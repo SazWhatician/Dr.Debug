@@ -1,0 +1,25 @@
+{
+  "name": "@dr-debug/ui",
+  "version": "0.1.0",
+  "description": "Shadow DOM HUD, diagnostic timeline, and floating widget for Dr. Debug",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@dr-debug/controller": "*",
+    "@dr-debug/core": "*"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["ui", "shadow-dom", "hud", "devtools", "debugging"],
+  "author": "Dr. Debug Team",
+  "license": "MIT"
+}

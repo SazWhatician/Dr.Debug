@@ -1,0 +1,21 @@
+{
+  "name": "@dr-debug/llms",
+  "version": "0.1.0",
+  "description": "Model-agnostic LLM client adapter for Dr. Debug",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["ai", "llm", "openai", "claude", "gemini", "debugging"],
+  "author": "Dr. Debug Team",
+  "license": "MIT"
+}

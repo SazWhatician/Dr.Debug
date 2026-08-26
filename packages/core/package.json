@@ -1,0 +1,26 @@
+{
+  "name": "@dr-debug/core",
+  "version": "0.1.0",
+  "description": "Re-Act diagnostic engine, Zod reflection schema, and tool registry for Dr. Debug",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@dr-debug/controller": "*",
+    "@dr-debug/llms": "*",
+    "zod": "^3.24.1"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["ai", "agent", "debugging", "react-loop", "diagnostics"],
+  "author": "Dr. Debug Team",
+  "license": "MIT"
+}

@@ -12,6 +12,12 @@
     "declarationMap": true,
     "sourceMap": true,
     "resolveJsonModule": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@dr-debug/controller": ["packages/controller/src/index.ts"],
+      "@dr-debug/llms": ["packages/llms/src/index.ts"],
+      "@dr-debug/core": ["packages/core/src/index.ts"]
+    }
   }
 }
