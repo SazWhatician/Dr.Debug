@@ -1,0 +1,21 @@
+{
+  "name": "@dr-debug/controller",
+  "version": "0.1.0",
+  "description": "Deep substrate sensory interceptors and <debug_state> serializer for Dr. Debug",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["debugging", "devtools", "observability", "interceptors", "ai-agent"],
+  "author": "Dr. Debug Team",
+  "license": "MIT"
+}
