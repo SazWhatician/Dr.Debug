@@ -5963,28 +5963,49 @@ ${msg.content}<end_of_turn>
       this.element.className = "dr-debug-modal hidden";
       const header = document.createElement("div");
       header.className = "dr-debug-header";
-      const title = document.createElement("div");
-      title.className = "dr-debug-title";
-      title.innerHTML = "<span>\u{1FA7A}</span> <span>Dr. Debug Cockpit</span>";
+      const brand = document.createElement("div");
+      brand.className = "dr-debug-brand";
+      brand.innerHTML = `
+      <span class="dr-debug-brand-icon">\u{1FA7A}</span>
+      <div>
+        <div class="dr-debug-title-text">DR. DEBUG // COCKPIT</div>
+      </div>
+    `;
+      const metricsWrapper = document.createElement("div");
+      metricsWrapper.className = "dr-debug-header-metrics";
+      this.heapMetricBadge = document.createElement("div");
+      this.heapMetricBadge.className = "dr-debug-metric-badge";
+      this.heapMetricBadge.innerHTML = `<span>\u{1F9E0}</span> <span id="dr-debug-heap-val">Heap: 48MB</span>`;
+      this.uptimeMetricBadge = document.createElement("div");
+      this.uptimeMetricBadge.className = "dr-debug-metric-badge";
+      this.uptimeMetricBadge.innerHTML = `<span>\u23F1\uFE0F</span> <span id="dr-debug-uptime-val">00:00</span>`;
       const closeBtn = document.createElement("button");
       closeBtn.className = "dr-debug-close-btn";
       closeBtn.innerHTML = "\u2715";
       closeBtn.title = "Close Cockpit";
       closeBtn.addEventListener("click", () => this.onClose());
-      header.appendChild(title);
-      header.appendChild(closeBtn);
+      metricsWrapper.appendChild(this.heapMetricBadge);
+      metricsWrapper.appendChild(this.uptimeMetricBadge);
+      metricsWrapper.appendChild(closeBtn);
+      header.appendChild(brand);
+      header.appendChild(metricsWrapper);
       const tabs = document.createElement("div");
       tabs.className = "dr-debug-tabs";
       this.tabTimeline = document.createElement("button");
       this.tabTimeline.className = "dr-debug-tab active";
-      this.tabTimeline.textContent = "Diagnostic Timeline";
+      this.tabTimeline.innerHTML = `<span>\u26A1</span> <span>Diagnostic Timeline</span>`;
       this.tabTimeline.addEventListener("click", () => this.switchTab("timeline"));
       this.tabTriage = document.createElement("button");
       this.tabTriage.className = "dr-debug-tab";
-      this.tabTriage.textContent = "Triage Stream";
+      this.tabTriage.innerHTML = `<span>\u{1F4E1}</span> <span>Telemetry Matrix</span>`;
       this.tabTriage.addEventListener("click", () => this.switchTab("triage"));
+      this.tabPrescription = document.createElement("button");
+      this.tabPrescription.className = "dr-debug-tab";
+      this.tabPrescription.innerHTML = `<span>\u{1F48A}</span> <span>Prescription</span>`;
+      this.tabPrescription.addEventListener("click", () => this.switchTab("prescription"));
       tabs.appendChild(this.tabTimeline);
       tabs.appendChild(this.tabTriage);
+      tabs.appendChild(this.tabPrescription);
       const body = document.createElement("div");
       body.className = "dr-debug-body";
       this.timelineContainer = document.createElement("div");
@@ -5995,37 +6016,76 @@ ${msg.content}<end_of_turn>
       this.triageContainer.style.display = "none";
       this.triageContainer.style.flexDirection = "column";
       this.triageContainer.style.gap = "10px";
+      this.prescriptionContainer = document.createElement("div");
+      this.prescriptionContainer.style.display = "none";
+      this.prescriptionContainer.style.flexDirection = "column";
+      this.prescriptionContainer.style.gap = "10px";
       body.appendChild(this.timelineContainer);
       body.appendChild(this.triageContainer);
+      body.appendChild(this.prescriptionContainer);
+      const queryWrapper = document.createElement("div");
+      queryWrapper.className = "dr-debug-query-wrapper";
+      const chipsRow = document.createElement("div");
+      chipsRow.className = "dr-debug-chips-row";
+      const quickChips = [
+        { label: "\u26A1 Diagnose 503 Error", query: "Why did the /api/ request return 503 and how can we fix it?" },
+        { label: "\u{1F50D} Find Correlations", query: "Find causal links between recent network failures and console exceptions." },
+        { label: "\u{1F9E0} Inspect Heap & Vitals", query: "Check memory heap allocations and identify any potential memory leaks." },
+        { label: "\u{1F9F9} Clear Telemetry", action: "clear" }
+      ];
+      for (const chip of quickChips) {
+        const chipEl = document.createElement("button");
+        chipEl.className = "dr-debug-quick-chip";
+        chipEl.textContent = chip.label;
+        chipEl.addEventListener("click", () => {
+          if (chip.action === "clear") {
+            this.clearTimeline();
+          } else if (chip.query) {
+            this.queryInput.value = chip.query;
+            this.triggerInvestigate();
+          }
+        });
+        chipsRow.appendChild(chipEl);
+      }
       const queryBox = document.createElement("div");
       queryBox.className = "dr-debug-query-box";
       this.queryInput = document.createElement("input");
       this.queryInput.className = "dr-debug-input";
-      this.queryInput.placeholder = "Ask Dr. Debug to investigate (e.g. Why did checkout fail?)...";
+      this.queryInput.placeholder = "Ask Dr. Debug (e.g. Why did /api/agents/resource/run fail?)...";
       this.queryInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") this.triggerInvestigate();
       });
       this.queryButton = document.createElement("button");
       this.queryButton.className = "dr-debug-btn";
-      this.queryButton.textContent = "Diagnose";
+      this.queryButton.innerHTML = `<span>\u26A1</span> <span>Diagnose</span>`;
       this.queryButton.addEventListener("click", () => this.triggerInvestigate());
       queryBox.appendChild(this.queryInput);
       queryBox.appendChild(this.queryButton);
+      queryWrapper.appendChild(chipsRow);
+      queryWrapper.appendChild(queryBox);
       this.element.appendChild(header);
       this.element.appendChild(tabs);
       this.element.appendChild(body);
-      this.element.appendChild(queryBox);
+      this.element.appendChild(queryWrapper);
       this.renderEmptyTimeline();
+      this.renderEmptyPrescription();
+      this.startUptimeTicker();
+      this.initDraggable(header);
     }
     element;
     timelineContainer;
     triageContainer;
+    prescriptionContainer;
     queryInput;
     queryButton;
     tabTimeline;
     tabTriage;
+    tabPrescription;
+    heapMetricBadge;
+    uptimeMetricBadge;
     activeTab = "timeline";
     steps = [];
+    startTime = Date.now();
     getElement() {
       return this.element;
     }
@@ -6044,32 +6104,41 @@ ${msg.content}<end_of_turn>
     setBusy(busy) {
       this.queryInput.disabled = busy;
       this.queryButton.disabled = busy;
-      this.queryButton.textContent = busy ? "Diagnosing..." : "Diagnose";
+      this.queryButton.innerHTML = busy ? `<span>\u23F3</span> <span>Diagnosing...</span>` : `<span>\u26A1</span> <span>Diagnose</span>`;
     }
     switchTab(tab) {
       this.activeTab = tab;
-      if (tab === "timeline") {
-        this.tabTimeline.classList.add("active");
-        this.tabTriage.classList.remove("active");
-        this.timelineContainer.style.display = "flex";
-        this.triageContainer.style.display = "none";
-      } else {
-        this.tabTriage.classList.add("active");
-        this.tabTimeline.classList.remove("active");
-        this.triageContainer.style.display = "flex";
-        this.timelineContainer.style.display = "none";
-      }
+      this.tabTimeline.classList.toggle("active", tab === "timeline");
+      this.tabTriage.classList.toggle("active", tab === "triage");
+      this.tabPrescription.classList.toggle("active", tab === "prescription");
+      this.timelineContainer.style.display = tab === "timeline" ? "flex" : "none";
+      this.triageContainer.style.display = tab === "triage" ? "flex" : "none";
+      this.prescriptionContainer.style.display = tab === "prescription" ? "flex" : "none";
     }
     clearTimeline() {
       this.steps = [];
-      this.timelineContainer.innerHTML = "";
+      this.renderEmptyTimeline();
+      this.renderEmptyPrescription();
     }
     renderEmptyTimeline() {
       this.timelineContainer.innerHTML = `
-      <div style="color: #8b949e; text-align: center; padding: 40px 10px; font-size: 12px;">
-        <div style="font-size: 28px; margin-bottom: 8px;">\u{1FA7A}</div>
-        <strong>Dr. Debug is observing runtime telemetry.</strong>
-        <p style="margin-top: 4px; color: #6e7681;">Click "Diagnose" or trigger an anomaly to begin autonomous Re-Act investigation.</p>
+      <div class="dr-debug-timeline-empty">
+        <div class="dr-debug-radar-ring">\u{1FA7A}</div>
+        <strong style="color: #f1f5f9; font-size: 13px;">Autonomous Diagnostic Observer Active</strong>
+        <p style="font-size: 12px; max-width: 320px; line-height: 1.5;">
+          Dr. Debug is continuously analyzing DOM mutations, network traffic, and console telemetry. Click <strong>Diagnose</strong> to launch autonomous RCA.
+        </p>
+      </div>
+    `;
+    }
+    renderEmptyPrescription() {
+      this.prescriptionContainer.innerHTML = `
+      <div class="dr-debug-timeline-empty">
+        <div class="dr-debug-radar-ring">\u{1F48A}</div>
+        <strong style="color: #f1f5f9; font-size: 13px;">No Prescription Generated Yet</strong>
+        <p style="font-size: 12px; max-width: 320px; line-height: 1.5;">
+          Launch a diagnosis to formulate verified code fixes, root causes, and unified diff patches.
+        </p>
       </div>
     `;
     }
@@ -6082,14 +6151,17 @@ ${msg.content}<end_of_turn>
       stepCard.className = "dr-debug-step-card";
       const header = document.createElement("div");
       header.className = "dr-debug-step-header";
+      const left = document.createElement("div");
+      left.className = "dr-debug-step-left";
       const numSpan = document.createElement("span");
-      numSpan.className = "dr-debug-step-num";
+      numSpan.className = "dr-debug-step-pill";
       numSpan.textContent = `Step ${step.stepNumber}`;
       const toolBadge = document.createElement("span");
       toolBadge.className = "dr-debug-step-tool";
       toolBadge.textContent = step.toolName;
-      header.appendChild(numSpan);
-      header.appendChild(toolBadge);
+      left.appendChild(numSpan);
+      left.appendChild(toolBadge);
+      header.appendChild(left);
       const thought = document.createElement("div");
       thought.className = "dr-debug-step-thought";
       thought.textContent = `\u{1F4A1} Hypothesis: ${step.hypothesis}`;
@@ -6107,80 +6179,143 @@ ${msg.content}<end_of_turn>
     showPrescription(prescription) {
       const card = document.createElement("div");
       card.className = "dr-debug-prescription-card";
+      const header = document.createElement("div");
+      header.className = "dr-debug-presc-header";
       const title = document.createElement("div");
-      title.className = "dr-debug-prescription-title";
-      title.innerHTML = `<span>\u2705 Root Cause Diagnosis</span> <span style="font-size: 11px; color: #8b949e;">(${Math.round((prescription.confidence ?? 0.95) * 100)}% Confidence)</span>`;
-      const diagnosisText = document.createElement("div");
-      diagnosisText.style.color = "#f0f6fc";
-      diagnosisText.style.fontSize = "12px";
-      diagnosisText.innerHTML = `<strong>Finding:</strong> ${this.escapeHtml(prescription.diagnosis)}`;
-      const rootCauseText = document.createElement("div");
-      rootCauseText.style.color = "#8b949e";
-      rootCauseText.style.fontSize = "12px";
-      rootCauseText.innerHTML = `<strong>Root Cause:</strong> ${this.escapeHtml(prescription.rootCause)}`;
-      card.appendChild(title);
-      card.appendChild(diagnosisText);
-      card.appendChild(rootCauseText);
+      title.className = "dr-debug-presc-title";
+      title.innerHTML = `<span>\u{1FA7A}</span> <span>Verified Root Cause Diagnosis</span>`;
+      const confChip = document.createElement("div");
+      confChip.className = "dr-debug-confidence-chip";
+      confChip.textContent = `${Math.round((prescription.confidence ?? 0.95) * 100)}% Confidence`;
+      header.appendChild(title);
+      header.appendChild(confChip);
+      const sectionFinding = document.createElement("div");
+      sectionFinding.className = "dr-debug-presc-section";
+      sectionFinding.innerHTML = `
+      <div class="dr-debug-presc-label">Diagnostic Finding</div>
+      <div class="dr-debug-presc-text">${this.escapeHtml(prescription.diagnosis)}</div>
+    `;
+      const sectionRCA = document.createElement("div");
+      sectionRCA.className = "dr-debug-presc-section";
+      sectionRCA.innerHTML = `
+      <div class="dr-debug-presc-label">Root Cause Mechanism</div>
+      <div class="dr-debug-presc-text" style="color: #cbd5e1;">${this.escapeHtml(prescription.rootCause)}</div>
+    `;
+      card.appendChild(header);
+      card.appendChild(sectionFinding);
+      card.appendChild(sectionRCA);
       if (prescription.filesToModify && prescription.filesToModify.length > 0) {
-        const filesDiv = document.createElement("div");
-        filesDiv.style.fontSize = "11px";
-        filesDiv.style.color = "#58a6ff";
-        filesDiv.textContent = `Target Files: ${prescription.filesToModify.join(", ")}`;
-        card.appendChild(filesDiv);
+        const sectionFiles = document.createElement("div");
+        sectionFiles.className = "dr-debug-presc-section";
+        sectionFiles.innerHTML = `
+        <div class="dr-debug-presc-label">Target Files To Patch</div>
+        <div style="font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: #38bdf8;">
+          ${prescription.filesToModify.map((f) => `\u{1F4C4} ${this.escapeHtml(f)}`).join(" &nbsp;|&nbsp; ")}
+        </div>
+      `;
+        card.appendChild(sectionFiles);
       }
       if (prescription.fix) {
+        const sectionFix = document.createElement("div");
+        sectionFix.className = "dr-debug-presc-section";
+        sectionFix.innerHTML = `<div class="dr-debug-presc-label">Prescribed Code Patch</div>`;
         const diffContainer = document.createElement("div");
         diffContainer.className = "dr-debug-prescription-diff";
         diffContainer.innerHTML = this.formatDiffHtml(prescription.fix);
         const copyBtn = document.createElement("button");
         copyBtn.className = "dr-debug-copy-btn";
-        copyBtn.textContent = "\u{1F4CB} Copy Patch";
+        copyBtn.innerHTML = `<span>\u{1F4CB}</span> <span>Copy Unified Patch</span>`;
         copyBtn.addEventListener("click", () => {
           if (navigator.clipboard) {
             navigator.clipboard.writeText(prescription.fix);
-            copyBtn.textContent = "\u2705 Copied!";
+            copyBtn.innerHTML = `<span>\u2705</span> <span>Patch Copied!</span>`;
             setTimeout(() => {
-              copyBtn.textContent = "\u{1F4CB} Copy Patch";
+              copyBtn.innerHTML = `<span>\u{1F4CB}</span> <span>Copy Unified Patch</span>`;
             }, 2e3);
           }
         });
-        card.appendChild(diffContainer);
-        card.appendChild(copyBtn);
+        sectionFix.appendChild(diffContainer);
+        sectionFix.appendChild(copyBtn);
+        card.appendChild(sectionFix);
       }
-      this.timelineContainer.appendChild(card);
+      this.timelineContainer.appendChild(card.cloneNode(true));
+      this.prescriptionContainer.innerHTML = "";
+      this.prescriptionContainer.appendChild(card);
       this.timelineContainer.scrollTop = this.timelineContainer.scrollHeight;
+      this.switchTab("prescription");
     }
     updateTriage(telemetry) {
       this.triageContainer.innerHTML = "";
+      if (telemetry.memory && telemetry.memory.usedMB) {
+        this.heapMetricBadge.innerHTML = `<span>\u{1F9E0}</span> <span>Heap: ${telemetry.memory.usedMB}MB</span>`;
+      }
       if (telemetry.errors.length > 0) {
         for (const err of telemetry.errors) {
           const item = document.createElement("div");
           item.className = "dr-debug-telemetry-item error";
-          item.innerHTML = `<strong>Console / Runtime Error:</strong><span>${this.escapeHtml(err)}</span>`;
+          item.innerHTML = `
+          <div class="dr-debug-telemetry-meta">
+            <span style="color: #fb7185; font-weight: 700;">\u{1F534} RUNTIME EXCEPTION</span>
+            <span>Just now</span>
+          </div>
+          <div style="font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: #f1f5f9;">
+            ${this.escapeHtml(err)}
+          </div>
+        `;
           this.triageContainer.appendChild(item);
         }
       }
       if (telemetry.slowRequests.length > 0) {
         for (const req of telemetry.slowRequests) {
+          const isFail = req.includes("[50") || req.includes("[40") || req.includes("[0]");
           const item = document.createElement("div");
-          item.className = "dr-debug-telemetry-item warn";
-          item.innerHTML = `<strong>Slow Network Call:</strong><span>${this.escapeHtml(req)}</span>`;
+          item.className = `dr-debug-telemetry-item ${isFail ? "net-fail" : "warn"}`;
+          item.innerHTML = `
+          <div class="dr-debug-telemetry-meta">
+            <span style="color: ${isFail ? "#fbbf24" : "#38bdf8"}; font-weight: 700;">
+              ${isFail ? "\u26A0\uFE0F HTTP NETWORK ANOMALY" : "\u23F3 LATENCY ANOMALY"}
+            </span>
+            <span>Substrate trace</span>
+          </div>
+          <div style="font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: #f1f5f9;">
+            ${this.escapeHtml(req)}
+          </div>
+        `;
           this.triageContainer.appendChild(item);
         }
       }
       if (telemetry.memory) {
         const item = document.createElement("div");
         item.className = "dr-debug-telemetry-item ok";
-        item.innerHTML = `<strong>Memory Health:</strong><span>Heap: ${telemetry.memory.usedMB || 0}MB / ${telemetry.memory.totalMB || 0}MB</span>`;
+        item.innerHTML = `
+        <div class="dr-debug-telemetry-meta">
+          <span style="color: #34d399; font-weight: 700;">\u{1F7E2} V8 MEMORY SUBSYSTEM</span>
+          <span>Live Snapshot</span>
+        </div>
+        <div style="font-size: 12px; color: #cbd5e1;">
+          Used Heap: <strong>${telemetry.memory.usedMB || 0} MB</strong> / Allocated: <strong>${telemetry.memory.totalMB || 0} MB</strong>
+        </div>
+      `;
         this.triageContainer.appendChild(item);
       }
       if (this.triageContainer.children.length === 0) {
         this.triageContainer.innerHTML = `
-        <div style="color: #3fb950; text-align: center; padding: 30px; font-size: 12px;">
-          \u2705 No active errors, network delays, or heap leaks detected.
+        <div style="color: #34d399; text-align: center; padding: 40px 10px; font-size: 13px;">
+          <div style="font-size: 24px; margin-bottom: 6px;">\u2728</div>
+          <strong>Substrate is completely healthy.</strong>
+          <p style="color: #64748b; font-size: 12px; margin-top: 4px;">Zero unhandled exceptions, zero network timeouts recorded.</p>
         </div>
       `;
       }
+    }
+    startUptimeTicker() {
+      setInterval(() => {
+        const sec = Math.floor((Date.now() - this.startTime) / 1e3);
+        const m = Math.floor(sec / 60).toString().padStart(2, "0");
+        const s = (sec % 60).toString().padStart(2, "0");
+        const el = this.element.querySelector("#dr-debug-uptime-val");
+        if (el) el.textContent = `${m}:${s}`;
+      }, 1e3);
     }
     triggerInvestigate() {
       const query = this.queryInput.value.trim();
@@ -6191,16 +6326,60 @@ ${msg.content}<end_of_turn>
     }
     formatDiffHtml(diff) {
       return diff.split("\n").map((line) => {
-        if (line.startsWith("+++") || line.startsWith("---")) {
-          return `<div style="color: #8b949e;">${this.escapeHtml(line)}</div>`;
+        if (line.startsWith("+++") || line.startsWith("---") || line.startsWith("@@")) {
+          return `<div style="color: #94a3b8;">${this.escapeHtml(line)}</div>`;
         }
-        if (line.startsWith("+")) return `<div class="dr-debug-diff-add">${this.escapeHtml(line)}</div>`;
-        if (line.startsWith("-")) return `<div class="dr-debug-diff-del">${this.escapeHtml(line)}</div>`;
+        if (line.startsWith("+")) return `<span class="dr-debug-diff-add">${this.escapeHtml(line)}</span>`;
+        if (line.startsWith("-")) return `<span class="dr-debug-diff-del">${this.escapeHtml(line)}</span>`;
         return `<div>${this.escapeHtml(line)}</div>`;
       }).join("");
     }
     escapeHtml(str) {
       return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+    initDraggable(header) {
+      let isDragging = false;
+      let startX = 0;
+      let startY = 0;
+      let initialX = 0;
+      let initialY = 0;
+      const onMouseDown = (e) => {
+        const target = e.target;
+        if (target.closest(".dr-debug-close-btn") || target.tagName === "BUTTON" || target.tagName === "INPUT") {
+          return;
+        }
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = this.element.getBoundingClientRect();
+        initialX = rect.left;
+        initialY = rect.top;
+        this.element.style.left = `${initialX}px`;
+        this.element.style.top = `${initialY}px`;
+        this.element.style.right = "auto";
+        this.element.style.bottom = "auto";
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("mouseup", onMouseUp);
+      };
+      const onMouseMove = (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        let newX = initialX + dx;
+        let newY = initialY + dy;
+        const maxX = window.innerWidth - this.element.offsetWidth - 10;
+        const maxY = window.innerHeight - this.element.offsetHeight - 10;
+        newX = Math.max(10, Math.min(newX, maxX));
+        newY = Math.max(10, Math.min(newY, maxY));
+        this.element.style.left = `${newX}px`;
+        this.element.style.top = `${newY}px`;
+      };
+      const onMouseUp = () => {
+        isDragging = false;
+        window.removeEventListener("mousemove", onMouseMove);
+        window.removeEventListener("mouseup", onMouseUp);
+      };
+      header.addEventListener("mousedown", onMouseDown);
     }
   };
 
@@ -6208,7 +6387,7 @@ ${msg.content}<end_of_turn>
   var FloatingPill = class {
     element;
     badgeText;
-    pulseDot;
+    equalizer;
     isDragging = false;
     startX = 0;
     startY = 0;
@@ -6219,18 +6398,23 @@ ${msg.content}<end_of_turn>
       this.element = document.createElement("div");
       this.element.className = "dr-debug-pill";
       this.element.title = "Dr. Debug - Click to open Cockpit";
-      this.pulseDot = document.createElement("span");
-      this.pulseDot.className = "dr-debug-pulse";
+      this.equalizer = document.createElement("div");
+      this.equalizer.className = "dr-debug-equalizer";
+      this.equalizer.innerHTML = `
+      <div class="dr-debug-eq-bar"></div>
+      <div class="dr-debug-eq-bar"></div>
+      <div class="dr-debug-eq-bar"></div>
+    `;
       const icon = document.createElement("span");
       icon.className = "dr-debug-pill-icon";
       icon.textContent = "\u{1FA7A}";
-      this.badgeText = document.createElement("span");
+      this.badgeText = document.createElement("div");
       this.badgeText.className = "dr-debug-pill-badge";
-      this.badgeText.textContent = "Dr. Debug";
-      this.element.appendChild(this.pulseDot);
+      this.badgeText.innerHTML = `<span>Dr. Debug</span> <span class="dr-debug-chip ok">ACTIVE</span>`;
+      this.element.appendChild(this.equalizer);
       this.element.appendChild(icon);
       this.element.appendChild(this.badgeText);
-      this.element.addEventListener("click", (e) => {
+      this.element.addEventListener("click", () => {
         if (!this.hasMoved) {
           onClick();
         }
@@ -6242,21 +6426,18 @@ ${msg.content}<end_of_turn>
     }
     updateStatus(errorCount, failedNetCount = 0, slowNetCount = 0, isRunning = false) {
       if (isRunning) {
-        this.pulseDot.className = "dr-debug-pulse running";
-        this.badgeText.textContent = "Diagnosing...";
+        this.badgeText.innerHTML = `<span>Dr. Debug</span> <span class="dr-debug-chip run">\u26A1 DIAGNOSING</span>`;
         return;
       }
       const totalIssues = errorCount + failedNetCount + slowNetCount;
       if (totalIssues > 0) {
-        this.pulseDot.className = "dr-debug-pulse error";
-        const parts = [];
-        if (errorCount > 0) parts.push(`${errorCount} Error${errorCount > 1 ? "s" : ""}`);
-        if (failedNetCount > 0) parts.push(`${failedNetCount} Net Fail${failedNetCount > 1 ? "s" : ""}`);
-        if (slowNetCount > 0) parts.push(`${slowNetCount} Slow`);
-        this.badgeText.textContent = `\u26A0\uFE0F ${parts.join(" | ")}`;
+        const chips = [];
+        if (errorCount > 0) chips.push(`<span class="dr-debug-chip err">\u274C ${errorCount} ERR</span>`);
+        if (failedNetCount > 0) chips.push(`<span class="dr-debug-chip net">\u26A0\uFE0F ${failedNetCount} NET FAIL</span>`);
+        if (slowNetCount > 0) chips.push(`<span class="dr-debug-chip net">\u23F3 ${slowNetCount} SLOW</span>`);
+        this.badgeText.innerHTML = chips.join(" ");
       } else {
-        this.pulseDot.className = "dr-debug-pulse";
-        this.badgeText.textContent = "Dr. Debug \u2705";
+        this.badgeText.innerHTML = `<span>Dr. Debug</span> <span class="dr-debug-chip ok">HEALTHY</span>`;
       }
     }
     initDraggable() {
@@ -6284,9 +6465,21 @@ ${msg.content}<end_of_turn>
         }
       };
       const onMouseUp = () => {
+        if (!this.isDragging) return;
         this.isDragging = false;
         window.removeEventListener("mousemove", onMouseMove);
         window.removeEventListener("mouseup", onMouseUp);
+        if (this.hasMoved) {
+          const rect = this.element.getBoundingClientRect();
+          const snapPadding = 24;
+          if (rect.left < window.innerWidth / 2) {
+            this.element.style.left = `${snapPadding}px`;
+            this.element.style.right = "auto";
+          } else {
+            this.element.style.left = "auto";
+            this.element.style.right = `${snapPadding}px`;
+          }
+        }
       };
       this.element.addEventListener("mousedown", onMouseDown);
     }
@@ -6296,13 +6489,15 @@ ${msg.content}<end_of_turn>
   var shadowStyles = `
 :host {
   all: initial;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 13px;
-  line-height: 1.4;
-  color: #e6edf3;
+  line-height: 1.45;
+  color: #f1f5f9;
   z-index: 2147483647;
   position: fixed;
   pointer-events: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
@@ -6311,6 +6506,10 @@ ${msg.content}<end_of_turn>
   padding: 0;
 }
 
+/* ==========================================================================
+   1. FLOATING PILL HUD (Holographic Capsule with Rotating Border Aura)
+   ========================================================================== */
+
 .dr-debug-pill {
   pointer-events: auto;
   position: fixed;
@@ -6318,349 +6517,659 @@ ${msg.content}<end_of_turn>
   right: 24px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: rgba(13, 17, 23, 0.92);
-  border: 1px solid rgba(48, 54, 61, 0.8);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(12px);
-  padding: 8px 14px;
+  gap: 10px;
+  background: rgba(10, 14, 23, 0.88);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  box-shadow: 
+    0 12px 32px -4px rgba(0, 0, 0, 0.7),
+    0 4px 12px rgba(6, 182, 212, 0.15),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px) saturate(190%);
+  -webkit-backdrop-filter: blur(20px) saturate(190%);
+  padding: 7px 16px 7px 12px;
   border-radius: 9999px;
   cursor: pointer;
   user-select: none;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, box-shadow;
 }
 
 .dr-debug-pill:hover {
-  background: rgba(22, 27, 34, 0.98);
-  border-color: #58a6ff;
-  transform: translateY(-2px);
+  background: rgba(15, 23, 42, 0.95);
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 
+    0 16px 40px -4px rgba(0, 0, 0, 0.8),
+    0 0 20px rgba(6, 182, 212, 0.4),
+    inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  transform: translateY(-3px) scale(1.03);
+}
+
+.dr-debug-pill:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+/* Live Equalizer Activity Waves */
+.dr-debug-equalizer {
+  display: flex;
+  align-items: flex-end;
+  gap: 2.5px;
+  height: 14px;
+  width: 14px;
+}
+
+.dr-debug-eq-bar {
+  flex: 1;
+  background: #00f0ff;
+  border-radius: 2px;
+  height: 4px;
+  transition: height 0.2s ease;
+  animation: eq-pulse 1.4s ease-in-out infinite alternate;
+}
+
+.dr-debug-eq-bar:nth-child(1) { animation-delay: 0s; }
+.dr-debug-eq-bar:nth-child(2) { animation-delay: 0.25s; }
+.dr-debug-eq-bar:nth-child(3) { animation-delay: 0.5s; }
+
+@keyframes eq-pulse {
+  0% { height: 3px; opacity: 0.6; }
+  50% { height: 13px; opacity: 1; }
+  100% { height: 6px; opacity: 0.8; }
 }
 
 .dr-debug-pill-icon {
   font-size: 16px;
   display: flex;
   align-items: center;
+  filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.6));
 }
 
 .dr-debug-pill-badge {
   font-weight: 600;
   font-size: 12px;
+  letter-spacing: 0.3px;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dr-debug-chip {
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-size: 10.5px;
+  font-weight: 700;
   letter-spacing: 0.2px;
-  color: #f0f6fc;
 }
 
-.dr-debug-pulse {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #3fb950;
+.dr-debug-chip.err {
+  background: rgba(244, 63, 94, 0.2);
+  color: #fb7185;
+  border: 1px solid rgba(244, 63, 94, 0.4);
+  box-shadow: 0 0 8px rgba(244, 63, 94, 0.3);
 }
 
-.dr-debug-pulse.error {
-  background: #f85149;
-  box-shadow: 0 0 0 0 rgba(248, 81, 73, 0.7);
-  animation: pulse-red 1.6s infinite;
+.dr-debug-chip.net {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
 }
 
-.dr-debug-pulse.running {
-  background: #a371f7;
-  box-shadow: 0 0 0 0 rgba(163, 113, 247, 0.7);
-  animation: pulse-purple 1.2s infinite;
+.dr-debug-chip.ok {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
-@keyframes pulse-red {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(248, 81, 73, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(248, 81, 73, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(248, 81, 73, 0); }
+.dr-debug-chip.run {
+  background: rgba(168, 85, 247, 0.2);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  animation: chip-glow 1.2s infinite alternate;
 }
 
-@keyframes pulse-purple {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(163, 113, 247, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(163, 113, 247, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(163, 113, 247, 0); }
+@keyframes chip-glow {
+  from { box-shadow: 0 0 4px rgba(168, 85, 247, 0.3); }
+  to { box-shadow: 0 0 12px rgba(168, 85, 247, 0.8); }
 }
 
-/* Main Cockpit Drawer */
+/* ==========================================================================
+   2. MAIN COCKPIT DRAWER (Obsidian Glass Floating Terminal)
+   ========================================================================== */
+
 .dr-debug-modal {
   pointer-events: auto;
   position: fixed;
-  bottom: 80px;
-  right: 24px;
-  width: 480px;
-  max-width: calc(100vw - 48px);
-  max-height: 680px;
-  height: 600px;
-  background: #0d1117;
-  border: 1px solid #30363d;
-  border-radius: 12px;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+  bottom: 76px;
+  right: 20px;
+  width: 410px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 90px);
+  height: 480px;
+  background: rgba(8, 12, 22, 0.76);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  box-shadow: 
+    0 20px 50px -6px rgba(0, 0, 0, 0.8),
+    0 0 24px rgba(6, 182, 212, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(28px) saturate(220%);
+  -webkit-backdrop-filter: blur(28px) saturate(220%);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: modal-fade-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: modal-spring-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 2147483647;
 }
 
 .dr-debug-modal.hidden {
   display: none;
 }
 
-@keyframes modal-fade-in {
-  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+@keyframes modal-spring-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Header */
+/* Header (Draggable Handle) */
 .dr-debug-header {
-  padding: 12px 16px;
-  background: #161b22;
-  border-bottom: 1px solid #30363d;
+  padding: 10px 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  cursor: grab;
+  user-select: none;
 }
 
-.dr-debug-title {
+.dr-debug-header:active {
+  cursor: grabbing;
+}
+
+.dr-debug-brand {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.dr-debug-brand-icon {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.7));
+}
+
+.dr-debug-title-text {
   font-weight: 700;
-  font-size: 14px;
-  color: #58a6ff;
+  font-size: 12.5px;
+  letter-spacing: 0.3px;
+  background: linear-gradient(135deg, #ffffff 0%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.dr-debug-header-metrics {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: #94a3b8;
+  font-family: ui-monospace, 'JetBrains Mono', Menlo, monospace;
+}
+
+.dr-debug-metric-badge {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 2px 6px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .dr-debug-close-btn {
-  background: transparent;
-  border: none;
-  color: #8b949e;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
   cursor: pointer;
-  font-size: 16px;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.15s;
+  font-size: 12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
 }
 
 .dr-debug-close-btn:hover {
-  color: #f0f6fc;
-  background: #21262d;
+  color: #fff;
+  background: rgba(244, 63, 94, 0.4);
+  border-color: rgba(244, 63, 94, 0.7);
+  transform: scale(1.05);
 }
 
-/* Navigation Tabs */
+/* Tabs */
 .dr-debug-tabs {
   display: flex;
-  background: #161b22;
-  border-bottom: 1px solid #30363d;
-  padding: 0 8px;
+  background: rgba(6, 9, 16, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 3px 6px;
+  gap: 3px;
 }
 
 .dr-debug-tab {
-  padding: 8px 12px;
+  flex: 1;
+  padding: 6px 8px;
   background: transparent;
   border: none;
-  color: #8b949e;
-  font-size: 12px;
+  color: #94a3b8;
+  font-size: 11.5px;
   font-weight: 600;
+  border-radius: 6px;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.dr-debug-tab:hover {
+  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .dr-debug-tab.active {
-  color: #58a6ff;
-  border-bottom-color: #58a6ff;
-}
-
-.dr-debug-tab:hover:not(.active) {
-  color: #c9d1d9;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.14);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15);
 }
 
 /* Body Content */
 .dr-debug-body {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Search / Prompt Query Bar */
-.dr-debug-query-box {
-  display: flex;
-  gap: 8px;
-  padding: 12px 16px;
-  background: #161b22;
-  border-top: 1px solid #30363d;
-}
-
-.dr-debug-input {
-  flex: 1;
-  background: #0d1117;
-  border: 1px solid #30363d;
-  border-radius: 6px;
-  padding: 8px 12px;
-  color: #f0f6fc;
-  font-size: 13px;
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-.dr-debug-input:focus {
-  border-color: #58a6ff;
-}
-
-.dr-debug-btn {
-  background: #238636;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 14px;
-  font-weight: 600;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.dr-debug-btn:hover {
-  background: #2ea043;
-}
-
-.dr-debug-btn:disabled {
-  background: #21262d;
-  color: #6e7681;
-  cursor: not-allowed;
-}
-
-/* Step Card & Timeline */
-.dr-debug-step-card {
-  background: #161b22;
-  border: 1px solid #30363d;
-  border-radius: 8px;
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
+.dr-debug-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dr-debug-body::-webkit-scrollbar-track {
+  background: rgba(10, 14, 23, 0.4);
+}
+
+.dr-debug-body::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 9999px;
+}
+
+.dr-debug-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.6);
+}
+
+/* ==========================================================================
+   3. DIAGNOSTIC TIMELINE & RE-ACT STEP CARDS
+   ========================================================================== */
+
+.dr-debug-timeline-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 40px 20px;
+  color: #64748b;
+  gap: 12px;
+}
+
+.dr-debug-radar-ring {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px dashed rgba(56, 189, 248, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  animation: spin-slow 8s linear infinite;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, transparent 70%);
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.dr-debug-step-card {
+  position: relative;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dr-debug-step-card:hover {
+  border-color: rgba(56, 189, 248, 0.3);
+  background: rgba(20, 30, 50, 0.8);
+}
+
 .dr-debug-step-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
 }
 
-.dr-debug-step-num {
+.dr-debug-step-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dr-debug-step-pill {
+  background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+  color: #fff;
   font-weight: 700;
-  color: #a371f7;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  box-shadow: 0 0 6px rgba(168, 85, 247, 0.4);
 }
 
 .dr-debug-step-tool {
-  background: #21262d;
-  padding: 2px 8px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+  padding: 2px 6px;
   border-radius: 4px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
-  color: #58a6ff;
+  font-family: ui-monospace, 'JetBrains Mono', Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
 }
 
 .dr-debug-step-thought {
-  color: #8b949e;
-  font-style: italic;
-  font-size: 12px;
+  color: #cbd5e1;
+  font-size: 11.5px;
+  line-height: 1.35;
+  padding-left: 4px;
+  border-left: 2px solid rgba(168, 85, 247, 0.5);
 }
 
 .dr-debug-step-output {
-  background: #0d1117;
-  border: 1px solid #21262d;
-  border-radius: 6px;
-  padding: 8px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
-  max-height: 120px;
+  background: rgba(6, 9, 16, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 5px;
+  padding: 6px 8px;
+  font-family: ui-monospace, 'JetBrains Mono', Menlo, monospace;
+  font-size: 10.5px;
+  max-height: 110px;
   overflow-y: auto;
   white-space: pre-wrap;
-  color: #c9d1d9;
+  color: #94a3b8;
+  line-height: 1.35;
 }
 
-/* Final Diagnosis / Prescription Card */
+/* ==========================================================================
+   4. PRESCRIPTION CARD & UNIFIED DIFF
+   ========================================================================== */
+
 .dr-debug-prescription-card {
-  background: #1c2128;
-  border: 1px solid #3fb950;
-  border-radius: 8px;
-  padding: 14px;
+  background: linear-gradient(145deg, rgba(16, 35, 28, 0.85) 0%, rgba(8, 20, 16, 0.95) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.15);
+  border-radius: 10px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
-.dr-debug-prescription-title {
+.dr-debug-presc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dr-debug-presc-title {
   display: flex;
   align-items: center;
   gap: 6px;
   font-weight: 700;
-  color: #3fb950;
-  font-size: 13px;
+  color: #34d399;
+  font-size: 12.5px;
+}
+
+.dr-debug-confidence-chip {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+  font-weight: 700;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 9999px;
+}
+
+.dr-debug-presc-section {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dr-debug-presc-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #6ee7b7;
+}
+
+.dr-debug-presc-text {
+  font-size: 11.5px;
+  color: #f1f5f9;
+  line-height: 1.4;
 }
 
 .dr-debug-prescription-diff {
-  background: #0d1117;
-  border: 1px solid #30363d;
+  background: rgba(3, 7, 18, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 6px;
-  padding: 10px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  padding: 8px;
+  font-family: ui-monospace, 'JetBrains Mono', Menlo, monospace;
   font-size: 11px;
   overflow-x: auto;
   white-space: pre;
+  color: #e2e8f0;
+  line-height: 1.45;
 }
 
 .dr-debug-diff-add {
-  color: #3fb950;
-  background: rgba(63, 185, 80, 0.15);
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.15);
+  display: block;
+  padding: 0 3px;
+  border-radius: 2px;
 }
 
 .dr-debug-diff-del {
-  color: #f85149;
-  background: rgba(248, 81, 73, 0.15);
+  color: #fb7185;
+  background: rgba(244, 63, 94, 0.15);
+  display: block;
+  padding: 0 3px;
+  border-radius: 2px;
 }
 
 .dr-debug-copy-btn {
   align-self: flex-end;
-  background: #21262d;
-  color: #c9d1d9;
-  border: 1px solid #30363d;
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 5px;
   padding: 4px 10px;
-  font-size: 11px;
+  font-size: 10.5px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s;
 }
 
 .dr-debug-copy-btn:hover {
-  background: #30363d;
-  color: #f0f6fc;
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #34d399;
 }
 
-/* Telemetry Items */
+/* ==========================================================================
+   5. TELEMETRY MATRIX & WATERFALL LATENCY CARDS
+   ========================================================================== */
+
 .dr-debug-telemetry-item {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 8px 10px;
-  background: #161b22;
-  border: 1px solid #21262d;
-  border-radius: 6px;
-  font-size: 12px;
+  font-size: 11.5px;
+  transition: all 0.2s;
+}
+
+.dr-debug-telemetry-item:hover {
+  background: rgba(20, 30, 50, 0.8);
+  border-color: rgba(56, 189, 248, 0.3);
 }
 
 .dr-debug-telemetry-item.error {
-  border-left: 3px solid #f85149;
+  border-left: 3px solid #f43f5e;
+  background: rgba(244, 63, 94, 0.06);
 }
 
-.dr-debug-telemetry-item.warn {
-  border-left: 3px solid #d29922;
+.dr-debug-telemetry-item.net-fail {
+  border-left: 3px solid #f59e0b;
+  background: rgba(245, 158, 11, 0.06);
 }
 
 .dr-debug-telemetry-item.ok {
-  border-left: 3px solid #3fb950;
+  border-left: 3px solid #10b981;
+}
+
+.dr-debug-telemetry-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+/* ==========================================================================
+   6. QUICK PROMPTS & INTERACTIVE QUERY BAR
+   ========================================================================== */
+
+.dr-debug-query-wrapper {
+  background: rgba(8, 12, 22, 0.85);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px;
+}
+
+.dr-debug-chips-row {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.dr-debug-chips-row::-webkit-scrollbar {
+  display: none;
+}
+
+.dr-debug-quick-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  font-size: 10.5px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.dr-debug-quick-chip:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.dr-debug-query-box {
+  display: flex;
+  gap: 6px;
+}
+
+.dr-debug-input {
+  flex: 1;
+  background: rgba(6, 9, 16, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 7px 10px;
+  color: #f8fafc;
+  font-size: 11.5px;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.dr-debug-input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+  background: rgba(10, 15, 28, 0.95);
+}
+
+.dr-debug-btn {
+  background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 3px 10px rgba(6, 182, 212, 0.3);
+}
+
+.dr-debug-btn:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #0891b2 100%);
+  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.45);
+  transform: translateY(-1px);
+}
+
+.dr-debug-btn:disabled {
+  background: rgba(255, 255, 255, 0.08);
+  color: #64748b;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
 }
 `;
 

@@ -2,91 +2,154 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Dr. Debug DevTools Panel</title>
+  <title>Dr. Debug // DevTools Substrate</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #090d16;
-      --card-bg: #111827;
-      --border: rgba(255, 255, 255, 0.1);
-      --text: #f3f4f6;
-      --text-muted: #9ca3af;
-      --cyan: #06b6d4;
-      --blue: #3b82f6;
-      --red: #ef4444;
+      --bg: #060911;
+      --card-bg: rgba(15, 23, 42, 0.75);
+      --border: rgba(56, 189, 248, 0.2);
+      --border-hover: rgba(56, 189, 248, 0.5);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --cyan: #00f0ff;
+      --blue: #0284c7;
+      --purple: #a855f7;
+      --red: #f43f5e;
+      --amber: #f59e0b;
       --green: #10b981;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Inter', sans-serif;
-      background: var(--bg);
+      background: radial-gradient(circle at top right, rgba(14, 165, 233, 0.08) 0%, transparent 60%), var(--bg);
       color: var(--text);
-      padding: 16px;
+      padding: 18px;
       line-height: 1.5;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 12px;
+      padding-bottom: 14px;
       border-bottom: 1px solid var(--border);
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
-    .brand { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+    }
+    .brand-icon {
+      font-size: 20px;
+      filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.6));
+    }
     .actions { display: flex; gap: 8px; }
     button {
-      background: var(--blue);
+      background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);
       color: #fff;
       border: none;
-      padding: 6px 12px;
-      border-radius: 6px;
+      padding: 8px 14px;
+      border-radius: 8px;
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25);
     }
-    button.btn-cyan { background: var(--cyan); }
-    button.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+    button:hover {
+      box-shadow: 0 6px 18px rgba(6, 182, 212, 0.45);
+      transform: translateY(-1px);
+    }
+    button.btn-outline {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      box-shadow: none;
+    }
+    button.btn-outline:hover {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: var(--border-hover);
+      color: var(--cyan);
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
     .panel-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(20px);
+      transition: border-color 0.2s;
     }
-    .panel-card h3 { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+    .panel-card:hover { border-color: var(--border-hover); }
+    .panel-card h3 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
     pre {
-      font-family: 'Fira Code', monospace;
-      font-size: 11px;
-      color: #94a3b8;
-      max-height: 160px;
+      font-family: 'Fira Code', 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: #cbd5e1;
+      max-height: 180px;
       overflow-y: auto;
       white-space: pre-wrap;
       word-break: break-all;
+      background: rgba(6, 9, 16, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 10px;
+      line-height: 1.5;
     }
+    pre::-webkit-scrollbar { width: 4px; }
+    pre::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.3); border-radius: 4px; }
     .investigation-box {
       background: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
     }
     .investigation-box input {
       width: 100%;
-      background: #060910;
+      background: rgba(6, 9, 16, 0.9);
       border: 1px solid var(--border);
       color: #fff;
-      padding: 8px 12px;
-      border-radius: 6px;
+      padding: 10px 14px;
+      border-radius: 8px;
       font-size: 13px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .investigation-box input:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 14px rgba(0, 240, 255, 0.25);
     }
     #rca-result {
-      margin-top: 12px;
-      padding: 12px;
-      background: #060910;
-      border-radius: 6px;
-      border-left: 3px solid var(--cyan);
+      margin-top: 16px;
+      padding: 16px;
+      background: rgba(6, 9, 16, 0.95);
+      border-radius: 10px;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
       display: none;
     }
   </style>
@@ -94,38 +157,43 @@
 <body>
   <div class="header">
     <div class="brand">
-      <span>🩺</span>
-      <span>Dr. Debug <span style="font-size: 11px; color: var(--cyan); font-weight: 500;">Autonomous Diagnostics</span></span>
+      <span class="brand-icon">🩺</span>
+      <span>DR. DEBUG // <span style="color: var(--cyan);">DEVTOOLS SUBSTRATE</span></span>
     </div>
     <div class="actions">
-      <button id="btn-refresh" class="btn-outline">🔄 Refresh Stream</button>
-      <button id="btn-export-md" class="btn-cyan">📄 Export RCA (Markdown)</button>
-      <button id="btn-export-json" class="btn-outline">📋 Export JSON</button>
+      <button id="btn-refresh" class="btn-outline"><span>🔄</span> <span>Refresh Telemetry</span></button>
+      <button id="btn-export-md"><span>📄</span> <span>Export RCA (Markdown)</span></button>
+      <button id="btn-export-json" class="btn-outline"><span>📋</span> <span>JSON</span></button>
     </div>
   </div>
 
   <div class="grid">
     <div class="panel-card">
-      <h3>🔴 Console Stream</h3>
-      <pre id="console-stream">Listening for page console events...</pre>
+      <h3><span>🔴 Console Telemetry</span> <span id="console-count" style="color: var(--red); font-weight: 700;">Live Stream</span></h3>
+      <pre id="console-stream">Listening for page runtime events...</pre>
     </div>
     <div class="panel-card">
-      <h3>🌐 Network Stream</h3>
+      <h3><span>🌐 Network Substrate</span> <span id="network-count" style="color: var(--cyan); font-weight: 700;">Active Matrix</span></h3>
       <pre id="network-stream">Listening for HTTP fetch & XHR requests...</pre>
     </div>
   </div>
 
   <div class="investigation-box">
-    <h3 style="font-size: 14px; margin-bottom: 8px;">🎯 Autonomous Diagnosis</h3>
+    <h3 style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--cyan); margin-bottom: 10px;">
+      ⚡ Autonomous Re-Act Diagnostic Engine
+    </h3>
     <input type="text" id="goal-input" value="Why did the last application error occur and how can we fix it?" />
-    <button id="btn-diagnose" style="padding: 8px 16px; font-size: 13px;">🩺 Start Autonomous Investigation</button>
+    <button id="btn-diagnose" style="padding: 10px 20px; font-size: 13px;"><span>🩺</span> <span>Launch Autonomous Investigation</span></button>
 
     <div id="rca-result">
-      <h4 style="font-size: 13px; color: var(--cyan); margin-bottom: 6px;">🩺 Diagnostic Report</h4>
-      <div id="rca-content" style="font-size: 12px; color: #e2e8f0; line-height: 1.6;"></div>
+      <h4 style="font-size: 13.5px; color: var(--green); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+        <span>✅</span> <span>Verified Root Cause Prescription</span>
+      </h4>
+      <div id="rca-content" style="font-size: 12.5px; color: #e2e8f0; line-height: 1.6;"></div>
     </div>
   </div>
 
   <script src="./panel.js"></script>
 </body>
 </html>
+

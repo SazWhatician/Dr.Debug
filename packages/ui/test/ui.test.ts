@@ -26,21 +26,20 @@ describe('DrDebugUI (Shadow DOM HUD & Cockpit)', () => {
     const ui = new DrDebugUI()
     const shadow = ui.getShadowRoot()
     const badge = shadow.querySelector('.dr-debug-pill-badge')
-    const pulse = shadow.querySelector('.dr-debug-pulse')
 
     // Initial state
-    ui.updatePillStatus(0, 0, false)
+    ui.updatePillStatus(0, 0, 0, false)
     expect(badge?.textContent).toContain('Dr. Debug')
+    expect(badge?.textContent).toContain('HEALTHY')
 
     // Error state
     ui.updatePillStatus(2, 0, 1, false)
-    expect(badge?.textContent).toContain('2 Errors | 1 Slow')
-    expect(pulse?.classList.contains('error')).toBe(true)
+    expect(badge?.textContent).toContain('2 ERR')
+    expect(badge?.textContent).toContain('1 SLOW')
 
     // Running state
     ui.updatePillStatus(2, 0, 1, true)
-    expect(badge?.textContent).toBe('Diagnosing...')
-    expect(pulse?.classList.contains('running')).toBe(true)
+    expect(badge?.textContent).toContain('DIAGNOSING')
 
     ui.destroy()
   })

@@ -19,12 +19,17 @@ export class CockpitPanel {
   private element: HTMLElement
   private timelineContainer: HTMLElement
   private triageContainer: HTMLElement
+  private prescriptionContainer: HTMLElement
   private queryInput: HTMLInputElement
   private queryButton: HTMLButtonElement
   private tabTimeline: HTMLButtonElement
   private tabTriage: HTMLButtonElement
-  private activeTab: 'timeline' | 'triage' = 'timeline'
+  private tabPrescription: HTMLButtonElement
+  private heapMetricBadge: HTMLElement
+  private uptimeMetricBadge: HTMLElement
+  private activeTab: 'timeline' | 'triage' | 'prescription' = 'timeline'
   private steps: StepItem[] = []
+  private startTime = Date.now()
 
   constructor(
     private onClose: () => void,
@@ -33,13 +38,29 @@ export class CockpitPanel {
     this.element = document.createElement('div')
     this.element.className = 'dr-debug-modal hidden'
 
-    // Header
+    // 1. Futuristic Header Bar
     const header = document.createElement('div')
     header.className = 'dr-debug-header'
 
-    const title = document.createElement('div')
-    title.className = 'dr-debug-title'
-    title.innerHTML = '<span>🩺</span> <span>Dr. Debug Cockpit</span>'
+    const brand = document.createElement('div')
+    brand.className = 'dr-debug-brand'
+    brand.innerHTML = `
+      <span class="dr-debug-brand-icon">🩺</span>
+      <div>
+        <div class="dr-debug-title-text">DR. DEBUG // COCKPIT</div>
+      </div>
+    `
+
+    const metricsWrapper = document.createElement('div')
+    metricsWrapper.className = 'dr-debug-header-metrics'
+
+    this.heapMetricBadge = document.createElement('div')
+    this.heapMetricBadge.className = 'dr-debug-metric-badge'
+    this.heapMetricBadge.innerHTML = `<span>🧠</span> <span id="dr-debug-heap-val">Heap: 48MB</span>`
+
+    this.uptimeMetricBadge = document.createElement('div')
+    this.uptimeMetricBadge.className = 'dr-debug-metric-badge'
+    this.uptimeMetricBadge.innerHTML = `<span>⏱️</span> <span id="dr-debug-uptime-val">00:00</span>`
 
     const closeBtn = document.createElement('button')
     closeBtn.className = 'dr-debug-close-btn'
@@ -47,27 +68,37 @@ export class CockpitPanel {
     closeBtn.title = 'Close Cockpit'
     closeBtn.addEventListener('click', () => this.onClose())
 
-    header.appendChild(title)
-    header.appendChild(closeBtn)
+    metricsWrapper.appendChild(this.heapMetricBadge)
+    metricsWrapper.appendChild(this.uptimeMetricBadge)
+    metricsWrapper.appendChild(closeBtn)
 
-    // Navigation Tabs
+    header.appendChild(brand)
+    header.appendChild(metricsWrapper)
+
+    // 2. Tab Navigation
     const tabs = document.createElement('div')
     tabs.className = 'dr-debug-tabs'
 
     this.tabTimeline = document.createElement('button')
     this.tabTimeline.className = 'dr-debug-tab active'
-    this.tabTimeline.textContent = 'Diagnostic Timeline'
+    this.tabTimeline.innerHTML = `<span>⚡</span> <span>Diagnostic Timeline</span>`
     this.tabTimeline.addEventListener('click', () => this.switchTab('timeline'))
 
     this.tabTriage = document.createElement('button')
     this.tabTriage.className = 'dr-debug-tab'
-    this.tabTriage.textContent = 'Triage Stream'
+    this.tabTriage.innerHTML = `<span>📡</span> <span>Telemetry Matrix</span>`
     this.tabTriage.addEventListener('click', () => this.switchTab('triage'))
+
+    this.tabPrescription = document.createElement('button')
+    this.tabPrescription.className = 'dr-debug-tab'
+    this.tabPrescription.innerHTML = `<span>💊</span> <span>Prescription</span>`
+    this.tabPrescription.addEventListener('click', () => this.switchTab('prescription'))
 
     tabs.appendChild(this.tabTimeline)
     tabs.appendChild(this.tabTriage)
+    tabs.appendChild(this.tabPrescription)
 
-    // Body
+    // 3. Body Containers
     const body = document.createElement('div')
     body.className = 'dr-debug-body'
 
@@ -81,34 +112,74 @@ export class CockpitPanel {
     this.triageContainer.style.flexDirection = 'column'
     this.triageContainer.style.gap = '10px'
 
+    this.prescriptionContainer = document.createElement('div')
+    this.prescriptionContainer.style.display = 'none'
+    this.prescriptionContainer.style.flexDirection = 'column'
+    this.prescriptionContainer.style.gap = '10px'
+
     body.appendChild(this.timelineContainer)
     body.appendChild(this.triageContainer)
+    body.appendChild(this.prescriptionContainer)
 
-    // Query Box
+    // 4. Quick Prompts & Query Wrapper
+    const queryWrapper = document.createElement('div')
+    queryWrapper.className = 'dr-debug-query-wrapper'
+
+    const chipsRow = document.createElement('div')
+    chipsRow.className = 'dr-debug-chips-row'
+
+    const quickChips = [
+      { label: '⚡ Diagnose 503 Error', query: 'Why did the /api/ request return 503 and how can we fix it?' },
+      { label: '🔍 Find Correlations', query: 'Find causal links between recent network failures and console exceptions.' },
+      { label: '🧠 Inspect Heap & Vitals', query: 'Check memory heap allocations and identify any potential memory leaks.' },
+      { label: '🧹 Clear Telemetry', action: 'clear' }
+    ]
+
+    for (const chip of quickChips) {
+      const chipEl = document.createElement('button')
+      chipEl.className = 'dr-debug-quick-chip'
+      chipEl.textContent = chip.label
+      chipEl.addEventListener('click', () => {
+        if (chip.action === 'clear') {
+          this.clearTimeline()
+        } else if (chip.query) {
+          this.queryInput.value = chip.query
+          this.triggerInvestigate()
+        }
+      })
+      chipsRow.appendChild(chipEl)
+    }
+
     const queryBox = document.createElement('div')
     queryBox.className = 'dr-debug-query-box'
 
     this.queryInput = document.createElement('input')
     this.queryInput.className = 'dr-debug-input'
-    this.queryInput.placeholder = 'Ask Dr. Debug to investigate (e.g. Why did checkout fail?)...'
+    this.queryInput.placeholder = 'Ask Dr. Debug (e.g. Why did /api/agents/resource/run fail?)...'
     this.queryInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') this.triggerInvestigate()
     })
 
     this.queryButton = document.createElement('button')
     this.queryButton.className = 'dr-debug-btn'
-    this.queryButton.textContent = 'Diagnose'
+    this.queryButton.innerHTML = `<span>⚡</span> <span>Diagnose</span>`
     this.queryButton.addEventListener('click', () => this.triggerInvestigate())
 
     queryBox.appendChild(this.queryInput)
     queryBox.appendChild(this.queryButton)
 
+    queryWrapper.appendChild(chipsRow)
+    queryWrapper.appendChild(queryBox)
+
     this.element.appendChild(header)
     this.element.appendChild(tabs)
     this.element.appendChild(body)
-    this.element.appendChild(queryBox)
+    this.element.appendChild(queryWrapper)
 
     this.renderEmptyTimeline()
+    this.renderEmptyPrescription()
+    this.startUptimeTicker()
+    this.initDraggable(header)
   }
 
   public getElement(): HTMLElement {
@@ -134,35 +205,48 @@ export class CockpitPanel {
   public setBusy(busy: boolean): void {
     this.queryInput.disabled = busy
     this.queryButton.disabled = busy
-    this.queryButton.textContent = busy ? 'Diagnosing...' : 'Diagnose'
+    this.queryButton.innerHTML = busy
+      ? `<span>⏳</span> <span>Diagnosing...</span>`
+      : `<span>⚡</span> <span>Diagnose</span>`
   }
 
-  public switchTab(tab: 'timeline' | 'triage'): void {
+  public switchTab(tab: 'timeline' | 'triage' | 'prescription'): void {
     this.activeTab = tab
-    if (tab === 'timeline') {
-      this.tabTimeline.classList.add('active')
-      this.tabTriage.classList.remove('active')
-      this.timelineContainer.style.display = 'flex'
-      this.triageContainer.style.display = 'none'
-    } else {
-      this.tabTriage.classList.add('active')
-      this.tabTimeline.classList.remove('active')
-      this.triageContainer.style.display = 'flex'
-      this.timelineContainer.style.display = 'none'
-    }
+    this.tabTimeline.classList.toggle('active', tab === 'timeline')
+    this.tabTriage.classList.toggle('active', tab === 'triage')
+    this.tabPrescription.classList.toggle('active', tab === 'prescription')
+
+    this.timelineContainer.style.display = tab === 'timeline' ? 'flex' : 'none'
+    this.triageContainer.style.display = tab === 'triage' ? 'flex' : 'none'
+    this.prescriptionContainer.style.display = tab === 'prescription' ? 'flex' : 'none'
   }
 
   public clearTimeline(): void {
     this.steps = []
-    this.timelineContainer.innerHTML = ''
+    this.renderEmptyTimeline()
+    this.renderEmptyPrescription()
   }
 
   public renderEmptyTimeline(): void {
     this.timelineContainer.innerHTML = `
-      <div style="color: #8b949e; text-align: center; padding: 40px 10px; font-size: 12px;">
-        <div style="font-size: 28px; margin-bottom: 8px;">🩺</div>
-        <strong>Dr. Debug is observing runtime telemetry.</strong>
-        <p style="margin-top: 4px; color: #6e7681;">Click "Diagnose" or trigger an anomaly to begin autonomous Re-Act investigation.</p>
+      <div class="dr-debug-timeline-empty">
+        <div class="dr-debug-radar-ring">🩺</div>
+        <strong style="color: #f1f5f9; font-size: 13px;">Autonomous Diagnostic Observer Active</strong>
+        <p style="font-size: 12px; max-width: 320px; line-height: 1.5;">
+          Dr. Debug is continuously analyzing DOM mutations, network traffic, and console telemetry. Click <strong>Diagnose</strong> to launch autonomous RCA.
+        </p>
+      </div>
+    `
+  }
+
+  public renderEmptyPrescription(): void {
+    this.prescriptionContainer.innerHTML = `
+      <div class="dr-debug-timeline-empty">
+        <div class="dr-debug-radar-ring">💊</div>
+        <strong style="color: #f1f5f9; font-size: 13px;">No Prescription Generated Yet</strong>
+        <p style="font-size: 12px; max-width: 320px; line-height: 1.5;">
+          Launch a diagnosis to formulate verified code fixes, root causes, and unified diff patches.
+        </p>
       </div>
     `
   }
@@ -179,16 +263,20 @@ export class CockpitPanel {
     const header = document.createElement('div')
     header.className = 'dr-debug-step-header'
 
+    const left = document.createElement('div')
+    left.className = 'dr-debug-step-left'
+
     const numSpan = document.createElement('span')
-    numSpan.className = 'dr-debug-step-num'
+    numSpan.className = 'dr-debug-step-pill'
     numSpan.textContent = `Step ${step.stepNumber}`
 
     const toolBadge = document.createElement('span')
     toolBadge.className = 'dr-debug-step-tool'
     toolBadge.textContent = step.toolName
 
-    header.appendChild(numSpan)
-    header.appendChild(toolBadge)
+    left.appendChild(numSpan)
+    left.appendChild(toolBadge)
+    header.appendChild(left)
 
     const thought = document.createElement('div')
     thought.className = 'dr-debug-step-thought'
@@ -212,56 +300,84 @@ export class CockpitPanel {
     const card = document.createElement('div')
     card.className = 'dr-debug-prescription-card'
 
+    const header = document.createElement('div')
+    header.className = 'dr-debug-presc-header'
+
     const title = document.createElement('div')
-    title.className = 'dr-debug-prescription-title'
-    title.innerHTML = `<span>✅ Root Cause Diagnosis</span> <span style="font-size: 11px; color: #8b949e;">(${Math.round((prescription.confidence ?? 0.95) * 100)}% Confidence)</span>`
+    title.className = 'dr-debug-presc-title'
+    title.innerHTML = `<span>🩺</span> <span>Verified Root Cause Diagnosis</span>`
 
-    const diagnosisText = document.createElement('div')
-    diagnosisText.style.color = '#f0f6fc'
-    diagnosisText.style.fontSize = '12px'
-    diagnosisText.innerHTML = `<strong>Finding:</strong> ${this.escapeHtml(prescription.diagnosis)}`
+    const confChip = document.createElement('div')
+    confChip.className = 'dr-debug-confidence-chip'
+    confChip.textContent = `${Math.round((prescription.confidence ?? 0.95) * 100)}% Confidence`
 
-    const rootCauseText = document.createElement('div')
-    rootCauseText.style.color = '#8b949e'
-    rootCauseText.style.fontSize = '12px'
-    rootCauseText.innerHTML = `<strong>Root Cause:</strong> ${this.escapeHtml(prescription.rootCause)}`
+    header.appendChild(title)
+    header.appendChild(confChip)
 
-    card.appendChild(title)
-    card.appendChild(diagnosisText)
-    card.appendChild(rootCauseText)
+    const sectionFinding = document.createElement('div')
+    sectionFinding.className = 'dr-debug-presc-section'
+    sectionFinding.innerHTML = `
+      <div class="dr-debug-presc-label">Diagnostic Finding</div>
+      <div class="dr-debug-presc-text">${this.escapeHtml(prescription.diagnosis)}</div>
+    `
+
+    const sectionRCA = document.createElement('div')
+    sectionRCA.className = 'dr-debug-presc-section'
+    sectionRCA.innerHTML = `
+      <div class="dr-debug-presc-label">Root Cause Mechanism</div>
+      <div class="dr-debug-presc-text" style="color: #cbd5e1;">${this.escapeHtml(prescription.rootCause)}</div>
+    `
+
+    card.appendChild(header)
+    card.appendChild(sectionFinding)
+    card.appendChild(sectionRCA)
 
     if (prescription.filesToModify && prescription.filesToModify.length > 0) {
-      const filesDiv = document.createElement('div')
-      filesDiv.style.fontSize = '11px'
-      filesDiv.style.color = '#58a6ff'
-      filesDiv.textContent = `Target Files: ${prescription.filesToModify.join(', ')}`
-      card.appendChild(filesDiv)
+      const sectionFiles = document.createElement('div')
+      sectionFiles.className = 'dr-debug-presc-section'
+      sectionFiles.innerHTML = `
+        <div class="dr-debug-presc-label">Target Files To Patch</div>
+        <div style="font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: #38bdf8;">
+          ${prescription.filesToModify.map((f) => `📄 ${this.escapeHtml(f)}`).join(' &nbsp;|&nbsp; ')}
+        </div>
+      `
+      card.appendChild(sectionFiles)
     }
 
     if (prescription.fix) {
+      const sectionFix = document.createElement('div')
+      sectionFix.className = 'dr-debug-presc-section'
+      sectionFix.innerHTML = `<div class="dr-debug-presc-label">Prescribed Code Patch</div>`
+
       const diffContainer = document.createElement('div')
       diffContainer.className = 'dr-debug-prescription-diff'
       diffContainer.innerHTML = this.formatDiffHtml(prescription.fix)
 
       const copyBtn = document.createElement('button')
       copyBtn.className = 'dr-debug-copy-btn'
-      copyBtn.textContent = '📋 Copy Patch'
+      copyBtn.innerHTML = `<span>📋</span> <span>Copy Unified Patch</span>`
       copyBtn.addEventListener('click', () => {
         if (navigator.clipboard) {
           navigator.clipboard.writeText(prescription.fix)
-          copyBtn.textContent = '✅ Copied!'
+          copyBtn.innerHTML = `<span>✅</span> <span>Patch Copied!</span>`
           setTimeout(() => {
-            copyBtn.textContent = '📋 Copy Patch'
+            copyBtn.innerHTML = `<span>📋</span> <span>Copy Unified Patch</span>`
           }, 2000)
         }
       })
 
-      card.appendChild(diffContainer)
-      card.appendChild(copyBtn)
+      sectionFix.appendChild(diffContainer)
+      sectionFix.appendChild(copyBtn)
+      card.appendChild(sectionFix)
     }
 
-    this.timelineContainer.appendChild(card)
+    // Append to timeline & to prescription tab
+    this.timelineContainer.appendChild(card.cloneNode(true))
+    this.prescriptionContainer.innerHTML = ''
+    this.prescriptionContainer.appendChild(card)
+
     this.timelineContainer.scrollTop = this.timelineContainer.scrollHeight
+    this.switchTab('prescription')
   }
 
   public updateTriage(telemetry: {
@@ -272,41 +388,84 @@ export class CockpitPanel {
   }): void {
     this.triageContainer.innerHTML = ''
 
+    if (telemetry.memory && telemetry.memory.usedMB) {
+      this.heapMetricBadge.innerHTML = `<span>🧠</span> <span>Heap: ${telemetry.memory.usedMB}MB</span>`
+    }
+
     // 1. Errors section
     if (telemetry.errors.length > 0) {
       for (const err of telemetry.errors) {
         const item = document.createElement('div')
         item.className = 'dr-debug-telemetry-item error'
-        item.innerHTML = `<strong>Console / Runtime Error:</strong><span>${this.escapeHtml(err)}</span>`
+        item.innerHTML = `
+          <div class="dr-debug-telemetry-meta">
+            <span style="color: #fb7185; font-weight: 700;">🔴 RUNTIME EXCEPTION</span>
+            <span>Just now</span>
+          </div>
+          <div style="font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: #f1f5f9;">
+            ${this.escapeHtml(err)}
+          </div>
+        `
         this.triageContainer.appendChild(item)
       }
     }
 
-    // 2. Slow Network section
+    // 2. Problem Network section
     if (telemetry.slowRequests.length > 0) {
       for (const req of telemetry.slowRequests) {
+        const isFail = req.includes('[50') || req.includes('[40') || req.includes('[0]')
         const item = document.createElement('div')
-        item.className = 'dr-debug-telemetry-item warn'
-        item.innerHTML = `<strong>Slow Network Call:</strong><span>${this.escapeHtml(req)}</span>`
+        item.className = `dr-debug-telemetry-item ${isFail ? 'net-fail' : 'warn'}`
+        item.innerHTML = `
+          <div class="dr-debug-telemetry-meta">
+            <span style="color: ${isFail ? '#fbbf24' : '#38bdf8'}; font-weight: 700;">
+              ${isFail ? '⚠️ HTTP NETWORK ANOMALY' : '⏳ LATENCY ANOMALY'}
+            </span>
+            <span>Substrate trace</span>
+          </div>
+          <div style="font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: #f1f5f9;">
+            ${this.escapeHtml(req)}
+          </div>
+        `
         this.triageContainer.appendChild(item)
       }
     }
 
-    // 3. Memory & Vitals
+    // 3. Memory & Performance Health
     if (telemetry.memory) {
       const item = document.createElement('div')
       item.className = 'dr-debug-telemetry-item ok'
-      item.innerHTML = `<strong>Memory Health:</strong><span>Heap: ${telemetry.memory.usedMB || 0}MB / ${telemetry.memory.totalMB || 0}MB</span>`
+      item.innerHTML = `
+        <div class="dr-debug-telemetry-meta">
+          <span style="color: #34d399; font-weight: 700;">🟢 V8 MEMORY SUBSYSTEM</span>
+          <span>Live Snapshot</span>
+        </div>
+        <div style="font-size: 12px; color: #cbd5e1;">
+          Used Heap: <strong>${telemetry.memory.usedMB || 0} MB</strong> / Allocated: <strong>${telemetry.memory.totalMB || 0} MB</strong>
+        </div>
+      `
       this.triageContainer.appendChild(item)
     }
 
     if (this.triageContainer.children.length === 0) {
       this.triageContainer.innerHTML = `
-        <div style="color: #3fb950; text-align: center; padding: 30px; font-size: 12px;">
-          ✅ No active errors, network delays, or heap leaks detected.
+        <div style="color: #34d399; text-align: center; padding: 40px 10px; font-size: 13px;">
+          <div style="font-size: 24px; margin-bottom: 6px;">✨</div>
+          <strong>Substrate is completely healthy.</strong>
+          <p style="color: #64748b; font-size: 12px; margin-top: 4px;">Zero unhandled exceptions, zero network timeouts recorded.</p>
         </div>
       `
     }
+  }
+
+  private startUptimeTicker(): void {
+    setInterval(() => {
+      const sec = Math.floor((Date.now() - this.startTime) / 1000)
+      const m = Math.floor(sec / 60).toString().padStart(2, '0')
+      const s = (sec % 60).toString().padStart(2, '0')
+      const el = this.element.querySelector('#dr-debug-uptime-val')
+      if (el) el.textContent = `${m}:${s}`
+    }, 1000)
   }
 
   private triggerInvestigate(): void {
@@ -321,11 +480,11 @@ export class CockpitPanel {
     return diff
       .split('\n')
       .map((line) => {
-        if (line.startsWith('+++') || line.startsWith('---')) {
-          return `<div style="color: #8b949e;">${this.escapeHtml(line)}</div>`
+        if (line.startsWith('+++') || line.startsWith('---') || line.startsWith('@@')) {
+          return `<div style="color: #94a3b8;">${this.escapeHtml(line)}</div>`
         }
-        if (line.startsWith('+')) return `<div class="dr-debug-diff-add">${this.escapeHtml(line)}</div>`
-        if (line.startsWith('-')) return `<div class="dr-debug-diff-del">${this.escapeHtml(line)}</div>`
+        if (line.startsWith('+')) return `<span class="dr-debug-diff-add">${this.escapeHtml(line)}</span>`
+        if (line.startsWith('-')) return `<span class="dr-debug-diff-del">${this.escapeHtml(line)}</span>`
         return `<div>${this.escapeHtml(line)}</div>`
       })
       .join('')
@@ -338,4 +497,62 @@ export class CockpitPanel {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
   }
+
+  private initDraggable(header: HTMLElement): void {
+    let isDragging = false
+    let startX = 0
+    let startY = 0
+    let initialX = 0
+    let initialY = 0
+
+    const onMouseDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (target.closest('.dr-debug-close-btn') || target.tagName === 'BUTTON' || target.tagName === 'INPUT') {
+        return
+      }
+
+      isDragging = true
+      startX = e.clientX
+      startY = e.clientY
+
+      const rect = this.element.getBoundingClientRect()
+      initialX = rect.left
+      initialY = rect.top
+
+      this.element.style.left = `${initialX}px`
+      this.element.style.top = `${initialY}px`
+      this.element.style.right = 'auto'
+      this.element.style.bottom = 'auto'
+
+      window.addEventListener('mousemove', onMouseMove)
+      window.addEventListener('mouseup', onMouseUp)
+    }
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return
+      const dx = e.clientX - startX
+      const dy = e.clientY - startY
+
+      let newX = initialX + dx
+      let newY = initialY + dy
+
+      const maxX = window.innerWidth - this.element.offsetWidth - 10
+      const maxY = window.innerHeight - this.element.offsetHeight - 10
+      newX = Math.max(10, Math.min(newX, maxX))
+      newY = Math.max(10, Math.min(newY, maxY))
+
+      this.element.style.left = `${newX}px`
+      this.element.style.top = `${newY}px`
+    }
+
+    const onMouseUp = () => {
+      isDragging = false
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+    }
+
+    header.addEventListener('mousedown', onMouseDown)
+  }
 }
+
+
