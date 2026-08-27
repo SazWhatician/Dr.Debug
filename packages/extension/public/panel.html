@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Dr. Debug DevTools Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #111827;
+      --border: rgba(255, 255, 255, 0.1);
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --cyan: #06b6d4;
+      --blue: #3b82f6;
+      --red: #ef4444;
+      --green: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      line-height: 1.5;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; }
+    .actions { display: flex; gap: 8px; }
+    button {
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.btn-cyan { background: var(--cyan); }
+    button.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+    .panel-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .panel-card h3 { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+    pre {
+      font-family: 'Fira Code', monospace;
+      font-size: 11px;
+      color: #94a3b8;
+      max-height: 160px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .investigation-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .investigation-box input {
+      width: 100%;
+      background: #060910;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+    #rca-result {
+      margin-top: 12px;
+      padding: 12px;
+      background: #060910;
+      border-radius: 6px;
+      border-left: 3px solid var(--cyan);
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand">
+      <span>🩺</span>
+      <span>Dr. Debug <span style="font-size: 11px; color: var(--cyan); font-weight: 500;">Autonomous Diagnostics</span></span>
+    </div>
+    <div class="actions">
+      <button id="btn-refresh" class="btn-outline">🔄 Refresh Stream</button>
+      <button id="btn-export-md" class="btn-cyan">📄 Export RCA (Markdown)</button>
+      <button id="btn-export-json" class="btn-outline">📋 Export JSON</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel-card">
+      <h3>🔴 Console Stream</h3>
+      <pre id="console-stream">Listening for page console events...</pre>
+    </div>
+    <div class="panel-card">
+      <h3>🌐 Network Stream</h3>
+      <pre id="network-stream">Listening for HTTP fetch & XHR requests...</pre>
+    </div>
+  </div>
+
+  <div class="investigation-box">
+    <h3 style="font-size: 14px; margin-bottom: 8px;">🎯 Autonomous Diagnosis</h3>
+    <input type="text" id="goal-input" value="Why did the last application error occur and how can we fix it?" />
+    <button id="btn-diagnose" style="padding: 8px 16px; font-size: 13px;">🩺 Start Autonomous Investigation</button>
+
+    <div id="rca-result">
+      <h4 style="font-size: 13px; color: var(--cyan); margin-bottom: 6px;">🩺 Diagnostic Report</h4>
+      <div id="rca-content" style="font-size: 12px; color: #e2e8f0; line-height: 1.6;"></div>
+    </div>
+  </div>
+
+  <script src="./panel.js"></script>
+</body>
+</html>

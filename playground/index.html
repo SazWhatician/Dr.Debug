@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🩺 Dr. Debug — Autonomous Browser Agent Playground</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="logo-badge">🩺</div>
+        <div class="brand-text">
+          <h1>Dr. Debug <span class="tag">Playground</span></h1>
+          <p>Autonomous in-browser AI debugging & diagnostic agent</p>
+        </div>
+      </div>
+
+      <!-- LLM Provider Controls -->
+      <div class="config-bar">
+        <div class="config-item">
+          <label for="provider-select">Inference Engine:</label>
+          <select id="provider-select">
+            <option value="groq" selected>⚡ Groq LPU (Ultra-Fast)</option>
+            <option value="mock">🤖 Mock Agent (Zero Setup)</option>
+            <option value="openai">🧠 OpenAI (GPT-4o)</option>
+          </select>
+        </div>
+
+        <div class="config-item" id="api-key-group">
+          <label for="api-key-input">API Key:</label>
+          <input type="password" id="api-key-input" placeholder="gsk_... or sk-..." />
+        </div>
+
+        <div class="config-item">
+          <button id="btn-reinit" class="btn-primary">Apply & Init Agent</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Playground Grid -->
+    <main class="main-content">
+      <!-- Status Banner -->
+      <section class="banner">
+        <div class="status-indicator">
+          <span class="pulse-dot"></span>
+          <span id="agent-status">Dr. Debug is actively monitoring the DOM, Console, Network & Performance streams.</span>
+        </div>
+        <div class="hint">
+          Look at the bottom right corner of your screen for the floating <strong>🩺 Dr. Debug HUD Pill</strong>.
+        </div>
+      </section>
+
+      <!-- Bug Simulator Triggers -->
+      <section class="section">
+        <h2>💥 Trigger Production Scenarios</h2>
+        <p class="section-desc">Click any trigger below to simulate production incidents. Watch Dr. Debug detect, intercept, and formulate hypotheses autonomously.</p>
+
+        <div class="card-grid">
+          <!-- Card 1: TypeError -->
+          <div class="card">
+            <div class="card-icon error-icon">🔴</div>
+            <h3>Null Reference (TypeError)</h3>
+            <p>Accesses <code>undefined.map()</code> inside a nested data component.</p>
+            <button id="trigger-null-error" class="btn-trigger error-btn">Trigger Uncaught TypeError</button>
+          </div>
+
+          <!-- Card 2: 404 API Failure -->
+          <div class="card">
+            <div class="card-icon warning-icon">🟠</div>
+            <h3>404 API Endpoint Failure</h3>
+            <p>Dispatches a failed <code>fetch('/api/v1/metrics/404')</code> network request.</p>
+            <button id="trigger-404" class="btn-trigger warning-btn">Trigger 404 Fetch</button>
+          </div>
+
+          <!-- Card 3: CORS Cascade -->
+          <div class="card">
+            <div class="card-icon cors-icon">🟡</div>
+            <h3>CORS Security Block</h3>
+            <p>Attempts cross-origin fetch to an unwhitelisted endpoint causing network block.</p>
+            <button id="trigger-cors" class="btn-trigger cors-btn">Trigger CORS Failure</button>
+          </div>
+
+          <!-- Card 4: Console Log Burst -->
+          <div class="card">
+            <div class="card-icon info-icon">🔵</div>
+            <h3>Console Spam Burst</h3>
+            <p>Emits a burst of warnings and errors to test ring-buffer deduplication.</p>
+            <button id="trigger-log-spam" class="btn-trigger info-btn">Trigger Log Burst</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Interactive Goal Query -->
+      <section class="section">
+        <h2>🎯 Autonomous Diagnosis on Demand</h2>
+        <p class="section-desc">Type a question or click "Run Autonomous Investigation" to have Dr. Debug inspect the telemetry buffer, query DOM state, and output a root cause fix.</p>
+        
+        <div class="investigation-bar">
+          <input type="text" id="goal-input" value="Why did the last application error occur and how can we fix it?" placeholder="Enter debug goal..." />
+          <button id="btn-run-investigation" class="btn-action">🩺 Investigate Now</button>
+        </div>
+      </section>
+
+      <!-- Live Telemetry Stream Viewer -->
+      <section class="section">
+        <h2>📊 Active Telemetry Buffers</h2>
+        <div class="telemetry-grid">
+          <div class="telemetry-box">
+            <h4>Console Buffer (<span id="console-count">0</span>)</h4>
+            <pre id="console-preview">No console entries recorded yet.</pre>
+          </div>
+          <div class="telemetry-box">
+            <h4>Network Stream (<span id="network-count">0</span>)</h4>
+            <pre id="network-preview">No network entries recorded yet.</pre>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>

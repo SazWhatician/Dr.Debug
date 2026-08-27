@@ -8,10 +8,12 @@
     "packages/*"
   ],
   "scripts": {
+    "dev": "vite playground",
+    "build:extension": "node scripts/build-extension.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present && npm run build:extension",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -21,6 +23,7 @@
     "@types/node": "^22.10.0",
     "happy-dom": "^15.11.7",
     "typescript": "^5.7.2",
+    "vite": "^5.4.11",
     "vitest": "^2.1.8"
   },
   "engines": {
