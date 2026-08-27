@@ -5997,6 +5997,11 @@ ${msg.content}<end_of_turn>
       this.uptimeMetricBadge = document.createElement("div");
       this.uptimeMetricBadge.className = "dr-debug-metric-badge";
       this.uptimeMetricBadge.innerHTML = `<span>\u23F1\uFE0F</span> <span id="dr-debug-uptime-val">00:00</span>`;
+      this.maximizeBtn = document.createElement("button");
+      this.maximizeBtn.className = "dr-debug-close-btn";
+      this.maximizeBtn.innerHTML = "\u2922";
+      this.maximizeBtn.title = "Expand to full page";
+      this.maximizeBtn.addEventListener("click", () => this.toggleMaximize());
       const closeBtn = document.createElement("button");
       closeBtn.className = "dr-debug-close-btn";
       closeBtn.innerHTML = "\u2715";
@@ -6004,6 +6009,7 @@ ${msg.content}<end_of_turn>
       closeBtn.addEventListener("click", () => this.onClose());
       metricsWrapper.appendChild(this.heapMetricBadge);
       metricsWrapper.appendChild(this.uptimeMetricBadge);
+      metricsWrapper.appendChild(this.maximizeBtn);
       metricsWrapper.appendChild(closeBtn);
       header.appendChild(brand);
       header.appendChild(metricsWrapper);
@@ -6104,6 +6110,8 @@ ${msg.content}<end_of_turn>
     activeTab = "timeline";
     steps = [];
     startTime = Date.now();
+    isMaximized = false;
+    maximizeBtn;
     getElement() {
       return this.element;
     }
@@ -6183,7 +6191,13 @@ ${msg.content}<end_of_turn>
       toolBadge.textContent = step.toolName;
       left.appendChild(numSpan);
       left.appendChild(toolBadge);
+      const right = document.createElement("div");
+      right.className = "dr-debug-step-right";
+      if (step.toolOutput) {
+        right.appendChild(this.makeCopyBtn(step.toolOutput));
+      }
       header.appendChild(left);
+      header.appendChild(right);
       const thought = document.createElement("div");
       thought.className = "dr-debug-step-thought";
       thought.textContent = `\u{1F4A1} Hypothesis: ${step.hypothesis}`;
@@ -6287,6 +6301,7 @@ ${msg.content}<end_of_turn>
             ${this.escapeHtml(err)}
           </div>
         `;
+          item.querySelector(".dr-debug-telemetry-meta").appendChild(this.makeCopyBtn(err));
           this.triageContainer.appendChild(item);
         }
       }
@@ -6306,6 +6321,7 @@ ${msg.content}<end_of_turn>
             ${this.escapeHtml(req)}
           </div>
         `;
+          item.querySelector(".dr-debug-telemetry-meta").appendChild(this.makeCopyBtn(req));
           this.triageContainer.appendChild(item);
         }
       }
@@ -6332,6 +6348,35 @@ ${msg.content}<end_of_turn>
         </div>
       `;
       }
+    }
+    toggleMaximize() {
+      this.isMaximized = !this.isMaximized;
+      this.element.classList.toggle("maximized", this.isMaximized);
+      this.maximizeBtn.innerHTML = this.isMaximized ? "\u2921" : "\u2922";
+      this.maximizeBtn.title = this.isMaximized ? "Restore size" : "Expand to full page";
+      if (this.isMaximized) {
+        this.element.style.left = "";
+        this.element.style.top = "";
+        this.element.style.right = "";
+        this.element.style.bottom = "";
+      }
+    }
+    makeCopyBtn(text) {
+      const btn = document.createElement("button");
+      btn.className = "dr-debug-copy-inline";
+      btn.innerHTML = "\u{1F4CB}";
+      btn.title = "Copy to clipboard";
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(text);
+          btn.innerHTML = "\u2705";
+          setTimeout(() => {
+            btn.innerHTML = "\u{1F4CB}";
+          }, 2e3);
+        }
+      });
+      return btn;
     }
     startUptimeTicker() {
       setInterval(() => {
@@ -6369,6 +6414,7 @@ ${msg.content}<end_of_turn>
       let initialX = 0;
       let initialY = 0;
       const onMouseDown = (e) => {
+        if (this.isMaximized) return;
         const target = e.target;
         if (target.closest(".dr-debug-close-btn") || target.tagName === "BUTTON" || target.tagName === "INPUT") {
           return;
@@ -6664,30 +6710,42 @@ ${msg.content}<end_of_turn>
 .dr-debug-modal {
   pointer-events: auto;
   position: fixed;
-  bottom: 76px;
+  bottom: 80px;
   right: 20px;
-  width: 410px;
+  width: 520px;
   max-width: calc(100vw - 32px);
-  max-height: calc(100vh - 90px);
-  height: 480px;
-  background: rgba(8, 12, 22, 0.76);
+  max-height: calc(100vh - 100px);
+  height: 620px;
+  background: rgba(8, 12, 22, 0.82);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 14px;
-  box-shadow: 
-    0 20px 50px -6px rgba(0, 0, 0, 0.8),
-    0 0 24px rgba(6, 182, 212, 0.16),
+  border-radius: 16px;
+  box-shadow:
+    0 24px 60px -8px rgba(0, 0, 0, 0.85),
+    0 0 32px rgba(6, 182, 212, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(28px) saturate(220%);
-  -webkit-backdrop-filter: blur(28px) saturate(220%);
+  backdrop-filter: blur(32px) saturate(220%);
+  -webkit-backdrop-filter: blur(32px) saturate(220%);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   animation: modal-spring-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 2147483647;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dr-debug-modal.hidden {
   display: none;
+}
+
+.dr-debug-modal.maximized {
+  inset: 10px;
+  width: calc(100vw - 20px) !important;
+  height: calc(100vh - 20px) !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 16px;
+  bottom: auto;
+  right: auto;
 }
 
 @keyframes modal-spring-in {
@@ -7057,6 +7115,32 @@ ${msg.content}<end_of_turn>
   color: #34d399;
 }
 
+.dr-debug-copy-inline {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #475569;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 9px;
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+.dr-debug-copy-inline:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+}
+
+.dr-debug-step-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
 /* ==========================================================================
    5. TELEMETRY MATRIX & WATERFALL LATENCY CARDS
    ========================================================================== */
@@ -7303,7 +7387,7 @@ ${msg.content}<end_of_turn>
               this.cockpit.setBusy(false);
             }
           } else {
-            this.cockpit.setBusy(false);
+            this.runDemoInvestigation(query);
           }
         }
       );
@@ -7343,6 +7427,68 @@ ${msg.content}<end_of_turn>
     }
     closeCockpit() {
       this.cockpit.hide();
+    }
+    runDemoInvestigation(query) {
+      this.cockpit.clearTimeline();
+      this.cockpit.switchTab("timeline");
+      this.updatePillStatus(0, 0, 0, true);
+      const steps = [
+        {
+          stepNumber: 1,
+          hypothesis: "Scanning console ring buffer for unhandled exceptions and error patterns.",
+          toolName: "scan_console",
+          toolOutput: '[ConsoleInterceptor] 3 errors in ring buffer\n\u2192 TypeError: Cannot read properties of undefined (reading "data")\n\u2192 NetworkError: Failed to fetch /api/agents/resource/run\n\u2192 Unhandled rejection: Promise rejected without .catch()'
+        },
+        {
+          stepNumber: 2,
+          hypothesis: "Cross-referencing network timeline for failed requests in the exception window.",
+          toolName: "scan_network",
+          toolOutput: "[NetworkInterceptor] 2 anomalies detected\n\u2192 POST /api/agents/resource/run \u2192 [503] 4821ms (upstream timeout)\n\u2192 GET /api/config \u2192 [0] ERR_CONNECTION_REFUSED (possible CORS block)"
+        },
+        {
+          stepNumber: 3,
+          hypothesis: "Analyzing temporal correlation \u2014 console error fired 312ms after the 503 response.",
+          toolName: "correlate",
+          toolOutput: "[TemporalEngine] High-confidence causal link found\n\u2192 NetworkRecord[POST /api/agents/resource/run] t=+1420ms status=503\n\u2192 ConsoleError[TypeError: data undefined]      t=+1732ms\n\u2192 \u0394t = 312ms \u2192 causal (threshold < 4000ms)"
+        },
+        {
+          stepNumber: 4,
+          hypothesis: "Checking web vitals and long tasks for downstream performance degradation.",
+          toolName: "scan_vitals",
+          toolOutput: "[PerformanceInterceptor] Snapshot\n\u2192 LCP: 2840ms  (needs-improvement, threshold 2500ms)\n\u2192 CLS: 0.04    (good)\n\u2192 INP: 380ms   (needs-improvement, threshold 200ms)\n\u2192 Long task: 210ms blocking main thread at t=+1680ms"
+        }
+      ];
+      const delays = [0, 1400, 2900, 4200];
+      steps.forEach((step, i) => {
+        setTimeout(() => this.cockpit.addStep(step), delays[i]);
+      });
+      setTimeout(() => {
+        this.showPrescription({
+          diagnosis: `POST /api/agents/resource/run is timing out with 503 Service Unavailable. The TypeError "Cannot read properties of undefined (reading 'data')" is a direct downstream effect \u2014 the response handler accesses .data on an undefined body when the request fails without a guard.`,
+          rootCause: "The upstream service is unavailable or overloaded. The client fetch call has no timeout, no retry logic, and no null-guard on the response body, causing a hard crash propagated as an unhandled rejection.",
+          confidence: 0.94,
+          filesToModify: ["src/api/agents.ts", "src/hooks/useAgentRun.ts"],
+          fix: `--- a/src/api/agents.ts
++++ b/src/api/agents.ts
+@@ -12,7 +12,13 @@
+ export async function runAgentResource(payload: AgentPayload) {
+-  const res = await fetch('/api/agents/resource/run', {
+-    method: 'POST', body: JSON.stringify(payload)
+-  })
+-  const { data } = await res.json()
+-  return data
++  const res = await fetch('/api/agents/resource/run', {
++    method: 'POST',
++    body: JSON.stringify(payload),
++    signal: AbortSignal.timeout(5000)
++  })
++  if (!res.ok) throw new Error(\`API \${res.status}: \${res.statusText}\`)
++  const json = await res.json().catch(() => null)
++  return json?.data ?? null
+ }`
+        });
+        this.updatePillStatus(1, 1, 0, false);
+      }, 5800);
     }
     destroy() {
       if (this.host.parentNode) {
