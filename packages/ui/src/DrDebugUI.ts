@@ -25,6 +25,14 @@ export class DrDebugUI {
     }
     this.host = host
 
+    if (typeof document !== 'undefined' && !document.body) {
+      document.addEventListener('DOMContentLoaded', () => {
+        if (document.body && this.host.parentElement !== document.body) {
+          document.body.appendChild(this.host)
+        }
+      })
+    }
+
     this.shadowRoot = host.shadowRoot || host.attachShadow({ mode: 'open' })
     this.shadowRoot.innerHTML = ''
 
@@ -66,8 +74,13 @@ export class DrDebugUI {
     return this.host
   }
 
-  public updatePillStatus(errorCount: number, slowNetCount: number, isRunning = false): void {
-    this.pill.updateStatus(errorCount, slowNetCount, isRunning)
+  public updatePillStatus(
+    errorCount: number,
+    failedNetCount = 0,
+    slowNetCount = 0,
+    isRunning = false
+  ): void {
+    this.pill.updateStatus(errorCount, failedNetCount, slowNetCount, isRunning)
   }
 
   public addTimelineStep(step: StepItem): void {

@@ -25,67 +25,94 @@ export class NetworkInterceptor {
 
     if (fetchTarget) {
       this.originalFetch = fetchTarget
-      const wrappedFetch = async (...args: Parameters<typeof fetch>): Promise<Response> => {
-        const startTime = Date.now()
-        const perfStart = typeof performance !== 'undefined' ? performance.now() : startTime
-        const { url, method, headers, bodyPreview } = this.parseFetchArgs(args)
+      const self = this
 
-        const record: NetworkRecord = {
-          id: `req_${startTime}_${Math.random().toString(36).substring(2, 7)}`,
-          method,
-          url,
-          startTime,
-          requestHeaders: headers,
-          requestBodyPreview: bodyPreview
-        }
+      const createWrapped = (nativeFetch: typeof fetch) => {
+        return async (...args: Parameters<typeof fetch>): Promise<Response> => {
+          const startTime = Date.now()
+          const perfStart = typeof performance !== 'undefined' ? performance.now() : startTime
+          const { url, method, headers, bodyPreview } = self.parseFetchArgs(args)
 
-        this.pushRecord(record)
+          const record: NetworkRecord = {
+            id: `req_${startTime}_${Math.random().toString(36).substring(2, 7)}`,
+            method,
+            url,
+            startTime,
+            requestHeaders: headers,
+            requestBodyPreview: bodyPreview
+          }
 
-        try {
-          const response = await this.originalFetch!(...args)
-          const duration = typeof performance !== 'undefined'
-            ? Math.round(performance.now() - perfStart)
-            : Date.now() - startTime
-          record.endTime = Date.now()
-          record.duration = duration
-          record.status = response.status
-          record.statusText = response.statusText
-          record.isFailed = response.status >= 400
-          record.isSlow = duration > 1500
+          self.pushRecord(record)
 
-          const resHeaders: Record<string, string> = {}
           try {
-            response.headers?.forEach((val, key) => {
-              resHeaders[key] = val
-            })
-          } catch {
-            // Ignore header iteration failure
-          }
-          record.responseHeaders = resHeaders
+            const response = await nativeFetch(...args)
+            const duration = typeof performance !== 'undefined'
+              ? Math.round(performance.now() - perfStart)
+              : Date.now() - startTime
+            record.endTime = Date.now()
+            record.duration = duration
+            record.status = response.status
+            record.statusText = response.statusText
+            record.isFailed = response.status >= 400
+            record.isSlow = duration > 1500
 
-          // Non-destructive body inspection
-          if (typeof response.clone === 'function') {
-            this.extractResponseBody(response.clone(), record)
-          }
+            const resHeaders: Record<string, string> = {}
+            try {
+              response.headers?.forEach((val, key) => {
+                resHeaders[key] = val
+              })
+            } catch {
+              // Ignore header iteration failure
+            }
+            record.responseHeaders = resHeaders
 
-          return response
-        } catch (err: any) {
-          const duration = typeof performance !== 'undefined'
-            ? Math.round(performance.now() - perfStart)
-            : Date.now() - startTime
-          record.endTime = Date.now()
-          record.duration = duration
-          record.status = 0
-          record.statusText = err?.message || 'NetworkError'
-          record.isFailed = true
-          record.isCORS = this.detectCORSError(err, record.url)
-          record.error = err?.message || 'Fetch failed'
-          throw err
+            // Non-destructive body inspection
+            if (typeof response.clone === 'function') {
+              self.extractResponseBody(response.clone(), record)
+            }
+
+            return response
+          } catch (err: any) {
+            const duration = typeof performance !== 'undefined'
+              ? Math.round(performance.now() - perfStart)
+              : Date.now() - startTime
+            record.endTime = Date.now()
+            record.duration = duration
+            record.status = 0
+            record.statusText = err?.message || 'NetworkError'
+            record.isFailed = true
+            record.isCORS = self.detectCORSError(err, record.url)
+            record.error = err?.message || 'Fetch failed'
+            throw err
+          }
         }
       }
 
-      if (typeof globalThis !== 'undefined') globalThis.fetch = wrappedFetch
-      if (typeof window !== 'undefined') window.fetch = wrappedFetch
+      let activeFetch = fetchTarget
+      let wrappedFetch = createWrapped(activeFetch)
+
+      const attachProperty = (obj: any) => {
+        try {
+          Object.defineProperty(obj, 'fetch', {
+            get: () => wrappedFetch,
+            set: (newFetch: any) => {
+              if (typeof newFetch === 'function') {
+                activeFetch = newFetch
+                wrappedFetch = createWrapped(newFetch)
+              }
+            },
+            configurable: true,
+            enumerable: true
+          })
+        } catch {
+          obj.fetch = wrappedFetch
+        }
+      }
+
+      if (typeof window !== 'undefined') attachProperty(window)
+      if (typeof globalThis !== 'undefined' && globalThis !== (typeof window !== 'undefined' ? window : null)) {
+        attachProperty(globalThis)
+      }
     }
 
     // 2. Hook XMLHttpRequest
@@ -302,8 +329,20 @@ export class NetworkInterceptor {
     if (!this.isInstalled) return
 
     if (this.originalFetch) {
-      if (typeof globalThis !== 'undefined') globalThis.fetch = this.originalFetch
-      if (typeof window !== 'undefined') window.fetch = this.originalFetch
+      const resetProperty = (obj: any) => {
+        try {
+          Object.defineProperty(obj, 'fetch', {
+            value: this.originalFetch,
+            writable: true,
+            configurable: true,
+            enumerable: true
+          })
+        } catch {
+          obj.fetch = this.originalFetch
+        }
+      }
+      if (typeof window !== 'undefined') resetProperty(window)
+      if (typeof globalThis !== 'undefined') resetProperty(globalThis)
     }
 
     if (typeof XMLHttpRequest !== 'undefined') {

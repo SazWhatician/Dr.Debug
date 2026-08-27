@@ -122,8 +122,15 @@ export class DrDebugCore {
 
       // Check if response contains structured JSON or tool call
       try {
-        // Try parsing content directly
-        const jsonMatch = rawContent.match(/\{[\s\S]*\}/)
+        // Strip markdown code blocks if present
+        let cleanContent = rawContent.trim()
+        if (cleanContent.startsWith('```json')) {
+          cleanContent = cleanContent.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+        } else if (cleanContent.startsWith('```')) {
+          cleanContent = cleanContent.replace(/^```\s*/, '').replace(/\s*```$/, '')
+        }
+
+        const jsonMatch = cleanContent.match(/\{[\s\S]*\}/)
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0])
           const validated = DebugReflectionSchema.safeParse(parsed)
@@ -169,16 +176,30 @@ export class DrDebugCore {
         }
       }
 
-      // If still no valid reflection, generate a structured fallback to maintain loop resilience
+      // If still no valid reflection, generate an adaptive fallback
       if (!reflection) {
-        reflection = {
-          evaluation_previous_goal: 'Parsed raw text output.',
-          working_hypothesis: 'Analyzing console & network anomalies.',
-          memory: cumulativeMemory,
-          next_goal: 'Inspect initial errors',
-          action: {
-            name: 'inspect_error',
-            arguments: { errorIndex: 0 }
+        const failedNet = this.controller.getNetworkRecords().filter((r) => r.isFailed)
+        if (failedNet.length > 0) {
+          reflection = {
+            evaluation_previous_goal: 'Autonomous triage selected failed network stream.',
+            working_hypothesis: `Investigating failed network request to ${failedNet[0].url}`,
+            memory: cumulativeMemory,
+            next_goal: 'Inspect failed network request details',
+            action: {
+              name: 'inspect_request',
+              arguments: { requestIndex: 0 }
+            }
+          }
+        } else {
+          reflection = {
+            evaluation_previous_goal: 'Autonomous triage selected console stream.',
+            working_hypothesis: 'Analyzing recorded console events.',
+            memory: cumulativeMemory,
+            next_goal: 'Inspect recorded error details',
+            action: {
+              name: 'inspect_error',
+              arguments: { errorIndex: 0 }
+            }
           }
         }
       }

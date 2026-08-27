@@ -52,4 +52,6 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   const bridge = new ContentScriptBridge()
   bridge.init()
   ;(window as any).__DR_DEBUG_BRIDGE__ = bridge
+  ;(window as any).__DR_DEBUG__ = bridge.getInstance()
+  console.log('%c🩺 Dr. Debug Active', 'background: #06b6d4; color: #000; font-weight: bold; padding: 2px 8px; border-radius: 4px;', 'Monitoring Console, Network, DOM & Performance telemetry.')
 }

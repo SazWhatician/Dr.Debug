@@ -11,6 +11,7 @@
     ringBuffer = [];
     maxEntries;
     isInstalled = false;
+    isCapturing = false;
     originalConsole = {};
     errorHandler;
     rejectionHandler;
@@ -20,61 +21,101 @@
     init() {
       if (this.isInstalled || typeof window === "undefined") return;
       this.errorHandler = (event) => {
-        const parsed = this.parseStack(event.error?.stack || "");
-        this.push({
-          id: `err_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-          type: "uncaught_error",
-          level: "error",
-          timestamp: Date.now(),
-          message: event.message || "Uncaught Error",
-          stack: event.error?.stack,
-          parsedStack: parsed.length ? parsed : [
-            {
-              filename: event.filename,
-              lineno: event.lineno,
-              colno: event.colno,
-              raw: `${event.filename}:${event.lineno}:${event.colno}`
-            }
-          ],
-          count: 1,
-          firstSeen: Date.now(),
-          lastSeen: Date.now()
-        });
+        if (this.isCapturing) return;
+        this.isCapturing = true;
+        try {
+          const message = event.message || (event.error ? event.error.message : "Uncaught Error");
+          if (message.includes("Maximum call stack size exceeded") && (event.filename?.includes("chrome-extension") || event.filename?.includes("installHook"))) {
+            return;
+          }
+          const parsed = this.parseStack(event.error?.stack || "");
+          this.push({
+            id: `err_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+            type: "uncaught_error",
+            level: "error",
+            timestamp: Date.now(),
+            message,
+            stack: event.error?.stack,
+            parsedStack: parsed.length ? parsed : [
+              {
+                filename: event.filename,
+                lineno: event.lineno,
+                colno: event.colno,
+                raw: `${event.filename}:${event.lineno}:${event.colno}`
+              }
+            ],
+            count: 1,
+            firstSeen: Date.now(),
+            lastSeen: Date.now()
+          });
+        } finally {
+          this.isCapturing = false;
+        }
       };
-      window.addEventListener("error", this.errorHandler);
+      window.addEventListener("error", this.errorHandler, true);
       this.rejectionHandler = (event) => {
-        const reason = event.reason;
-        const message = typeof reason === "object" && reason !== null ? reason.message || reason.toString() : String(reason || "Unhandled Promise Rejection");
-        const stack = typeof reason === "object" && reason !== null ? reason.stack : void 0;
-        const parsed = stack ? this.parseStack(stack) : [];
-        this.push({
-          id: `rej_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-          type: "unhandled_rejection",
-          level: "error",
-          timestamp: Date.now(),
-          message: `Unhandled Rejection: ${message}`,
-          stack,
-          parsedStack: parsed,
-          count: 1,
-          firstSeen: Date.now(),
-          lastSeen: Date.now()
-        });
+        if (this.isCapturing) return;
+        this.isCapturing = true;
+        try {
+          const reason = event.reason;
+          const message = typeof reason === "object" && reason !== null ? reason.message || reason.toString() : String(reason || "Unhandled Promise Rejection");
+          const stack = typeof reason === "object" && reason !== null ? reason.stack : void 0;
+          const parsed = stack ? this.parseStack(stack) : [];
+          this.push({
+            id: `rej_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+            type: "unhandled_rejection",
+            level: "error",
+            timestamp: Date.now(),
+            message: `Unhandled Rejection: ${message}`,
+            stack,
+            parsedStack: parsed,
+            count: 1,
+            firstSeen: Date.now(),
+            lastSeen: Date.now()
+          });
+        } finally {
+          this.isCapturing = false;
+        }
       };
-      window.addEventListener("unhandledrejection", this.rejectionHandler);
+      window.addEventListener("unhandledrejection", this.rejectionHandler, true);
       const levels = ["error", "warn", "info", "log"];
       levels.forEach((level) => {
         if (typeof console !== "undefined" && console[level]) {
-          this.originalConsole[level] = console[level].bind(console);
+          let originalFn = console[level].bind(console);
+          this.originalConsole[level] = originalFn;
           const typeMap = {
             error: "console_error",
             warn: "console_warn",
             info: "console_info",
             log: "console_log"
           };
-          console[level] = (...args) => {
-            this.captureConsoleLog(level, typeMap[level], args);
-            this.originalConsole[level]?.(...args);
+          const wrapped = (...args) => {
+            if (this.isCapturing) {
+              return originalFn(...args);
+            }
+            this.isCapturing = true;
+            try {
+              this.captureConsoleLog(level, typeMap[level], args);
+            } catch {
+            } finally {
+              this.isCapturing = false;
+            }
+            return originalFn(...args);
           };
+          try {
+            Object.defineProperty(console, level, {
+              get: () => wrapped,
+              set: (newFn) => {
+                if (typeof newFn === "function" && newFn !== wrapped) {
+                  originalFn = newFn;
+                }
+              },
+              configurable: true,
+              enumerable: true
+            });
+          } catch {
+            console[level] = wrapped;
+          }
         }
       });
       this.isInstalled = true;
@@ -123,41 +164,44 @@ ${arg.stack || ""}`;
       }
     }
     parseStack(stack) {
-      if (!stack) return [];
-      const lines = stack.split("\n");
+      if (!stack || typeof stack !== "string") return [];
       const frames = [];
+      const lines = stack.split("\n").slice(0, 25);
       const v8Regex = /^\s*at\s+(?:([^\s(]+)\s+\((.+):(\d+):(\d+)\)|(.+):(\d+):(\d+))\s*$/;
       const ffRegex = /^\s*(?:([^@]+)@)?(.+):(\d+):(\d+)\s*$/;
       for (const line of lines) {
-        const v8Match = line.match(v8Regex);
-        if (v8Match) {
-          if (v8Match[1]) {
+        try {
+          const v8Match = line.match(v8Regex);
+          if (v8Match) {
+            if (v8Match[1]) {
+              frames.push({
+                functionName: v8Match[1],
+                filename: v8Match[2],
+                lineno: parseInt(v8Match[3], 10),
+                colno: parseInt(v8Match[4], 10),
+                raw: line.trim()
+              });
+            } else {
+              frames.push({
+                filename: v8Match[5],
+                lineno: parseInt(v8Match[6], 10),
+                colno: parseInt(v8Match[7], 10),
+                raw: line.trim()
+              });
+            }
+            continue;
+          }
+          const ffMatch = line.match(ffRegex);
+          if (ffMatch) {
             frames.push({
-              functionName: v8Match[1],
-              filename: v8Match[2],
-              lineno: parseInt(v8Match[3], 10),
-              colno: parseInt(v8Match[4], 10),
-              raw: line.trim()
-            });
-          } else {
-            frames.push({
-              filename: v8Match[5],
-              lineno: parseInt(v8Match[6], 10),
-              colno: parseInt(v8Match[7], 10),
+              functionName: ffMatch[1] || "<anonymous>",
+              filename: ffMatch[2],
+              lineno: parseInt(ffMatch[3], 10),
+              colno: parseInt(ffMatch[4], 10),
               raw: line.trim()
             });
           }
-          continue;
-        }
-        const ffMatch = line.match(ffRegex);
-        if (ffMatch) {
-          frames.push({
-            functionName: ffMatch[1] || "<anonymous>",
-            filename: ffMatch[2],
-            lineno: parseInt(ffMatch[3], 10),
-            colno: parseInt(ffMatch[4], 10),
-            raw: line.trim()
-          });
+        } catch {
         }
       }
       return frames;
@@ -185,7 +229,16 @@ ${arg.stack || ""}`;
       const levels = ["error", "warn", "info", "log"];
       levels.forEach((level) => {
         if (this.originalConsole[level] && typeof console !== "undefined") {
-          console[level] = this.originalConsole[level];
+          try {
+            Object.defineProperty(console, level, {
+              value: this.originalConsole[level],
+              writable: true,
+              configurable: true,
+              enumerable: true
+            });
+          } catch {
+            console[level] = this.originalConsole[level];
+          }
         }
       });
       this.isInstalled = false;
@@ -271,54 +324,78 @@ ${arg.stack || ""}`;
       const fetchTarget = typeof globalThis !== "undefined" && typeof globalThis.fetch === "function" ? globalThis.fetch : typeof window !== "undefined" && typeof window.fetch === "function" ? window.fetch : void 0;
       if (fetchTarget) {
         this.originalFetch = fetchTarget;
-        const wrappedFetch = async (...args) => {
-          const startTime = Date.now();
-          const perfStart = typeof performance !== "undefined" ? performance.now() : startTime;
-          const { url, method, headers, bodyPreview } = this.parseFetchArgs(args);
-          const record = {
-            id: `req_${startTime}_${Math.random().toString(36).substring(2, 7)}`,
-            method,
-            url,
-            startTime,
-            requestHeaders: headers,
-            requestBodyPreview: bodyPreview
-          };
-          this.pushRecord(record);
-          try {
-            const response = await this.originalFetch(...args);
-            const duration = typeof performance !== "undefined" ? Math.round(performance.now() - perfStart) : Date.now() - startTime;
-            record.endTime = Date.now();
-            record.duration = duration;
-            record.status = response.status;
-            record.statusText = response.statusText;
-            record.isFailed = response.status >= 400;
-            record.isSlow = duration > 1500;
-            const resHeaders = {};
+        const self = this;
+        const createWrapped = (nativeFetch) => {
+          return async (...args) => {
+            const startTime = Date.now();
+            const perfStart = typeof performance !== "undefined" ? performance.now() : startTime;
+            const { url, method, headers, bodyPreview } = self.parseFetchArgs(args);
+            const record = {
+              id: `req_${startTime}_${Math.random().toString(36).substring(2, 7)}`,
+              method,
+              url,
+              startTime,
+              requestHeaders: headers,
+              requestBodyPreview: bodyPreview
+            };
+            self.pushRecord(record);
             try {
-              response.headers?.forEach((val, key) => {
-                resHeaders[key] = val;
-              });
-            } catch {
+              const response = await nativeFetch(...args);
+              const duration = typeof performance !== "undefined" ? Math.round(performance.now() - perfStart) : Date.now() - startTime;
+              record.endTime = Date.now();
+              record.duration = duration;
+              record.status = response.status;
+              record.statusText = response.statusText;
+              record.isFailed = response.status >= 400;
+              record.isSlow = duration > 1500;
+              const resHeaders = {};
+              try {
+                response.headers?.forEach((val, key) => {
+                  resHeaders[key] = val;
+                });
+              } catch {
+              }
+              record.responseHeaders = resHeaders;
+              if (typeof response.clone === "function") {
+                self.extractResponseBody(response.clone(), record);
+              }
+              return response;
+            } catch (err) {
+              const duration = typeof performance !== "undefined" ? Math.round(performance.now() - perfStart) : Date.now() - startTime;
+              record.endTime = Date.now();
+              record.duration = duration;
+              record.status = 0;
+              record.statusText = err?.message || "NetworkError";
+              record.isFailed = true;
+              record.isCORS = self.detectCORSError(err, record.url);
+              record.error = err?.message || "Fetch failed";
+              throw err;
             }
-            record.responseHeaders = resHeaders;
-            if (typeof response.clone === "function") {
-              this.extractResponseBody(response.clone(), record);
-            }
-            return response;
-          } catch (err) {
-            const duration = typeof performance !== "undefined" ? Math.round(performance.now() - perfStart) : Date.now() - startTime;
-            record.endTime = Date.now();
-            record.duration = duration;
-            record.status = 0;
-            record.statusText = err?.message || "NetworkError";
-            record.isFailed = true;
-            record.isCORS = this.detectCORSError(err, record.url);
-            record.error = err?.message || "Fetch failed";
-            throw err;
+          };
+        };
+        let activeFetch = fetchTarget;
+        let wrappedFetch = createWrapped(activeFetch);
+        const attachProperty = (obj) => {
+          try {
+            Object.defineProperty(obj, "fetch", {
+              get: () => wrappedFetch,
+              set: (newFetch) => {
+                if (typeof newFetch === "function") {
+                  activeFetch = newFetch;
+                  wrappedFetch = createWrapped(newFetch);
+                }
+              },
+              configurable: true,
+              enumerable: true
+            });
+          } catch {
+            obj.fetch = wrappedFetch;
           }
         };
-        if (typeof globalThis !== "undefined") globalThis.fetch = wrappedFetch;
-        if (typeof window !== "undefined") window.fetch = wrappedFetch;
+        if (typeof window !== "undefined") attachProperty(window);
+        if (typeof globalThis !== "undefined" && globalThis !== (typeof window !== "undefined" ? window : null)) {
+          attachProperty(globalThis);
+        }
       }
       if (typeof XMLHttpRequest !== "undefined") {
         this.hookXHR();
@@ -489,8 +566,20 @@ ${arg.stack || ""}`;
     destroy() {
       if (!this.isInstalled) return;
       if (this.originalFetch) {
-        if (typeof globalThis !== "undefined") globalThis.fetch = this.originalFetch;
-        if (typeof window !== "undefined") window.fetch = this.originalFetch;
+        const resetProperty = (obj) => {
+          try {
+            Object.defineProperty(obj, "fetch", {
+              value: this.originalFetch,
+              writable: true,
+              configurable: true,
+              enumerable: true
+            });
+          } catch {
+            obj.fetch = this.originalFetch;
+          }
+        };
+        if (typeof window !== "undefined") resetProperty(window);
+        if (typeof globalThis !== "undefined") resetProperty(globalThis);
       }
       if (typeof XMLHttpRequest !== "undefined") {
         if (this.originalXHROpen) XMLHttpRequest.prototype.open = this.originalXHROpen;
@@ -5481,7 +5570,13 @@ Please analyze the telemetry, formulate your working hypothesis, and choose the 
         const rawContent = response.content || "";
         let reflection = null;
         try {
-          const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+          let cleanContent = rawContent.trim();
+          if (cleanContent.startsWith("```json")) {
+            cleanContent = cleanContent.replace(/^```json\s*/, "").replace(/\s*```$/, "");
+          } else if (cleanContent.startsWith("```")) {
+            cleanContent = cleanContent.replace(/^```\s*/, "").replace(/\s*```$/, "");
+          }
+          const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             const parsed = JSON.parse(jsonMatch[0]);
             const validated = DebugReflectionSchema.safeParse(parsed);
@@ -5523,16 +5618,30 @@ Please analyze the telemetry, formulate your working hypothesis, and choose the 
           }
         }
         if (!reflection) {
-          reflection = {
-            evaluation_previous_goal: "Parsed raw text output.",
-            working_hypothesis: "Analyzing console & network anomalies.",
-            memory: cumulativeMemory,
-            next_goal: "Inspect initial errors",
-            action: {
-              name: "inspect_error",
-              arguments: { errorIndex: 0 }
-            }
-          };
+          const failedNet = this.controller.getNetworkRecords().filter((r) => r.isFailed);
+          if (failedNet.length > 0) {
+            reflection = {
+              evaluation_previous_goal: "Autonomous triage selected failed network stream.",
+              working_hypothesis: `Investigating failed network request to ${failedNet[0].url}`,
+              memory: cumulativeMemory,
+              next_goal: "Inspect failed network request details",
+              action: {
+                name: "inspect_request",
+                arguments: { requestIndex: 0 }
+              }
+            };
+          } else {
+            reflection = {
+              evaluation_previous_goal: "Autonomous triage selected console stream.",
+              working_hypothesis: "Analyzing recorded console events.",
+              memory: cumulativeMemory,
+              next_goal: "Inspect recorded error details",
+              action: {
+                name: "inspect_error",
+                arguments: { errorIndex: 0 }
+              }
+            };
+          }
         }
         cumulativeMemory = reflection.memory || cumulativeMemory;
         options.onReflection?.(reflection);
@@ -6131,16 +6240,18 @@ ${msg.content}<end_of_turn>
     getElement() {
       return this.element;
     }
-    updateStatus(errorCount, slowNetCount, isRunning = false) {
+    updateStatus(errorCount, failedNetCount = 0, slowNetCount = 0, isRunning = false) {
       if (isRunning) {
         this.pulseDot.className = "dr-debug-pulse running";
         this.badgeText.textContent = "Diagnosing...";
         return;
       }
-      if (errorCount > 0 || slowNetCount > 0) {
+      const totalIssues = errorCount + failedNetCount + slowNetCount;
+      if (totalIssues > 0) {
         this.pulseDot.className = "dr-debug-pulse error";
         const parts = [];
         if (errorCount > 0) parts.push(`${errorCount} Error${errorCount > 1 ? "s" : ""}`);
+        if (failedNetCount > 0) parts.push(`${failedNetCount} Net Fail${failedNetCount > 1 ? "s" : ""}`);
         if (slowNetCount > 0) parts.push(`${slowNetCount} Slow`);
         this.badgeText.textContent = `\u26A0\uFE0F ${parts.join(" | ")}`;
       } else {
@@ -6568,6 +6679,13 @@ ${msg.content}<end_of_turn>
         parent.appendChild(host);
       }
       this.host = host;
+      if (typeof document !== "undefined" && !document.body) {
+        document.addEventListener("DOMContentLoaded", () => {
+          if (document.body && this.host.parentElement !== document.body) {
+            document.body.appendChild(this.host);
+          }
+        });
+      }
       this.shadowRoot = host.shadowRoot || host.attachShadow({ mode: "open" });
       this.shadowRoot.innerHTML = "";
       const styleEl = document.createElement("style");
@@ -6599,8 +6717,8 @@ ${msg.content}<end_of_turn>
     getHost() {
       return this.host;
     }
-    updatePillStatus(errorCount, slowNetCount, isRunning = false) {
-      this.pill.updateStatus(errorCount, slowNetCount, isRunning);
+    updatePillStatus(errorCount, failedNetCount = 0, slowNetCount = 0, isRunning = false) {
+      this.pill.updateStatus(errorCount, failedNetCount, slowNetCount, isRunning);
     }
     addTimelineStep(step) {
       this.cockpit.addStep(step);
@@ -6639,6 +6757,7 @@ ${msg.content}<end_of_turn>
     ui;
     options;
     isAutoInvestigating = false;
+    syncInterval;
     constructor(options = {}) {
       this.options = options;
       this.controller = new DebugController();
@@ -6665,6 +6784,11 @@ ${msg.content}<end_of_turn>
           }
         });
         this.syncUIStatus();
+        if (typeof window !== "undefined") {
+          this.syncInterval = setInterval(() => {
+            this.syncUIStatus();
+          }, 800);
+        }
       }
       if (options.autoInvestigate && typeof window !== "undefined") {
         window.addEventListener("error", () => this.handleAutoTrigger());
@@ -6684,7 +6808,8 @@ ${msg.content}<end_of_turn>
       const activeGoal = goal || "Diagnose all active browser errors, network failures, and performance bottlenecks.";
       this.ui?.updatePillStatus(
         this.controller.getConsoleEntries().filter((e) => e.level === "error").length,
-        this.controller.getNetworkRecords().filter((r) => r.isSlow || r.isFailed).length,
+        this.controller.getNetworkRecords().filter((r) => r.isFailed).length,
+        this.controller.getNetworkRecords().filter((r) => r.isSlow && !r.isFailed).length,
         true
       );
       let currentHypothesis = "Evaluating telemetry...";
@@ -6731,12 +6856,14 @@ ${msg.content}<end_of_turn>
     syncUIStatus() {
       if (!this.ui) return;
       const errors = this.controller.getConsoleEntries().filter((e) => e.level === "error");
-      const slowNet = this.controller.getNetworkRecords().filter((r) => r.isSlow || r.isFailed);
+      const failedNet = this.controller.getNetworkRecords().filter((r) => r.isFailed);
+      const slowNet = this.controller.getNetworkRecords().filter((r) => r.isSlow && !r.isFailed);
+      const allProblemNet = this.controller.getNetworkRecords().filter((r) => r.isFailed || r.isSlow);
       const memory = this.controller.getMemorySnapshot();
-      this.ui.updatePillStatus(errors.length, slowNet.length, false);
+      this.ui.updatePillStatus(errors.length, failedNet.length, slowNet.length, false);
       this.ui.updateTriage({
         errors: errors.map((e) => e.message),
-        slowRequests: slowNet.map((r) => `${r.method} ${r.url} (${Math.round(r.duration || 0)}ms)`),
+        slowRequests: allProblemNet.map((r) => `${r.method} ${r.url} ${r.status ? `[${r.status}]` : ""} (${Math.round(r.duration || 0)}ms)`),
         memory: memory ? {
           usedMB: Math.round((memory.usedJSHeapSize || 0) / (1024 * 1024)),
           totalMB: Math.round((memory.totalJSHeapSize || 0) / (1024 * 1024))
@@ -6747,13 +6874,16 @@ ${msg.content}<end_of_turn>
       if (this.isAutoInvestigating) return;
       this.isAutoInvestigating = true;
       try {
-        await this.investigate("Investigate recent runtime error");
-      } catch {
+        await this.investigate("Autonomous diagnosis triggered by uncaught runtime exception.");
       } finally {
         this.isAutoInvestigating = false;
       }
     }
     destroy() {
+      if (this.syncInterval) {
+        clearInterval(this.syncInterval);
+        this.syncInterval = void 0;
+      }
       this.controller.destroy();
       this.ui?.destroy();
     }
@@ -6815,5 +6945,7 @@ ${msg.content}<end_of_turn>
     const bridge = new ContentScriptBridge();
     bridge.init();
     window.__DR_DEBUG_BRIDGE__ = bridge;
+    window.__DR_DEBUG__ = bridge.getInstance();
+    console.log("%c\u{1FA7A} Dr. Debug Active", "background: #06b6d4; color: #000; font-weight: bold; padding: 2px 8px; border-radius: 4px;", "Monitoring Console, Network, DOM & Performance telemetry.");
   }
 })();

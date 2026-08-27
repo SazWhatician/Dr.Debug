@@ -33,12 +33,12 @@ describe('DrDebugUI (Shadow DOM HUD & Cockpit)', () => {
     expect(badge?.textContent).toContain('Dr. Debug')
 
     // Error state
-    ui.updatePillStatus(2, 1, false)
+    ui.updatePillStatus(2, 0, 1, false)
     expect(badge?.textContent).toContain('2 Errors | 1 Slow')
     expect(pulse?.classList.contains('error')).toBe(true)
 
     // Running state
-    ui.updatePillStatus(2, 1, true)
+    ui.updatePillStatus(2, 0, 1, true)
     expect(badge?.textContent).toBe('Diagnosing...')
     expect(pulse?.classList.contains('running')).toBe(true)
 

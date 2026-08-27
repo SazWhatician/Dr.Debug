@@ -28,6 +28,8 @@ export class DrDebug {
   private options: DrDebugOptions
   private isAutoInvestigating = false
 
+  private syncInterval?: any
+
   constructor(options: DrDebugOptions = {}) {
     this.options = options
 
@@ -63,6 +65,13 @@ export class DrDebug {
         }
       })
       this.syncUIStatus()
+
+      // Real-time telemetry sync for badge and triage drawer
+      if (typeof window !== 'undefined') {
+        this.syncInterval = setInterval(() => {
+          this.syncUIStatus()
+        }, 800)
+      }
     }
 
     // 5. Auto-investigate on uncaught errors if configured
@@ -89,7 +98,8 @@ export class DrDebug {
     
     this.ui?.updatePillStatus(
       this.controller.getConsoleEntries().filter((e) => e.level === 'error').length,
-      this.controller.getNetworkRecords().filter((r) => r.isSlow || r.isFailed).length,
+      this.controller.getNetworkRecords().filter((r) => r.isFailed).length,
+      this.controller.getNetworkRecords().filter((r) => r.isSlow && !r.isFailed).length,
       true
     )
 
@@ -141,13 +151,15 @@ export class DrDebug {
     if (!this.ui) return
 
     const errors = this.controller.getConsoleEntries().filter((e) => e.level === 'error')
-    const slowNet = this.controller.getNetworkRecords().filter((r) => r.isSlow || r.isFailed)
+    const failedNet = this.controller.getNetworkRecords().filter((r) => r.isFailed)
+    const slowNet = this.controller.getNetworkRecords().filter((r) => r.isSlow && !r.isFailed)
+    const allProblemNet = this.controller.getNetworkRecords().filter((r) => r.isFailed || r.isSlow)
     const memory = this.controller.getMemorySnapshot()
 
-    this.ui.updatePillStatus(errors.length, slowNet.length, false)
+    this.ui.updatePillStatus(errors.length, failedNet.length, slowNet.length, false)
     this.ui.updateTriage({
       errors: errors.map((e) => e.message),
-      slowRequests: slowNet.map((r) => `${r.method} ${r.url} (${Math.round(r.duration || 0)}ms)`),
+      slowRequests: allProblemNet.map((r) => `${r.method} ${r.url} ${r.status ? `[${r.status}]` : ''} (${Math.round(r.duration || 0)}ms)`),
       memory: memory
         ? {
             usedMB: Math.round((memory.usedJSHeapSize || 0) / (1024 * 1024)),
@@ -160,16 +172,19 @@ export class DrDebug {
   private async handleAutoTrigger(): Promise<void> {
     if (this.isAutoInvestigating) return
     this.isAutoInvestigating = true
+
     try {
-      await this.investigate('Investigate recent runtime error')
-    } catch {
-      // Avoid recursive failure
+      await this.investigate('Autonomous diagnosis triggered by uncaught runtime exception.')
     } finally {
       this.isAutoInvestigating = false
     }
   }
 
   public destroy(): void {
+    if (this.syncInterval) {
+      clearInterval(this.syncInterval)
+      this.syncInterval = undefined
+    }
     this.controller.destroy()
     this.ui?.destroy()
   }

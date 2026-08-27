@@ -42,17 +42,25 @@ export class FloatingPill {
     return this.element
   }
 
-  public updateStatus(errorCount: number, slowNetCount: number, isRunning = false): void {
+  public updateStatus(
+    errorCount: number,
+    failedNetCount = 0,
+    slowNetCount = 0,
+    isRunning = false
+  ): void {
     if (isRunning) {
       this.pulseDot.className = 'dr-debug-pulse running'
       this.badgeText.textContent = 'Diagnosing...'
       return
     }
 
-    if (errorCount > 0 || slowNetCount > 0) {
+    const totalIssues = errorCount + failedNetCount + slowNetCount
+
+    if (totalIssues > 0) {
       this.pulseDot.className = 'dr-debug-pulse error'
       const parts: string[] = []
       if (errorCount > 0) parts.push(`${errorCount} Error${errorCount > 1 ? 's' : ''}`)
+      if (failedNetCount > 0) parts.push(`${failedNetCount} Net Fail${failedNetCount > 1 ? 's' : ''}`)
       if (slowNetCount > 0) parts.push(`${slowNetCount} Slow`)
       this.badgeText.textContent = `⚠️ ${parts.join(' | ')}`
     } else {

@@ -4,6 +4,7 @@ export class ConsoleInterceptor {
   private ringBuffer: ConsoleEntry[] = []
   private maxEntries: number
   private isInstalled = false
+  private isCapturing = false
   private originalConsole: Partial<Record<LogLevel, (...args: any[]) => void>> = {}
   private errorHandler?: (event: ErrorEvent) => void
   private rejectionHandler?: (event: PromiseRejectionEvent) => void
@@ -15,60 +16,81 @@ export class ConsoleInterceptor {
   public init(): void {
     if (this.isInstalled || typeof window === 'undefined') return
 
-    // 1. Uncaught Runtime Errors
+    // 1. Uncaught Runtime Errors (capture phase to beat framework error boundaries)
     this.errorHandler = (event: ErrorEvent) => {
-      const parsed = this.parseStack(event.error?.stack || '')
-      this.push({
-        id: `err_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-        type: 'uncaught_error',
-        level: 'error',
-        timestamp: Date.now(),
-        message: event.message || 'Uncaught Error',
-        stack: event.error?.stack,
-        parsedStack: parsed.length ? parsed : [
-          {
-            filename: event.filename,
-            lineno: event.lineno,
-            colno: event.colno,
-            raw: `${event.filename}:${event.lineno}:${event.colno}`
-          }
-        ],
-        count: 1,
-        firstSeen: Date.now(),
-        lastSeen: Date.now()
-      })
-    }
-    window.addEventListener('error', this.errorHandler)
+      if (this.isCapturing) return
+      this.isCapturing = true
+      try {
+        const message = event.message || (event.error ? event.error.message : 'Uncaught Error')
+        if (
+          message.includes('Maximum call stack size exceeded') &&
+          (event.filename?.includes('chrome-extension') || event.filename?.includes('installHook'))
+        ) {
+          return
+        }
 
-    // 2. Unhandled Promise Rejections
+        const parsed = this.parseStack(event.error?.stack || '')
+        this.push({
+          id: `err_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+          type: 'uncaught_error',
+          level: 'error',
+          timestamp: Date.now(),
+          message,
+          stack: event.error?.stack,
+          parsedStack: parsed.length ? parsed : [
+            {
+              filename: event.filename,
+              lineno: event.lineno,
+              colno: event.colno,
+              raw: `${event.filename}:${event.lineno}:${event.colno}`
+            }
+          ],
+          count: 1,
+          firstSeen: Date.now(),
+          lastSeen: Date.now()
+        })
+      } finally {
+        this.isCapturing = false
+      }
+    }
+    window.addEventListener('error', this.errorHandler, true)
+
+    // 2. Unhandled Promise Rejections (capture phase)
     this.rejectionHandler = (event: PromiseRejectionEvent) => {
-      const reason = event.reason
-      const message = typeof reason === 'object' && reason !== null
-        ? reason.message || reason.toString()
-        : String(reason || 'Unhandled Promise Rejection')
-      const stack = typeof reason === 'object' && reason !== null ? reason.stack : undefined
-      const parsed = stack ? this.parseStack(stack) : []
+      if (this.isCapturing) return
+      this.isCapturing = true
+      try {
+        const reason = event.reason
+        const message = typeof reason === 'object' && reason !== null
+          ? reason.message || reason.toString()
+          : String(reason || 'Unhandled Promise Rejection')
+        const stack = typeof reason === 'object' && reason !== null ? reason.stack : undefined
+        const parsed = stack ? this.parseStack(stack) : []
 
-      this.push({
-        id: `rej_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-        type: 'unhandled_rejection',
-        level: 'error',
-        timestamp: Date.now(),
-        message: `Unhandled Rejection: ${message}`,
-        stack,
-        parsedStack: parsed,
-        count: 1,
-        firstSeen: Date.now(),
-        lastSeen: Date.now()
-      })
+        this.push({
+          id: `rej_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+          type: 'unhandled_rejection',
+          level: 'error',
+          timestamp: Date.now(),
+          message: `Unhandled Rejection: ${message}`,
+          stack,
+          parsedStack: parsed,
+          count: 1,
+          firstSeen: Date.now(),
+          lastSeen: Date.now()
+        })
+      } finally {
+        this.isCapturing = false
+      }
     }
-    window.addEventListener('unhandledrejection', this.rejectionHandler)
+    window.addEventListener('unhandledrejection', this.rejectionHandler, true)
 
-    // 3. Prototype Interception for console.error, warn, info, log
+    // 3. Resilient Interception for console.error, warn, info, log
     const levels: LogLevel[] = ['error', 'warn', 'info', 'log']
     levels.forEach((level) => {
       if (typeof console !== 'undefined' && console[level]) {
-        this.originalConsole[level] = console[level].bind(console)
+        let originalFn = console[level].bind(console)
+        this.originalConsole[level] = originalFn
         const typeMap: Record<LogLevel, ConsoleEntryType> = {
           error: 'console_error',
           warn: 'console_warn',
@@ -76,9 +98,34 @@ export class ConsoleInterceptor {
           log: 'console_log'
         }
 
-        console[level] = (...args: any[]) => {
-          this.captureConsoleLog(level, typeMap[level], args)
-          this.originalConsole[level]?.(...args)
+        const wrapped = (...args: any[]) => {
+          if (this.isCapturing) {
+            return originalFn(...args)
+          }
+          this.isCapturing = true
+          try {
+            this.captureConsoleLog(level, typeMap[level], args)
+          } catch {
+            // Protect host application
+          } finally {
+            this.isCapturing = false
+          }
+          return originalFn(...args)
+        }
+
+        try {
+          Object.defineProperty(console, level, {
+            get: () => wrapped,
+            set: (newFn: any) => {
+              if (typeof newFn === 'function' && newFn !== wrapped) {
+                originalFn = newFn
+              }
+            },
+            configurable: true,
+            enumerable: true
+          })
+        } catch {
+          console[level] = wrapped
         }
       }
     })
@@ -123,7 +170,7 @@ export class ConsoleInterceptor {
   }
 
   private push(entry: ConsoleEntry): void {
-    // Check for deduplication against the most recent entry if identical within 5 seconds
+    // Check for deduplication against the most recent entry if identical within 10 seconds
     const last = this.ringBuffer[this.ringBuffer.length - 1]
     if (
       last &&
@@ -143,47 +190,47 @@ export class ConsoleInterceptor {
   }
 
   private parseStack(stack: string): StackFrame[] {
-    if (!stack) return []
-    const lines = stack.split('\n')
+    if (!stack || typeof stack !== 'string') return []
     const frames: StackFrame[] = []
-
-    // Standard V8 stack line: "    at functionName (filename:lineno:colno)"
-    // Or: "    at filename:lineno:colno"
+    const lines = stack.split('\n').slice(0, 25)
     const v8Regex = /^\s*at\s+(?:([^\s(]+)\s+\((.+):(\d+):(\d+)\)|(.+):(\d+):(\d+))\s*$/
-    // Safari / Firefox: "functionName@filename:lineno:colno"
     const ffRegex = /^\s*(?:([^@]+)@)?(.+):(\d+):(\d+)\s*$/
 
     for (const line of lines) {
-      const v8Match = line.match(v8Regex)
-      if (v8Match) {
-        if (v8Match[1]) {
+      try {
+        const v8Match = line.match(v8Regex)
+        if (v8Match) {
+          if (v8Match[1]) {
+            frames.push({
+              functionName: v8Match[1],
+              filename: v8Match[2],
+              lineno: parseInt(v8Match[3], 10),
+              colno: parseInt(v8Match[4], 10),
+              raw: line.trim()
+            })
+          } else {
+            frames.push({
+              filename: v8Match[5],
+              lineno: parseInt(v8Match[6], 10),
+              colno: parseInt(v8Match[7], 10),
+              raw: line.trim()
+            })
+          }
+          continue
+        }
+
+        const ffMatch = line.match(ffRegex)
+        if (ffMatch) {
           frames.push({
-            functionName: v8Match[1],
-            filename: v8Match[2],
-            lineno: parseInt(v8Match[3], 10),
-            colno: parseInt(v8Match[4], 10),
-            raw: line.trim()
-          })
-        } else {
-          frames.push({
-            filename: v8Match[5],
-            lineno: parseInt(v8Match[6], 10),
-            colno: parseInt(v8Match[7], 10),
+            functionName: ffMatch[1] || '<anonymous>',
+            filename: ffMatch[2],
+            lineno: parseInt(ffMatch[3], 10),
+            colno: parseInt(ffMatch[4], 10),
             raw: line.trim()
           })
         }
-        continue
-      }
-
-      const ffMatch = line.match(ffRegex)
-      if (ffMatch) {
-        frames.push({
-          functionName: ffMatch[1] || '<anonymous>',
-          filename: ffMatch[2],
-          lineno: parseInt(ffMatch[3], 10),
-          colno: parseInt(ffMatch[4], 10),
-          raw: line.trim()
-        })
+      } catch {
+        // Ignore single frame parsing error
       }
     }
 
@@ -219,7 +266,16 @@ export class ConsoleInterceptor {
     const levels: LogLevel[] = ['error', 'warn', 'info', 'log']
     levels.forEach((level) => {
       if (this.originalConsole[level] && typeof console !== 'undefined') {
-        console[level] = this.originalConsole[level]!
+        try {
+          Object.defineProperty(console, level, {
+            value: this.originalConsole[level],
+            writable: true,
+            configurable: true,
+            enumerable: true
+          })
+        } catch {
+          console[level] = this.originalConsole[level]!
+        }
       }
     })
 
