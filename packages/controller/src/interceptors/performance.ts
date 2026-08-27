@@ -59,7 +59,23 @@ export class PerformanceInterceptor {
       }
     })
 
-    // 4. Slow Resources (>1500ms duration)
+    // 4. INP (Interaction to Next Paint) via 'event' entries
+    let inpMax = 0
+    this.safeObserve('event', (list) => {
+      for (const entry of list.getEntries()) {
+        if (entry.duration > inpMax) {
+          inpMax = entry.duration
+          const val = Math.round(inpMax)
+          this.vitals['INP'] = {
+            name: 'INP',
+            value: val,
+            rating: val <= 200 ? 'good' : val <= 500 ? 'needs-improvement' : 'poor'
+          }
+        }
+      }
+    }, { durationThreshold: 40 })
+
+    // 5. Slow Resources (>1500ms duration)
     this.safeObserve('resource', (list) => {
       for (const entry of list.getEntries()) {
         const resEntry = entry as PerformanceResourceTiming
@@ -83,14 +99,13 @@ export class PerformanceInterceptor {
 
   private safeObserve(
     entryType: string,
-    callback: (list: PerformanceObserverEntryList) => void
+    callback: (list: PerformanceObserverEntryList) => void,
+    extraOptions: PerformanceObserverInit = {}
   ): void {
     try {
       if (PerformanceObserver.supportedEntryTypes?.includes(entryType)) {
-        const observer = new PerformanceObserver((list) => {
-          callback(list)
-        })
-        observer.observe({ type: entryType, buffered: true })
+        const observer = new PerformanceObserver(callback)
+        observer.observe({ type: entryType, buffered: true, ...extraOptions })
         this.observers.push(observer)
       }
     } catch {

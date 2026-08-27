@@ -1,3 +1,5 @@
+import { DR_DEBUG_LOGO } from '../assets/logo.js'
+
 export interface StepItem {
   stepNumber: number
   hypothesis: string
@@ -30,6 +32,8 @@ export class CockpitPanel {
   private activeTab: 'timeline' | 'triage' | 'prescription' = 'timeline'
   private steps: StepItem[] = []
   private startTime = Date.now()
+  private isMaximized = false
+  private maximizeBtn!: HTMLButtonElement
 
   constructor(
     private onClose: () => void,
@@ -45,7 +49,7 @@ export class CockpitPanel {
     const brand = document.createElement('div')
     brand.className = 'dr-debug-brand'
     brand.innerHTML = `
-      <span class="dr-debug-brand-icon">🩺</span>
+      <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo header-logo" alt="Dr. Debug" />
       <div>
         <div class="dr-debug-title-text">DR. DEBUG // COCKPIT</div>
       </div>
@@ -62,6 +66,12 @@ export class CockpitPanel {
     this.uptimeMetricBadge.className = 'dr-debug-metric-badge'
     this.uptimeMetricBadge.innerHTML = `<span>⏱️</span> <span id="dr-debug-uptime-val">00:00</span>`
 
+    this.maximizeBtn = document.createElement('button')
+    this.maximizeBtn.className = 'dr-debug-close-btn'
+    this.maximizeBtn.innerHTML = '⤢'
+    this.maximizeBtn.title = 'Expand to full page'
+    this.maximizeBtn.addEventListener('click', () => this.toggleMaximize())
+
     const closeBtn = document.createElement('button')
     closeBtn.className = 'dr-debug-close-btn'
     closeBtn.innerHTML = '✕'
@@ -70,6 +80,7 @@ export class CockpitPanel {
 
     metricsWrapper.appendChild(this.heapMetricBadge)
     metricsWrapper.appendChild(this.uptimeMetricBadge)
+    metricsWrapper.appendChild(this.maximizeBtn)
     metricsWrapper.appendChild(closeBtn)
 
     header.appendChild(brand)
@@ -230,7 +241,9 @@ export class CockpitPanel {
   public renderEmptyTimeline(): void {
     this.timelineContainer.innerHTML = `
       <div class="dr-debug-timeline-empty">
-        <div class="dr-debug-radar-ring">🩺</div>
+        <div class="dr-debug-radar-ring">
+          <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo radar-logo" alt="Dr. Debug" />
+        </div>
         <strong style="color: #f1f5f9; font-size: 13px;">Autonomous Diagnostic Observer Active</strong>
         <p style="font-size: 12px; max-width: 320px; line-height: 1.5;">
           Dr. Debug is continuously analyzing DOM mutations, network traffic, and console telemetry. Click <strong>Diagnose</strong> to launch autonomous RCA.
@@ -242,7 +255,9 @@ export class CockpitPanel {
   public renderEmptyPrescription(): void {
     this.prescriptionContainer.innerHTML = `
       <div class="dr-debug-timeline-empty">
-        <div class="dr-debug-radar-ring">💊</div>
+        <div class="dr-debug-radar-ring">
+          <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo radar-logo" alt="Dr. Debug" />
+        </div>
         <strong style="color: #f1f5f9; font-size: 13px;">No Prescription Generated Yet</strong>
         <p style="font-size: 12px; max-width: 320px; line-height: 1.5;">
           Launch a diagnosis to formulate verified code fixes, root causes, and unified diff patches.
@@ -276,7 +291,15 @@ export class CockpitPanel {
 
     left.appendChild(numSpan)
     left.appendChild(toolBadge)
+
+    const right = document.createElement('div')
+    right.className = 'dr-debug-step-right'
+    if (step.toolOutput) {
+      right.appendChild(this.makeCopyBtn(step.toolOutput))
+    }
+
     header.appendChild(left)
+    header.appendChild(right)
 
     const thought = document.createElement('div')
     thought.className = 'dr-debug-step-thought'
@@ -305,7 +328,10 @@ export class CockpitPanel {
 
     const title = document.createElement('div')
     title.className = 'dr-debug-presc-title'
-    title.innerHTML = `<span>🩺</span> <span>Verified Root Cause Diagnosis</span>`
+    title.innerHTML = `
+      <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo" alt="Dr. Debug" style="display:inline-block; vertical-align:middle;" />
+      <span>Verified Root Cause Diagnosis</span>
+    `
 
     const confChip = document.createElement('div')
     confChip.className = 'dr-debug-confidence-chip'
@@ -406,6 +432,7 @@ export class CockpitPanel {
             ${this.escapeHtml(err)}
           </div>
         `
+        item.querySelector('.dr-debug-telemetry-meta')!.appendChild(this.makeCopyBtn(err))
         this.triageContainer.appendChild(item)
       }
     }
@@ -427,6 +454,7 @@ export class CockpitPanel {
             ${this.escapeHtml(req)}
           </div>
         `
+        item.querySelector('.dr-debug-telemetry-meta')!.appendChild(this.makeCopyBtn(req))
         this.triageContainer.appendChild(item)
       }
     }
@@ -456,6 +484,35 @@ export class CockpitPanel {
         </div>
       `
     }
+  }
+
+  private toggleMaximize(): void {
+    this.isMaximized = !this.isMaximized
+    this.element.classList.toggle('maximized', this.isMaximized)
+    this.maximizeBtn.innerHTML = this.isMaximized ? '⤡' : '⤢'
+    this.maximizeBtn.title = this.isMaximized ? 'Restore size' : 'Expand to full page'
+    if (this.isMaximized) {
+      this.element.style.left = ''
+      this.element.style.top = ''
+      this.element.style.right = ''
+      this.element.style.bottom = ''
+    }
+  }
+
+  private makeCopyBtn(text: string): HTMLButtonElement {
+    const btn = document.createElement('button')
+    btn.className = 'dr-debug-copy-inline'
+    btn.innerHTML = '📋'
+    btn.title = 'Copy to clipboard'
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text)
+        btn.innerHTML = '✅'
+        setTimeout(() => { btn.innerHTML = '📋' }, 2000)
+      }
+    })
+    return btn
   }
 
   private startUptimeTicker(): void {
@@ -506,6 +563,7 @@ export class CockpitPanel {
     let initialY = 0
 
     const onMouseDown = (e: MouseEvent) => {
+      if (this.isMaximized) return
       const target = e.target as HTMLElement
       if (target.closest('.dr-debug-close-btn') || target.tagName === 'BUTTON' || target.tagName === 'INPUT') {
         return

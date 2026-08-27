@@ -102,8 +102,7 @@ export class DebugController {
   }
 
   public getCorrelations(): TemporalCorrelation[] {
-    const state = this.getSnapshot()
-    return computeCorrelations(state)
+    return this.getSnapshot().correlations
   }
 
   public clear(): void {

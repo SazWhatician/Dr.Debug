@@ -151,30 +151,42 @@ export const shadowStyles = `
 .dr-debug-modal {
   pointer-events: auto;
   position: fixed;
-  bottom: 76px;
+  bottom: 80px;
   right: 20px;
-  width: 410px;
+  width: 520px;
   max-width: calc(100vw - 32px);
-  max-height: calc(100vh - 90px);
-  height: 480px;
-  background: rgba(8, 12, 22, 0.76);
+  max-height: calc(100vh - 100px);
+  height: 620px;
+  background: rgba(8, 12, 22, 0.82);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 14px;
-  box-shadow: 
-    0 20px 50px -6px rgba(0, 0, 0, 0.8),
-    0 0 24px rgba(6, 182, 212, 0.16),
+  border-radius: 16px;
+  box-shadow:
+    0 24px 60px -8px rgba(0, 0, 0, 0.85),
+    0 0 32px rgba(6, 182, 212, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(28px) saturate(220%);
-  -webkit-backdrop-filter: blur(28px) saturate(220%);
+  backdrop-filter: blur(32px) saturate(220%);
+  -webkit-backdrop-filter: blur(32px) saturate(220%);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   animation: modal-spring-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 2147483647;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dr-debug-modal.hidden {
   display: none;
+}
+
+.dr-debug-modal.maximized {
+  inset: 10px;
+  width: calc(100vw - 20px) !important;
+  height: calc(100vh - 20px) !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 16px;
+  bottom: auto;
+  right: auto;
 }
 
 @keyframes modal-spring-in {
@@ -544,6 +556,32 @@ export const shadowStyles = `
   color: #34d399;
 }
 
+.dr-debug-copy-inline {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #475569;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 9px;
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+.dr-debug-copy-inline:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+}
+
+.dr-debug-step-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
 /* ==========================================================================
    5. TELEMETRY MATRIX & WATERFALL LATENCY CARDS
    ========================================================================== */
@@ -682,6 +720,74 @@ export const shadowStyles = `
   box-shadow: none;
   cursor: not-allowed;
   transform: none;
+}
+
+/* ==========================================================================
+   7. BRAND LOGO & RESPONSIVE ADAPTATION
+   ========================================================================== */
+
+.dr-debug-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.7));
+  border-radius: 4px;
+  display: block;
+}
+
+.dr-debug-logo.pill-logo {
+  width: 18px;
+  height: 18px;
+}
+
+.dr-debug-logo.header-logo {
+  width: 22px;
+  height: 22px;
+}
+
+.dr-debug-logo.radar-logo {
+  width: 32px;
+  height: 32px;
+}
+
+@media (max-width: 520px) {
+  .dr-debug-modal {
+    width: calc(100vw - 20px) !important;
+    left: 10px !important;
+    right: 10px !important;
+    bottom: 10px !important;
+    height: 75vh !important;
+    max-height: 75vh !important;
+    border-radius: 12px;
+  }
+
+  .dr-debug-header {
+    padding: 8px 10px;
+  }
+
+  .dr-debug-header-metrics {
+    display: none;
+  }
+
+  .dr-debug-tabs {
+    padding: 2px 4px;
+  }
+
+  .dr-debug-tab {
+    padding: 5px 6px;
+    font-size: 10.5px;
+  }
+
+  .dr-debug-body {
+    padding: 8px;
+  }
+
+  .dr-debug-pill {
+    bottom: 16px;
+    right: 16px;
+    padding: 5px 12px;
+    gap: 6px;
+  }
 }
 `
 

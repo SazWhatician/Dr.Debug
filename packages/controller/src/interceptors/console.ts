@@ -149,7 +149,12 @@ export class ConsoleInterceptor {
     let stack: string | undefined
     if (level === 'error' || level === 'warn') {
       const err = args.find((a) => a instanceof Error)
-      stack = err ? err.stack : new Error().stack
+      if (err) {
+        stack = err.stack
+      } else {
+        // Slice off 'Error', 'captureConsoleLog', 'wrapped' — expose only user frames
+        stack = (new Error().stack ?? '').split('\n').slice(3).join('\n')
+      }
     }
 
     const parsed = stack ? this.parseStack(stack) : []

@@ -152,12 +152,17 @@
       box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
       display: none;
     }
+    @media (max-width: 650px) {
+      .grid { grid-template-columns: 1fr; }
+      .header { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .actions { width: 100%; flex-wrap: wrap; }
+    }
   </style>
 </head>
 <body>
   <div class="header">
     <div class="brand">
-      <span class="brand-icon">🩺</span>
+      <img src="./icons/icon48.png" style="width:24px; height:24px; border-radius:5px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(0,240,255,0.7));" alt="Dr. Debug"/>
       <span>DR. DEBUG // <span style="color: var(--cyan);">DEVTOOLS SUBSTRATE</span></span>
     </div>
     <div class="actions">

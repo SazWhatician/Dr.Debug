@@ -1,3 +1,5 @@
+import { DR_DEBUG_LOGO } from '../assets/logo.js'
+
 export class FloatingPill {
   private element: HTMLElement
   private badgeText: HTMLElement
@@ -25,7 +27,7 @@ export class FloatingPill {
 
     const icon = document.createElement('span')
     icon.className = 'dr-debug-pill-icon'
-    icon.textContent = '🩺'
+    icon.innerHTML = `<img src="${DR_DEBUG_LOGO}" class="dr-debug-logo pill-logo" alt="Dr. Debug" />`
 
     this.badgeText = document.createElement('div')
     this.badgeText.className = 'dr-debug-pill-badge'

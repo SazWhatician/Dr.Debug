@@ -183,8 +183,8 @@ export function debugStateToString(state: DebugState, options: SerializerOptions
     lines.push('')
   }
 
-  // 6. Automated Heuristic Correlations
-  const correlations = computeCorrelations(state)
+  // 6. Automated Heuristic Correlations (reuse pre-computed if available)
+  const correlations = state.correlations.length > 0 ? state.correlations : computeCorrelations(state)
   if (correlations.length > 0) {
     lines.push('<heuristic_correlations>')
     lines.push('  💡 Automated Correlation Insights:')

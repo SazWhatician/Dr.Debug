@@ -134,7 +134,11 @@ ${arg.stack || ""}`;
       let stack;
       if (level === "error" || level === "warn") {
         const err = args.find((a) => a instanceof Error);
-        stack = err ? err.stack : new Error().stack;
+        if (err) {
+          stack = err.stack;
+        } else {
+          stack = (new Error().stack ?? "").split("\n").slice(3).join("\n");
+        }
       }
       const parsed = stack ? this.parseStack(stack) : [];
       this.push({
@@ -644,6 +648,20 @@ ${arg.stack || ""}`;
           rating: rounded <= 0.1 ? "good" : rounded <= 0.25 ? "needs-improvement" : "poor"
         };
       });
+      let inpMax = 0;
+      this.safeObserve("event", (list) => {
+        for (const entry of list.getEntries()) {
+          if (entry.duration > inpMax) {
+            inpMax = entry.duration;
+            const val = Math.round(inpMax);
+            this.vitals["INP"] = {
+              name: "INP",
+              value: val,
+              rating: val <= 200 ? "good" : val <= 500 ? "needs-improvement" : "poor"
+            };
+          }
+        }
+      }, { durationThreshold: 40 });
       this.safeObserve("resource", (list) => {
         for (const entry of list.getEntries()) {
           const resEntry = entry;
@@ -663,13 +681,11 @@ ${arg.stack || ""}`;
       });
       this.isInstalled = true;
     }
-    safeObserve(entryType, callback) {
+    safeObserve(entryType, callback, extraOptions = {}) {
       try {
         if (PerformanceObserver.supportedEntryTypes?.includes(entryType)) {
-          const observer = new PerformanceObserver((list) => {
-            callback(list);
-          });
-          observer.observe({ type: entryType, buffered: true });
+          const observer = new PerformanceObserver(callback);
+          observer.observe({ type: entryType, buffered: true, ...extraOptions });
           this.observers.push(observer);
         }
       } catch {
@@ -850,7 +866,7 @@ ${arg.stack || ""}`;
       lines.push("</memory_health>");
       lines.push("");
     }
-    const correlations = computeCorrelations(state);
+    const correlations = state.correlations.length > 0 ? state.correlations : computeCorrelations(state);
     if (correlations.length > 0) {
       lines.push("<heuristic_correlations>");
       lines.push("  \u{1F4A1} Automated Correlation Insights:");
@@ -940,8 +956,7 @@ ${arg.stack || ""}`;
       return this.memoryInterceptor.sample();
     }
     getCorrelations() {
-      const state = this.getSnapshot();
-      return computeCorrelations(state);
+      return this.getSnapshot().correlations;
     }
     clear() {
       this.consoleInterceptor.clear();
@@ -5954,6 +5969,9 @@ ${msg.content}<end_of_turn>
     }
   };
 
+  // packages/ui/src/assets/logo.ts
+  var DR_DEBUG_LOGO = "data:image/png;base64,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";
+
   // packages/ui/src/components/CockpitPanel.ts
   var CockpitPanel = class {
     constructor(onClose, onInvestigate) {
@@ -5966,7 +5984,7 @@ ${msg.content}<end_of_turn>
       const brand = document.createElement("div");
       brand.className = "dr-debug-brand";
       brand.innerHTML = `
-      <span class="dr-debug-brand-icon">\u{1FA7A}</span>
+      <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo header-logo" alt="Dr. Debug" />
       <div>
         <div class="dr-debug-title-text">DR. DEBUG // COCKPIT</div>
       </div>
@@ -6123,7 +6141,9 @@ ${msg.content}<end_of_turn>
     renderEmptyTimeline() {
       this.timelineContainer.innerHTML = `
       <div class="dr-debug-timeline-empty">
-        <div class="dr-debug-radar-ring">\u{1FA7A}</div>
+        <div class="dr-debug-radar-ring">
+          <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo radar-logo" alt="Dr. Debug" />
+        </div>
         <strong style="color: #f1f5f9; font-size: 13px;">Autonomous Diagnostic Observer Active</strong>
         <p style="font-size: 12px; max-width: 320px; line-height: 1.5;">
           Dr. Debug is continuously analyzing DOM mutations, network traffic, and console telemetry. Click <strong>Diagnose</strong> to launch autonomous RCA.
@@ -6134,7 +6154,9 @@ ${msg.content}<end_of_turn>
     renderEmptyPrescription() {
       this.prescriptionContainer.innerHTML = `
       <div class="dr-debug-timeline-empty">
-        <div class="dr-debug-radar-ring">\u{1F48A}</div>
+        <div class="dr-debug-radar-ring">
+          <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo radar-logo" alt="Dr. Debug" />
+        </div>
         <strong style="color: #f1f5f9; font-size: 13px;">No Prescription Generated Yet</strong>
         <p style="font-size: 12px; max-width: 320px; line-height: 1.5;">
           Launch a diagnosis to formulate verified code fixes, root causes, and unified diff patches.
@@ -6183,7 +6205,10 @@ ${msg.content}<end_of_turn>
       header.className = "dr-debug-presc-header";
       const title = document.createElement("div");
       title.className = "dr-debug-presc-title";
-      title.innerHTML = `<span>\u{1FA7A}</span> <span>Verified Root Cause Diagnosis</span>`;
+      title.innerHTML = `
+      <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo" alt="Dr. Debug" style="display:inline-block; vertical-align:middle;" />
+      <span>Verified Root Cause Diagnosis</span>
+    `;
       const confChip = document.createElement("div");
       confChip.className = "dr-debug-confidence-chip";
       confChip.textContent = `${Math.round((prescription.confidence ?? 0.95) * 100)}% Confidence`;
@@ -6407,7 +6432,7 @@ ${msg.content}<end_of_turn>
     `;
       const icon = document.createElement("span");
       icon.className = "dr-debug-pill-icon";
-      icon.textContent = "\u{1FA7A}";
+      icon.innerHTML = `<img src="${DR_DEBUG_LOGO}" class="dr-debug-logo pill-logo" alt="Dr. Debug" />`;
       this.badgeText = document.createElement("div");
       this.badgeText.className = "dr-debug-pill-badge";
       this.badgeText.innerHTML = `<span>Dr. Debug</span> <span class="dr-debug-chip ok">ACTIVE</span>`;
@@ -7170,6 +7195,74 @@ ${msg.content}<end_of_turn>
   box-shadow: none;
   cursor: not-allowed;
   transform: none;
+}
+
+/* ==========================================================================
+   7. BRAND LOGO & RESPONSIVE ADAPTATION
+   ========================================================================== */
+
+.dr-debug-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.7));
+  border-radius: 4px;
+  display: block;
+}
+
+.dr-debug-logo.pill-logo {
+  width: 18px;
+  height: 18px;
+}
+
+.dr-debug-logo.header-logo {
+  width: 22px;
+  height: 22px;
+}
+
+.dr-debug-logo.radar-logo {
+  width: 32px;
+  height: 32px;
+}
+
+@media (max-width: 520px) {
+  .dr-debug-modal {
+    width: calc(100vw - 20px) !important;
+    left: 10px !important;
+    right: 10px !important;
+    bottom: 10px !important;
+    height: 75vh !important;
+    max-height: 75vh !important;
+    border-radius: 12px;
+  }
+
+  .dr-debug-header {
+    padding: 8px 10px;
+  }
+
+  .dr-debug-header-metrics {
+    display: none;
+  }
+
+  .dr-debug-tabs {
+    padding: 2px 4px;
+  }
+
+  .dr-debug-tab {
+    padding: 5px 6px;
+    font-size: 10.5px;
+  }
+
+  .dr-debug-body {
+    padding: 8px;
+  }
+
+  .dr-debug-pill {
+    bottom: 16px;
+    right: 16px;
+    padding: 5px 12px;
+    gap: 6px;
+  }
 }
 `;
 

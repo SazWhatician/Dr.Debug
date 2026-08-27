@@ -4,32 +4,83 @@
   <meta charset="utf-8">
   <style>
     body {
-      width: 280px;
+      width: 290px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0d131f;
+      background: linear-gradient(145deg, #090d16 0%, #0d1527 100%);
       color: #f3f4f6;
-      padding: 14px;
+      padding: 16px;
+      margin: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.7));
+    }
+    h3 {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      color: #fff;
       margin: 0;
     }
-    h3 { font-size: 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-    p { font-size: 12px; color: #9ca3af; margin-bottom: 12px; line-height: 1.4; }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #34d399;
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 14px;
+      line-height: 1.45;
+    }
     button {
       width: 100%;
-      background: #06b6d4;
+      background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);
       color: #fff;
       border: none;
-      padding: 8px;
-      border-radius: 6px;
-      font-weight: 600;
+      padding: 9px;
+      border-radius: 7px;
+      font-weight: 700;
       font-size: 12px;
       cursor: pointer;
+      box-shadow: 0 4px 14px rgba(6, 182, 212, 0.3);
+      transition: all 0.2s;
+    }
+    button:hover {
+      box-shadow: 0 6px 18px rgba(6, 182, 212, 0.5);
+      transform: translateY(-1px);
     }
   </style>
 </head>
 <body>
-  <h3>🩺 Dr. Debug</h3>
-  <p>Autonomous AI debugging agent is active in your browser tabs.</p>
+  <div class="header">
+    <img src="./icons/icon48.png" class="logo" alt="Dr. Debug" />
+    <div>
+      <h3>Dr. Debug</h3>
+    </div>
+  </div>
+  <div class="status-badge">🟢 Real-Time Telemetry Active</div>
+  <p>Autonomous AI debugging agent is actively inspecting Console, Network & Performance telemetry in your tabs.</p>
   <button id="btn-open-devtools">Open Webpage & Press F12</button>
   <script src="./popup.js"></script>
 </body>
 </html>
+
