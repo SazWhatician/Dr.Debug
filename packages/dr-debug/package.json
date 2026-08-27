@@ -1,0 +1,28 @@
+{
+  "name": "dr-debug",
+  "version": "0.1.0",
+  "description": "Autonomous In-Browser AI Debugging & Observability Agent",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@dr-debug/controller": "*",
+    "@dr-debug/core": "*",
+    "@dr-debug/llms": "*",
+    "@dr-debug/ui": "*",
+    "zod": "^3.24.1"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["debugging", "ai-agent", "devtools", "observability", "litert", "react", "browser"],
+  "author": "Dr. Debug Team",
+  "license": "MIT"
+}

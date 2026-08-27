@@ -35,6 +35,29 @@ export class DrDebugCore {
     return Array.from(this.tools.values())
   }
 
+  public normalizeToolName(name: string): string {
+    const cleaned = (name || '').trim().toLowerCase()
+    if (this.tools.has(cleaned)) return cleaned
+
+    const aliases: Record<string, string> = {
+      inspect_network_request: 'inspect_request',
+      inspect_network: 'inspect_request',
+      inspect_errors: 'inspect_error',
+      inspect_exception: 'inspect_error',
+      inspect_dom: 'inspect_element',
+      eval_js: 'execute_javascript',
+      eval_javascript: 'execute_javascript',
+      run_javascript: 'execute_javascript',
+      get_storage: 'check_storage',
+      inspect_storage: 'check_storage',
+      finish: 'done',
+      complete: 'done',
+      conclude: 'done'
+    }
+
+    return aliases[cleaned] || cleaned
+  }
+
   public async investigate(
     goal: string,
     options: InvestigationOptions = {}
@@ -114,21 +137,34 @@ export class DrDebugCore {
 
       if (!reflection && response.toolCalls && response.toolCalls.length > 0) {
         const firstCall = response.toolCalls[0]
-        let toolArgs = {}
+        let toolArgs: any = {}
         try {
           toolArgs = JSON.parse(firstCall.function.arguments || '{}')
         } catch {
           // ignore
         }
 
-        reflection = {
-          evaluation_previous_goal: 'Direct tool dispatch from model function calling.',
-          working_hypothesis: 'Evaluating selected diagnostic tool.',
-          memory: cumulativeMemory,
-          next_goal: `Execute ${firstCall.function.name}`,
-          action: {
-            name: firstCall.function.name,
-            arguments: toolArgs
+        if (toolArgs && typeof toolArgs === 'object' && toolArgs.action && toolArgs.action.name) {
+          reflection = {
+            evaluation_previous_goal: toolArgs.evaluation_previous_goal || 'Direct tool dispatch from function call.',
+            working_hypothesis: toolArgs.working_hypothesis || 'Evaluating diagnostic action.',
+            memory: toolArgs.memory || cumulativeMemory,
+            next_goal: toolArgs.next_goal || `Execute ${toolArgs.action.name}`,
+            action: {
+              name: toolArgs.action.name,
+              arguments: toolArgs.action.arguments || toolArgs.action.parameters || {}
+            }
+          }
+        } else {
+          reflection = {
+            evaluation_previous_goal: 'Direct tool dispatch from model function calling.',
+            working_hypothesis: 'Evaluating selected diagnostic tool.',
+            memory: cumulativeMemory,
+            next_goal: `Execute ${firstCall.function.name}`,
+            action: {
+              name: firstCall.function.name,
+              arguments: toolArgs
+            }
           }
         }
       }
@@ -151,7 +187,7 @@ export class DrDebugCore {
       options.onReflection?.(reflection)
 
       // Execute Diagnostic Tool
-      const actionName = reflection.action.name
+      const actionName = this.normalizeToolName(reflection.action.name)
       const actionArgs = reflection.action.arguments || {}
       const targetTool = this.tools.get(actionName)
 

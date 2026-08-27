@@ -53,6 +53,20 @@ export interface LLMResponse {
   finishReason?: string
 }
 
+export interface LiteRTEngine {
+  init?(): Promise<void>
+  generate?(prompt: string, options?: { maxTokens?: number; temperature?: number; signal?: AbortSignal }): Promise<string>
+}
+
+export interface LiteRTConfig {
+  modelPath?: string
+  modelName?: string
+  device?: 'webgpu' | 'wasm' | 'cpu'
+  temperature?: number
+  maxTokens?: number
+  engine?: LiteRTEngine
+}
+
 export interface ILLMClient {
   chat(messages: ChatMessage[], tools?: ToolDefinition[], signal?: AbortSignal): Promise<LLMResponse>
 }

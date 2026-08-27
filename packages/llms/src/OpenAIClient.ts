@@ -45,36 +45,59 @@ export class OpenAIClient implements ILLMClient {
       body.tool_choice = 'auto'
     }
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.apiKey}`,
-        ...this.headers
-      },
-      body: JSON.stringify(body),
-      signal
-    })
+    let maxRetries = 3
+    let delay = 1000
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`OpenAI API error (${response.status}): ${errorText}`)
-    }
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.apiKey}`,
+          ...this.headers
+        },
+        body: JSON.stringify(body),
+        signal
+      })
 
-    const data = await response.json()
-    const choice = data.choices?.[0]
-
-    return {
-      content: choice?.message?.content ?? null,
-      toolCalls: choice?.message?.tool_calls,
-      usage: data.usage
-        ? {
-            promptTokens: data.usage.prompt_tokens,
-            completionTokens: data.usage.completion_tokens,
-            totalTokens: data.usage.total_tokens
+      if (response.status === 429 && attempt < maxRetries) {
+        let waitMs = delay
+        try {
+          const errJson = await response.clone().json()
+          const match = errJson?.error?.message?.match(/try again in ([\d\.]+)s/)
+          if (match) {
+            waitMs = Math.ceil(parseFloat(match[1]) * 1000) + 200
           }
-        : undefined,
-      finishReason: choice?.finish_reason
+        } catch {
+          // ignore
+        }
+        await new Promise((resolve) => setTimeout(resolve, waitMs))
+        delay *= 2
+        continue
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`OpenAI API error (${response.status}): ${errorText}`)
+      }
+
+      const data = await response.json()
+      const choice = data.choices?.[0]
+
+      return {
+        content: choice?.message?.content ?? null,
+        toolCalls: choice?.message?.tool_calls,
+        usage: data.usage
+          ? {
+              promptTokens: data.usage.prompt_tokens,
+              completionTokens: data.usage.completion_tokens,
+              totalTokens: data.usage.total_tokens
+            }
+          : undefined,
+        finishReason: choice?.finish_reason
+      }
     }
+
+    throw new Error('OpenAI API request failed: Max retries exceeded')
   }
 }

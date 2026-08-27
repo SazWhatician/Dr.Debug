@@ -20,6 +20,9 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+CREDS.txt
+*.key
+*.secret
 
 # IDE & OS
 .DS_Store

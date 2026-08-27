@@ -17,7 +17,10 @@
     "paths": {
       "@dr-debug/controller": ["packages/controller/src/index.ts"],
       "@dr-debug/llms": ["packages/llms/src/index.ts"],
-      "@dr-debug/core": ["packages/core/src/index.ts"]
+      "@dr-debug/core": ["packages/core/src/index.ts"],
+      "@dr-debug/ui": ["packages/ui/src/index.ts"],
+      "@dr-debug/extension": ["packages/extension/src/index.ts"],
+      "dr-debug": ["packages/dr-debug/src/index.ts"]
     }
   }
 }
