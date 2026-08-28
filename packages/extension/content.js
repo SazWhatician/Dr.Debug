@@ -6,7 +6,7 @@
       __defProp(target, name, { get: all[name], enumerable: true });
   };
 
-  // packages/controller/src/interceptors/console.ts
+  // packages/controller/src/interceptors/console.js
   var ConsoleInterceptor = class {
     ringBuffer = [];
     maxEntries;
@@ -19,9 +19,11 @@
       this.maxEntries = maxEntries;
     }
     init() {
-      if (this.isInstalled || typeof window === "undefined") return;
+      if (this.isInstalled || typeof window === "undefined")
+        return;
       this.errorHandler = (event) => {
-        if (this.isCapturing) return;
+        if (this.isCapturing)
+          return;
         this.isCapturing = true;
         try {
           const message = event.message || (event.error ? event.error.message : "Uncaught Error");
@@ -54,7 +56,8 @@
       };
       window.addEventListener("error", this.errorHandler, true);
       this.rejectionHandler = (event) => {
-        if (this.isCapturing) return;
+        if (this.isCapturing)
+          return;
         this.isCapturing = true;
         try {
           const reason = event.reason;
@@ -111,8 +114,10 @@
     }
     captureConsoleLog(level, type, args) {
       const message = args.map((arg) => {
-        if (typeof arg === "string") return arg;
-        if (arg instanceof Error) return `${arg.name}: ${arg.message}
+        if (typeof arg === "string")
+          return arg;
+        if (arg instanceof Error)
+          return `${arg.name}: ${arg.message}
 ${arg.stack || ""}`;
         if (typeof arg === "object" && arg !== null) {
           try {
@@ -122,7 +127,8 @@ ${arg.stack || ""}`;
             const seen = /* @__PURE__ */ new WeakSet();
             return JSON.stringify(arg, (_key, value) => {
               if (typeof value === "object" && value !== null) {
-                if (seen.has(value)) return "[Circular]";
+                if (seen.has(value))
+                  return "[Circular]";
                 seen.add(value);
               }
               return value;
@@ -168,7 +174,8 @@ ${arg.stack || ""}`;
       }
     }
     parseStack(stack) {
-      if (!stack || typeof stack !== "string") return [];
+      if (!stack || typeof stack !== "string")
+        return [];
       const frames = [];
       const lines = stack.split("\n").slice(0, 25);
       const v8Regex = /^\s*at\s+(?:([^\s(]+)\s+\((.+):(\d+):(\d+)\)|(.+):(\d+):(\d+))\s*$/;
@@ -223,7 +230,8 @@ ${arg.stack || ""}`;
       this.ringBuffer = [];
     }
     destroy() {
-      if (!this.isInstalled) return;
+      if (!this.isInstalled)
+        return;
       if (this.errorHandler && typeof window !== "undefined") {
         window.removeEventListener("error", this.errorHandler, true);
       }
@@ -243,12 +251,117 @@ ${arg.stack || ""}`;
     }
   };
 
-  // packages/controller/src/interceptors/memory.ts
+  // packages/controller/src/interceptors/docker.js
+  var DockerInterceptor = class {
+    logRingBuffer = [];
+    containers = /* @__PURE__ */ new Map();
+    maxBufferSize;
+    isAvailable = false;
+    logCounter = 0;
+    constructor(maxBufferSize = 100) {
+      this.maxBufferSize = maxBufferSize;
+    }
+    init() {
+      this.isAvailable = true;
+    }
+    setContainers(containers) {
+      this.containers.clear();
+      containers.forEach((c) => this.containers.set(c.name || c.id, c));
+      this.isAvailable = true;
+    }
+    getContainers() {
+      return Array.from(this.containers.values());
+    }
+    pushLog(containerName, rawMessage, stream = "stdout", customTimestamp, customLevel) {
+      this.logCounter++;
+      const cleanMessage = (rawMessage || "").trim();
+      let timestamp = customTimestamp || Date.now();
+      const isoMatch = cleanMessage.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})/);
+      if (!customTimestamp && isoMatch) {
+        const parsed = Date.parse(isoMatch[0]);
+        if (!isNaN(parsed)) {
+          timestamp = parsed;
+        }
+      }
+      let level = customLevel || "info";
+      if (!customLevel) {
+        const upper = cleanMessage.toUpperCase();
+        if (stream === "stderr" || upper.includes("ERROR") || upper.includes("FATAL") || upper.includes("PANIC") || upper.includes("EXCEPTION") || upper.includes("FAIL") || upper.includes("CRITICAL") || upper.includes("ERR_") || upper.includes("TRACEBACK")) {
+          level = "error";
+        } else if (upper.includes("WARN")) {
+          level = "warn";
+        } else if (upper.includes("DEBUG")) {
+          level = "log";
+        }
+      }
+      const entry = {
+        id: `doc_${this.logCounter}_${Date.now()}`,
+        containerName: containerName || "default",
+        timestamp,
+        stream,
+        message: cleanMessage,
+        level
+      };
+      if (this.logRingBuffer.length >= this.maxBufferSize) {
+        this.logRingBuffer.shift();
+      }
+      this.logRingBuffer.push(entry);
+      this.isAvailable = true;
+      return entry;
+    }
+    getLogs(options) {
+      let result = [...this.logRingBuffer];
+      if (options?.container && options.container !== "all") {
+        const target = options.container.toLowerCase();
+        result = result.filter((entry) => entry.containerName.toLowerCase() === target || entry.containerName.toLowerCase().includes(target));
+      }
+      if (options?.level && options.level !== "all") {
+        result = result.filter((entry) => entry.level === options.level);
+      }
+      if (options?.grep) {
+        try {
+          const regex = new RegExp(options.grep, "i");
+          result = result.filter((entry) => regex.test(entry.message));
+        } catch {
+          const query = options.grep.toLowerCase();
+          result = result.filter((entry) => entry.message.toLowerCase().includes(query));
+        }
+      }
+      if (options?.sinceSeconds && options.sinceSeconds > 0) {
+        const cutoff = Date.now() - options.sinceSeconds * 1e3;
+        result = result.filter((entry) => entry.timestamp >= cutoff);
+      }
+      if (options?.tail && options.tail > 0) {
+        result = result.slice(-options.tail);
+      }
+      return result;
+    }
+    getStatus() {
+      const errorCount = this.logRingBuffer.filter((l) => l.level === "error").length;
+      return {
+        isAvailable: this.isAvailable || this.logRingBuffer.length > 0,
+        containerCount: this.containers.size,
+        errorCount
+      };
+    }
+    clear() {
+      this.logRingBuffer = [];
+      this.logCounter = 0;
+    }
+    destroy() {
+      this.clear();
+      this.containers.clear();
+      this.isAvailable = false;
+    }
+  };
+
+  // packages/controller/src/interceptors/memory.js
   var MemoryInterceptor = class {
     history = [];
     maxHistory = 20;
     sample() {
-      if (typeof window === "undefined") return null;
+      if (typeof window === "undefined")
+        return null;
       const memory = performance?.memory;
       const now = Date.now();
       let usedJSHeapSize;
@@ -305,7 +418,7 @@ ${arg.stack || ""}`;
     }
   };
 
-  // packages/controller/src/interceptors/network.ts
+  // packages/controller/src/interceptors/network.js
   var NetworkInterceptor = class {
     records = [];
     maxRecords;
@@ -318,7 +431,8 @@ ${arg.stack || ""}`;
       this.maxRecords = maxRecords;
     }
     init() {
-      if (this.isInstalled) return;
+      if (this.isInstalled)
+        return;
       const fetchTarget = typeof window !== "undefined" && typeof window.fetch === "function" ? window.fetch : typeof globalThis !== "undefined" && typeof globalThis.fetch === "function" ? globalThis.fetch : void 0;
       if (fetchTarget) {
         this.originalFetch = fetchTarget;
@@ -427,7 +541,8 @@ ${arg.stack || ""}`;
         }
       }
       if (init) {
-        if (init.method) method = init.method.toUpperCase();
+        if (init.method)
+          method = init.method.toUpperCase();
         if (init.headers) {
           try {
             headers = this.normalizeHeaders(init.headers);
@@ -456,9 +571,12 @@ ${arg.stack || ""}`;
       return result;
     }
     serializeBody(body) {
-      if (!body) return void 0;
-      if (typeof body === "string") return body.slice(0, 1024);
-      if (body instanceof URLSearchParams) return body.toString().slice(0, 1024);
+      if (!body)
+        return void 0;
+      if (typeof body === "string")
+        return body.slice(0, 1024);
+      if (body instanceof URLSearchParams)
+        return body.toString().slice(0, 1024);
       try {
         return JSON.stringify(body).slice(0, 1024);
       } catch {
@@ -467,7 +585,8 @@ ${arg.stack || ""}`;
     }
     async extractResponseBody(response, record) {
       try {
-        if (response.bodyUsed) return;
+        if (response.bodyUsed)
+          return;
         const clone = response.clone();
         const text = await clone.text();
         record.responseBodyPreview = text.slice(0, 2048);
@@ -586,7 +705,8 @@ ${arg.stack || ""}`;
       this.records = [];
     }
     destroy() {
-      if (!this.isInstalled) return;
+      if (!this.isInstalled)
+        return;
       if (this.originalFetch) {
         if (typeof window !== "undefined") {
           try {
@@ -602,8 +722,10 @@ ${arg.stack || ""}`;
         }
       }
       if (typeof XMLHttpRequest !== "undefined") {
-        if (this.originalXHROpen) XMLHttpRequest.prototype.open = this.originalXHROpen;
-        if (this.originalXHRSend) XMLHttpRequest.prototype.send = this.originalXHRSend;
+        if (this.originalXHROpen)
+          XMLHttpRequest.prototype.open = this.originalXHROpen;
+        if (this.originalXHRSend)
+          XMLHttpRequest.prototype.send = this.originalXHRSend;
         if (this.originalXHRSetRequestHeader) {
           XMLHttpRequest.prototype.setRequestHeader = this.originalXHRSetRequestHeader;
         }
@@ -612,7 +734,7 @@ ${arg.stack || ""}`;
     }
   };
 
-  // packages/controller/src/interceptors/performance.ts
+  // packages/controller/src/interceptors/performance.js
   var PerformanceInterceptor = class {
     longTasks = [];
     vitals = {};
@@ -729,11 +851,39 @@ ${arg.stack || ""}`;
     }
   };
 
-  // packages/controller/src/serializer.ts
+  // packages/controller/src/serializer.js
   function computeCorrelations(state) {
     const correlations = [];
     const failedRequests = state.network.records.filter((r) => r.isFailed);
     const errorEntries = state.console.entries.filter((e) => e.level === "error");
+    const dockerErrors = (state.docker?.logs || []).filter((l) => l.level === "error");
+    for (const doc of dockerErrors) {
+      for (const req of failedRequests) {
+        const timeDelta = req.startTime - doc.timestamp;
+        if (timeDelta >= -1e3 && timeDelta <= 3500) {
+          const docSummary = `\u{1F433} [${doc.containerName}] ${doc.message.slice(0, 70)}`;
+          const reqSummary = `\u{1F310} ${req.method} ${req.url} [${req.status || 0}]`;
+          correlations.push({
+            id: `corr_${doc.id}_${req.id}`,
+            description: `Backend container [${doc.containerName}] panic at ${formatTime(doc.timestamp)} correlated with network failure [${req.method} ${req.url}] at ${formatTime(req.startTime)} (\u0394t: ${Math.abs(timeDelta)}ms)`,
+            likelihood: Math.abs(timeDelta) <= 1500 ? "high" : "medium",
+            sourceEvent: {
+              type: "docker",
+              id: doc.id,
+              summary: docSummary,
+              timestamp: doc.timestamp
+            },
+            targetEvent: {
+              type: "network",
+              id: req.id,
+              summary: reqSummary,
+              timestamp: req.startTime
+            },
+            timeDeltaMs: Math.abs(timeDelta)
+          });
+        }
+      }
+    }
     for (const req of failedRequests) {
       for (const err of errorEntries) {
         const timeDelta = err.timestamp - req.startTime;
@@ -763,17 +913,135 @@ ${arg.stack || ""}`;
     }
     return correlations;
   }
+  function buildCausalErrorGraph(state, options = {}) {
+    const nodes = [];
+    const edges = [];
+    const timeframe = options.timeframeMs ?? 8e3;
+    const dockerErrors = (options.includeDocker !== false ? state.docker?.logs || [] : []).filter((l) => l.level === "error");
+    const failedRequests = state.network.records.filter((r) => r.isFailed || r.isSlow);
+    const consoleErrors = state.console.entries.filter((e) => e.level === "error" || e.level === "warn");
+    dockerErrors.forEach((doc) => {
+      nodes.push({
+        id: doc.id,
+        label: `\u{1F433} ${doc.containerName}`,
+        layer: "docker",
+        summary: doc.message.slice(0, 120),
+        timestamp: doc.timestamp,
+        metadata: { container: doc.containerName, stream: doc.stream, raw: doc.message }
+      });
+    });
+    failedRequests.forEach((req) => {
+      nodes.push({
+        id: req.id,
+        label: `\u{1F310} ${req.method} ${req.url}`,
+        layer: "network",
+        summary: `Status: ${req.status || "FAILED"}${req.isCORS ? " (CORS)" : ""} (${Math.round(req.duration || 0)}ms)`,
+        timestamp: req.startTime,
+        metadata: { url: req.url, status: req.status, isCORS: req.isCORS, duration: req.duration }
+      });
+    });
+    consoleErrors.forEach((err) => {
+      nodes.push({
+        id: err.id,
+        label: `\u{1F534} ${err.type}`,
+        layer: "console",
+        summary: err.message.slice(0, 120),
+        timestamp: err.timestamp,
+        metadata: { message: err.message, stack: err.stack, count: err.count }
+      });
+    });
+    dockerErrors.forEach((doc) => {
+      failedRequests.forEach((req) => {
+        const delta = req.startTime - doc.timestamp;
+        if (delta >= -1e3 && delta <= timeframe) {
+          edges.push({
+            id: `edge_${doc.id}_${req.id}`,
+            source: doc.id,
+            target: req.id,
+            label: `CAUSED_HTTP_FAILURE (+${Math.abs(delta)}ms)`,
+            timeDeltaMs: delta,
+            confidence: delta >= 0 && delta <= 1500 ? 0.95 : 0.8,
+            relationship: "CAUSED_BY"
+          });
+        }
+      });
+    });
+    failedRequests.forEach((req) => {
+      consoleErrors.forEach((err) => {
+        const delta = err.timestamp - req.startTime;
+        if (delta >= 0 && delta <= timeframe) {
+          edges.push({
+            id: `edge_${req.id}_${err.id}`,
+            source: req.id,
+            target: err.id,
+            label: `TRIGGERED_CLIENT_ERROR (+${delta}ms)`,
+            timeDeltaMs: delta,
+            confidence: delta <= 2e3 ? 0.92 : 0.75,
+            relationship: "TRIGGERED_BY"
+          });
+        }
+      });
+    });
+    let rootCauseNodeId = void 0;
+    if (edges.length > 0) {
+      const targetSet = new Set(edges.map((e) => e.target));
+      const sourceCandidates = nodes.filter((n) => edges.some((e) => e.source === n.id) && !targetSet.has(n.id));
+      if (sourceCandidates.length > 0) {
+        sourceCandidates.sort((a, b) => a.timestamp - b.timestamp);
+        rootCauseNodeId = sourceCandidates[0].id;
+        sourceCandidates[0].isRootCause = true;
+      } else {
+        rootCauseNodeId = edges[0].source;
+        const found = nodes.find((n) => n.id === rootCauseNodeId);
+        if (found)
+          found.isRootCause = true;
+      }
+    } else if (nodes.length > 0) {
+      const sorted = [...nodes].sort((a, b) => a.timestamp - b.timestamp);
+      rootCauseNodeId = sorted[0].id;
+      sorted[0].isRootCause = true;
+    }
+    const mermaidLines = ["graph TD"];
+    nodes.forEach((n) => {
+      const cleanLabel = n.label.replace(/"/g, "'");
+      const cleanSummary = n.summary.replace(/"/g, "'").replace(/\n/g, " ");
+      const rootTag = n.isRootCause ? " [ROOT CAUSE]" : "";
+      mermaidLines.push(`  ${n.id}["${cleanLabel}<br/>${cleanSummary}${rootTag}"]`);
+    });
+    edges.forEach((e) => {
+      mermaidLines.push(`  ${e.source} -->|"${e.label}"| ${e.target}`);
+    });
+    mermaidLines.push("  classDef dockerNode fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#e0e7ff;");
+    mermaidLines.push("  classDef netNode fill:#082f49,stroke:#00f0ff,stroke-width:2px,color:#e0f2fe;");
+    mermaidLines.push("  classDef clientNode fill:#4c0519,stroke:#f43f5e,stroke-width:2px,color:#ffe4e6;");
+    nodes.forEach((n) => {
+      if (n.layer === "docker")
+        mermaidLines.push(`  class ${n.id} dockerNode;`);
+      else if (n.layer === "network")
+        mermaidLines.push(`  class ${n.id} netNode;`);
+      else if (n.layer === "console")
+        mermaidLines.push(`  class ${n.id} clientNode;`);
+    });
+    return {
+      nodes,
+      edges,
+      rootCauseNodeId,
+      mermaidDiagram: mermaidLines.join("\n")
+    };
+  }
   function formatTime(timestamp) {
     const d = new Date(timestamp);
     return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}:${d.getSeconds().toString().padStart(2, "0")}.${d.getMilliseconds().toString().padStart(3, "0")}`;
   }
   function formatMB(bytes) {
-    if (!bytes) return "0MB";
+    if (!bytes)
+      return "0MB";
     return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
   }
   function debugStateToString(state, options = {}) {
     const maxConsole = options.maxConsoleEntries ?? 15;
     const maxNetwork = options.maxNetworkEntries ?? 12;
+    const maxDocker = options.maxDockerEntries ?? 10;
     const lines = [];
     lines.push("<debug_state>");
     lines.push("");
@@ -782,19 +1050,43 @@ ${arg.stack || ""}`;
     lines.push(`  Title: "${state.pageContext.title || "Web Application"}"`);
     lines.push(`  Uptime: ${state.pageContext.uptimeSeconds.toFixed(1)}s`);
     const statusEmoji = state.console.errorCount > 0 || state.network.failedCount > 0 ? "\u26A0\uFE0F" : "\u2705";
-    lines.push(
-      `  Status: ${statusEmoji} ${state.console.errorCount} Errors | ${state.network.failedCount} Failed Requests | ${state.network.slowCount} Slow Calls`
-    );
+    const dockerInfo = state.docker?.isAvailable ? ` | \u{1F433} Docker: ${state.docker.containers.length} active (${state.docker.errorCount} errors)` : "";
+    lines.push(`  Status: ${statusEmoji} ${state.console.errorCount} Errors | ${state.network.failedCount} Failed Requests | ${state.network.slowCount} Slow Calls${dockerInfo}`);
     lines.push("</page_context>");
     lines.push("");
+    if (state.docker && (state.docker.logs.length > 0 || state.docker.containers.length > 0)) {
+      lines.push(`<docker_stream containers="${state.docker.containers.length}" total_logs="${state.docker.logs.length}" errors="${state.docker.errorCount}">`);
+      if (state.docker.containers.length > 0) {
+        lines.push("  Active Containers:");
+        state.docker.containers.forEach((c) => {
+          lines.push(`    - [${c.name}] (${c.image}) State: ${c.state}`);
+        });
+      }
+      const sortedDockerLogs = [...state.docker.logs].sort((a, b) => {
+        const priority = (level) => level === "error" ? 3 : level === "warn" ? 2 : 1;
+        return priority(b.level) - priority(a.level) || b.timestamp - a.timestamp;
+      });
+      const dockerToRender = sortedDockerLogs.slice(0, maxDocker);
+      if (dockerToRender.length > 0) {
+        lines.push("  Recent Container Logs:");
+        dockerToRender.forEach((log, idx) => {
+          const lvl = log.level.toUpperCase().padEnd(5, " ");
+          const time = formatTime(log.timestamp);
+          lines.push(`    [${idx}] ${lvl} ${time} [${log.containerName}] (${log.stream}): ${log.message.slice(0, 160)}`);
+        });
+        if (state.docker.logs.length > maxDocker) {
+          lines.push(`    ... (${state.docker.logs.length - maxDocker} older container logs omitted)`);
+        }
+      }
+      lines.push("</docker_stream>");
+      lines.push("");
+    }
     const sortedConsole = [...state.console.entries].sort((a, b) => {
       const priority = (level) => level === "error" ? 3 : level === "warn" ? 2 : 1;
       return priority(b.level) - priority(a.level) || b.timestamp - a.timestamp;
     });
     const consoleToRender = sortedConsole.slice(0, maxConsole);
-    lines.push(
-      `<console_stream total="${state.console.total}" errors="${state.console.errorCount}" warnings="${state.console.warnCount}">`
-    );
+    lines.push(`<console_stream total="${state.console.total}" errors="${state.console.errorCount}" warnings="${state.console.warnCount}">`);
     if (consoleToRender.length === 0) {
       lines.push("  (No console entries recorded)");
     } else {
@@ -821,9 +1113,7 @@ ${arg.stack || ""}`;
       return priority(b) - priority(a) || b.startTime - a.startTime;
     });
     const networkToRender = sortedNetwork.slice(0, maxNetwork);
-    lines.push(
-      `<network_stream total="${state.network.total}" failed="${state.network.failedCount}" slow="${state.network.slowCount}">`
-    );
+    lines.push(`<network_stream total="${state.network.total}" failed="${state.network.failedCount}" slow="${state.network.slowCount}">`);
     if (networkToRender.length === 0) {
       lines.push("  (No network calls recorded)");
     } else {
@@ -892,16 +1182,26 @@ ${arg.stack || ""}`;
       lines.push("</heuristic_correlations>");
       lines.push("");
     }
+    if (options.includeGraph && state.causalGraph && state.causalGraph.nodes.length > 0) {
+      lines.push("<causal_error_graph>");
+      lines.push(`  Nodes: ${state.causalGraph.nodes.length} | Edges: ${state.causalGraph.edges.length}`);
+      if (state.causalGraph.rootCauseNodeId) {
+        lines.push(`  Identified Root Cause Node: ${state.causalGraph.rootCauseNodeId}`);
+      }
+      lines.push("</causal_error_graph>");
+      lines.push("");
+    }
     lines.push("</debug_state>");
     return lines.join("\n");
   }
 
-  // packages/controller/src/DebugController.ts
+  // packages/controller/src/DebugController.js
   var DebugController = class {
     consoleInterceptor;
     networkInterceptor;
     performanceInterceptor;
     memoryInterceptor;
+    dockerInterceptor;
     startTime = Date.now();
     isRunning = false;
     constructor(maxBufferSize = 100) {
@@ -909,13 +1209,16 @@ ${arg.stack || ""}`;
       this.networkInterceptor = new NetworkInterceptor(maxBufferSize);
       this.performanceInterceptor = new PerformanceInterceptor();
       this.memoryInterceptor = new MemoryInterceptor();
+      this.dockerInterceptor = new DockerInterceptor(maxBufferSize);
     }
     init() {
-      if (this.isRunning) return;
+      if (this.isRunning)
+        return;
       this.startTime = Date.now();
       this.consoleInterceptor.init();
       this.networkInterceptor.init();
       this.performanceInterceptor.init();
+      this.dockerInterceptor.init();
       this.isRunning = true;
     }
     getSnapshot() {
@@ -923,6 +1226,9 @@ ${arg.stack || ""}`;
       const networkRecords = this.networkInterceptor.getRecords();
       const performanceMetrics = this.performanceInterceptor.getMetrics();
       const memorySnapshot = this.memoryInterceptor.sample();
+      const dockerContainers = this.dockerInterceptor.getContainers();
+      const dockerLogs = this.dockerInterceptor.getLogs();
+      const dockerStatus = this.dockerInterceptor.getStatus();
       const errors = consoleEntries.filter((e) => e.level === "error");
       const warns = consoleEntries.filter((e) => e.level === "warn");
       const failedNet = networkRecords.filter((r) => r.isFailed);
@@ -950,9 +1256,16 @@ ${arg.stack || ""}`;
         },
         performance: performanceMetrics,
         memory: memorySnapshot,
+        docker: {
+          isAvailable: dockerStatus.isAvailable,
+          containers: dockerContainers,
+          logs: dockerLogs,
+          errorCount: dockerStatus.errorCount
+        },
         correlations: []
       };
       state.correlations = computeCorrelations(state);
+      state.causalGraph = buildCausalErrorGraph(state);
       return state;
     }
     serialize(options) {
@@ -971,37 +1284,57 @@ ${arg.stack || ""}`;
     getMemorySnapshot() {
       return this.memoryInterceptor.sample();
     }
+    getDockerLogs(options) {
+      return this.dockerInterceptor.getLogs(options);
+    }
+    getDockerContainers() {
+      return this.dockerInterceptor.getContainers();
+    }
+    pushDockerLog(containerName, message, stream = "stdout", timestamp, level) {
+      return this.dockerInterceptor.pushLog(containerName, message, stream, timestamp, level);
+    }
+    setDockerContainers(containers) {
+      this.dockerInterceptor.setContainers(containers);
+    }
     getCorrelations() {
       return this.getSnapshot().correlations;
+    }
+    getCausalGraph(options) {
+      const state = this.getSnapshot();
+      return buildCausalErrorGraph(state, options);
     }
     clear() {
       this.consoleInterceptor.clear();
       this.networkInterceptor.clear();
       this.performanceInterceptor.clear();
       this.memoryInterceptor.clear();
+      this.dockerInterceptor.clear();
     }
     destroy() {
-      if (!this.isRunning) return;
+      if (!this.isRunning)
+        return;
       this.consoleInterceptor.destroy();
       this.networkInterceptor.destroy();
       this.performanceInterceptor.destroy();
+      this.dockerInterceptor.destroy();
       this.isRunning = false;
     }
   };
 
-  // packages/core/src/prompts/system_prompt.ts
+  // packages/core/src/prompts/system_prompt.js
   function getSystemPrompt() {
     return `You are Dr. Debug, an expert AI software diagnostics engineer living directly inside a live web application.
 Your mission is to autonomously investigate runtime errors, network anomalies, and performance bottlenecks, discover their exact root causes, and produce verified code fixes.
 
 <investigation_methodology>
-1. TRACE CAUSALITY, NOT SYMPTOMS:
-   - A TypeError or undefined property access on line 42 is almost always a downstream casualty of a failed network request, missing initial state, or unhandled promise rejection.
-   - Correlate console timestamps with network failures, layout shifts, and user actions.
+1. TRACE FULL-STACK CAUSALITY, NOT JUST SYMPTOMS:
+   - A TypeError or undefined property access on line 42 is almost always a downstream casualty of a failed network request, backend container panic, missing initial state, or unhandled promise rejection.
+   - Correlate console timestamps with network failures, Docker container logs, layout shifts, and user actions.
+   - Use 'graphify_errors' to map the entire cross-layer causal chain (Docker Backend \u2794 HTTP 5xx \u2794 Client Exception \u2794 Broken UI).
 
 2. EVIDENCE-BASED DIAGNOSTICS:
-   - Do not guess variable values or server responses. Use tools (such as inspect_request, inspect_error, query_framework_state, execute_javascript) to inspect live state.
-   - If a network request failed, inspect its headers and error payload.
+   - Do not guess variable values or server responses. Use tools (such as inspect_request, inspect_docker_logs, inspect_error, query_framework_state, execute_javascript, graphify_errors) to inspect live state.
+   - If a network request failed with 500/502/503/504, inspect backend container logs via 'inspect_docker_logs' to uncover database connection panics, unhandled backend exceptions, or OOM events.
 
 3. FORCED REFLECTION BEFORE ACTION:
    - In every step, you must evaluate the previous step result, maintain a working hypothesis, update persistent memory, and state your next sub-goal before calling a tool.
@@ -1009,7 +1342,7 @@ Your mission is to autonomously investigate runtime errors, network anomalies, a
 4. DELIVER VERIFIED ACTIONABLE FIXES:
    - When calling the "done" tool, deliver:
      a) Plain-English diagnosis
-     b) Definite root cause (with file names and line numbers)
+     b) Definite root cause (with container/file names and line numbers)
      c) Concrete unified diff or code fix
      d) High confidence score backed by discovered evidence
 </investigation_methodology>
@@ -1017,7 +1350,7 @@ Your mission is to autonomously investigate runtime errors, network anomalies, a
 Always output your response as valid JSON matching the reflection structure.`;
   }
 
-  // packages/core/src/tools/check_storage.ts
+  // packages/core/src/tools/check_storage.js
   var checkStorageTool = {
     name: "check_storage",
     description: "Inspects LocalStorage, SessionStorage, and Cookie stores for missing keys, expired JWT tokens, or corrupted JSON.",
@@ -1068,7 +1401,7 @@ Always output your response as valid JSON matching the reflection structure.`;
     }
   };
 
-  // packages/core/src/tools/done.ts
+  // packages/core/src/tools/done.js
   var doneTool = {
     name: "done",
     description: "Concludes the investigation and outputs the finalized diagnosis, verified root cause, confidence score, and suggested code fix.",
@@ -1101,18 +1434,14 @@ Always output your response as valid JSON matching the reflection structure.`;
     },
     async execute(args, context) {
       context.memory["finalResult"] = args;
-      return JSON.stringify(
-        {
-          status: "investigation_concluded",
-          ...args
-        },
-        null,
-        2
-      );
+      return JSON.stringify({
+        status: "investigation_concluded",
+        ...args
+      }, null, 2);
     }
   };
 
-  // packages/core/src/tools/execute_javascript.ts
+  // packages/core/src/tools/execute_javascript.js
   var executeJavascriptTool = {
     name: "execute_javascript",
     description: "Executes a diagnostic JavaScript snippet in the live page context with timeout protection and returns the formatted evaluation result or error.",
@@ -1143,9 +1472,12 @@ Always output your response as valid JSON matching the reflection structure.`;
           return `Evaluation Exception: ${result.message}
 ${result.stack || ""}`;
         }
-        if (result === void 0) return "undefined";
-        if (result === null) return "null";
-        if (typeof result === "string") return result;
+        if (result === void 0)
+          return "undefined";
+        if (result === null)
+          return "null";
+        if (typeof result === "string")
+          return result;
         try {
           return JSON.stringify(result, null, 2);
         } catch {
@@ -1157,7 +1489,7 @@ ${result.stack || ""}`;
     }
   };
 
-  // packages/core/src/tools/find_correlations.ts
+  // packages/core/src/tools/find_correlations.js
   var findCorrelationsTool = {
     name: "find_correlations",
     description: "Analyzes temporal clustering of network failures, console exceptions, and long tasks across the timeline to detect causal chains.",
@@ -1179,7 +1511,120 @@ ${result.stack || ""}`;
     }
   };
 
-  // packages/core/src/tools/inspect_element.ts
+  // packages/core/src/tools/graphify_errors.js
+  var graphifyErrorsTool = {
+    name: "graphify_errors",
+    description: "Constructs and analyzes a multi-layer full-stack Causal Error Graph connecting Docker backend exceptions, HTTP network failures, and frontend console errors into a directed causal chain with identified root causes.",
+    parameters: {
+      type: "object",
+      properties: {
+        includeDocker: {
+          type: "boolean",
+          description: "Whether to include Docker backend container logs in the graph (default: true)."
+        },
+        timeframeMs: {
+          type: "number",
+          description: "Correlation time window in milliseconds (default: 8000ms)."
+        }
+      }
+    },
+    async execute(args, context) {
+      const graph = context.controller.getCausalGraph({
+        includeDocker: args.includeDocker !== false,
+        timeframeMs: args.timeframeMs ?? 8e3
+      });
+      if (graph.nodes.length === 0) {
+        return "No active errors or anomalies recorded across Docker, Network, or Console to build a causal graph.";
+      }
+      const lines = [
+        `=== CAUSAL ERROR GRAPH (${graph.nodes.length} nodes, ${graph.edges.length} causal links) ===`,
+        ""
+      ];
+      if (graph.rootCauseNodeId) {
+        const rootNode = graph.nodes.find((n) => n.id === graph.rootCauseNodeId);
+        if (rootNode) {
+          lines.push(`\u{1F3AF} PRIMARY ROOT CAUSE DETECTED: [${rootNode.layer.toUpperCase()}] ${rootNode.label}`);
+          lines.push(`   Summary: ${rootNode.summary}`);
+          lines.push("");
+        }
+      }
+      lines.push("--- Causal Relationships ---");
+      if (graph.edges.length === 0) {
+        lines.push("(No temporal causal links detected between isolated error nodes)");
+      } else {
+        graph.edges.forEach((edge, idx) => {
+          const src = graph.nodes.find((n) => n.id === edge.source);
+          const tgt = graph.nodes.find((n) => n.id === edge.target);
+          lines.push(`${idx + 1}. [${src?.layer || "source"}] ${src?.label || edge.source} \u2500\u2500(${edge.label})\u2500\u2500\u25BA [${tgt?.layer || "target"}] ${tgt?.label || edge.target} (Confidence: ${Math.round(edge.confidence * 100)}%)`);
+        });
+      }
+      lines.push("");
+      lines.push("--- Mermaid Diagram ---");
+      lines.push("```mermaid");
+      lines.push(graph.mermaidDiagram);
+      lines.push("```");
+      return lines.join("\n");
+    }
+  };
+
+  // packages/core/src/tools/inspect_docker_logs.js
+  var inspectDockerLogsTool = {
+    name: "inspect_docker_logs",
+    description: "Inspects and filters live Docker backend container logs (stdout/stderr) to diagnose server crashes, database errors, and microservice panics.",
+    parameters: {
+      type: "object",
+      properties: {
+        container: {
+          type: "string",
+          description: 'Optional name or substring of the container to inspect (e.g. "api", "backend", "db"). If omitted, logs from all containers are retrieved.'
+        },
+        level: {
+          type: "string",
+          enum: ["error", "warn", "info", "all"],
+          description: 'Optional severity filter (default: "all" or "error" if investigating bugs).'
+        },
+        grep: {
+          type: "string",
+          description: "Optional search keyword or regex to filter log messages."
+        },
+        tail: {
+          type: "number",
+          description: "Maximum number of recent log lines to retrieve (default: 30)."
+        },
+        sinceSeconds: {
+          type: "number",
+          description: "Optional lookback window in seconds (e.g. 60 for the last minute)."
+        }
+      }
+    },
+    async execute(args, context) {
+      const logs = context.controller.getDockerLogs({
+        container: args.container,
+        level: args.level,
+        grep: args.grep,
+        tail: args.tail || 30,
+        sinceSeconds: args.sinceSeconds
+      });
+      const containers = context.controller.getDockerContainers();
+      if (logs.length === 0) {
+        if (containers.length === 0) {
+          return "No active Docker containers or logs recorded in the current session.";
+        }
+        return `No matching logs found for query. Active containers: ${containers.map((c) => c.name).join(", ")}`;
+      }
+      const lines = [
+        `=== DOCKER CONTAINER LOGS (${logs.length} entries) ===`
+      ];
+      logs.forEach((log, idx) => {
+        const timeStr = new Date(log.timestamp).toISOString().split("T")[1]?.slice(0, 12) || "";
+        const lvl = log.level.toUpperCase().padEnd(5, " ");
+        lines.push(`[${idx + 1}] ${timeStr} [${log.containerName}] ${lvl} (${log.stream}): ${log.message}`);
+      });
+      return lines.join("\n");
+    }
+  };
+
+  // packages/core/src/tools/inspect_element.js
   var inspectElementTool = {
     name: "inspect_element",
     description: "Inspects a live DOM element using a CSS selector. Returns dimensions, visibility, computed styles, attributes, and text content.",
@@ -1231,7 +1676,7 @@ ${result.stack || ""}`;
     }
   };
 
-  // packages/core/src/tools/inspect_error.ts
+  // packages/core/src/tools/inspect_error.js
   var inspectErrorTool = {
     name: "inspect_error",
     description: "Inspects a specific console error or exception by its index in the console stream to retrieve full stack frames, file locations, line numbers, and frequency.",
@@ -1266,7 +1711,7 @@ ${result.stack || ""}`;
     }
   };
 
-  // packages/core/src/tools/inspect_request.ts
+  // packages/core/src/tools/inspect_request.js
   var inspectRequestTool = {
     name: "inspect_request",
     description: "Inspects a network request by its index in the network stream to retrieve full URL, method, status, duration, request/response headers, and response body previews.",
@@ -1307,7 +1752,7 @@ ${result.stack || ""}`;
     }
   };
 
-  // packages/core/src/tools/query_framework_state.ts
+  // packages/core/src/tools/query_framework_state.js
   var queryFrameworkStateTool = {
     name: "query_framework_state",
     description: "Queries frontend framework runtime state, including React DevTools hooks, Redux/Zustand store snapshots, or global state objects.",
@@ -1371,7 +1816,7 @@ ${result.stack || ""}`;
     }
   };
 
-  // packages/core/src/tools/replay_network_request.ts
+  // packages/core/src/tools/replay_network_request.js
   var replayNetworkRequestTool = {
     name: "replay_network_request",
     description: "Re-sends a previously recorded network request with optional header or parameter overrides to test if the failure is transient or deterministic.",
@@ -1432,11 +1877,13 @@ ${result.stack || ""}`;
     }
   };
 
-  // packages/core/src/tools/index.ts
+  // packages/core/src/tools/index.js
   function createDefaultTools() {
     return [
       inspectErrorTool,
       inspectRequestTool,
+      inspectDockerLogsTool,
+      graphifyErrorsTool,
       inspectElementTool,
       queryFrameworkStateTool,
       executeJavascriptTool,
@@ -5488,28 +5935,20 @@ ${result.stack || ""}`;
   };
   var NEVER = INVALID;
 
-  // packages/core/src/types.ts
+  // packages/core/src/types.js
   var ToolActionSchema = external_exports.object({
     name: external_exports.string().describe("The name of the diagnostic tool to execute."),
     arguments: external_exports.record(external_exports.any()).describe("The key-value arguments for the chosen tool.")
   });
   var DebugReflectionSchema = external_exports.object({
-    evaluation_previous_goal: external_exports.string().describe(
-      "Evaluation of the last diagnostic step result. State whether the previous hypothesis was confirmed, refuted, or yielded unexpected clues."
-    ),
-    working_hypothesis: external_exports.string().describe(
-      'Current working causal theory of the root cause (e.g. "Network 401 error caused token expiration, cascading into undefined state in UserProfile").'
-    ),
-    memory: external_exports.string().describe(
-      "Cumulative persistent discoveries and confirmed facts retained across investigation steps."
-    ),
-    next_goal: external_exports.string().describe(
-      "The immediate sub-goal for this step to verify or advance the hypothesis."
-    ),
+    evaluation_previous_goal: external_exports.string().describe("Evaluation of the last diagnostic step result. State whether the previous hypothesis was confirmed, refuted, or yielded unexpected clues."),
+    working_hypothesis: external_exports.string().describe('Current working causal theory of the root cause (e.g. "Network 401 error caused token expiration, cascading into undefined state in UserProfile").'),
+    memory: external_exports.string().describe("Cumulative persistent discoveries and confirmed facts retained across investigation steps."),
+    next_goal: external_exports.string().describe("The immediate sub-goal for this step to verify or advance the hypothesis."),
     action: ToolActionSchema.describe("The single diagnostic tool action to dispatch.")
   });
 
-  // packages/core/src/DrDebugCore.ts
+  // packages/core/src/DrDebugCore.js
   var DrDebugCore = class {
     controller;
     llmClient;
@@ -5530,7 +5969,8 @@ ${result.stack || ""}`;
     }
     normalizeToolName(name) {
       const cleaned = (name || "").trim().toLowerCase();
-      if (this.tools.has(cleaned)) return cleaned;
+      if (this.tools.has(cleaned))
+        return cleaned;
       const aliases = {
         inspect_network_request: "inspect_request",
         inspect_network: "inspect_request",
@@ -5542,6 +5982,16 @@ ${result.stack || ""}`;
         run_javascript: "execute_javascript",
         get_storage: "check_storage",
         inspect_storage: "check_storage",
+        inspect_docker: "inspect_docker_logs",
+        docker_logs: "inspect_docker_logs",
+        check_docker_logs: "inspect_docker_logs",
+        docker: "inspect_docker_logs",
+        get_docker_logs: "inspect_docker_logs",
+        causal_graph: "graphify_errors",
+        error_graph: "graphify_errors",
+        build_graph: "graphify_errors",
+        graph_errors: "graphify_errors",
+        generate_graph: "graphify_errors",
         finish: "done",
         complete: "done",
         conclude: "done"
@@ -5746,7 +6196,7 @@ Evaluate this evidence and proceed to the next step.`
     }
   };
 
-  // packages/llms/src/LiteRTClient.ts
+  // packages/llms/src/LiteRTClient.js
   var LiteRTClient = class {
     modelPath;
     modelName;
@@ -5764,7 +6214,8 @@ Evaluate this evidence and proceed to the next step.`
       this.engine = config.engine;
     }
     async init() {
-      if (this.isInitialized) return;
+      if (this.isInitialized)
+        return;
       if (this.engine?.init) {
         await this.engine.init();
       }
@@ -5900,7 +6351,7 @@ ${msg.content}<end_of_turn>
     }
   };
 
-  // packages/llms/src/OpenAIClient.ts
+  // packages/llms/src/OpenAIClient.js
   var OpenAIClient = class {
     apiKey;
     baseURL;
@@ -5925,9 +6376,12 @@ ${msg.content}<end_of_turn>
             role: m.role,
             content: m.content
           };
-          if (m.name) msg.name = m.name;
-          if (m.tool_call_id) msg.tool_call_id = m.tool_call_id;
-          if (m.tool_calls) msg.tool_calls = m.tool_calls;
+          if (m.name)
+            msg.name = m.name;
+          if (m.tool_call_id)
+            msg.tool_call_id = m.tool_call_id;
+          if (m.tool_calls)
+            msg.tool_calls = m.tool_calls;
           return msg;
         }),
         temperature: this.temperature,
@@ -5985,16 +6439,249 @@ ${msg.content}<end_of_turn>
     }
   };
 
-  // packages/ui/src/assets/logo.ts
+  // packages/ui/src/components/CausalGraphView.js
+  var CausalGraphView = class {
+    element;
+    currentGraph = null;
+    selectedNodeId = null;
+    constructor() {
+      this.element = document.createElement("div");
+      this.element.className = "dr-debug-graph-wrapper";
+      this.renderEmpty();
+    }
+    getElement() {
+      return this.element;
+    }
+    updateGraph(graph) {
+      this.currentGraph = graph;
+      this.render();
+    }
+    renderEmpty() {
+      this.element.innerHTML = `
+      <div class="dr-debug-graph-empty">
+        <div style="font-size: 32px; margin-bottom: 8px;">\u{1F578}\uFE0F</div>
+        <div style="font-weight: 700; font-size: 14px; color: #38bdf8;">Autonomous Causal Topology Matrix</div>
+        <div style="font-size: 12px; color: #94a3b8; max-width: 360px; margin: 6px auto 14px auto;">
+          Cross-correlating Docker backend logs, network requests, and console runtime exceptions in real-time.
+        </div>
+        <div style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 9999px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; font-size: 12px; font-weight: 600;">
+          <span>\u{1F7E2}</span> <span>No Root Cause Anomalies Detected</span>
+        </div>
+      </div>
+    `;
+    }
+    render() {
+      if (!this.currentGraph || this.currentGraph.nodes.length === 0) {
+        this.renderEmpty();
+        return;
+      }
+      const { nodes, edges, rootCauseNodeId, mermaidDiagram } = this.currentGraph;
+      const layers = {
+        docker: nodes.filter((n) => n.layer === "docker"),
+        network: nodes.filter((n) => n.layer === "network"),
+        console: nodes.filter((n) => n.layer === "console"),
+        dom: nodes.filter((n) => n.layer === "dom")
+      };
+      const activeLayers = ["docker", "network", "console", "dom"].filter((l) => layers[l].length > 0);
+      const nodePositions = /* @__PURE__ */ new Map();
+      const colWidth = 240;
+      const colGap = 80;
+      const rowGap = 30;
+      const cardWidth = 220;
+      const cardHeight = 76;
+      const totalCols = Math.max(activeLayers.length, 1);
+      const svgWidth = Math.max(760, totalCols * (colWidth + colGap));
+      let maxLayerCount = 0;
+      activeLayers.forEach((l) => {
+        maxLayerCount = Math.max(maxLayerCount, layers[l].length);
+      });
+      const svgHeight = Math.max(340, maxLayerCount * (cardHeight + rowGap) + 80);
+      activeLayers.forEach((layerKey, colIndex) => {
+        const layerNodes = layers[layerKey];
+        const colX = 40 + colIndex * (cardWidth + colGap);
+        const startY = 50;
+        layerNodes.forEach((node, rowIndex) => {
+          const rowY = startY + rowIndex * (cardHeight + rowGap);
+          nodePositions.set(node.id, {
+            x: colX,
+            y: rowY,
+            width: cardWidth,
+            height: cardHeight
+          });
+        });
+      });
+      let svgPaths = "";
+      edges.forEach((edge) => {
+        const srcPos = nodePositions.get(edge.source);
+        const tgtPos = nodePositions.get(edge.target);
+        if (srcPos && tgtPos) {
+          const startX = srcPos.x + srcPos.width;
+          const startY = srcPos.y + srcPos.height / 2;
+          const endX = tgtPos.x;
+          const endY = tgtPos.y + tgtPos.height / 2;
+          const c1X = startX + (endX - startX) * 0.5;
+          const c1Y = startY;
+          const c2X = startX + (endX - startX) * 0.5;
+          const c2Y = endY;
+          svgPaths += `
+          <path d="M ${startX} ${startY} C ${c1X} ${c1Y}, ${c2X} ${c2Y}, ${endX} ${endY}"
+                class="dr-debug-causal-link"
+                marker-end="url(#arrowhead)" />
+          <path d="M ${startX} ${startY} C ${c1X} ${c1Y}, ${c2X} ${c2Y}, ${endX} ${endY}"
+                class="dr-debug-causal-pulse" />
+        `;
+        }
+      });
+      let nodesHtml = "";
+      nodes.forEach((node) => {
+        const pos = nodePositions.get(node.id) || { x: 0, y: 0, width: cardWidth, height: cardHeight };
+        const isRoot = node.id === rootCauseNodeId || node.isRootCause;
+        const isSelected = node.id === this.selectedNodeId;
+        const layerClass = `node-${node.layer}`;
+        const rootBadge = isRoot ? `<div class="dr-debug-node-root-badge">\u{1F3AF} ROOT CAUSE</div>` : "";
+        nodesHtml += `
+        <div class="dr-debug-graph-node ${layerClass} ${isRoot ? "is-root" : ""} ${isSelected ? "selected" : ""}"
+             data-node-id="${node.id}"
+             style="position: absolute; left: ${pos.x}px; top: ${pos.y}px; width: ${pos.width}px; height: ${pos.height}px;">
+          ${rootBadge}
+          <div class="dr-debug-node-header">
+            <span class="dr-debug-node-title">${this.escapeHtml(node.label)}</span>
+            <span class="dr-debug-node-layer">${node.layer.toUpperCase()}</span>
+          </div>
+          <div class="dr-debug-node-summary">${this.escapeHtml(node.summary)}</div>
+        </div>
+      `;
+      });
+      this.element.innerHTML = `
+      <div class="dr-debug-graph-toolbar">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-weight: 700; font-size: 13px; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
+            <span>\u{1F578}\uFE0F</span> <span>Causal Dependency Graph</span>
+          </span>
+          <span class="dr-debug-badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">
+            ${nodes.length} Nodes / ${edges.length} Causal Links
+          </span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button id="dr-debug-btn-copy-mermaid" class="dr-debug-btn-secondary" title="Copy Mermaid DAG markdown to clipboard">
+            <span>\u{1F4CB}</span> <span>Copy Mermaid</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="dr-debug-graph-canvas-container">
+        <div class="dr-debug-graph-canvas" style="position: relative; width: ${svgWidth}px; height: ${svgHeight}px;">
+          <svg class="dr-debug-graph-svg" width="${svgWidth}" height="${svgHeight}">
+            <defs>
+              <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#00f0ff" />
+              </marker>
+            </defs>
+            ${svgPaths}
+          </svg>
+          ${nodesHtml}
+        </div>
+      </div>
+
+      <div id="dr-debug-node-detail-box" class="dr-debug-node-detail-box" style="display: none;">
+        <div class="dr-debug-detail-header">
+          <span id="dr-debug-detail-title" style="font-weight: 700; color: #00f0ff;">Node Details</span>
+          <button id="dr-debug-detail-close" class="dr-debug-close-btn" style="padding: 2px 6px;">\u2715</button>
+        </div>
+        <pre id="dr-debug-detail-content" class="dr-debug-detail-pre"></pre>
+      </div>
+    `;
+      const copyBtn = this.element.querySelector("#dr-debug-btn-copy-mermaid");
+      copyBtn?.addEventListener("click", () => {
+        navigator.clipboard?.writeText(mermaidDiagram);
+        if (copyBtn) {
+          const originalText = copyBtn.innerHTML;
+          copyBtn.innerHTML = "<span>\u2705</span> <span>Copied!</span>";
+          setTimeout(() => {
+            copyBtn.innerHTML = originalText;
+          }, 1500);
+        }
+      });
+      const nodeEls = this.element.querySelectorAll(".dr-debug-graph-node");
+      nodeEls.forEach((el) => {
+        el.addEventListener("click", () => {
+          const nodeId = el.getAttribute("data-node-id");
+          if (nodeId) {
+            this.showNodeDetails(nodeId);
+          }
+        });
+      });
+      const closeDetail = this.element.querySelector("#dr-debug-detail-close");
+      closeDetail?.addEventListener("click", () => {
+        const box = this.element.querySelector("#dr-debug-node-detail-box");
+        if (box)
+          box.style.display = "none";
+        this.selectedNodeId = null;
+        this.element.querySelectorAll(".dr-debug-graph-node").forEach((n) => n.classList.remove("selected"));
+      });
+    }
+    showNodeDetails(nodeId) {
+      if (!this.currentGraph)
+        return;
+      const node = this.currentGraph.nodes.find((n) => n.id === nodeId);
+      if (!node)
+        return;
+      this.selectedNodeId = nodeId;
+      this.element.querySelectorAll(".dr-debug-graph-node").forEach((n) => {
+        n.classList.toggle("selected", n.getAttribute("data-node-id") === nodeId);
+      });
+      const box = this.element.querySelector("#dr-debug-node-detail-box");
+      const title = this.element.querySelector("#dr-debug-detail-title");
+      const content = this.element.querySelector("#dr-debug-detail-content");
+      if (box && title && content) {
+        box.style.display = "block";
+        title.textContent = `[${node.layer.toUpperCase()}] ${node.label} ${node.isRootCause ? "\u{1F3AF} (ROOT CAUSE)" : ""}`;
+        content.textContent = JSON.stringify({
+          id: node.id,
+          layer: node.layer,
+          timestamp: new Date(node.timestamp).toISOString(),
+          summary: node.summary,
+          metadata: node.metadata
+        }, null, 2);
+      }
+    }
+    escapeHtml(str) {
+      return (str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+  };
+
+  // packages/ui/src/assets/logo.js
   var DR_DEBUG_LOGO = "data:image/png;base64,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";
 
-  // packages/ui/src/components/CockpitPanel.ts
+  // packages/ui/src/components/CockpitPanel.js
   var CockpitPanel = class {
+    onClose;
+    onInvestigate;
+    element;
+    timelineContainer;
+    triageContainer;
+    graphContainer;
+    prescriptionContainer;
+    causalGraphView;
+    queryInput;
+    queryButton;
+    tabTimeline;
+    tabTriage;
+    tabGraph;
+    tabPrescription;
+    heapMetricBadge;
+    uptimeMetricBadge;
+    activeTab = "timeline";
+    steps = [];
+    startTime = Date.now();
+    isMaximized = false;
+    maximizeBtn;
     constructor(onClose, onInvestigate) {
       this.onClose = onClose;
       this.onInvestigate = onInvestigate;
       this.element = document.createElement("div");
       this.element.className = "dr-debug-modal hidden";
+      this.causalGraphView = new CausalGraphView();
       const header = document.createElement("div");
       header.className = "dr-debug-header";
       const brand = document.createElement("div");
@@ -6033,18 +6720,23 @@ ${msg.content}<end_of_turn>
       tabs.className = "dr-debug-tabs";
       this.tabTimeline = document.createElement("button");
       this.tabTimeline.className = "dr-debug-tab active";
-      this.tabTimeline.innerHTML = `<span>\u26A1</span> <span>Diagnostic Timeline</span>`;
+      this.tabTimeline.innerHTML = `<span>\u26A1</span> <span>Timeline</span>`;
       this.tabTimeline.addEventListener("click", () => this.switchTab("timeline"));
       this.tabTriage = document.createElement("button");
       this.tabTriage.className = "dr-debug-tab";
-      this.tabTriage.innerHTML = `<span>\u{1F4E1}</span> <span>Telemetry Matrix</span>`;
+      this.tabTriage.innerHTML = `<span>\u{1F4E1}</span> <span>Telemetry</span>`;
       this.tabTriage.addEventListener("click", () => this.switchTab("triage"));
+      this.tabGraph = document.createElement("button");
+      this.tabGraph.className = "dr-debug-tab";
+      this.tabGraph.innerHTML = `<span>\u{1F578}\uFE0F</span> <span>Causal Graph</span>`;
+      this.tabGraph.addEventListener("click", () => this.switchTab("graph"));
       this.tabPrescription = document.createElement("button");
       this.tabPrescription.className = "dr-debug-tab";
       this.tabPrescription.innerHTML = `<span>\u{1F48A}</span> <span>Prescription</span>`;
       this.tabPrescription.addEventListener("click", () => this.switchTab("prescription"));
       tabs.appendChild(this.tabTimeline);
       tabs.appendChild(this.tabTriage);
+      tabs.appendChild(this.tabGraph);
       tabs.appendChild(this.tabPrescription);
       const body = document.createElement("div");
       body.className = "dr-debug-body";
@@ -6056,12 +6748,18 @@ ${msg.content}<end_of_turn>
       this.triageContainer.style.display = "none";
       this.triageContainer.style.flexDirection = "column";
       this.triageContainer.style.gap = "10px";
+      this.graphContainer = document.createElement("div");
+      this.graphContainer.style.display = "none";
+      this.graphContainer.style.flexDirection = "column";
+      this.graphContainer.style.gap = "10px";
+      this.graphContainer.appendChild(this.causalGraphView.getElement());
       this.prescriptionContainer = document.createElement("div");
       this.prescriptionContainer.style.display = "none";
       this.prescriptionContainer.style.flexDirection = "column";
       this.prescriptionContainer.style.gap = "10px";
       body.appendChild(this.timelineContainer);
       body.appendChild(this.triageContainer);
+      body.appendChild(this.graphContainer);
       body.appendChild(this.prescriptionContainer);
       const queryWrapper = document.createElement("div");
       queryWrapper.className = "dr-debug-query-wrapper";
@@ -6093,7 +6791,8 @@ ${msg.content}<end_of_turn>
       this.queryInput.className = "dr-debug-input";
       this.queryInput.placeholder = "Ask Dr. Debug (e.g. Why did /api/agents/resource/run fail?)...";
       this.queryInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") this.triggerInvestigate();
+        if (e.key === "Enter")
+          this.triggerInvestigate();
       });
       this.queryButton = document.createElement("button");
       this.queryButton.className = "dr-debug-btn";
@@ -6112,22 +6811,6 @@ ${msg.content}<end_of_turn>
       this.startUptimeTicker();
       this.initDraggable(header);
     }
-    element;
-    timelineContainer;
-    triageContainer;
-    prescriptionContainer;
-    queryInput;
-    queryButton;
-    tabTimeline;
-    tabTriage;
-    tabPrescription;
-    heapMetricBadge;
-    uptimeMetricBadge;
-    activeTab = "timeline";
-    steps = [];
-    startTime = Date.now();
-    isMaximized = false;
-    maximizeBtn;
     getElement() {
       return this.element;
     }
@@ -6152,10 +6835,15 @@ ${msg.content}<end_of_turn>
       this.activeTab = tab;
       this.tabTimeline.classList.toggle("active", tab === "timeline");
       this.tabTriage.classList.toggle("active", tab === "triage");
+      this.tabGraph.classList.toggle("active", tab === "graph");
       this.tabPrescription.classList.toggle("active", tab === "prescription");
       this.timelineContainer.style.display = tab === "timeline" ? "flex" : "none";
       this.triageContainer.style.display = tab === "triage" ? "flex" : "none";
+      this.graphContainer.style.display = tab === "graph" ? "flex" : "none";
       this.prescriptionContainer.style.display = tab === "prescription" ? "flex" : "none";
+    }
+    updateCausalGraph(graph) {
+      this.causalGraphView.updateGraph(graph);
     }
     clearTimeline() {
       this.steps = [];
@@ -6400,12 +7088,14 @@ ${msg.content}<end_of_turn>
         const m = Math.floor(sec / 60).toString().padStart(2, "0");
         const s = (sec % 60).toString().padStart(2, "0");
         const el = this.element.querySelector("#dr-debug-uptime-val");
-        if (el) el.textContent = `${m}:${s}`;
+        if (el)
+          el.textContent = `${m}:${s}`;
       }, 1e3);
     }
     triggerInvestigate() {
       const query = this.queryInput.value.trim();
-      if (!query) return;
+      if (!query)
+        return;
       this.setBusy(true);
       this.switchTab("timeline");
       this.onInvestigate(query);
@@ -6415,8 +7105,10 @@ ${msg.content}<end_of_turn>
         if (line.startsWith("+++") || line.startsWith("---") || line.startsWith("@@")) {
           return `<div style="color: #94a3b8;">${this.escapeHtml(line)}</div>`;
         }
-        if (line.startsWith("+")) return `<span class="dr-debug-diff-add">${this.escapeHtml(line)}</span>`;
-        if (line.startsWith("-")) return `<span class="dr-debug-diff-del">${this.escapeHtml(line)}</span>`;
+        if (line.startsWith("+"))
+          return `<span class="dr-debug-diff-add">${this.escapeHtml(line)}</span>`;
+        if (line.startsWith("-"))
+          return `<span class="dr-debug-diff-del">${this.escapeHtml(line)}</span>`;
         return `<div>${this.escapeHtml(line)}</div>`;
       }).join("");
     }
@@ -6430,7 +7122,8 @@ ${msg.content}<end_of_turn>
       let initialX = 0;
       let initialY = 0;
       const onMouseDown = (e) => {
-        if (this.isMaximized) return;
+        if (this.isMaximized)
+          return;
         const target = e.target;
         if (target.closest(".dr-debug-close-btn") || target.tagName === "BUTTON" || target.tagName === "INPUT") {
           return;
@@ -6449,7 +7142,8 @@ ${msg.content}<end_of_turn>
         window.addEventListener("mouseup", onMouseUp);
       };
       const onMouseMove = (e) => {
-        if (!isDragging) return;
+        if (!isDragging)
+          return;
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
         let newX = initialX + dx;
@@ -6470,7 +7164,7 @@ ${msg.content}<end_of_turn>
     }
   };
 
-  // packages/ui/src/components/FloatingPill.ts
+  // packages/ui/src/components/FloatingPill.js
   var FloatingPill = class {
     element;
     badgeText;
@@ -6519,9 +7213,12 @@ ${msg.content}<end_of_turn>
       const totalIssues = errorCount + failedNetCount + slowNetCount;
       if (totalIssues > 0) {
         const chips = [];
-        if (errorCount > 0) chips.push(`<span class="dr-debug-chip err">\u274C ${errorCount} ERR</span>`);
-        if (failedNetCount > 0) chips.push(`<span class="dr-debug-chip net">\u26A0\uFE0F ${failedNetCount} NET FAIL</span>`);
-        if (slowNetCount > 0) chips.push(`<span class="dr-debug-chip net">\u23F3 ${slowNetCount} SLOW</span>`);
+        if (errorCount > 0)
+          chips.push(`<span class="dr-debug-chip err">\u274C ${errorCount} ERR</span>`);
+        if (failedNetCount > 0)
+          chips.push(`<span class="dr-debug-chip net">\u26A0\uFE0F ${failedNetCount} NET FAIL</span>`);
+        if (slowNetCount > 0)
+          chips.push(`<span class="dr-debug-chip net">\u23F3 ${slowNetCount} SLOW</span>`);
         this.badgeText.innerHTML = chips.join(" ");
       } else {
         this.badgeText.innerHTML = `<span>Dr. Debug</span> <span class="dr-debug-chip ok">HEALTHY</span>`;
@@ -6540,7 +7237,8 @@ ${msg.content}<end_of_turn>
         window.addEventListener("mouseup", onMouseUp);
       };
       const onMouseMove = (e) => {
-        if (!this.isDragging) return;
+        if (!this.isDragging)
+          return;
         const dx = e.clientX - this.startX;
         const dy = e.clientY - this.startY;
         if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
@@ -6552,7 +7250,8 @@ ${msg.content}<end_of_turn>
         }
       };
       const onMouseUp = () => {
-        if (!this.isDragging) return;
+        if (!this.isDragging)
+          return;
         this.isDragging = false;
         window.removeEventListener("mousemove", onMouseMove);
         window.removeEventListener("mouseup", onMouseUp);
@@ -6572,7 +7271,7 @@ ${msg.content}<end_of_turn>
     }
   };
 
-  // packages/ui/src/styles.ts
+  // packages/ui/src/styles.js
   var shadowStyles = `
 :host {
   all: initial;
@@ -7325,6 +8024,214 @@ ${msg.content}<end_of_turn>
   height: 32px;
 }
 
+/* ==========================================================================
+   8. CAUSAL GRAPH (Holographic Topology & Animated DAG)
+   ========================================================================== */
+
+.dr-debug-graph-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 280px;
+}
+
+.dr-debug-graph-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  background: rgba(6, 9, 16, 0.6);
+  border: 1px dashed rgba(56, 189, 248, 0.2);
+  border-radius: 12px;
+}
+
+.dr-debug-graph-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.dr-debug-graph-canvas-container {
+  flex: 1;
+  overflow: auto;
+  background: radial-gradient(circle at center, rgba(15, 23, 42, 0.8) 0%, rgba(6, 9, 16, 0.95) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 10px;
+  padding: 10px;
+  min-height: 240px;
+}
+
+.dr-debug-graph-canvas-container::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.dr-debug-graph-canvas-container::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 3px;
+}
+
+.dr-debug-graph-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.dr-debug-causal-link {
+  fill: none;
+  stroke: rgba(56, 189, 248, 0.5);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+
+.dr-debug-causal-pulse {
+  fill: none;
+  stroke: #00f0ff;
+  stroke-width: 2.5;
+  stroke-dasharray: 8 20;
+  animation: graph-pulse 1.8s linear infinite;
+}
+
+@keyframes graph-pulse {
+  from { stroke-dashoffset: 28; }
+  to { stroke-dashoffset: 0; }
+}
+
+.dr-debug-graph-node {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.dr-debug-graph-node:hover {
+  border-color: #00f0ff;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(0, 240, 255, 0.25);
+  z-index: 10;
+}
+
+.dr-debug-graph-node.selected {
+  border-color: #00f0ff;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
+}
+
+.dr-debug-graph-node.node-docker {
+  border-left: 3px solid #818cf8;
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%);
+}
+
+.dr-debug-graph-node.node-network {
+  border-left: 3px solid #00f0ff;
+  background: linear-gradient(135deg, rgba(8, 47, 73, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%);
+}
+
+.dr-debug-graph-node.node-console {
+  border-left: 3px solid #f43f5e;
+  background: linear-gradient(135deg, rgba(76, 5, 25, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%);
+}
+
+.dr-debug-graph-node.node-dom {
+  border-left: 3px solid #c084fc;
+  background: linear-gradient(135deg, rgba(59, 7, 100, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%);
+}
+
+.dr-debug-graph-node.is-root {
+  border: 1.5px solid #f43f5e !important;
+  box-shadow: 0 0 20px rgba(244, 63, 94, 0.4) !important;
+}
+
+.dr-debug-node-root-badge {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #f43f5e;
+  color: #fff;
+  letter-spacing: 0.4px;
+}
+
+.dr-debug-node-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.dr-debug-node-title {
+  font-family: 'Fira Code', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dr-debug-node-layer {
+  font-size: 9px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+}
+
+.dr-debug-node-summary {
+  font-size: 10.5px;
+  color: #cbd5e1;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.dr-debug-node-detail-box {
+  margin-top: 10px;
+  background: rgba(6, 9, 16, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.dr-debug-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.dr-debug-detail-pre {
+  font-family: 'Fira Code', monospace;
+  font-size: 11px;
+  color: #94a3b8;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 8px;
+  border-radius: 6px;
+  max-height: 140px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
 @media (max-width: 520px) {
   .dr-debug-modal {
     width: calc(100vw - 20px) !important;
@@ -7366,7 +8273,7 @@ ${msg.content}<end_of_turn>
 }
 `;
 
-  // packages/ui/src/DrDebugUI.ts
+  // packages/ui/src/DrDebugUI.js
   var DrDebugUI = class {
     host;
     shadowRoot;
@@ -7410,20 +8317,17 @@ ${msg.content}<end_of_turn>
       const styleEl = document.createElement("style");
       styleEl.textContent = shadowStyles;
       this.shadowRoot.appendChild(styleEl);
-      this.cockpit = new CockpitPanel(
-        () => this.cockpit.hide(),
-        async (query) => {
-          if (options.onInvestigate) {
-            try {
-              await options.onInvestigate(query);
-            } finally {
-              this.cockpit.setBusy(false);
-            }
-          } else {
-            this.runDemoInvestigation(query);
+      this.cockpit = new CockpitPanel(() => this.cockpit.hide(), async (query) => {
+        if (options.onInvestigate) {
+          try {
+            await options.onInvestigate(query);
+          } finally {
+            this.cockpit.setBusy(false);
           }
+        } else {
+          this.runDemoInvestigation(query);
         }
-      );
+      });
       this.pill = new FloatingPill(() => {
         this.cockpit.toggle();
       });
@@ -7448,6 +8352,9 @@ ${msg.content}<end_of_turn>
     }
     updateTriage(telemetry) {
       this.cockpit.updateTriage(telemetry);
+    }
+    updateCausalGraph(graph) {
+      this.cockpit.updateCausalGraph(graph);
     }
     clearTimeline() {
       this.cockpit.clearTimeline();
@@ -7530,7 +8437,7 @@ ${msg.content}<end_of_turn>
     }
   };
 
-  // packages/dr-debug/src/DrDebug.ts
+  // packages/dr-debug/src/DrDebug.js
   var DrDebug = class {
     controller;
     core;
@@ -7587,12 +8494,7 @@ ${msg.content}<end_of_turn>
     }
     async investigate(goal, options = {}) {
       const activeGoal = goal || "Diagnose all active browser errors, network failures, and performance bottlenecks.";
-      this.ui?.updatePillStatus(
-        this.controller.getConsoleEntries().filter((e) => e.level === "error").length,
-        this.controller.getNetworkRecords().filter((r) => r.isFailed).length,
-        this.controller.getNetworkRecords().filter((r) => r.isSlow && !r.isFailed).length,
-        true
-      );
+      this.ui?.updatePillStatus(this.controller.getConsoleEntries().filter((e) => e.level === "error").length, this.controller.getNetworkRecords().filter((r) => r.isFailed).length, this.controller.getNetworkRecords().filter((r) => r.isSlow && !r.isFailed).length, true);
       let currentHypothesis = "Evaluating telemetry...";
       let currentStepNumber = 1;
       try {
@@ -7635,7 +8537,8 @@ ${msg.content}<end_of_turn>
       }
     }
     syncUIStatus() {
-      if (!this.ui) return;
+      if (!this.ui)
+        return;
       const errors = this.controller.getConsoleEntries().filter((e) => e.level === "error");
       const failedNet = this.controller.getNetworkRecords().filter((r) => r.isFailed);
       const slowNet = this.controller.getNetworkRecords().filter((r) => r.isSlow && !r.isFailed);
@@ -7650,9 +8553,12 @@ ${msg.content}<end_of_turn>
           totalMB: Math.round((memory.totalJSHeapSize || 0) / (1024 * 1024))
         } : void 0
       });
+      const graph = this.controller.getCausalGraph();
+      this.ui.updateCausalGraph(graph);
     }
     async handleAutoTrigger() {
-      if (this.isAutoInvestigating) return;
+      if (this.isAutoInvestigating)
+        return;
       this.isAutoInvestigating = true;
       try {
         await this.investigate("Autonomous diagnosis triggered by uncaught runtime exception.");
@@ -7692,12 +8598,26 @@ ${msg.content}<end_of_turn>
     init() {
       if (typeof window === "undefined") return;
       if (this.instance) return;
-      this.instance = new DrDebug({
-        enableUI: false,
+      const defaultOptions = {
+        enableUI: true,
         autoInvestigate: false
-      });
+      };
+      if (typeof chrome !== "undefined" && chrome.storage?.local) {
+        chrome.storage.local.get(["apiKey", "baseURL", "model", "enableUI", "autoInvestigate"], (settings) => {
+          const options = {
+            enableUI: settings?.enableUI !== false,
+            autoInvestigate: settings?.autoInvestigate === true,
+            apiKey: settings?.apiKey,
+            baseURL: settings?.baseURL,
+            model: settings?.model
+          };
+          this.bootInstance(options);
+        });
+      } else {
+        this.bootInstance(defaultOptions);
+      }
       if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
-        chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           if (message.type === "DR_DEBUG_TRIGGER_INVESTIGATION") {
             this.instance?.investigate(message.goal).then((result) => {
               sendResponse({ status: "success", result });
@@ -7723,7 +8643,29 @@ ${msg.content}<end_of_turn>
             }
             return false;
           }
+          if (message.type === "DR_DEBUG_UPDATE_SETTINGS") {
+            if (message.settings) {
+              this.destroy();
+              this.bootInstance({
+                enableUI: message.settings.enableUI !== false,
+                autoInvestigate: message.settings.autoInvestigate === true,
+                apiKey: message.settings.apiKey,
+                baseURL: message.settings.baseURL,
+                model: message.settings.model
+              });
+              sendResponse({ status: "updated" });
+            }
+            return false;
+          }
         });
+      }
+    }
+    bootInstance(options) {
+      if (this.instance) return;
+      this.instance = new DrDebug(options);
+      if (typeof window !== "undefined") {
+        ;
+        window.__DR_DEBUG__ = this.instance;
       }
     }
     getInstance() {

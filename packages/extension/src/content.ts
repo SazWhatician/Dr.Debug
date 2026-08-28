@@ -7,15 +7,30 @@ export class ContentScriptBridge {
     if (typeof window === 'undefined') return
     if (this.instance) return
 
-    // Inject in-page DrDebug instance with silent telemetry observation
-    this.instance = new DrDebug({
-      enableUI: false,
+    // Load user settings or default to enabling the floating cockpit UI
+    const defaultOptions = {
+      enableUI: true,
       autoInvestigate: false
-    })
+    }
+
+    if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+      chrome.storage.local.get(['apiKey', 'baseURL', 'model', 'enableUI', 'autoInvestigate'], (settings: any) => {
+        const options = {
+          enableUI: settings?.enableUI !== false,
+          autoInvestigate: settings?.autoInvestigate === true,
+          apiKey: settings?.apiKey,
+          baseURL: settings?.baseURL,
+          model: settings?.model
+        }
+        this.bootInstance(options)
+      })
+    } else {
+      this.bootInstance(defaultOptions)
+    }
 
     // Listen for extension commands
     if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
-      chrome.runtime.onMessage.addListener((message: any, sender: any, sendResponse: any) => {
+      chrome.runtime.onMessage.addListener((message: any, _sender: any, sendResponse: any) => {
         if (message.type === 'DR_DEBUG_TRIGGER_INVESTIGATION') {
           this.instance
             ?.investigate(message.goal)
@@ -46,7 +61,30 @@ export class ContentScriptBridge {
           }
           return false
         }
+
+        if (message.type === 'DR_DEBUG_UPDATE_SETTINGS') {
+          if (message.settings) {
+            this.destroy()
+            this.bootInstance({
+              enableUI: message.settings.enableUI !== false,
+              autoInvestigate: message.settings.autoInvestigate === true,
+              apiKey: message.settings.apiKey,
+              baseURL: message.settings.baseURL,
+              model: message.settings.model
+            })
+            sendResponse({ status: 'updated' })
+          }
+          return false
+        }
       })
+    }
+  }
+
+  private bootInstance(options: any): void {
+    if (this.instance) return
+    this.instance = new DrDebug(options)
+    if (typeof window !== 'undefined') {
+      ;(window as any).__DR_DEBUG__ = this.instance
     }
   }
 

@@ -86,18 +86,63 @@ export interface MemorySnapshot {
   trendMBPerMin?: number
 }
 
+export interface DockerContainerInfo {
+  id: string
+  name: string
+  image: string
+  state: 'running' | 'exited' | 'restarting' | 'paused' | string
+  status: string
+  ports?: string[]
+}
+
+export interface DockerLogEntry {
+  id: string
+  containerName: string
+  timestamp: number
+  stream: 'stdout' | 'stderr'
+  message: string
+  level: LogLevel
+}
+
+export interface ErrorGraphNode {
+  id: string
+  label: string
+  layer: 'docker' | 'network' | 'console' | 'dom'
+  summary: string
+  timestamp: number
+  metadata?: Record<string, any>
+  isRootCause?: boolean
+}
+
+export interface ErrorGraphEdge {
+  id: string
+  source: string
+  target: string
+  label: string
+  timeDeltaMs?: number
+  confidence: number
+  relationship: 'CAUSED_BY' | 'TRIGGERED_BY' | 'CORRELATED_WITH' | 'PROPAGATED_TO'
+}
+
+export interface CausalErrorGraph {
+  nodes: ErrorGraphNode[]
+  edges: ErrorGraphEdge[]
+  rootCauseNodeId?: string
+  mermaidDiagram: string
+}
+
 export interface TemporalCorrelation {
   id: string
   description: string
   likelihood: 'high' | 'medium' | 'low'
   sourceEvent: {
-    type: 'network' | 'console' | 'performance'
+    type: 'network' | 'console' | 'performance' | 'docker'
     id: string
     summary: string
     timestamp: number
   }
   targetEvent: {
-    type: 'network' | 'console' | 'performance'
+    type: 'network' | 'console' | 'performance' | 'docker'
     id: string
     summary: string
     timestamp: number
@@ -130,13 +175,24 @@ export interface DebugState {
   }
   performance: PerformanceMetrics
   memory: MemorySnapshot | null
+  docker?: {
+    isAvailable: boolean
+    containers: DockerContainerInfo[]
+    logs: DockerLogEntry[]
+    errorCount: number
+  }
   correlations: TemporalCorrelation[]
+  causalGraph?: CausalErrorGraph
 }
 
 export interface SerializerOptions {
   maxConsoleEntries?: number
   maxNetworkEntries?: number
+  maxDockerEntries?: number
   tokenBudget?: number
   includeMemory?: boolean
   includePerformance?: boolean
+  includeDocker?: boolean
+  includeGraph?: boolean
 }
+

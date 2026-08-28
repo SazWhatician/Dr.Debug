@@ -194,6 +194,21 @@ export const shadowStyles = `
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+@keyframes slide-in-card {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes thinking-pulse {
+  0%, 100% { transform: scale(1);   opacity: 0.5; box-shadow: 0 0 0 0 rgba(192,132,252,0.4); }
+  50%       { transform: scale(1.4); opacity: 1;   box-shadow: 0 0 0 8px rgba(192,132,252,0); }
+}
+
+@keyframes causal-flow {
+  from { stroke-dashoffset: 24; }
+  to   { stroke-dashoffset: 0; }
+}
+
 /* Header (Draggable Handle) */
 .dr-debug-header {
   padding: 10px 14px;
@@ -381,8 +396,9 @@ export const shadowStyles = `
   display: flex;
   flex-direction: column;
   gap: 8px;
-  transition: all 0.2s;
+  transition: border-color 0.2s, background 0.2s;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  animation: slide-in-card 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dr-debug-step-card:hover {
@@ -423,12 +439,33 @@ export const shadowStyles = `
   font-weight: 600;
 }
 
+.dr-debug-step-reasoning-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #a855f7;
+  margin-bottom: 2px;
+}
+
 .dr-debug-step-thought {
-  color: #cbd5e1;
-  font-size: 11.5px;
-  line-height: 1.35;
-  padding-left: 4px;
-  border-left: 2px solid rgba(168, 85, 247, 0.5);
+  color: #e2e8f0;
+  font-size: 12px;
+  line-height: 1.45;
+  padding: 6px 10px;
+  background: rgba(168, 85, 247, 0.07);
+  border-left: 2px solid rgba(168, 85, 247, 0.6);
+  border-radius: 0 5px 5px 0;
+}
+
+.dr-debug-step-output-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #38bdf8;
+  margin-bottom: 2px;
+  margin-top: 2px;
 }
 
 .dr-debug-step-output {
@@ -438,11 +475,53 @@ export const shadowStyles = `
   padding: 6px 8px;
   font-family: ui-monospace, 'JetBrains Mono', Menlo, monospace;
   font-size: 10.5px;
-  max-height: 110px;
+  max-height: 130px;
   overflow-y: auto;
   white-space: pre-wrap;
   color: #94a3b8;
-  line-height: 1.35;
+  line-height: 1.4;
+}
+
+/* ── AI Thinking / Reasoning Card ── */
+.dr-debug-thinking-card {
+  background: rgba(168, 85, 247, 0.06);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  animation: slide-in-card 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dr-debug-thinking-pulse {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #c084fc;
+  flex-shrink: 0;
+  margin-top: 3px;
+  animation: thinking-pulse 1.1s ease-in-out infinite;
+}
+
+.dr-debug-thinking-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dr-debug-thinking-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #c084fc;
+}
+
+.dr-debug-thinking-text {
+  font-size: 12px;
+  color: #e2e8f0;
+  line-height: 1.4;
 }
 
 /* ==========================================================================
@@ -750,6 +829,428 @@ export const shadowStyles = `
   height: 32px;
 }
 
+/* ==========================================================================
+   8. CAUSAL GRAPH (Holographic Topology & Animated DAG)
+   ========================================================================== */
+
+.dr-debug-graph-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 280px;
+}
+
+.dr-debug-graph-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  background: rgba(6, 9, 16, 0.6);
+  border: 1px dashed rgba(56, 189, 248, 0.2);
+  border-radius: 12px;
+}
+
+.dr-debug-graph-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.dr-debug-graph-canvas-container {
+  flex: 1;
+  overflow: auto;
+  background: radial-gradient(circle at center, rgba(15, 23, 42, 0.8) 0%, rgba(6, 9, 16, 0.95) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 10px;
+  padding: 10px;
+  min-height: 240px;
+}
+
+.dr-debug-graph-canvas-container::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.dr-debug-graph-canvas-container::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 3px;
+}
+
+.dr-debug-graph-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.dr-debug-causal-link {
+  fill: none;
+  stroke: rgba(56, 189, 248, 0.5);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+
+.dr-debug-causal-pulse {
+  fill: none;
+  stroke: #00f0ff;
+  stroke-width: 2.5;
+  stroke-dasharray: 8 20;
+  animation: graph-pulse 1.8s linear infinite;
+}
+
+@keyframes graph-pulse {
+  from { stroke-dashoffset: 28; }
+  to { stroke-dashoffset: 0; }
+}
+
+.dr-debug-graph-node {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.dr-debug-graph-node:hover {
+  border-color: #00f0ff;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(0, 240, 255, 0.25);
+  z-index: 10;
+}
+
+.dr-debug-graph-node.selected {
+  border-color: #00f0ff;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
+}
+
+.dr-debug-graph-node.node-docker {
+  border-left: 3px solid #818cf8;
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%);
+}
+
+.dr-debug-graph-node.node-network {
+  border-left: 3px solid #00f0ff;
+  background: linear-gradient(135deg, rgba(8, 47, 73, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%);
+}
+
+.dr-debug-graph-node.node-console {
+  border-left: 3px solid #f43f5e;
+  background: linear-gradient(135deg, rgba(76, 5, 25, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%);
+}
+
+.dr-debug-graph-node.node-dom {
+  border-left: 3px solid #c084fc;
+  background: linear-gradient(135deg, rgba(59, 7, 100, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%);
+}
+
+.dr-debug-graph-node.is-root {
+  border: 1.5px solid #f43f5e !important;
+  box-shadow: 0 0 20px rgba(244, 63, 94, 0.4) !important;
+}
+
+.dr-debug-node-root-badge {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #f43f5e;
+  color: #fff;
+  letter-spacing: 0.4px;
+}
+
+.dr-debug-node-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.dr-debug-node-title {
+  font-family: 'Fira Code', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dr-debug-node-layer {
+  font-size: 9px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+}
+
+.dr-debug-node-summary {
+  font-size: 10.5px;
+  color: #cbd5e1;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.dr-debug-node-detail-box {
+  margin-top: 10px;
+  background: rgba(6, 9, 16, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.dr-debug-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.dr-debug-detail-pre {
+  font-family: 'Fira Code', monospace;
+  font-size: 11px;
+  color: #94a3b8;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 8px;
+  border-radius: 6px;
+  max-height: 140px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+/* ==========================================================================
+   8. CAUSAL GRAPH VIEW
+   ========================================================================== */
+
+.dr-debug-graph-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+}
+
+.dr-debug-graph-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 32px 20px;
+  gap: 8px;
+  color: #64748b;
+}
+
+.dr-debug-graph-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 4px;
+  flex-shrink: 0;
+}
+
+.dr-debug-btn-secondary {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  border-radius: 5px;
+  padding: 4px 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+}
+
+.dr-debug-btn-secondary:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+}
+
+.dr-debug-badge {
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.dr-debug-graph-canvas-container {
+  overflow: auto;
+  flex: 1;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  background: rgba(4, 7, 14, 0.6);
+  position: relative;
+}
+
+.dr-debug-graph-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.dr-debug-causal-link {
+  fill: none;
+  stroke: rgba(0, 240, 255, 0.45);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 3;
+  animation: causal-flow 1.5s linear infinite;
+}
+
+.dr-debug-causal-pulse {
+  fill: none;
+  stroke: rgba(0, 240, 255, 0.12);
+  stroke-width: 4;
+}
+
+.dr-debug-graph-node {
+  position: absolute;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.85);
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.dr-debug-graph-node:hover {
+  transform: scale(1.03);
+  z-index: 2;
+}
+
+.dr-debug-graph-node.node-docker {
+  border-color: rgba(251, 146, 60, 0.4);
+  background: rgba(30, 18, 10, 0.9);
+}
+
+.dr-debug-graph-node.node-network {
+  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(8, 22, 32, 0.9);
+}
+
+.dr-debug-graph-node.node-console {
+  border-color: rgba(244, 63, 94, 0.4);
+  background: rgba(28, 10, 16, 0.9);
+}
+
+.dr-debug-graph-node.node-dom {
+  border-color: rgba(99, 102, 241, 0.4);
+  background: rgba(15, 14, 36, 0.9);
+}
+
+.dr-debug-graph-node.is-root {
+  box-shadow: 0 0 16px rgba(251, 146, 60, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4);
+  border-width: 2px;
+}
+
+.dr-debug-graph-node.selected {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+  z-index: 3;
+}
+
+.dr-debug-node-root-badge {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(251, 146, 60, 0.9);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.dr-debug-node-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.dr-debug-node-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #f1f5f9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
+}
+
+.dr-debug-node-layer {
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.dr-debug-node-summary {
+  font-size: 10px;
+  color: #64748b;
+  line-height: 1.3;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.dr-debug-node-detail-box {
+  background: rgba(8, 12, 22, 0.98);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 8px;
+  padding: 10px 12px;
+  flex-shrink: 0;
+  max-height: 140px;
+  overflow: hidden;
+}
+
+.dr-debug-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.dr-debug-detail-pre {
+  font-family: ui-monospace, 'JetBrains Mono', Menlo, monospace;
+  font-size: 10px;
+  color: #94a3b8;
+  white-space: pre-wrap;
+  overflow-y: auto;
+  max-height: 90px;
+}
+
 @media (max-width: 520px) {
   .dr-debug-modal {
     width: calc(100vw - 20px) !important;
@@ -790,4 +1291,5 @@ export const shadowStyles = `
   }
 }
 `
+
 

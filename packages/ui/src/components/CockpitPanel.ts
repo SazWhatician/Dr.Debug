@@ -1,4 +1,5 @@
 import { DR_DEBUG_LOGO } from '../assets/logo.js'
+import { CausalGraphView, type CausalErrorGraph } from './CausalGraphView.js'
 
 export interface StepItem {
   stepNumber: number
@@ -21,19 +22,23 @@ export class CockpitPanel {
   private element: HTMLElement
   private timelineContainer: HTMLElement
   private triageContainer: HTMLElement
+  private graphContainer: HTMLElement
   private prescriptionContainer: HTMLElement
+  private causalGraphView: CausalGraphView = new CausalGraphView()
   private queryInput: HTMLInputElement
   private queryButton: HTMLButtonElement
   private tabTimeline: HTMLButtonElement
   private tabTriage: HTMLButtonElement
+  private tabGraph: HTMLButtonElement
   private tabPrescription: HTMLButtonElement
   private heapMetricBadge: HTMLElement
   private uptimeMetricBadge: HTMLElement
-  private activeTab: 'timeline' | 'triage' | 'prescription' = 'timeline'
+  private activeTab: 'timeline' | 'triage' | 'graph' | 'prescription' = 'timeline'
   private steps: StepItem[] = []
   private startTime = Date.now()
   private isMaximized = false
   private maximizeBtn!: HTMLButtonElement
+  private thinkingCard: HTMLElement | null = null
 
   constructor(
     private onClose: () => void,
@@ -92,13 +97,18 @@ export class CockpitPanel {
 
     this.tabTimeline = document.createElement('button')
     this.tabTimeline.className = 'dr-debug-tab active'
-    this.tabTimeline.innerHTML = `<span>⚡</span> <span>Diagnostic Timeline</span>`
+    this.tabTimeline.innerHTML = `<span>⚡</span> <span>Timeline</span>`
     this.tabTimeline.addEventListener('click', () => this.switchTab('timeline'))
 
     this.tabTriage = document.createElement('button')
     this.tabTriage.className = 'dr-debug-tab'
-    this.tabTriage.innerHTML = `<span>📡</span> <span>Telemetry Matrix</span>`
+    this.tabTriage.innerHTML = `<span>📡</span> <span>Telemetry</span>`
     this.tabTriage.addEventListener('click', () => this.switchTab('triage'))
+
+    this.tabGraph = document.createElement('button')
+    this.tabGraph.className = 'dr-debug-tab'
+    this.tabGraph.innerHTML = `<span>🕸️</span> <span>Causal Graph</span>`
+    this.tabGraph.addEventListener('click', () => this.switchTab('graph'))
 
     this.tabPrescription = document.createElement('button')
     this.tabPrescription.className = 'dr-debug-tab'
@@ -107,6 +117,7 @@ export class CockpitPanel {
 
     tabs.appendChild(this.tabTimeline)
     tabs.appendChild(this.tabTriage)
+    tabs.appendChild(this.tabGraph)
     tabs.appendChild(this.tabPrescription)
 
     // 3. Body Containers
@@ -123,6 +134,12 @@ export class CockpitPanel {
     this.triageContainer.style.flexDirection = 'column'
     this.triageContainer.style.gap = '10px'
 
+    this.graphContainer = document.createElement('div')
+    this.graphContainer.style.display = 'none'
+    this.graphContainer.style.flexDirection = 'column'
+    this.graphContainer.style.gap = '10px'
+    this.graphContainer.appendChild(this.causalGraphView.getElement())
+
     this.prescriptionContainer = document.createElement('div')
     this.prescriptionContainer.style.display = 'none'
     this.prescriptionContainer.style.flexDirection = 'column'
@@ -130,6 +147,7 @@ export class CockpitPanel {
 
     body.appendChild(this.timelineContainer)
     body.appendChild(this.triageContainer)
+    body.appendChild(this.graphContainer)
     body.appendChild(this.prescriptionContainer)
 
     // 4. Quick Prompts & Query Wrapper
@@ -221,14 +239,16 @@ export class CockpitPanel {
       : `<span>⚡</span> <span>Diagnose</span>`
   }
 
-  public switchTab(tab: 'timeline' | 'triage' | 'prescription'): void {
+  public switchTab(tab: 'timeline' | 'triage' | 'graph' | 'prescription'): void {
     this.activeTab = tab
     this.tabTimeline.classList.toggle('active', tab === 'timeline')
     this.tabTriage.classList.toggle('active', tab === 'triage')
+    this.tabGraph.classList.toggle('active', tab === 'graph')
     this.tabPrescription.classList.toggle('active', tab === 'prescription')
 
     this.timelineContainer.style.display = tab === 'timeline' ? 'flex' : 'none'
     this.triageContainer.style.display = tab === 'triage' ? 'flex' : 'none'
+    this.graphContainer.style.display = tab === 'graph' ? 'flex' : 'none'
     this.prescriptionContainer.style.display = tab === 'prescription' ? 'flex' : 'none'
   }
 
@@ -267,14 +287,14 @@ export class CockpitPanel {
   }
 
   public addStep(step: StepItem): void {
-    if (this.steps.length === 0) {
-      this.timelineContainer.innerHTML = ''
-    }
+    this.clearThinking()
+    if (this.steps.length === 0) this.timelineContainer.innerHTML = ''
     this.steps.push(step)
 
     const stepCard = document.createElement('div')
     stepCard.className = 'dr-debug-step-card'
 
+    // Header row: step number + tool badge + copy button
     const header = document.createElement('div')
     header.className = 'dr-debug-step-header'
 
@@ -294,24 +314,35 @@ export class CockpitPanel {
 
     const right = document.createElement('div')
     right.className = 'dr-debug-step-right'
-    if (step.toolOutput) {
-      right.appendChild(this.makeCopyBtn(step.toolOutput))
-    }
+    if (step.toolOutput) right.appendChild(this.makeCopyBtn(step.toolOutput))
 
     header.appendChild(left)
     header.appendChild(right)
+    stepCard.appendChild(header)
+
+    // AI Reasoning block
+    const reasoningLabel = document.createElement('div')
+    reasoningLabel.className = 'dr-debug-step-reasoning-label'
+    reasoningLabel.textContent = '🧠 AI Reasoning'
 
     const thought = document.createElement('div')
     thought.className = 'dr-debug-step-thought'
-    thought.textContent = `💡 Hypothesis: ${step.hypothesis}`
+    thought.textContent = step.hypothesis
 
-    stepCard.appendChild(header)
+    stepCard.appendChild(reasoningLabel)
     stepCard.appendChild(thought)
 
+    // Tool output block
     if (step.toolOutput) {
+      const outputLabel = document.createElement('div')
+      outputLabel.className = 'dr-debug-step-output-label'
+      outputLabel.textContent = 'Tool Output'
+
       const output = document.createElement('div')
       output.className = 'dr-debug-step-output'
       output.textContent = step.toolOutput
+
+      stepCard.appendChild(outputLabel)
       stepCard.appendChild(output)
     }
 
@@ -483,6 +514,38 @@ export class CockpitPanel {
           <p style="color: #64748b; font-size: 12px; margin-top: 4px;">Zero unhandled exceptions, zero network timeouts recorded.</p>
         </div>
       `
+    }
+  }
+
+  public showThinking(message: string): void {
+    if (this.thinkingCard) this.thinkingCard.remove()
+    if (this.steps.length === 0) this.timelineContainer.innerHTML = ''
+
+    this.thinkingCard = document.createElement('div')
+    this.thinkingCard.className = 'dr-debug-thinking-card'
+    this.thinkingCard.innerHTML = `
+      <div class="dr-debug-thinking-pulse"></div>
+      <div class="dr-debug-thinking-body">
+        <div class="dr-debug-thinking-label">Dr. Debug · Reasoning</div>
+        <div class="dr-debug-thinking-text">${this.escapeHtml(message)}</div>
+      </div>
+    `
+    this.timelineContainer.appendChild(this.thinkingCard)
+    this.timelineContainer.scrollTop = this.timelineContainer.scrollHeight
+    if (this.activeTab !== 'timeline') this.switchTab('timeline')
+  }
+
+  public clearThinking(): void {
+    if (this.thinkingCard) {
+      this.thinkingCard.remove()
+      this.thinkingCard = null
+    }
+  }
+
+  public updateCausalGraph(graph: CausalErrorGraph): void {
+    this.causalGraphView.updateGraph(graph)
+    if (graph.nodes.length > 0) {
+      this.tabGraph.innerHTML = `<span>🕸️</span> <span>Causal Map <span style="background:rgba(251,146,60,0.2);color:#fb923c;border:1px solid rgba(251,146,60,0.4);padding:1px 5px;border-radius:9999px;font-size:9px;font-weight:700">${graph.nodes.length}</span></span>`
     }
   }
 

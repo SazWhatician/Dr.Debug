@@ -45,4 +45,4 @@ Deliver a zero-setup Chrome Extension that allows developers to run Dr. Debug on
 
 ## 📝 Phase Completion & Change Notes
 - **[2026-08-27]**: Implemented `@dr-debug/extension` package with Manifest V3 background service worker, content script bridge, DevTools RCA Markdown/JSON exporter, and VLQ `SourceMapResolver`.
-- **[2026-08-28]**: Hardened network and console interceptors to eliminate third-party site breakage (fixed `fetch`/`XHR` illegal invocation, recursive getter/setter loops, stream locking on SSE, early DOM insertion during `document_start`, and circular JSON handling). All 50 tests passing cleanly.
+- **[2026-08-28]**: Hardened network and console interceptors to eliminate third-party site breakage (fixed `fetch`/`XHR` illegal invocation, recursive getter/setter loops, stream locking on SSE, early DOM insertion during `document_start`, and circular JSON handling). Enabled in-page floating HUD pill by default and introduced dynamic AI provider configuration (Groq LPU, OpenAI GPT-4o, Gemini, LiteRT) directly in the Chrome extension popup. All 50 tests passing cleanly.

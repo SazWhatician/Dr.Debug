@@ -17,110 +17,170 @@
         <div class="logo-badge">🩺</div>
         <div class="brand-text">
           <h1>Dr. Debug <span class="tag">Playground</span></h1>
-          <p>Autonomous in-browser AI debugging & diagnostic agent</p>
+          <p>Autonomous full-stack AI debugging agent — frontend + backend in one shot</p>
         </div>
       </div>
 
-      <!-- LLM Provider Controls -->
       <div class="config-bar">
         <div class="config-item">
-          <label for="provider-select">Inference Engine:</label>
+          <label for="provider-select">AI Engine:</label>
           <select id="provider-select">
-            <option value="groq" selected>⚡ Groq LPU (Ultra-Fast)</option>
-            <option value="mock">🤖 Mock Agent (Zero Setup)</option>
+            <option value="mock" selected>🤖 Mock Agent (Zero Setup)</option>
+            <option value="groq">⚡ Groq (Ultra-Fast)</option>
             <option value="openai">🧠 OpenAI (GPT-4o)</option>
           </select>
         </div>
-
-        <div class="config-item" id="api-key-group">
+        <div class="config-item" id="api-key-group" style="opacity: 0.4;">
           <label for="api-key-input">API Key:</label>
           <input type="password" id="api-key-input" placeholder="gsk_... or sk-..." />
         </div>
-
         <div class="config-item">
           <button id="btn-reinit" class="btn-primary">Apply & Init Agent</button>
         </div>
       </div>
     </header>
 
-    <!-- Main Playground Grid -->
     <main class="main-content">
+
+      <!-- How AI Works — top of page, always visible -->
+      <section class="how-it-works-banner">
+        <div class="hiw-title">How the AI Agent works</div>
+        <div class="hiw-steps">
+          <div class="hiw-step">
+            <div class="hiw-step-icon">📡</div>
+            <div class="hiw-step-label">Reads telemetry</div>
+            <div class="hiw-step-sub">Console · Network · Docker</div>
+          </div>
+          <div class="hiw-arrow">→</div>
+          <div class="hiw-step">
+            <div class="hiw-step-icon">🧠</div>
+            <div class="hiw-step-label">Forms hypothesis</div>
+            <div class="hiw-step-sub">Re-Act reasoning loop</div>
+          </div>
+          <div class="hiw-arrow">→</div>
+          <div class="hiw-step">
+            <div class="hiw-step-icon">🔧</div>
+            <div class="hiw-step-label">Calls tools</div>
+            <div class="hiw-step-sub">inspect_error · graphify_errors</div>
+          </div>
+          <div class="hiw-arrow">→</div>
+          <div class="hiw-step">
+            <div class="hiw-step-icon">🕸️</div>
+            <div class="hiw-step-label">Causal graph</div>
+            <div class="hiw-step-sub">Docker → API → Frontend</div>
+          </div>
+          <div class="hiw-arrow">→</div>
+          <div class="hiw-step">
+            <div class="hiw-step-icon">💊</div>
+            <div class="hiw-step-label">Code fix</div>
+            <div class="hiw-step-sub">Unified diff patch</div>
+          </div>
+        </div>
+      </section>
+
       <!-- Status Banner -->
       <section class="banner">
         <div class="status-indicator">
           <span class="pulse-dot"></span>
-          <span id="agent-status">Dr. Debug is actively monitoring the DOM, Console, Network & Performance streams.</span>
+          <span id="agent-status">Initializing Dr. Debug…</span>
         </div>
         <div class="hint">
-          Look at the bottom right corner of your screen for the floating <strong>🩺 Dr. Debug HUD Pill</strong>.
+          The <strong>🩺 Dr. Debug pill</strong> is in the bottom-right corner. Click it to open the Cockpit, or click <strong>Investigate Now</strong> below.
         </div>
       </section>
 
-      <!-- Bug Simulator Triggers -->
+      <!-- Frontend Bug Triggers -->
       <section class="section">
-        <h2>💥 Trigger Production Scenarios</h2>
-        <p class="section-desc">Click any trigger below to simulate production incidents. Watch Dr. Debug detect, intercept, and formulate hypotheses autonomously.</p>
-
+        <h2>💥 Frontend Bug Scenarios</h2>
+        <p class="section-desc">Simulate real production incidents. Dr. Debug intercepts errors and network anomalies automatically.</p>
         <div class="card-grid">
-          <!-- Card 1: TypeError -->
           <div class="card">
             <div class="card-icon error-icon">🔴</div>
             <h3>Null Reference (TypeError)</h3>
-            <p>Accesses <code>undefined.map()</code> inside a nested data component.</p>
-            <button id="trigger-null-error" class="btn-trigger error-btn">Trigger Uncaught TypeError</button>
+            <p>Accesses <code>undefined.map()</code> inside a nested component — classic uncaught exception.</p>
+            <button id="trigger-null-error" class="btn-trigger error-btn">Trigger TypeError</button>
           </div>
-
-          <!-- Card 2: 404 API Failure -->
           <div class="card">
             <div class="card-icon warning-icon">🟠</div>
-            <h3>404 API Endpoint Failure</h3>
-            <p>Dispatches a failed <code>fetch('/api/v1/metrics/404')</code> network request.</p>
+            <h3>404 API Endpoint</h3>
+            <p>Dispatches a failed <code>fetch('/api/v1/metrics')</code> — captured in the network ring buffer.</p>
             <button id="trigger-404" class="btn-trigger warning-btn">Trigger 404 Fetch</button>
           </div>
-
-          <!-- Card 3: CORS Cascade -->
           <div class="card">
             <div class="card-icon cors-icon">🟡</div>
             <h3>CORS Security Block</h3>
-            <p>Attempts cross-origin fetch to an unwhitelisted endpoint causing network block.</p>
-            <button id="trigger-cors" class="btn-trigger cors-btn">Trigger CORS Failure</button>
+            <p>Cross-origin request to an unwhitelisted domain — Dr. Debug flags the CORS correlation.</p>
+            <button id="trigger-cors" class="btn-trigger cors-btn">Trigger CORS Block</button>
           </div>
-
-          <!-- Card 4: Console Log Burst -->
           <div class="card">
             <div class="card-icon info-icon">🔵</div>
             <h3>Console Spam Burst</h3>
-            <p>Emits a burst of warnings and errors to test ring-buffer deduplication.</p>
+            <p>8 warnings + 1 fatal error to test the ring-buffer deduplication and pattern detection.</p>
             <button id="trigger-log-spam" class="btn-trigger info-btn">Trigger Log Burst</button>
           </div>
         </div>
       </section>
 
-      <!-- Interactive Goal Query -->
+      <!-- Docker Backend Triggers -->
       <section class="section">
-        <h2>🎯 Autonomous Diagnosis on Demand</h2>
-        <p class="section-desc">Type a question or click "Run Autonomous Investigation" to have Dr. Debug inspect the telemetry buffer, query DOM state, and output a root cause fix.</p>
-        
-        <div class="investigation-bar">
-          <input type="text" id="goal-input" value="Why did the last application error occur and how can we fix it?" placeholder="Enter debug goal..." />
-          <button id="btn-run-investigation" class="btn-action">🩺 Investigate Now</button>
+        <h2>🐳 Docker Backend Scenarios</h2>
+        <p class="section-desc">Simulate container crashes. The AI correlates backend Docker logs with frontend errors to find root causes across the full stack.</p>
+        <div class="card-grid">
+          <div class="card docker-card">
+            <div class="card-icon docker-icon">🗄️</div>
+            <h3>DB Connection Exhaustion</h3>
+            <p>PostgreSQL hits <code>max_connections=100</code>. API returns 503. Frontend crashes.</p>
+            <div class="docker-badge">postgres-db · api-server</div>
+            <button id="trigger-db-crash" class="btn-trigger docker-btn">Trigger DB Crash</button>
+          </div>
+          <div class="card docker-card">
+            <div class="card-icon docker-icon">💀</div>
+            <h3>OOM Kill</h3>
+            <p>api-server container hits memory limit (512Mi). OOMKiller terminates the process.</p>
+            <div class="docker-badge">api-server · redis-cache</div>
+            <button id="trigger-oom" class="btn-trigger docker-btn">Trigger OOM Kill</button>
+          </div>
+          <div class="card docker-card highlight-card">
+            <div class="card-icon docker-icon">⚡</div>
+            <h3>Full-Stack Cascade</h3>
+            <p>DB missing → API 503 → Frontend TypeError. Watch the AI trace the causal chain across all layers.</p>
+            <div class="docker-badge cascade">DB → API → Frontend</div>
+            <button id="trigger-cascade" class="btn-trigger cascade-btn">Trigger Cascade</button>
+          </div>
         </div>
       </section>
 
-      <!-- Live Telemetry Stream Viewer -->
+      <!-- Investigation Input -->
       <section class="section">
-        <h2>📊 Active Telemetry Buffers</h2>
+        <h2>🎯 Autonomous Investigation</h2>
+        <p class="section-desc">Click a trigger scenario above, then run the investigation. The AI reads all telemetry and returns a root-cause diagnosis with a code fix.</p>
+        <div class="investigation-bar">
+          <input type="text" id="goal-input" value="Why did the last error occur and how do we fix it?" placeholder="Enter debug goal..." />
+          <button id="btn-run-investigation" class="btn-action">🩺 Investigate Now</button>
+        </div>
+        <p class="investigation-hint">💡 Using <strong>Mock Agent</strong>? No API key needed — it runs a full 4-step Re-Act demonstration.</p>
+      </section>
+
+      <!-- Live Telemetry Buffers -->
+      <section class="section">
+        <h2>📊 Live Telemetry Buffers</h2>
+        <p class="section-desc">Real-time view of what Dr. Debug is watching. The AI reads all of this when you click Investigate.</p>
         <div class="telemetry-grid">
           <div class="telemetry-box">
-            <h4>Console Buffer (<span id="console-count">0</span>)</h4>
+            <h4>Console Buffer <span class="count-badge" id="console-count">0</span></h4>
             <pre id="console-preview">No console entries recorded yet.</pre>
           </div>
           <div class="telemetry-box">
-            <h4>Network Stream (<span id="network-count">0</span>)</h4>
+            <h4>Network Stream <span class="count-badge" id="network-count">0</span></h4>
             <pre id="network-preview">No network entries recorded yet.</pre>
+          </div>
+          <div class="telemetry-box docker-telemetry">
+            <h4>Docker Logs <span class="count-badge docker-count-badge" id="docker-count">0</span></h4>
+            <pre id="docker-preview">No Docker logs yet. Click a Docker trigger above.</pre>
           </div>
         </div>
       </section>
+
     </main>
   </div>
 

@@ -1,11 +1,16 @@
 import { ConsoleInterceptor } from './interceptors/console.js'
+import { DockerInterceptor } from './interceptors/docker.js'
 import { MemoryInterceptor } from './interceptors/memory.js'
 import { NetworkInterceptor } from './interceptors/network.js'
 import { PerformanceInterceptor } from './interceptors/performance.js'
-import { computeCorrelations, debugStateToString } from './serializer.js'
+import { buildCausalErrorGraph, computeCorrelations, debugStateToString } from './serializer.js'
 import type {
+  CausalErrorGraph,
   ConsoleEntry,
   DebugState,
+  DockerContainerInfo,
+  DockerLogEntry,
+  LogLevel,
   MemorySnapshot,
   NetworkRecord,
   PageContext,
@@ -19,6 +24,7 @@ export class DebugController {
   private networkInterceptor: NetworkInterceptor
   private performanceInterceptor: PerformanceInterceptor
   private memoryInterceptor: MemoryInterceptor
+  private dockerInterceptor: DockerInterceptor
   private startTime: number = Date.now()
   private isRunning = false
 
@@ -27,6 +33,7 @@ export class DebugController {
     this.networkInterceptor = new NetworkInterceptor(maxBufferSize)
     this.performanceInterceptor = new PerformanceInterceptor()
     this.memoryInterceptor = new MemoryInterceptor()
+    this.dockerInterceptor = new DockerInterceptor(maxBufferSize)
   }
 
   public init(): void {
@@ -35,6 +42,7 @@ export class DebugController {
     this.consoleInterceptor.init()
     this.networkInterceptor.init()
     this.performanceInterceptor.init()
+    this.dockerInterceptor.init()
     this.isRunning = true
   }
 
@@ -43,6 +51,9 @@ export class DebugController {
     const networkRecords = this.networkInterceptor.getRecords()
     const performanceMetrics = this.performanceInterceptor.getMetrics()
     const memorySnapshot = this.memoryInterceptor.sample()
+    const dockerContainers = this.dockerInterceptor.getContainers()
+    const dockerLogs = this.dockerInterceptor.getLogs()
+    const dockerStatus = this.dockerInterceptor.getStatus()
 
     const errors = consoleEntries.filter((e) => e.level === 'error')
     const warns = consoleEntries.filter((e) => e.level === 'warn')
@@ -73,10 +84,17 @@ export class DebugController {
       },
       performance: performanceMetrics,
       memory: memorySnapshot,
+      docker: {
+        isAvailable: dockerStatus.isAvailable,
+        containers: dockerContainers,
+        logs: dockerLogs,
+        errorCount: dockerStatus.errorCount
+      },
       correlations: []
     }
 
     state.correlations = computeCorrelations(state)
+    state.causalGraph = buildCausalErrorGraph(state)
     return state
   }
 
@@ -101,8 +119,41 @@ export class DebugController {
     return this.memoryInterceptor.sample()
   }
 
+  public getDockerLogs(options?: {
+    container?: string
+    level?: LogLevel | 'all'
+    grep?: string
+    tail?: number
+    sinceSeconds?: number
+  }): DockerLogEntry[] {
+    return this.dockerInterceptor.getLogs(options)
+  }
+
+  public getDockerContainers(): DockerContainerInfo[] {
+    return this.dockerInterceptor.getContainers()
+  }
+
+  public pushDockerLog(
+    containerName: string,
+    message: string,
+    stream: 'stdout' | 'stderr' = 'stdout',
+    timestamp?: number,
+    level?: LogLevel
+  ): DockerLogEntry {
+    return this.dockerInterceptor.pushLog(containerName, message, stream, timestamp, level)
+  }
+
+  public setDockerContainers(containers: DockerContainerInfo[]): void {
+    this.dockerInterceptor.setContainers(containers)
+  }
+
   public getCorrelations(): TemporalCorrelation[] {
     return this.getSnapshot().correlations
+  }
+
+  public getCausalGraph(options?: { timeframeMs?: number; includeDocker?: boolean }): CausalErrorGraph {
+    const state = this.getSnapshot()
+    return buildCausalErrorGraph(state, options)
   }
 
   public clear(): void {
@@ -110,6 +161,7 @@ export class DebugController {
     this.networkInterceptor.clear()
     this.performanceInterceptor.clear()
     this.memoryInterceptor.clear()
+    this.dockerInterceptor.clear()
   }
 
   public destroy(): void {
@@ -117,6 +169,7 @@ export class DebugController {
     this.consoleInterceptor.destroy()
     this.networkInterceptor.destroy()
     this.performanceInterceptor.destroy()
+    this.dockerInterceptor.destroy()
     this.isRunning = false
   }
 }

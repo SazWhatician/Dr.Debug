@@ -1,4 +1,5 @@
 import { CockpitPanel, type PrescriptionData, type StepItem } from './components/CockpitPanel.js'
+import type { CausalErrorGraph } from './components/CausalGraphView.js'
 import { FloatingPill } from './components/FloatingPill.js'
 import { shadowStyles } from './styles.js'
 
@@ -121,6 +122,14 @@ export class DrDebugUI {
     this.cockpit.clearTimeline()
   }
 
+  public showThinking(message: string): void {
+    this.cockpit.showThinking(message)
+  }
+
+  public updateCausalGraph(graph: CausalErrorGraph): void {
+    this.cockpit.updateCausalGraph(graph)
+  }
+
   public toggleCockpit(): void {
     this.cockpit.toggle()
   }
@@ -133,53 +142,61 @@ export class DrDebugUI {
     this.cockpit.hide()
   }
 
-  private runDemoInvestigation(query: string): void {
+  private runDemoInvestigation(_query: string): void {
     this.cockpit.clearTimeline()
     this.cockpit.switchTab('timeline')
     this.updatePillStatus(0, 0, 0, true)
+    this.cockpit.showThinking('Reading console ring buffer, network timeline, and Docker backend logs...')
 
     const steps: StepItem[] = [
       {
         stepNumber: 1,
-        hypothesis: 'Scanning console ring buffer for unhandled exceptions and error patterns.',
-        toolName: 'scan_console',
-        toolOutput: '[ConsoleInterceptor] 3 errors in ring buffer\n→ TypeError: Cannot read properties of undefined (reading "data")\n→ NetworkError: Failed to fetch /api/agents/resource/run\n→ Unhandled rejection: Promise rejected without .catch()'
+        hypothesis: 'Inspect the console ring buffer for unhandled exceptions. The TypeError is likely caused by a failed async operation returning undefined instead of an expected response body.',
+        toolName: 'inspect_error',
+        toolOutput: '[ConsoleInterceptor] 3 errors in ring buffer\n→ TypeError: Cannot read properties of undefined (reading "data")\n→ NetworkError: Failed to fetch /api/agents/resource/run (503)\n→ Unhandled rejection: Promise chain missing .catch() handler'
       },
       {
         stepNumber: 2,
-        hypothesis: 'Cross-referencing network timeline for failed requests in the exception window.',
-        toolName: 'scan_network',
-        toolOutput: '[NetworkInterceptor] 2 anomalies detected\n→ POST /api/agents/resource/run → [503] 4821ms (upstream timeout)\n→ GET /api/config → [0] ERR_CONNECTION_REFUSED (possible CORS block)'
+        hypothesis: 'Cross-reference the network timeline. The TypeError appeared 312ms after a 503 response — strong causal candidate. Checking the failed request details.',
+        toolName: 'inspect_request',
+        toolOutput: '[NetworkInterceptor] 2 anomalies\n→ POST /api/agents/resource/run  [503] 4821ms  ⚠️ upstream timeout\n→ GET /api/config                 [0]   ERR_CONNECTION_REFUSED  ⚠️ CORS/unreachable'
       },
       {
         stepNumber: 3,
-        hypothesis: 'Analyzing temporal correlation — console error fired 312ms after the 503 response.',
-        toolName: 'correlate',
-        toolOutput: '[TemporalEngine] High-confidence causal link found\n→ NetworkRecord[POST /api/agents/resource/run] t=+1420ms status=503\n→ ConsoleError[TypeError: data undefined]      t=+1732ms\n→ Δt = 312ms → causal (threshold < 4000ms)'
+        hypothesis: 'The 503 suggests the backend is down, not just slow. Inspecting Docker container logs to find the root backend failure.',
+        toolName: 'inspect_docker_logs',
+        toolOutput: '[DockerInterceptor] 4 backend errors\n→ [postgres-db] FATAL: remaining connection slots reserved for superuser\n→ [postgres-db] ERROR: max_connections (100) reached — refusing connection\n→ [api-server]  PrismaClientKnownRequestError: P2024 DB connection timeout\n→ [api-server]  Error: POST /api/agents/resource/run → upstream DB unavailable'
       },
       {
         stepNumber: 4,
-        hypothesis: 'Checking web vitals and long tasks for downstream performance degradation.',
-        toolName: 'scan_vitals',
-        toolOutput: '[PerformanceInterceptor] Snapshot\n→ LCP: 2840ms  (needs-improvement, threshold 2500ms)\n→ CLS: 0.04    (good)\n→ INP: 380ms   (needs-improvement, threshold 200ms)\n→ Long task: 210ms blocking main thread at t=+1680ms'
+        hypothesis: 'Building the full-stack causal graph. The DB pool exhaustion is the root node — everything else is a downstream effect of that single failure.',
+        toolName: 'graphify_errors',
+        toolOutput: '[CausalGraph] 4 nodes, 3 causal links\n🎯 ROOT CAUSE: [docker] postgres-db — max_connections exhausted\n→ [docker] api-server DB timeout          (CAUSED_BY     98%)\n→ [network] POST /api/agents/resource 503  (PROPAGATED_TO 96%)\n→ [console] TypeError: data undefined      (TRIGGERED_BY  94%)\n\nSee Causal Map tab for the interactive dependency graph.'
       }
     ]
 
-    const delays = [0, 1400, 2900, 4200]
+    const delays = [800, 2300, 3900, 5400]
     steps.forEach((step, i) => {
-      setTimeout(() => this.cockpit.addStep(step), delays[i])
+      setTimeout(() => {
+        if (i + 1 < steps.length) {
+          this.cockpit.showThinking(steps[i + 1].hypothesis)
+        } else {
+          this.cockpit.showThinking('Root cause identified. Generating verified code fix...')
+        }
+        this.cockpit.addStep(step)
+      }, delays[i])
     })
 
     setTimeout(() => {
       this.showPrescription({
-        diagnosis: `POST /api/agents/resource/run is timing out with 503 Service Unavailable. The TypeError "Cannot read properties of undefined (reading 'data')" is a direct downstream effect — the response handler accesses .data on an undefined body when the request fails without a guard.`,
-        rootCause: 'The upstream service is unavailable or overloaded. The client fetch call has no timeout, no retry logic, and no null-guard on the response body, causing a hard crash propagated as an unhandled rejection.',
-        confidence: 0.94,
-        filesToModify: ['src/api/agents.ts', 'src/hooks/useAgentRun.ts'],
-        fix: `--- a/src/api/agents.ts\n+++ b/src/api/agents.ts\n@@ -12,7 +12,13 @@\n export async function runAgentResource(payload: AgentPayload) {\n-  const res = await fetch('/api/agents/resource/run', {\n-    method: 'POST', body: JSON.stringify(payload)\n-  })\n-  const { data } = await res.json()\n-  return data\n+  const res = await fetch('/api/agents/resource/run', {\n+    method: 'POST',\n+    body: JSON.stringify(payload),\n+    signal: AbortSignal.timeout(5000)\n+  })\n+  if (!res.ok) throw new Error(\`API \${res.status}: \${res.statusText}\`)\n+  const json = await res.json().catch(() => null)\n+  return json?.data ?? null\n }`
+        diagnosis: 'The frontend TypeError is a direct downstream effect of the API returning 503. The API fails because PostgreSQL exhausted its connection pool — confirmed in Docker stderr. The missing null-guard in the fetch handler turns a silent API failure into an uncaught exception.',
+        rootCause: 'PostgreSQL connection leak: backend ORM sessions are never explicitly closed, accumulating until max_connections (100) is hit. This cascades: DB refuses new connections → API returns 503 on all requests → frontend fetch handler crashes on undefined response body.',
+        confidence: 0.97,
+        filesToModify: ['backend/src/db/session.py', 'frontend/src/api/client.ts'],
+        fix: `--- a/backend/src/db/session.py\n+++ b/backend/src/db/session.py\n@@ -24,5 +24,6 @@\n async def get_db():\n-    session = SessionFactory()\n-    yield session\n+    async with SessionFactory() as session:\n+        yield session\n+        await session.close()\n\n--- a/frontend/src/api/client.ts\n+++ b/frontend/src/api/client.ts\n@@ -8,3 +8,5 @@\n export async function callAPI(url: string) {\n   const res = await fetch(url)\n-  return res.json()\n+  if (!res.ok) throw new Error(\`HTTP \${res.status}: \${res.statusText}\`)\n+  return res.json().catch(() => null)\n }`
       })
       this.updatePillStatus(1, 1, 0, false)
-    }, 5800)
+    }, 7200)
   }
 
   public destroy(): void {

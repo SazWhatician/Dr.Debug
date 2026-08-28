@@ -2,12 +2,29 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <title>Dr. Debug</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg: #060911;
+      --card-bg: rgba(15, 23, 42, 0.85);
+      --border: rgba(56, 189, 248, 0.2);
+      --border-hover: rgba(56, 189, 248, 0.5);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --cyan: #00f0ff;
+      --blue: #0284c7;
+      --purple: #a855f7;
+      --green: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      width: 290px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(145deg, #090d16 0%, #0d1527 100%);
-      color: #f3f4f6;
+      width: 320px;
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top right, rgba(14, 165, 233, 0.12) 0%, transparent 70%), var(--bg);
+      color: var(--text);
       padding: 16px;
       margin: 0;
       -webkit-font-smoothing: antialiased;
@@ -15,22 +32,25 @@
     .header {
       display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: space-between;
       margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
     }
     .logo {
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
       border-radius: 6px;
       object-fit: contain;
       filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.7));
-    }
-    h3 {
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.3px;
-      color: #fff;
-      margin: 0;
     }
     .status-badge {
       display: inline-flex;
@@ -43,44 +63,144 @@
       font-weight: 700;
       padding: 2px 8px;
       border-radius: 9999px;
-      margin-bottom: 10px;
     }
-    p {
-      font-size: 12px;
-      color: #94a3b8;
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
       margin-bottom: 14px;
-      line-height: 1.45;
     }
     button {
       width: 100%;
       background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);
       color: #fff;
       border: none;
-      padding: 9px;
-      border-radius: 7px;
+      padding: 9px 12px;
+      border-radius: 8px;
       font-weight: 700;
       font-size: 12px;
       cursor: pointer;
-      box-shadow: 0 4px 14px rgba(6, 182, 212, 0.3);
-      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 4px 14px rgba(6, 182, 212, 0.25);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
     button:hover {
-      box-shadow: 0 6px 18px rgba(6, 182, 212, 0.5);
+      box-shadow: 0 6px 20px rgba(6, 182, 212, 0.45);
       transform: translateY(-1px);
+    }
+    button.btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: #e2e8f0;
+      box-shadow: none;
+    }
+    button.btn-secondary:hover {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: var(--border-hover);
+      color: var(--cyan);
+    }
+    .config-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .config-card h4 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--cyan);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .form-group {
+      margin-bottom: 8px;
+    }
+    label {
+      display: block;
+      font-size: 10.5px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+    select, input[type="text"], input[type="password"] {
+      width: 100%;
+      background: rgba(6, 9, 16, 0.9);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    select:focus, input:focus {
+      border-color: var(--cyan);
+    }
+    .status-msg {
+      font-size: 11px;
+      text-align: center;
+      margin-top: 6px;
+      min-height: 16px;
+      color: var(--green);
+    }
+    .footer-hint {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.4;
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <img src="./icons/icon48.png" class="logo" alt="Dr. Debug" />
-    <div>
-      <h3>Dr. Debug</h3>
+    <div class="brand">
+      <img src="./icons/icon48.png" class="logo" alt="Dr. Debug" />
+      <span>DR. DEBUG</span>
     </div>
+    <div class="status-badge">🟢 Live Telemetry</div>
   </div>
-  <div class="status-badge">🟢 Real-Time Telemetry Active</div>
-  <p>Autonomous AI debugging agent is actively inspecting Console, Network & Performance telemetry in your tabs.</p>
-  <button id="btn-open-devtools">Open Webpage & Press F12</button>
+
+  <div class="btn-group">
+    <button id="btn-toggle-ui">
+      <span>✨</span> <span>Toggle In-Page Cockpit (HUD)</span>
+    </button>
+    <button id="btn-diagnose" class="btn-secondary">
+      <span>🩺</span> <span>Diagnose Active Tab with AI</span>
+    </button>
+  </div>
+
+  <div class="config-card">
+    <h4><span>⚡</span> <span>AI Inference Engine</span></h4>
+    <div class="form-group">
+      <label for="provider-select">Model Provider</label>
+      <select id="provider-select">
+        <option value="groq" selected>Groq LPU (llama-3.3-70b-versatile)</option>
+        <option value="openai">OpenAI (GPT-4o / GPT-4o-mini)</option>
+        <option value="gemini">Gemini Flash (via compatible endpoint)</option>
+        <option value="litert">LiteRT / Mock (On-Device Engine)</option>
+      </select>
+    </div>
+    <div class="form-group" id="api-key-group">
+      <label for="api-key-input">API Key</label>
+      <input type="password" id="api-key-input" placeholder="gsk_... or sk-..." />
+    </div>
+    <button id="btn-save-settings" class="btn-secondary" style="padding: 6px 10px; font-size: 11px;">
+      <span>💾</span> <span>Save & Apply AI Settings</span>
+    </button>
+    <div id="status-msg" class="status-msg"></div>
+  </div>
+
+  <div class="footer-hint">
+    Floating HUD pill appears in the bottom right corner of webpages. Press <strong>F12</strong> for full DevTools panel.
+  </div>
+
   <script src="./popup.js"></script>
 </body>
 </html>
-

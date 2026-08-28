@@ -103,8 +103,10 @@ export class DrDebug {
       true
     )
 
-    let currentHypothesis = 'Evaluating telemetry...'
+    let currentHypothesis = 'Reading telemetry buffers and forming initial hypothesis...'
     let currentStepNumber = 1
+
+    this.ui?.showThinking(currentHypothesis)
 
     try {
       const result = await this.core.investigate(activeGoal, {
@@ -116,6 +118,7 @@ export class DrDebug {
         },
         onReflection: (reflection) => {
           currentHypothesis = reflection.working_hypothesis
+          this.ui?.showThinking(reflection.working_hypothesis)
           options.onReflection?.(reflection)
         },
         onToolResult: (toolName, toolResult) => {
@@ -167,6 +170,10 @@ export class DrDebug {
           }
         : undefined
     })
+
+    // Sync full-stack causal topology graph
+    const graph = this.controller.getCausalGraph()
+    this.ui.updateCausalGraph(graph)
   }
 
   private async handleAutoTrigger(): Promise<void> {

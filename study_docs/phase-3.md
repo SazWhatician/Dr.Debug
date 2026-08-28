@@ -29,6 +29,9 @@ Design and build the modern, non-intrusive in-browser developer HUD living insid
     - Step number and tool badge
     - Working Hypothesis & Thought Process
     - Dispatched Diagnostic Tool & Raw Output
+  - [x] **Causal Topology Matrix View (`CausalGraphView`):**
+    - Native SVG/HTML5 interactive DAG connecting Docker Backend ➔ Network ➔ Console ➔ UI.
+    - Animated pulse links, root cause highlight badge, click-to-inspect modal, and Mermaid export.
   - [x] **Prescription / Root Cause Card:**
     - Plain English explanation of finding and verified root cause
     - Target files and confidence metric
@@ -50,10 +53,12 @@ Design and build the modern, non-intrusive in-browser developer HUD living insid
 ## 🧪 Acceptance Criteria & Verification
 1. **Style Isolation:** Zero style bleed between complex UI frameworks and the Shadow DOM HUD.
 2. **On-Device LLM:** `LiteRTClient` formats prompts with tool calling tags and parses model responses cleanly.
-3. **End-to-End Orchestration:** All 39 unit and integration tests passing across all packages (`npm test`).
+3. **End-to-End Orchestration:** All 59 unit and integration tests passing across all packages (`npm test`).
 4. **Type Safety:** 100% strict TypeScript typecheck passes cleanly with zero errors (`npm run typecheck`).
 
 ---
 
 ## 📝 Phase Completion & Change Notes
 - **[2026-08-27]**: Implemented `LiteRTClient` for local on-device inference; built `FloatingPill`, `CockpitPanel`, and `DrDebugUI` with Shadow DOM isolation; created `dr-debug` master orchestrator and end-to-end integration test suite. All 39 tests passing.
+- **[2026-08-28]**: Added `CausalGraphView` native SVG full-stack topology graph tab to Shadow DOM Cockpit HUD.
+

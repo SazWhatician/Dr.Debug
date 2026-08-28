@@ -3,6 +3,8 @@ import { checkStorageTool } from './check_storage.js'
 import { doneTool } from './done.js'
 import { executeJavascriptTool } from './execute_javascript.js'
 import { findCorrelationsTool } from './find_correlations.js'
+import { graphifyErrorsTool } from './graphify_errors.js'
+import { inspectDockerLogsTool } from './inspect_docker_logs.js'
 import { inspectElementTool } from './inspect_element.js'
 import { inspectErrorTool } from './inspect_error.js'
 import { inspectRequestTool } from './inspect_request.js'
@@ -13,6 +15,8 @@ export function createDefaultTools(): DiagnosticTool[] {
   return [
     inspectErrorTool,
     inspectRequestTool,
+    inspectDockerLogsTool,
+    graphifyErrorsTool,
     inspectElementTool,
     queryFrameworkStateTool,
     executeJavascriptTool,
@@ -28,6 +32,8 @@ export {
   doneTool,
   executeJavascriptTool,
   findCorrelationsTool,
+  graphifyErrorsTool,
+  inspectDockerLogsTool,
   inspectElementTool,
   inspectErrorTool,
   inspectRequestTool,

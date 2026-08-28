@@ -35,6 +35,8 @@ Implement the autonomous cognitive brain of Dr. Debug. This includes the forced 
   - [x] `query_framework_state`: React Component inspection via DevTools hook, props, Zustand/Redux store dumps.
   - [x] `execute_javascript`: Safe in-browser JS evaluation with `AbortSignal` and output formatting.
   - [x] `find_correlations`: Temporal clustering of errors, network calls, and user interactions.
+  - [x] `inspect_docker_logs`: Inspects and filters live Docker backend container logs (stdout/stderr) for server panics and OOM events.
+  - [x] `graphify_errors`: Constructs multi-layer full-stack Causal Error Graphs (Docker ➔ Network ➔ Console ➔ UI) with root cause detection and Mermaid generation.
   - [x] `replay_network_request`: Re-send failed requests with modified headers/parameters to test determinism.
   - [x] `check_storage`: Inspect LocalStorage, SessionStorage, and Cookies for expired JWTs or corrupted state.
   - [x] `done`: Formal conclusion tool outputting diagnosis, verified root cause, file paths, confidence score, and proposed code fix.
@@ -51,10 +53,12 @@ Implement the autonomous cognitive brain of Dr. Debug. This includes the forced 
 1. **Determinism:** Agent successfully solves standard test scenarios (e.g., CORS cascading into TypeError) in $\le 4$ steps.
 2. **Reflection Integrity:** Re-Act loop validates reflection schemas before executing tools.
 3. **Safety:** `execute_javascript` executes with timeout protection and captures runtime errors without crashing the main application thread.
-4. **Test Coverage:** All 28 tests across 9 test files passing with 100% success.
+4. **Test Coverage:** All 59 tests across 17 test files passing with 100% success.
 
 ---
 
 ## 📝 Phase Completion & Change Notes
 - **[2026-08-26]**: Initial specification drafted.
 - **[2026-08-26]**: Implemented `@dr-debug/llms` (`OpenAIClient`, `MockLLMClient`) and `@dr-debug/core` (`DrDebugCore`, `DebugReflectionSchema`, and all 9 diagnostic tools). Full test suite passing (28/28 tests across 9 test files). TypeScript typecheck passed with 0 errors. Phase 2 marked as **🟢 Completed**.
+- **[2026-08-28]**: Added `inspect_docker_logs` and `graphify_errors` diagnostic tools for full-stack Docker backend inspection and Causal Error DAG generation with Mermaid export. Test suite expanded to 59/59 tests passing across 17 test files.
+
