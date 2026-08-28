@@ -38,10 +38,11 @@ Deliver a zero-setup Chrome Extension that allows developers to run Dr. Debug on
 1. **Third-Party Site Injection:** Extension injects cleanly on arbitrary complex web applications without console errors.
 2. **DevTools Integration:** Dedicated panel stays in sync with active tab navigation and error events.
 3. **Source Map Accuracy:** Accurately unminifies production stack traces down to the exact original TypeScript source line.
-4. **Test Suite:** All 46 monorepo tests passing cleanly (`npm test`).
+4. **Test Suite:** All 50 monorepo tests passing cleanly (`npm test`).
 5. **Type Safety:** 100% strict TypeScript typecheck passes with zero errors (`npm run typecheck`).
 
 ---
 
 ## 📝 Phase Completion & Change Notes
-- **[2026-08-27]**: Implemented `@dr-debug/extension` package with Manifest V3 background service worker, content script bridge, DevTools RCA Markdown/JSON exporter, and VLQ `SourceMapResolver`. All 46 tests passing.
+- **[2026-08-27]**: Implemented `@dr-debug/extension` package with Manifest V3 background service worker, content script bridge, DevTools RCA Markdown/JSON exporter, and VLQ `SourceMapResolver`.
+- **[2026-08-28]**: Hardened network and console interceptors to eliminate third-party site breakage (fixed `fetch`/`XHR` illegal invocation, recursive getter/setter loops, stream locking on SSE, early DOM insertion during `document_start`, and circular JSON handling). All 50 tests passing cleanly.

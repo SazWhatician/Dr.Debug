@@ -17,101 +17,121 @@ export class NetworkInterceptor {
     if (this.isInstalled) return
 
     // 1. Hook globalThis.fetch / window.fetch
-    const fetchTarget = typeof globalThis !== 'undefined' && typeof globalThis.fetch === 'function'
-      ? globalThis.fetch
-      : typeof window !== 'undefined' && typeof window.fetch === 'function'
-        ? window.fetch
+    const fetchTarget = typeof window !== 'undefined' && typeof window.fetch === 'function'
+      ? window.fetch
+      : typeof globalThis !== 'undefined' && typeof globalThis.fetch === 'function'
+        ? globalThis.fetch
         : undefined
 
     if (fetchTarget) {
       this.originalFetch = fetchTarget
       const self = this
+      const originalFetch = this.originalFetch
 
-      const createWrapped = (nativeFetch: typeof fetch) => {
-        return async (...args: Parameters<typeof fetch>): Promise<Response> => {
-          const startTime = Date.now()
-          const perfStart = typeof performance !== 'undefined' ? performance.now() : startTime
-          const { url, method, headers, bodyPreview } = self.parseFetchArgs(args)
+      const wrappedFetch = async function (this: any, ...args: Parameters<typeof fetch>): Promise<Response> {
+        const startTime = Date.now()
+        const perfStart = typeof performance !== 'undefined' ? performance.now() : startTime
 
-          const record: NetworkRecord = {
-            id: `req_${startTime}_${Math.random().toString(36).substring(2, 7)}`,
-            method,
-            url,
-            startTime,
-            requestHeaders: headers,
-            requestBodyPreview: bodyPreview
-          }
+        let url = ''
+        let method = 'GET'
+        let headers: Record<string, string> | undefined
+        let bodyPreview: string | undefined
 
+        try {
+          const parsed = self.parseFetchArgs(args)
+          url = parsed.url
+          method = parsed.method
+          headers = parsed.headers
+          bodyPreview = parsed.bodyPreview
+        } catch {
+          // Guard against parameter inspection errors
+        }
+
+        const record: NetworkRecord = {
+          id: `req_${startTime}_${Math.random().toString(36).substring(2, 7)}`,
+          method,
+          url,
+          startTime,
+          requestHeaders: headers,
+          requestBodyPreview: bodyPreview
+        }
+
+        try {
           self.pushRecord(record)
+        } catch {
+          // Protect telemetry recording
+        }
+
+        try {
+          const response = await originalFetch.apply(this || globalThis, args)
+          const duration = typeof performance !== 'undefined'
+            ? Math.round(performance.now() - perfStart)
+            : Date.now() - startTime
+          record.endTime = Date.now()
+          record.duration = duration
+          record.status = response.status
+          record.statusText = response.statusText
+          record.isFailed = response.status >= 400
+          record.isSlow = duration > 1500
 
           try {
-            const response = await nativeFetch(...args)
-            const duration = typeof performance !== 'undefined'
-              ? Math.round(performance.now() - perfStart)
-              : Date.now() - startTime
-            record.endTime = Date.now()
-            record.duration = duration
-            record.status = response.status
-            record.statusText = response.statusText
-            record.isFailed = response.status >= 400
-            record.isSlow = duration > 1500
-
             const resHeaders: Record<string, string> = {}
-            try {
-              response.headers?.forEach((val, key) => {
-                resHeaders[key] = val
-              })
-            } catch {
-              // Ignore header iteration failure
-            }
+            response.headers?.forEach((val, key) => {
+              resHeaders[key] = val
+            })
             record.responseHeaders = resHeaders
-
-            // Non-destructive body inspection
-            if (typeof response.clone === 'function') {
-              self.extractResponseBody(response.clone(), record)
-            }
-
-            return response
-          } catch (err: any) {
-            const duration = typeof performance !== 'undefined'
-              ? Math.round(performance.now() - perfStart)
-              : Date.now() - startTime
-            record.endTime = Date.now()
-            record.duration = duration
-            record.status = 0
-            record.statusText = err?.message || 'NetworkError'
-            record.isFailed = true
-            record.isCORS = self.detectCORSError(err, record.url)
-            record.error = err?.message || 'Fetch failed'
-            throw err
+          } catch {
+            // Ignore header iteration failure
           }
+
+          // Safe, non-destructive body inspection (strictly skip streams, SSE, opaque, or consumed bodies)
+          if (
+            response &&
+            response.type !== 'opaque' &&
+            !response.bodyUsed &&
+            typeof response.clone === 'function'
+          ) {
+            const contentType = (response.headers?.get('content-type') || '').toLowerCase()
+            const isStreaming =
+              contentType.includes('event-stream') ||
+              contentType.includes('stream') ||
+              contentType.includes('multipart/') ||
+              contentType.includes('octet-stream')
+
+            if (!isStreaming && (contentType.includes('application/json') || contentType.includes('text/'))) {
+              self.extractResponseBody(response, record)
+            }
+          }
+
+          return response
+        } catch (err: any) {
+          const duration = typeof performance !== 'undefined'
+            ? Math.round(performance.now() - perfStart)
+            : Date.now() - startTime
+          record.endTime = Date.now()
+          record.duration = duration
+          record.status = 0
+          record.statusText = err?.message || 'NetworkError'
+          record.isFailed = true
+          record.isCORS = self.detectCORSError(err, record.url)
+          record.error = err?.message || 'Fetch failed'
+          throw err
         }
       }
 
-      let activeFetch = fetchTarget
-      let wrappedFetch = createWrapped(activeFetch)
-
-      const attachProperty = (obj: any) => {
+      if (typeof window !== 'undefined' && window.fetch) {
         try {
-          Object.defineProperty(obj, 'fetch', {
-            get: () => wrappedFetch,
-            set: (newFetch: any) => {
-              if (typeof newFetch === 'function') {
-                activeFetch = newFetch
-                wrappedFetch = createWrapped(newFetch)
-              }
-            },
-            configurable: true,
-            enumerable: true
-          })
+          window.fetch = wrappedFetch as any
         } catch {
-          obj.fetch = wrappedFetch
+          // Ignore
         }
       }
-
-      if (typeof window !== 'undefined') attachProperty(window)
-      if (typeof globalThis !== 'undefined' && globalThis !== (typeof window !== 'undefined' ? window : null)) {
-        attachProperty(globalThis)
+      if (typeof globalThis !== 'undefined' && globalThis.fetch && globalThis !== (typeof window !== 'undefined' ? window : null)) {
+        try {
+          globalThis.fetch = wrappedFetch as any
+        } catch {
+          // Ignore
+        }
       }
     }
 
@@ -143,12 +163,23 @@ export class NetworkInterceptor {
     } else if (typeof input === 'object' && input !== null && 'url' in input) {
       url = (input as Request).url
       method = (input as Request).method || 'GET'
+      if ((input as Request).headers && !init?.headers) {
+        try {
+          headers = this.normalizeHeaders((input as Request).headers)
+        } catch {
+          // Ignore header parsing error
+        }
+      }
     }
 
     if (init) {
       if (init.method) method = init.method.toUpperCase()
       if (init.headers) {
-        headers = this.normalizeHeaders(init.headers)
+        try {
+          headers = this.normalizeHeaders(init.headers)
+        } catch {
+          // Ignore
+        }
       }
       if (init.body) {
         bodyPreview = this.serializeBody(init.body)
@@ -185,17 +216,14 @@ export class NetworkInterceptor {
     }
   }
 
-  private async extractResponseBody(responseClone: Response, record: NetworkRecord): Promise<void> {
+  private async extractResponseBody(response: Response, record: NetworkRecord): Promise<void> {
     try {
-      const contentType = responseClone.headers?.get('content-type') || ''
-      if (contentType.includes('application/json') || contentType.includes('text/')) {
-        const text = await responseClone.text()
-        record.responseBodyPreview = text.slice(0, 2048)
-      } else {
-        record.responseBodyPreview = `[Binary / Stream content: ${contentType}]`
-      }
+      if (response.bodyUsed) return
+      const clone = response.clone()
+      const text = await clone.text()
+      record.responseBodyPreview = text.slice(0, 2048)
     } catch {
-      // Clone stream could not be read; ignore
+      // Clone stream could not be read; ignore safely
     }
   }
 
@@ -234,71 +262,91 @@ export class NetworkInterceptor {
     >()
 
     proto.open = function (this: XMLHttpRequest, ...args: any[]) {
-      const method = (args[0] || 'GET').toUpperCase()
-      const url = String(args[1] || '')
-      const startTime = Date.now()
+      try {
+        const method = (args[0] || 'GET').toUpperCase()
+        const url = String(args[1] || '')
+        const startTime = Date.now()
 
-      const record: NetworkRecord = {
-        id: `xhr_${startTime}_${Math.random().toString(36).substring(2, 7)}`,
-        method,
-        url,
-        startTime
+        const record: NetworkRecord = {
+          id: `xhr_${startTime}_${Math.random().toString(36).substring(2, 7)}`,
+          method,
+          url,
+          startTime
+        }
+
+        xhrStateMap.set(this, {
+          record,
+          perfStart: typeof performance !== 'undefined' ? performance.now() : startTime,
+          requestHeaders: {}
+        })
+
+        self.pushRecord(record)
+      } catch {
+        // Safe telemetry capture
       }
 
-      xhrStateMap.set(this, {
-        record,
-        perfStart: typeof performance !== 'undefined' ? performance.now() : startTime,
-        requestHeaders: {}
-      })
-
-      self.pushRecord(record)
-      return self.originalXHROpen!.apply(this, args as any)
+      return self.originalXHROpen!.apply(this, arguments as any)
     }
 
     proto.setRequestHeader = function (this: XMLHttpRequest, name: string, value: string) {
-      const state = xhrStateMap.get(this)
-      if (state) {
-        state.requestHeaders[name] = value
-        state.record.requestHeaders = state.requestHeaders
+      try {
+        const state = xhrStateMap.get(this)
+        if (state) {
+          state.requestHeaders[name] = value
+          state.record.requestHeaders = state.requestHeaders
+        }
+      } catch {
+        // Safe telemetry capture
       }
-      return self.originalXHRSetRequestHeader!.apply(this, [name, value])
+
+      return self.originalXHRSetRequestHeader!.apply(this, arguments as any)
     }
 
     proto.send = function (this: XMLHttpRequest, body?: any) {
-      const state = xhrStateMap.get(this)
-      if (state) {
-        state.perfStart = typeof performance !== 'undefined' ? performance.now() : Date.now()
-        if (body) {
-          state.record.requestBodyPreview = self.serializeBody(body)
-        }
-
-        this.addEventListener('loadend', () => {
-          const duration = typeof performance !== 'undefined'
-            ? Math.round(performance.now() - state.perfStart)
-            : Date.now() - state.record.startTime
-          state.record.endTime = Date.now()
-          state.record.duration = duration
-          state.record.status = this.status
-          state.record.statusText = this.statusText
-          state.record.isFailed = this.status === 0 || this.status >= 400
-          state.record.isSlow = duration > 1500
-          if (this.status === 0) {
-            state.record.isCORS = self.detectCORSError(new Error('XHR Network Error'), state.record.url)
+      try {
+        const state = xhrStateMap.get(this)
+        if (state) {
+          state.perfStart = typeof performance !== 'undefined' ? performance.now() : Date.now()
+          if (body) {
+            state.record.requestBodyPreview = self.serializeBody(body)
           }
 
-          if (this.responseType === '' || this.responseType === 'text') {
-            state.record.responseBodyPreview = (this.responseText || '').slice(0, 2048)
-          } else if (this.responseType === 'json') {
+          this.addEventListener('loadend', () => {
             try {
-              state.record.responseBodyPreview = JSON.stringify(this.response).slice(0, 2048)
+              const duration = typeof performance !== 'undefined'
+                ? Math.round(performance.now() - state.perfStart)
+                : Date.now() - state.record.startTime
+              state.record.endTime = Date.now()
+              state.record.duration = duration
+              state.record.status = this.status
+              state.record.statusText = this.statusText
+              state.record.isFailed = this.status === 0 || this.status >= 400
+              state.record.isSlow = duration > 1500
+              if (this.status === 0) {
+                state.record.isCORS = self.detectCORSError(new Error('XHR Network Error'), state.record.url)
+              }
+
+              if (this.responseType === '' || this.responseType === 'text') {
+                state.record.responseBodyPreview = (this.responseText || '').slice(0, 2048)
+              } else if (this.responseType === 'json' && this.response) {
+                try {
+                  state.record.responseBodyPreview = typeof this.response === 'string'
+                    ? this.response.slice(0, 2048)
+                    : JSON.stringify(this.response).slice(0, 2048)
+                } catch {
+                  state.record.responseBodyPreview = '[JSON Response]'
+                }
+              }
             } catch {
-              state.record.responseBodyPreview = '[JSON Response]'
+              // Ignore any loadend telemetry error safely
             }
-          }
-        })
+          })
+        }
+      } catch {
+        // Safe telemetry capture
       }
 
-      return self.originalXHRSend!.apply(this, [body])
+      return self.originalXHRSend!.apply(this, arguments as any)
     }
   }
 
@@ -329,20 +377,20 @@ export class NetworkInterceptor {
     if (!this.isInstalled) return
 
     if (this.originalFetch) {
-      const resetProperty = (obj: any) => {
+      if (typeof window !== 'undefined') {
         try {
-          Object.defineProperty(obj, 'fetch', {
-            value: this.originalFetch,
-            writable: true,
-            configurable: true,
-            enumerable: true
-          })
+          window.fetch = this.originalFetch
         } catch {
-          obj.fetch = this.originalFetch
+          // Ignore
         }
       }
-      if (typeof window !== 'undefined') resetProperty(window)
-      if (typeof globalThis !== 'undefined') resetProperty(globalThis)
+      if (typeof globalThis !== 'undefined') {
+        try {
+          globalThis.fetch = this.originalFetch
+        } catch {
+          // Ignore
+        }
+      }
     }
 
     if (typeof XMLHttpRequest !== 'undefined') {

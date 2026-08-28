@@ -14,24 +14,40 @@ export class DrDebugUI {
   private cockpit: CockpitPanel
 
   constructor(options: DrDebugUIOptions = {}) {
-    const parent = options.container || document.body || document.documentElement
-
     // Check if #dr-debug-root already exists
     let host = document.getElementById('dr-debug-root')
     if (!host) {
       host = document.createElement('div')
       host.id = 'dr-debug-root'
-      parent.appendChild(host)
+      host.style.position = 'fixed'
+      host.style.zIndex = '2147483647'
+      host.style.pointerEvents = 'none'
+      host.style.top = '0'
+      host.style.left = '0'
+      host.style.width = '0'
+      host.style.height = '0'
+      host.style.border = 'none'
+      host.style.margin = '0'
+      host.style.padding = '0'
+
+      if (options.container) {
+        options.container.appendChild(host)
+      } else if (typeof document !== 'undefined' && document.body) {
+        document.body.appendChild(host)
+      } else if (typeof document !== 'undefined') {
+        const onReady = () => {
+          if (document.body && !host!.isConnected) {
+            document.body.appendChild(host!)
+          }
+        }
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', onReady, { once: true })
+        } else {
+          window.addEventListener('load', onReady, { once: true })
+        }
+      }
     }
     this.host = host
-
-    if (typeof document !== 'undefined' && !document.body) {
-      document.addEventListener('DOMContentLoaded', () => {
-        if (document.body && this.host.parentElement !== document.body) {
-          document.body.appendChild(this.host)
-        }
-      })
-    }
 
     this.shadowRoot = host.shadowRoot || host.attachShadow({ mode: 'open' })
     this.shadowRoot.innerHTML = ''

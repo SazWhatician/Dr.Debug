@@ -85,4 +85,33 @@ describe('ConsoleInterceptor', () => {
 
     expect(interceptor.getEntries().length).toBe(0)
   })
+
+  it('safely handles cyclic objects and complex DOM structures without throwing', () => {
+    const cyclicObj: any = { name: 'cyclic' }
+    cyclicObj.self = cyclicObj
+
+    expect(() => {
+      console.log('Testing cyclic object:', cyclicObj)
+    }).not.toThrow()
+
+    const entries = interceptor.getEntries()
+    expect(entries.length).toBe(1)
+    expect(entries[0].message).toContain('[Circular]')
+  })
+
+  it('allows external libraries to re-wrap console methods without recursion', () => {
+    const prevWarn = console.warn
+    let wrappedWarnCount = 0
+    console.warn = function (...args: any[]) {
+      wrappedWarnCount++
+      prevWarn.apply(console, args)
+    }
+
+    console.warn('External wrapped warning')
+    expect(wrappedWarnCount).toBe(1)
+
+    const warnings = interceptor.getWarnings()
+    expect(warnings.length).toBe(1)
+    expect(warnings[0].message).toContain('External wrapped warning')
+  })
 })

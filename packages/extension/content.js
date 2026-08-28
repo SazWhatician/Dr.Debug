@@ -81,7 +81,7 @@
       const levels = ["error", "warn", "info", "log"];
       levels.forEach((level) => {
         if (typeof console !== "undefined" && console[level]) {
-          let originalFn = console[level].bind(console);
+          const originalFn = console[level];
           this.originalConsole[level] = originalFn;
           const typeMap = {
             error: "console_error",
@@ -90,31 +90,20 @@
             log: "console_log"
           };
           const wrapped = (...args) => {
-            if (this.isCapturing) {
-              return originalFn(...args);
+            if (!this.isCapturing) {
+              this.isCapturing = true;
+              try {
+                this.captureConsoleLog(level, typeMap[level], args);
+              } catch {
+              } finally {
+                this.isCapturing = false;
+              }
             }
-            this.isCapturing = true;
-            try {
-              this.captureConsoleLog(level, typeMap[level], args);
-            } catch {
-            } finally {
-              this.isCapturing = false;
-            }
-            return originalFn(...args);
+            return originalFn.apply(console, args);
           };
           try {
-            Object.defineProperty(console, level, {
-              get: () => wrapped,
-              set: (newFn) => {
-                if (typeof newFn === "function" && newFn !== wrapped) {
-                  originalFn = newFn;
-                }
-              },
-              configurable: true,
-              enumerable: true
-            });
-          } catch {
             console[level] = wrapped;
+          } catch {
           }
         }
       });
@@ -125,19 +114,30 @@
         if (typeof arg === "string") return arg;
         if (arg instanceof Error) return `${arg.name}: ${arg.message}
 ${arg.stack || ""}`;
-        try {
-          return JSON.stringify(arg);
-        } catch {
-          return String(arg);
+        if (typeof arg === "object" && arg !== null) {
+          try {
+            if (typeof Element !== "undefined" && arg instanceof Element) {
+              return `<${arg.tagName.toLowerCase()}${arg.id ? ` id="${arg.id}"` : ""}${arg.className ? ` class="${arg.className}"` : ""}>`;
+            }
+            const seen = /* @__PURE__ */ new WeakSet();
+            return JSON.stringify(arg, (_key, value) => {
+              if (typeof value === "object" && value !== null) {
+                if (seen.has(value)) return "[Circular]";
+                seen.add(value);
+              }
+              return value;
+            }).slice(0, 1024);
+          } catch {
+            return Object.prototype.toString.call(arg);
+          }
         }
+        return String(arg);
       }).join(" ");
       let stack;
-      if (level === "error" || level === "warn") {
+      if (level === "error") {
         const err = args.find((a) => a instanceof Error);
         if (err) {
           stack = err.stack;
-        } else {
-          stack = (new Error().stack ?? "").split("\n").slice(3).join("\n");
         }
       }
       const parsed = stack ? this.parseStack(stack) : [];
@@ -225,23 +225,17 @@ ${arg.stack || ""}`;
     destroy() {
       if (!this.isInstalled) return;
       if (this.errorHandler && typeof window !== "undefined") {
-        window.removeEventListener("error", this.errorHandler);
+        window.removeEventListener("error", this.errorHandler, true);
       }
       if (this.rejectionHandler && typeof window !== "undefined") {
-        window.removeEventListener("unhandledrejection", this.rejectionHandler);
+        window.removeEventListener("unhandledrejection", this.rejectionHandler, true);
       }
       const levels = ["error", "warn", "info", "log"];
       levels.forEach((level) => {
         if (this.originalConsole[level] && typeof console !== "undefined") {
           try {
-            Object.defineProperty(console, level, {
-              value: this.originalConsole[level],
-              writable: true,
-              configurable: true,
-              enumerable: true
-            });
-          } catch {
             console[level] = this.originalConsole[level];
+          } catch {
           }
         }
       });
@@ -325,80 +319,86 @@ ${arg.stack || ""}`;
     }
     init() {
       if (this.isInstalled) return;
-      const fetchTarget = typeof globalThis !== "undefined" && typeof globalThis.fetch === "function" ? globalThis.fetch : typeof window !== "undefined" && typeof window.fetch === "function" ? window.fetch : void 0;
+      const fetchTarget = typeof window !== "undefined" && typeof window.fetch === "function" ? window.fetch : typeof globalThis !== "undefined" && typeof globalThis.fetch === "function" ? globalThis.fetch : void 0;
       if (fetchTarget) {
         this.originalFetch = fetchTarget;
         const self = this;
-        const createWrapped = (nativeFetch) => {
-          return async (...args) => {
-            const startTime = Date.now();
-            const perfStart = typeof performance !== "undefined" ? performance.now() : startTime;
-            const { url, method, headers, bodyPreview } = self.parseFetchArgs(args);
-            const record = {
-              id: `req_${startTime}_${Math.random().toString(36).substring(2, 7)}`,
-              method,
-              url,
-              startTime,
-              requestHeaders: headers,
-              requestBodyPreview: bodyPreview
-            };
-            self.pushRecord(record);
-            try {
-              const response = await nativeFetch(...args);
-              const duration = typeof performance !== "undefined" ? Math.round(performance.now() - perfStart) : Date.now() - startTime;
-              record.endTime = Date.now();
-              record.duration = duration;
-              record.status = response.status;
-              record.statusText = response.statusText;
-              record.isFailed = response.status >= 400;
-              record.isSlow = duration > 1500;
-              const resHeaders = {};
-              try {
-                response.headers?.forEach((val, key) => {
-                  resHeaders[key] = val;
-                });
-              } catch {
-              }
-              record.responseHeaders = resHeaders;
-              if (typeof response.clone === "function") {
-                self.extractResponseBody(response.clone(), record);
-              }
-              return response;
-            } catch (err) {
-              const duration = typeof performance !== "undefined" ? Math.round(performance.now() - perfStart) : Date.now() - startTime;
-              record.endTime = Date.now();
-              record.duration = duration;
-              record.status = 0;
-              record.statusText = err?.message || "NetworkError";
-              record.isFailed = true;
-              record.isCORS = self.detectCORSError(err, record.url);
-              record.error = err?.message || "Fetch failed";
-              throw err;
-            }
-          };
-        };
-        let activeFetch = fetchTarget;
-        let wrappedFetch = createWrapped(activeFetch);
-        const attachProperty = (obj) => {
+        const originalFetch = this.originalFetch;
+        const wrappedFetch = async function(...args) {
+          const startTime = Date.now();
+          const perfStart = typeof performance !== "undefined" ? performance.now() : startTime;
+          let url = "";
+          let method = "GET";
+          let headers;
+          let bodyPreview;
           try {
-            Object.defineProperty(obj, "fetch", {
-              get: () => wrappedFetch,
-              set: (newFetch) => {
-                if (typeof newFetch === "function") {
-                  activeFetch = newFetch;
-                  wrappedFetch = createWrapped(newFetch);
-                }
-              },
-              configurable: true,
-              enumerable: true
-            });
+            const parsed = self.parseFetchArgs(args);
+            url = parsed.url;
+            method = parsed.method;
+            headers = parsed.headers;
+            bodyPreview = parsed.bodyPreview;
           } catch {
-            obj.fetch = wrappedFetch;
+          }
+          const record = {
+            id: `req_${startTime}_${Math.random().toString(36).substring(2, 7)}`,
+            method,
+            url,
+            startTime,
+            requestHeaders: headers,
+            requestBodyPreview: bodyPreview
+          };
+          try {
+            self.pushRecord(record);
+          } catch {
+          }
+          try {
+            const response = await originalFetch.apply(this || globalThis, args);
+            const duration = typeof performance !== "undefined" ? Math.round(performance.now() - perfStart) : Date.now() - startTime;
+            record.endTime = Date.now();
+            record.duration = duration;
+            record.status = response.status;
+            record.statusText = response.statusText;
+            record.isFailed = response.status >= 400;
+            record.isSlow = duration > 1500;
+            try {
+              const resHeaders = {};
+              response.headers?.forEach((val, key) => {
+                resHeaders[key] = val;
+              });
+              record.responseHeaders = resHeaders;
+            } catch {
+            }
+            if (response && response.type !== "opaque" && !response.bodyUsed && typeof response.clone === "function") {
+              const contentType = (response.headers?.get("content-type") || "").toLowerCase();
+              const isStreaming = contentType.includes("event-stream") || contentType.includes("stream") || contentType.includes("multipart/") || contentType.includes("octet-stream");
+              if (!isStreaming && (contentType.includes("application/json") || contentType.includes("text/"))) {
+                self.extractResponseBody(response, record);
+              }
+            }
+            return response;
+          } catch (err) {
+            const duration = typeof performance !== "undefined" ? Math.round(performance.now() - perfStart) : Date.now() - startTime;
+            record.endTime = Date.now();
+            record.duration = duration;
+            record.status = 0;
+            record.statusText = err?.message || "NetworkError";
+            record.isFailed = true;
+            record.isCORS = self.detectCORSError(err, record.url);
+            record.error = err?.message || "Fetch failed";
+            throw err;
           }
         };
-        if (typeof window !== "undefined") attachProperty(window);
-        if (typeof globalThis !== "undefined" && globalThis !== (typeof window !== "undefined" ? window : null)) {
-          attachProperty(globalThis);
+        if (typeof window !== "undefined" && window.fetch) {
+          try {
+            window.fetch = wrappedFetch;
+          } catch {
+          }
+        }
+        if (typeof globalThis !== "undefined" && globalThis.fetch && globalThis !== (typeof window !== "undefined" ? window : null)) {
+          try {
+            globalThis.fetch = wrappedFetch;
+          } catch {
+          }
         }
       }
       if (typeof XMLHttpRequest !== "undefined") {
@@ -419,11 +419,20 @@ ${arg.stack || ""}`;
       } else if (typeof input === "object" && input !== null && "url" in input) {
         url = input.url;
         method = input.method || "GET";
+        if (input.headers && !init?.headers) {
+          try {
+            headers = this.normalizeHeaders(input.headers);
+          } catch {
+          }
+        }
       }
       if (init) {
         if (init.method) method = init.method.toUpperCase();
         if (init.headers) {
-          headers = this.normalizeHeaders(init.headers);
+          try {
+            headers = this.normalizeHeaders(init.headers);
+          } catch {
+          }
         }
         if (init.body) {
           bodyPreview = this.serializeBody(init.body);
@@ -456,15 +465,12 @@ ${arg.stack || ""}`;
         return `[${typeof body} Object]`;
       }
     }
-    async extractResponseBody(responseClone, record) {
+    async extractResponseBody(response, record) {
       try {
-        const contentType = responseClone.headers?.get("content-type") || "";
-        if (contentType.includes("application/json") || contentType.includes("text/")) {
-          const text = await responseClone.text();
-          record.responseBodyPreview = text.slice(0, 2048);
-        } else {
-          record.responseBodyPreview = `[Binary / Stream content: ${contentType}]`;
-        }
+        if (response.bodyUsed) return;
+        const clone = response.clone();
+        const text = await clone.text();
+        record.responseBodyPreview = text.slice(0, 2048);
       } catch {
       }
     }
@@ -492,61 +498,73 @@ ${arg.stack || ""}`;
       this.originalXHRSetRequestHeader = proto.setRequestHeader;
       const xhrStateMap = /* @__PURE__ */ new WeakMap();
       proto.open = function(...args) {
-        const method = (args[0] || "GET").toUpperCase();
-        const url = String(args[1] || "");
-        const startTime = Date.now();
-        const record = {
-          id: `xhr_${startTime}_${Math.random().toString(36).substring(2, 7)}`,
-          method,
-          url,
-          startTime
-        };
-        xhrStateMap.set(this, {
-          record,
-          perfStart: typeof performance !== "undefined" ? performance.now() : startTime,
-          requestHeaders: {}
-        });
-        self.pushRecord(record);
-        return self.originalXHROpen.apply(this, args);
+        try {
+          const method = (args[0] || "GET").toUpperCase();
+          const url = String(args[1] || "");
+          const startTime = Date.now();
+          const record = {
+            id: `xhr_${startTime}_${Math.random().toString(36).substring(2, 7)}`,
+            method,
+            url,
+            startTime
+          };
+          xhrStateMap.set(this, {
+            record,
+            perfStart: typeof performance !== "undefined" ? performance.now() : startTime,
+            requestHeaders: {}
+          });
+          self.pushRecord(record);
+        } catch {
+        }
+        return self.originalXHROpen.apply(this, arguments);
       };
       proto.setRequestHeader = function(name, value) {
-        const state = xhrStateMap.get(this);
-        if (state) {
-          state.requestHeaders[name] = value;
-          state.record.requestHeaders = state.requestHeaders;
+        try {
+          const state = xhrStateMap.get(this);
+          if (state) {
+            state.requestHeaders[name] = value;
+            state.record.requestHeaders = state.requestHeaders;
+          }
+        } catch {
         }
-        return self.originalXHRSetRequestHeader.apply(this, [name, value]);
+        return self.originalXHRSetRequestHeader.apply(this, arguments);
       };
       proto.send = function(body) {
-        const state = xhrStateMap.get(this);
-        if (state) {
-          state.perfStart = typeof performance !== "undefined" ? performance.now() : Date.now();
-          if (body) {
-            state.record.requestBodyPreview = self.serializeBody(body);
-          }
-          this.addEventListener("loadend", () => {
-            const duration = typeof performance !== "undefined" ? Math.round(performance.now() - state.perfStart) : Date.now() - state.record.startTime;
-            state.record.endTime = Date.now();
-            state.record.duration = duration;
-            state.record.status = this.status;
-            state.record.statusText = this.statusText;
-            state.record.isFailed = this.status === 0 || this.status >= 400;
-            state.record.isSlow = duration > 1500;
-            if (this.status === 0) {
-              state.record.isCORS = self.detectCORSError(new Error("XHR Network Error"), state.record.url);
+        try {
+          const state = xhrStateMap.get(this);
+          if (state) {
+            state.perfStart = typeof performance !== "undefined" ? performance.now() : Date.now();
+            if (body) {
+              state.record.requestBodyPreview = self.serializeBody(body);
             }
-            if (this.responseType === "" || this.responseType === "text") {
-              state.record.responseBodyPreview = (this.responseText || "").slice(0, 2048);
-            } else if (this.responseType === "json") {
+            this.addEventListener("loadend", () => {
               try {
-                state.record.responseBodyPreview = JSON.stringify(this.response).slice(0, 2048);
+                const duration = typeof performance !== "undefined" ? Math.round(performance.now() - state.perfStart) : Date.now() - state.record.startTime;
+                state.record.endTime = Date.now();
+                state.record.duration = duration;
+                state.record.status = this.status;
+                state.record.statusText = this.statusText;
+                state.record.isFailed = this.status === 0 || this.status >= 400;
+                state.record.isSlow = duration > 1500;
+                if (this.status === 0) {
+                  state.record.isCORS = self.detectCORSError(new Error("XHR Network Error"), state.record.url);
+                }
+                if (this.responseType === "" || this.responseType === "text") {
+                  state.record.responseBodyPreview = (this.responseText || "").slice(0, 2048);
+                } else if (this.responseType === "json" && this.response) {
+                  try {
+                    state.record.responseBodyPreview = typeof this.response === "string" ? this.response.slice(0, 2048) : JSON.stringify(this.response).slice(0, 2048);
+                  } catch {
+                    state.record.responseBodyPreview = "[JSON Response]";
+                  }
+                }
               } catch {
-                state.record.responseBodyPreview = "[JSON Response]";
               }
-            }
-          });
+            });
+          }
+        } catch {
         }
-        return self.originalXHRSend.apply(this, [body]);
+        return self.originalXHRSend.apply(this, arguments);
       };
     }
     pushRecord(record) {
@@ -570,20 +588,18 @@ ${arg.stack || ""}`;
     destroy() {
       if (!this.isInstalled) return;
       if (this.originalFetch) {
-        const resetProperty = (obj) => {
+        if (typeof window !== "undefined") {
           try {
-            Object.defineProperty(obj, "fetch", {
-              value: this.originalFetch,
-              writable: true,
-              configurable: true,
-              enumerable: true
-            });
+            window.fetch = this.originalFetch;
           } catch {
-            obj.fetch = this.originalFetch;
           }
-        };
-        if (typeof window !== "undefined") resetProperty(window);
-        if (typeof globalThis !== "undefined") resetProperty(globalThis);
+        }
+        if (typeof globalThis !== "undefined") {
+          try {
+            globalThis.fetch = this.originalFetch;
+          } catch {
+          }
+        }
       }
       if (typeof XMLHttpRequest !== "undefined") {
         if (this.originalXHROpen) XMLHttpRequest.prototype.open = this.originalXHROpen;
@@ -7357,21 +7373,38 @@ ${msg.content}<end_of_turn>
     pill;
     cockpit;
     constructor(options = {}) {
-      const parent = options.container || document.body || document.documentElement;
       let host = document.getElementById("dr-debug-root");
       if (!host) {
         host = document.createElement("div");
         host.id = "dr-debug-root";
-        parent.appendChild(host);
+        host.style.position = "fixed";
+        host.style.zIndex = "2147483647";
+        host.style.pointerEvents = "none";
+        host.style.top = "0";
+        host.style.left = "0";
+        host.style.width = "0";
+        host.style.height = "0";
+        host.style.border = "none";
+        host.style.margin = "0";
+        host.style.padding = "0";
+        if (options.container) {
+          options.container.appendChild(host);
+        } else if (typeof document !== "undefined" && document.body) {
+          document.body.appendChild(host);
+        } else if (typeof document !== "undefined") {
+          const onReady = () => {
+            if (document.body && !host.isConnected) {
+              document.body.appendChild(host);
+            }
+          };
+          if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", onReady, { once: true });
+          } else {
+            window.addEventListener("load", onReady, { once: true });
+          }
+        }
       }
       this.host = host;
-      if (typeof document !== "undefined" && !document.body) {
-        document.addEventListener("DOMContentLoaded", () => {
-          if (document.body && this.host.parentElement !== document.body) {
-            document.body.appendChild(this.host);
-          }
-        });
-      }
       this.shadowRoot = host.shadowRoot || host.attachShadow({ mode: "open" });
       this.shadowRoot.innerHTML = "";
       const styleEl = document.createElement("style");
@@ -7640,7 +7673,7 @@ ${msg.content}<end_of_turn>
     const currentScript = document.currentScript;
     if (currentScript && currentScript.dataset) {
       const dataset = currentScript.dataset;
-      if (dataset.model || dataset.apiKey || dataset.autoInit !== "false") {
+      if (dataset.autoInit === "true" || dataset.drDebug !== void 0 || dataset.model && dataset.autoInit !== "false") {
         const instance = new DrDebug({
           model: dataset.model,
           apiKey: dataset.apiKey,
@@ -7658,8 +7691,9 @@ ${msg.content}<end_of_turn>
     instance;
     init() {
       if (typeof window === "undefined") return;
+      if (this.instance) return;
       this.instance = new DrDebug({
-        enableUI: true,
+        enableUI: false,
         autoInvestigate: false
       });
       if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
@@ -7679,6 +7713,16 @@ ${msg.content}<end_of_turn>
             });
             return false;
           }
+          if (message.type === "DR_DEBUG_TOGGLE_UI") {
+            const ui = this.instance?.getUI();
+            if (ui) {
+              ui.toggleCockpit();
+              sendResponse({ status: "success" });
+            } else {
+              sendResponse({ status: "no_ui" });
+            }
+            return false;
+          }
         });
       }
     }
@@ -7687,13 +7731,15 @@ ${msg.content}<end_of_turn>
     }
     destroy() {
       this.instance?.destroy();
+      this.instance = void 0;
     }
   };
   if (typeof window !== "undefined" && typeof document !== "undefined") {
-    const bridge = new ContentScriptBridge();
-    bridge.init();
-    window.__DR_DEBUG_BRIDGE__ = bridge;
-    window.__DR_DEBUG__ = bridge.getInstance();
-    console.log("%c\u{1FA7A} Dr. Debug Active", "background: #06b6d4; color: #000; font-weight: bold; padding: 2px 8px; border-radius: 4px;", "Monitoring Console, Network, DOM & Performance telemetry.");
+    if (!window.__DR_DEBUG_BRIDGE__) {
+      const bridge = new ContentScriptBridge();
+      bridge.init();
+      window.__DR_DEBUG_BRIDGE__ = bridge;
+      window.__DR_DEBUG__ = bridge.getInstance();
+    }
   }
 })();

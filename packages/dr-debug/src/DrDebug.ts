@@ -190,12 +190,12 @@ export class DrDebug {
   }
 }
 
-// Auto-bootstrap via <script> tag attributes
+// Auto-bootstrap via <script> tag attributes (when explicitly configured)
 if (typeof document !== 'undefined' && typeof window !== 'undefined') {
   const currentScript = document.currentScript as HTMLScriptElement | null
   if (currentScript && currentScript.dataset) {
     const dataset = currentScript.dataset
-    if (dataset.model || dataset.apiKey || dataset.autoInit !== 'false') {
+    if (dataset.autoInit === 'true' || dataset.drDebug !== undefined || (dataset.model && dataset.autoInit !== 'false')) {
       const instance = new DrDebug({
         model: dataset.model,
         apiKey: dataset.apiKey,

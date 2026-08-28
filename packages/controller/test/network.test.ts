@@ -94,4 +94,46 @@ describe('NetworkInterceptor', () => {
     expect(records[0].url).toBe('https://api.acme.io/items/3')
     expect(records[4].url).toBe('https://api.acme.io/items/7')
   })
+
+  it('safely skips response cloning for Server-Sent Events (SSE) and stream responses', async () => {
+    const sseResponse = new Response('data: hello\n\n', {
+      status: 200,
+      headers: { 'Content-Type': 'text/event-stream' }
+    })
+    globalThis.fetch = async () => sseResponse
+
+    interceptor = new NetworkInterceptor(5)
+    interceptor.init()
+
+    const res = await window.fetch('https://api.openai.com/v1/chat/completions')
+    expect(res.status).toBe(200)
+
+    const records = interceptor.getRecords()
+    expect(records.length).toBe(1)
+    // Response body preview should remain undefined for streaming to avoid stream locking
+    expect(records[0].responseBodyPreview).toBeUndefined()
+  })
+
+  it('supports third-party library re-wrapping of fetch without recursion or errors', async () => {
+    globalThis.fetch = async () => new Response('OK', { status: 200 })
+
+    interceptor = new NetworkInterceptor(5)
+    interceptor.init()
+
+    // Simulate Sentry / APM tool wrapping window.fetch
+    const prevFetch = window.fetch
+    let wrappedCallCount = 0
+    window.fetch = async function (...args: any[]) {
+      wrappedCallCount++
+      return prevFetch.apply(this, args as any)
+    }
+
+    const res = await window.fetch('https://api.acme.io/data')
+    expect(res.status).toBe(200)
+    expect(wrappedCallCount).toBe(1)
+
+    const records = interceptor.getRecords()
+    expect(records.length).toBe(1)
+    expect(records[0].url).toBe('https://api.acme.io/data')
+  })
 })

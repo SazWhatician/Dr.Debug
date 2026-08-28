@@ -89,7 +89,7 @@ export class ConsoleInterceptor {
     const levels: LogLevel[] = ['error', 'warn', 'info', 'log']
     levels.forEach((level) => {
       if (typeof console !== 'undefined' && console[level]) {
-        let originalFn = console[level].bind(console)
+        const originalFn = console[level]
         this.originalConsole[level] = originalFn
         const typeMap: Record<LogLevel, ConsoleEntryType> = {
           error: 'console_error',
@@ -99,33 +99,23 @@ export class ConsoleInterceptor {
         }
 
         const wrapped = (...args: any[]) => {
-          if (this.isCapturing) {
-            return originalFn(...args)
+          if (!this.isCapturing) {
+            this.isCapturing = true
+            try {
+              this.captureConsoleLog(level, typeMap[level], args)
+            } catch {
+              // Protect host application
+            } finally {
+              this.isCapturing = false
+            }
           }
-          this.isCapturing = true
-          try {
-            this.captureConsoleLog(level, typeMap[level], args)
-          } catch {
-            // Protect host application
-          } finally {
-            this.isCapturing = false
-          }
-          return originalFn(...args)
+          return originalFn.apply(console, args)
         }
 
         try {
-          Object.defineProperty(console, level, {
-            get: () => wrapped,
-            set: (newFn: any) => {
-              if (typeof newFn === 'function' && newFn !== wrapped) {
-                originalFn = newFn
-              }
-            },
-            configurable: true,
-            enumerable: true
-          })
-        } catch {
           console[level] = wrapped
+        } catch {
+          // Ignore if console property is non-writable
         }
       }
     })
@@ -138,22 +128,32 @@ export class ConsoleInterceptor {
       .map((arg) => {
         if (typeof arg === 'string') return arg
         if (arg instanceof Error) return `${arg.name}: ${arg.message}\n${arg.stack || ''}`
-        try {
-          return JSON.stringify(arg)
-        } catch {
-          return String(arg)
+        if (typeof arg === 'object' && arg !== null) {
+          try {
+            if (typeof Element !== 'undefined' && arg instanceof Element) {
+              return `<${arg.tagName.toLowerCase()}${arg.id ? ` id="${arg.id}"` : ''}${arg.className ? ` class="${arg.className}"` : ''}>`
+            }
+            const seen = new WeakSet()
+            return JSON.stringify(arg, (_key, value) => {
+              if (typeof value === 'object' && value !== null) {
+                if (seen.has(value)) return '[Circular]'
+                seen.add(value)
+              }
+              return value
+            }).slice(0, 1024)
+          } catch {
+            return Object.prototype.toString.call(arg)
+          }
         }
+        return String(arg)
       })
       .join(' ')
 
     let stack: string | undefined
-    if (level === 'error' || level === 'warn') {
+    if (level === 'error') {
       const err = args.find((a) => a instanceof Error)
       if (err) {
         stack = err.stack
-      } else {
-        // Slice off 'Error', 'captureConsoleLog', 'wrapped' — expose only user frames
-        stack = (new Error().stack ?? '').split('\n').slice(3).join('\n')
       }
     }
 
@@ -262,24 +262,19 @@ export class ConsoleInterceptor {
     if (!this.isInstalled) return
 
     if (this.errorHandler && typeof window !== 'undefined') {
-      window.removeEventListener('error', this.errorHandler)
+      window.removeEventListener('error', this.errorHandler, true)
     }
     if (this.rejectionHandler && typeof window !== 'undefined') {
-      window.removeEventListener('unhandledrejection', this.rejectionHandler)
+      window.removeEventListener('unhandledrejection', this.rejectionHandler, true)
     }
 
     const levels: LogLevel[] = ['error', 'warn', 'info', 'log']
     levels.forEach((level) => {
       if (this.originalConsole[level] && typeof console !== 'undefined') {
         try {
-          Object.defineProperty(console, level, {
-            value: this.originalConsole[level],
-            writable: true,
-            configurable: true,
-            enumerable: true
-          })
-        } catch {
           console[level] = this.originalConsole[level]!
+        } catch {
+          // Ignore
         }
       }
     })

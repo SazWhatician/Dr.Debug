@@ -73,7 +73,7 @@ export class PerformanceInterceptor {
           }
         }
       }
-    }, { durationThreshold: 40 })
+    }, { durationThreshold: 40 } as any)
 
     // 5. Slow Resources (>1500ms duration)
     this.safeObserve('resource', (list) => {
