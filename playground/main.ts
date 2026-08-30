@@ -3,60 +3,59 @@ import { MockLLMClient } from '../packages/llms/src/index.js'
 
 let doctor: DrDebug | null = null
 
+const DEFAULT_GROQ_KEY = ''
 const storedKey = localStorage.getItem('dr_debug_api_key') || ''
 const apiKeyInput = document.getElementById('api-key-input') as HTMLInputElement
 const providerSelect = document.getElementById('provider-select') as HTMLSelectElement
 const agentStatus = document.getElementById('agent-status') as HTMLSpanElement
 
-if (apiKeyInput && storedKey) {
+if (apiKeyInput) {
   apiKeyInput.value = storedKey
 }
 
 // Rich 4-step mock that demonstrates the full Re-Act loop
 function createRichMock(): MockLLMClient {
-  return new MockLLMClient({
-    responses: [
-      {
-        toolCalls: [{
-          id: 'c1', type: 'function',
-          function: { name: 'inspect_error', arguments: JSON.stringify({ errorIndex: 0 }) }
-        }]
-      },
-      {
-        toolCalls: [{
-          id: 'c2', type: 'function',
-          function: { name: 'inspect_request', arguments: JSON.stringify({ requestIndex: 0 }) }
-        }]
-      },
-      {
-        toolCalls: [{
-          id: 'c3', type: 'function',
-          function: { name: 'inspect_docker_logs', arguments: JSON.stringify({ level: 'error', tail: 10 }) }
-        }]
-      },
-      {
-        toolCalls: [{
-          id: 'c4', type: 'function',
-          function: { name: 'graphify_errors', arguments: JSON.stringify({ includeDocker: true, timeframeMs: 8000 }) }
-        }]
-      },
-      {
-        toolCalls: [{
-          id: 'c5', type: 'function',
-          function: {
-            name: 'done',
-            arguments: JSON.stringify({
-              diagnosis: 'The frontend TypeError is a direct downstream effect of the API returning 503. The API is failing because the PostgreSQL container (postgres-db) exhausted its connection pool — confirmed in Docker stderr: "FATAL: remaining connection slots reserved for superuser".',
-              rootCause: 'PostgreSQL max_connections (100) reached due to a connection leak in the backend ORM layer — sessions are not being closed after requests, accumulating until the pool saturates. This causes the API to return 503 on all new requests, which the frontend fetch handler does not guard against, producing the uncaught TypeError.',
-              confidence: 0.97,
-              filesToModify: ['backend/src/db/session.py', 'frontend/src/api/client.ts'],
-              fix: '--- a/backend/src/db/session.py\n+++ b/backend/src/db/session.py\n@@ -24,5 +24,6 @@\n async def get_db():\n-    session = SessionFactory()\n-    yield session\n+    async with SessionFactory() as session:\n+        yield session\n+        await session.close()\n\n--- a/frontend/src/api/client.ts\n+++ b/frontend/src/api/client.ts\n@@ -8,3 +8,5 @@\n export async function callAPI(url: string) {\n   const res = await fetch(url)\n-  return res.json()\n+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`)\n+  return res.json().catch(() => null)\n }'
-            })
-          }
-        }]
-      }
-    ]
-  })
+  return new MockLLMClient([
+    {
+      toolCalls: [{
+        id: 'c1', type: 'function',
+        function: { name: 'inspect_error', arguments: JSON.stringify({ errorIndex: 0 }) }
+      }]
+    },
+    {
+      toolCalls: [{
+        id: 'c2', type: 'function',
+        function: { name: 'inspect_request', arguments: JSON.stringify({ requestIndex: 0 }) }
+      }]
+    },
+    {
+      toolCalls: [{
+        id: 'c3', type: 'function',
+        function: { name: 'inspect_docker_logs', arguments: JSON.stringify({ level: 'error', tail: 10 }) }
+      }]
+    },
+    {
+      toolCalls: [{
+        id: 'c4', type: 'function',
+        function: { name: 'graphify_errors', arguments: JSON.stringify({ includeDocker: true, timeframeMs: 8000 }) }
+      }]
+    },
+    {
+      toolCalls: [{
+        id: 'c5', type: 'function',
+        function: {
+          name: 'done',
+          arguments: JSON.stringify({
+            diagnosis: 'The frontend TypeError is a direct downstream effect of the API returning 503. The API is failing because the PostgreSQL container (postgres-db) exhausted its connection pool — confirmed in Docker stderr: "FATAL: remaining connection slots reserved for superuser".',
+            rootCause: 'PostgreSQL max_connections (100) reached due to a connection leak in the backend ORM layer — sessions are not being closed after requests, accumulating until the pool saturates. This causes the API to return 503 on all new requests, which the frontend fetch handler does not guard against, producing the uncaught TypeError.',
+            confidence: 0.97,
+            filesToModify: ['backend/src/db/session.py', 'frontend/src/api/client.ts'],
+            fix: '--- a/backend/src/db/session.py\n+++ b/backend/src/db/session.py\n@@ -24,5 +24,6 @@\n async def get_db():\n-    session = SessionFactory()\n-    yield session\n+    async with SessionFactory() as session:\n+        yield session\n+        await session.close()\n\n--- a/frontend/src/api/client.ts\n+++ b/frontend/src/api/client.ts\n@@ -8,3 +8,5 @@\n export async function callAPI(url: string) {\n   const res = await fetch(url)\n-  return res.json()\n+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`)\n  return res.json().catch(() => null)\n }'
+          })
+        }
+      }]
+    }
+  ])
 }
 
 function seedDocker(): void {
@@ -73,15 +72,15 @@ function initDrDebug(): void {
   if (doctor) doctor.destroy()
 
   const provider = providerSelect.value
-  const apiKey = apiKeyInput.value.trim()
+  const apiKey = (apiKeyInput.value || '').trim() || (provider === 'groq' ? DEFAULT_GROQ_KEY : '')
   if (apiKey) localStorage.setItem('dr_debug_api_key', apiKey)
 
   if (provider === 'mock') {
     doctor = new DrDebug({ llmClient: createRichMock(), enableUI: true })
-    agentStatus.textContent = '🟢 Mock AI Agent active — no API key needed. Trigger a scenario then click Investigate Now.'
+    agentStatus.textContent = '🟢 Mock AI Agent active — zero API key needed. Click any trigger, then click "🩺 Investigate Now"!'
   } else if (provider === 'groq') {
-    doctor = new DrDebug({ baseURL: 'https://api.groq.com/openai/v1', apiKey: apiKey || undefined, model: 'openai/gpt-oss-120b', enableUI: true })
-    agentStatus.textContent = apiKey ? '⚡ Connected to Groq (openai/gpt-oss-120b).' : '⚠️ Enter your Groq API key above and click Apply.'
+    doctor = new DrDebug({ baseURL: 'https://api.groq.com/openai/v1', apiKey, model: 'openai/gpt-oss-120b', enableUI: true })
+    agentStatus.textContent = '⚡ Connected to Groq (openai/gpt-oss-120b). Ready for live autonomous investigation.'
   } else {
     doctor = new DrDebug({ apiKey: apiKey || undefined, model: 'gpt-4o', enableUI: true })
     agentStatus.textContent = apiKey ? '🧠 Connected to OpenAI (gpt-4o).' : '⚠️ Enter your OpenAI API key above and click Apply.'

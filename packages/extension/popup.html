@@ -191,9 +191,14 @@
       <label for="api-key-input">API Key</label>
       <input type="password" id="api-key-input" placeholder="gsk_... or sk-..." />
     </div>
-    <button id="btn-save-settings" class="btn-secondary" style="padding: 6px 10px; font-size: 11px;">
-      <span>💾</span> <span>Save & Apply AI Settings</span>
-    </button>
+    <div style="display:flex; gap:6px;">
+      <button id="btn-test-key" class="btn-secondary" style="padding: 6px 10px; font-size: 11px; flex:1;">
+        <span>⚡</span> <span>Test Key</span>
+      </button>
+      <button id="btn-save-settings" style="padding: 6px 10px; font-size: 11px; flex:1;">
+        <span>💾</span> <span>Save</span>
+      </button>
+    </div>
     <div id="status-msg" class="status-msg"></div>
   </div>
 

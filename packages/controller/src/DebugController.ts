@@ -1,20 +1,39 @@
 import { ConsoleInterceptor } from './interceptors/console.js'
 import { DockerInterceptor } from './interceptors/docker.js'
+import { FrameworkInterceptor } from './interceptors/framework.js'
+import { InteractionInterceptor } from './interceptors/interaction.js'
+import { LayoutInspector } from './interceptors/layoutInspector.js'
 import { MemoryInterceptor } from './interceptors/memory.js'
 import { NetworkInterceptor } from './interceptors/network.js'
+import { NetworkMockInterceptor } from './interceptors/networkMock.js'
 import { PerformanceInterceptor } from './interceptors/performance.js'
-import { buildCausalErrorGraph, computeCorrelations, debugStateToString } from './serializer.js'
+import { SQLQueryCorrelator } from './interceptors/sqlCorrelator.js'
+import {
+  buildCausalErrorGraph,
+  computeCorrelations,
+  computeDiagnosticMatrix,
+  debugStateToString,
+  generateUnifiedAIDebugPrompt,
+  getErrorHistogram,
+  type ErrorHistogramBucket
+} from './serializer.js'
 import type {
   CausalErrorGraph,
   ConsoleEntry,
   DebugState,
+  DiagnosticMatrixSnapshot,
   DockerContainerInfo,
   DockerLogEntry,
+  FrameworkState,
+  InteractionEvent,
+  LayoutAnomaly,
   LogLevel,
   MemorySnapshot,
+  NetworkMockRule,
   NetworkRecord,
   PageContext,
   PerformanceMetrics,
+  SQLQueryCorrelation,
   SerializerOptions,
   TemporalCorrelation
 } from './types.js'
@@ -25,6 +44,11 @@ export class DebugController {
   private performanceInterceptor: PerformanceInterceptor
   private memoryInterceptor: MemoryInterceptor
   private dockerInterceptor: DockerInterceptor
+  private frameworkInterceptor: FrameworkInterceptor
+  private interactionInterceptor: InteractionInterceptor
+  private networkMockInterceptor: NetworkMockInterceptor
+  private layoutInspector: LayoutInspector
+  private sqlQueryCorrelator: SQLQueryCorrelator
   private startTime: number = Date.now()
   private isRunning = false
 
@@ -34,6 +58,11 @@ export class DebugController {
     this.performanceInterceptor = new PerformanceInterceptor()
     this.memoryInterceptor = new MemoryInterceptor()
     this.dockerInterceptor = new DockerInterceptor(maxBufferSize)
+    this.frameworkInterceptor = new FrameworkInterceptor(maxBufferSize)
+    this.interactionInterceptor = new InteractionInterceptor()
+    this.networkMockInterceptor = new NetworkMockInterceptor()
+    this.layoutInspector = new LayoutInspector()
+    this.sqlQueryCorrelator = new SQLQueryCorrelator()
   }
 
   public init(): void {
@@ -43,6 +72,9 @@ export class DebugController {
     this.networkInterceptor.init()
     this.performanceInterceptor.init()
     this.dockerInterceptor.init()
+    this.frameworkInterceptor.init()
+    this.interactionInterceptor.init()
+    this.networkMockInterceptor.init()
     this.isRunning = true
   }
 
@@ -90,7 +122,9 @@ export class DebugController {
         logs: dockerLogs,
         errorCount: dockerStatus.errorCount
       },
-      correlations: []
+      correlations: [],
+      framework: this.frameworkInterceptor.getFrameworkState(),
+      interactions: this.interactionInterceptor.getReplaySequence()
     }
 
     state.correlations = computeCorrelations(state)
@@ -156,12 +190,75 @@ export class DebugController {
     return buildCausalErrorGraph(state, options)
   }
 
+  public getUnifiedAIDebugPrompt(targetId?: string): string {
+    const state = this.getSnapshot()
+    return generateUnifiedAIDebugPrompt(targetId, state)
+  }
+
+  public getErrorHistogram(bucketCount = 10): ErrorHistogramBucket[] {
+    const state = this.getSnapshot()
+    return getErrorHistogram(state, bucketCount)
+  }
+
+  public getDiagnosticMatrix(): DiagnosticMatrixSnapshot {
+    const state = this.getSnapshot()
+    return computeDiagnosticMatrix(state)
+  }
+
+  public getFrameworkState(): FrameworkState {
+    return this.frameworkInterceptor.getFrameworkState()
+  }
+
+  public getInteractionReplay(): InteractionEvent[] {
+    return this.interactionInterceptor.getReplaySequence()
+  }
+
+  public getInteractionReplayHuman(): string {
+    return this.interactionInterceptor.getHumanReadableReplay()
+  }
+
+  public mockNetworkResponse(
+    urlPattern: string,
+    mockStatus: number,
+    mockBody: string,
+    method?: string,
+    mockHeaders?: Record<string, string>
+  ): NetworkMockRule {
+    return this.networkMockInterceptor.addRule({
+      urlPattern,
+      mockStatus,
+      mockBody,
+      method,
+      mockHeaders,
+      isActive: true
+    })
+  }
+
+  public getMockRules(): NetworkMockRule[] {
+    return this.networkMockInterceptor.getRules()
+  }
+
+  public removeMockRule(id: string): boolean {
+    return this.networkMockInterceptor.removeRule(id)
+  }
+
+  public getLayoutAnomalies(targetSelector?: string): LayoutAnomaly[] {
+    return this.layoutInspector.inspect(targetSelector)
+  }
+
+  public getSQLCorrelations(): SQLQueryCorrelation[] {
+    return this.sqlQueryCorrelator.correlate(this.getNetworkRecords())
+  }
+
+
   public clear(): void {
     this.consoleInterceptor.clear()
     this.networkInterceptor.clear()
     this.performanceInterceptor.clear()
     this.memoryInterceptor.clear()
     this.dockerInterceptor.clear()
+    this.frameworkInterceptor.clear()
+    this.interactionInterceptor.clear()
   }
 
   public destroy(): void {
@@ -170,6 +267,9 @@ export class DebugController {
     this.networkInterceptor.destroy()
     this.performanceInterceptor.destroy()
     this.dockerInterceptor.destroy()
+    this.frameworkInterceptor.destroy()
+    this.interactionInterceptor.destroy()
+    this.networkMockInterceptor.destroy()
     this.isRunning = false
   }
 }

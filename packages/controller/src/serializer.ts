@@ -1,11 +1,18 @@
 import type {
   CausalErrorGraph,
   DebugState,
+  DiagnosticMatrixCell,
+  DiagnosticMatrixSnapshot,
   ErrorGraphEdge,
   ErrorGraphNode,
+  HttpStatusDetail,
+  MatrixSeverity,
+  MatrixSubstrate,
+  NetworkRecord,
   SerializerOptions,
   TemporalCorrelation
 } from './types.js'
+
 
 export function computeCorrelations(state: DebugState): TemporalCorrelation[] {
   const correlations: TemporalCorrelation[] = []
@@ -428,3 +435,597 @@ export function debugStateToString(state: DebugState, options: SerializerOptions
 
   return lines.join('\n')
 }
+
+export interface ErrorHistogramBucket {
+  timestamp: number
+  label: string
+  http5xx: number
+  http4xx: number
+  consoleErrors: number
+  dockerErrors: number
+  total: number
+}
+
+export function getErrorHistogram(state: DebugState, bucketCount = 10): ErrorHistogramBucket[] {
+  const allErrors: Array<{ timestamp: number; type: '5xx' | '4xx' | 'console' | 'docker' }> = []
+
+  // Collect 5xx & 4xx network failures
+  state.network.records.forEach((r) => {
+    if (r.status && r.status >= 500) {
+      allErrors.push({ timestamp: r.startTime, type: '5xx' })
+    } else if (r.status && r.status >= 400) {
+      allErrors.push({ timestamp: r.startTime, type: '4xx' })
+    } else if (r.isFailed) {
+      allErrors.push({ timestamp: r.startTime, type: '5xx' })
+    }
+  })
+
+  // Collect console errors
+  state.console.entries.forEach((e) => {
+    if (e.level === 'error') {
+      allErrors.push({ timestamp: e.timestamp, type: 'console' })
+    }
+  })
+
+  // Collect docker errors
+  ;(state.docker?.logs || []).forEach((d) => {
+    if (d.level === 'error') {
+      allErrors.push({ timestamp: d.timestamp, type: 'docker' })
+    }
+  })
+
+  if (allErrors.length === 0) {
+    const now = Date.now()
+    return Array.from({ length: bucketCount }, (_, i) => {
+      const ts = now - (bucketCount - 1 - i) * 10000
+      const date = new Date(ts)
+      const label = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`
+      return { timestamp: ts, label, http5xx: 0, http4xx: 0, consoleErrors: 0, dockerErrors: 0, total: 0 }
+    })
+  }
+
+  allErrors.sort((a, b) => a.timestamp - b.timestamp)
+  const minTime = allErrors[0].timestamp
+  const maxTime = Math.max(allErrors[allErrors.length - 1].timestamp, minTime + 10000)
+  const duration = maxTime - minTime
+  const step = Math.max(1000, Math.ceil(duration / bucketCount))
+
+  const buckets: ErrorHistogramBucket[] = []
+  for (let i = 0; i < bucketCount; i++) {
+    const bStart = minTime + i * step
+    const bEnd = bStart + step
+    const date = new Date(bStart)
+    const label = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`
+
+    const inBucket = allErrors.filter((e) => e.timestamp >= bStart && e.timestamp < bEnd)
+    const http5xx = inBucket.filter((e) => e.type === '5xx').length
+    const http4xx = inBucket.filter((e) => e.type === '4xx').length
+    const consoleErrors = inBucket.filter((e) => e.type === 'console').length
+    const dockerErrors = inBucket.filter((e) => e.type === 'docker').length
+
+    buckets.push({
+      timestamp: bStart,
+      label,
+      http5xx,
+      http4xx,
+      consoleErrors,
+      dockerErrors,
+      total: inBucket.length
+    })
+  }
+
+  return buckets
+}
+
+export function generateCurlCommand(req: Partial<NetworkRecord> & { url: string; method?: string }): string {
+  const parts: string[] = ['curl']
+  const method = (req.method || 'GET').toUpperCase()
+  if (method !== 'GET') {
+    parts.push(`-X ${method}`)
+  }
+  parts.push(`'${req.url}'`)
+
+  if (req.requestHeaders) {
+    for (const [key, val] of Object.entries(req.requestHeaders)) {
+      const lower = key.toLowerCase()
+      if (lower === 'host') continue
+      parts.push(`-H '${key}: ${String(val).replace(/'/g, "'\\''")}'`)
+    }
+  }
+
+  if (req.requestBodyPreview && method !== 'GET' && method !== 'HEAD') {
+    parts.push(`--data-raw '${req.requestBodyPreview.replace(/'/g, "'\\''")}'`)
+  }
+
+  return parts.join(' \\\n  ')
+}
+
+export function getHttpStatusExplainer(status: number): HttpStatusDetail {
+  const statusMap: Record<number, HttpStatusDetail> = {
+    0: {
+      code: 0,
+      title: 'Network Error / CORS Failure',
+      explanation: 'The request failed before receiving an HTTP response (DNS failure, connection refused, or CORS preflight rejected by browser).',
+      recommendation: 'Verify backend server is running and CORS headers (Access-Control-Allow-Origin) are enabled.'
+    },
+    400: {
+      code: 400,
+      title: '400 Bad Request',
+      explanation: 'The server could not understand the request due to invalid syntax or malformed payload.',
+      recommendation: 'Check request payload schema, query parameters, and required fields.'
+    },
+    401: {
+      code: 401,
+      title: '401 Unauthorized',
+      explanation: 'Authentication is required and has either failed or not been provided (missing/expired token).',
+      recommendation: 'Verify Authorization header, Bearer token validity, or API key configuration.'
+    },
+    403: {
+      code: 403,
+      title: '403 Forbidden',
+      explanation: 'The server understood the request but refuses to authorize it (insufficient user permissions).',
+      recommendation: 'Check user role/scopes and RBAC permissions for the target resource.'
+    },
+    404: {
+      code: 404,
+      title: '404 Not Found',
+      explanation: 'The requested resource could not be found on the server endpoint.',
+      recommendation: 'Verify URL path, API routing prefixes (/api/v1/...), and ID parameters.'
+    },
+    408: {
+      code: 408,
+      title: '408 Request Timeout',
+      explanation: 'The client did not produce a request within the time that the server was prepared to wait.',
+      recommendation: 'Check network latency, request payload size, or slow client upload speeds.'
+    },
+    409: {
+      code: 409,
+      title: '409 Conflict',
+      explanation: 'The request conflicts with current server state (e.g. duplicate key, version mismatch).',
+      recommendation: 'Check for unique constraint violations or concurrency locking.'
+    },
+    422: {
+      code: 422,
+      title: '422 Unprocessable Entity',
+      explanation: 'The request was well-formed but contained semantic validation errors.',
+      recommendation: 'Inspect server validation response for specific field error details.'
+    },
+    429: {
+      code: 429,
+      title: '429 Too Many Requests',
+      explanation: 'Rate limit has been exceeded for this IP or API key.',
+      recommendation: 'Implement exponential backoff or inspect Retry-After header.'
+    },
+    500: {
+      code: 500,
+      title: '500 Internal Server Error',
+      explanation: 'The server encountered an unexpected condition that prevented it from fulfilling the request.',
+      recommendation: 'Inspect backend container logs, unhandled backend exceptions, and database connections.'
+    },
+    502: {
+      code: 502,
+      title: '502 Bad Gateway',
+      explanation: 'The gateway or proxy received an invalid response from the upstream backend server.',
+      recommendation: 'Check if backend process crashed, restarted, or sent non-HTTP response.'
+    },
+    503: {
+      code: 503,
+      title: '503 Service Unavailable',
+      explanation: 'The server is currently unable to handle the request due to maintenance or temporary overload.',
+      recommendation: 'Check container health, CPU/memory saturation, and load balancer health checks.'
+    },
+    504: {
+      code: 504,
+      title: '504 Gateway Timeout',
+      explanation: 'The gateway server did not receive a timely response from the upstream server or database.',
+      recommendation: 'Check slow database queries, long synchronous operations, and upstream timeouts.'
+    }
+  }
+
+  if (statusMap[status]) {
+    return statusMap[status]
+  }
+
+  if (status >= 500) {
+    return {
+      code: status,
+      title: `${status} Server Error`,
+      explanation: 'The server encountered an error fulfilling the request.',
+      recommendation: 'Inspect backend service logs for unhandled exceptions.'
+    }
+  }
+  if (status >= 400) {
+    return {
+      code: status,
+      title: `${status} Client Error`,
+      explanation: 'The request could not be processed due to a client-side issue.',
+      recommendation: 'Verify request parameters, headers, and client state.'
+    }
+  }
+
+  return {
+    code: status,
+    title: `${status} Response`,
+    explanation: 'Standard HTTP status.',
+    recommendation: 'Inspect payload response.'
+  }
+}
+
+export function computeDiagnosticMatrix(state: DebugState): DiagnosticMatrixSnapshot {
+  const substrates: MatrixSubstrate[] = ['network', 'console', 'docker', 'system']
+  const severities: MatrixSeverity[] = ['critical', 'high', 'notice']
+
+  const cells: Record<string, DiagnosticMatrixCell> = {}
+  for (const sub of substrates) {
+    for (const sev of severities) {
+      const key = `${sub}:${sev}`
+      cells[key] = {
+        substrate: sub,
+        severity: sev,
+        count: 0,
+        itemIds: [],
+        primaryLabel: ''
+      }
+    }
+  }
+
+  const substrateCounts: Record<MatrixSubstrate, number> = {
+    network: 0,
+    console: 0,
+    docker: 0,
+    system: 0
+  }
+
+  let criticalCount = 0
+  let highCount = 0
+  let noticeCount = 0
+
+  // 1. Network Records
+  state.network.records.forEach((r) => {
+    let sev: MatrixSeverity | null = null
+    if (r.status && r.status >= 500) {
+      sev = 'critical'
+    } else if (r.isFailed && (!r.status || r.status === 0)) {
+      sev = 'critical'
+    } else if (r.status && r.status >= 400) {
+      sev = 'high'
+    } else if (r.isCORS) {
+      sev = 'high'
+    } else if (r.isSlow) {
+      sev = 'notice'
+    }
+
+    if (sev) {
+      const key = `network:${sev}`
+      cells[key].count++
+      cells[key].itemIds.push(r.id)
+      cells[key].primaryLabel = cells[key].primaryLabel || `${r.method} ${r.url}`
+      substrateCounts.network++
+      if (sev === 'critical') criticalCount++
+      else if (sev === 'high') highCount++
+      else if (sev === 'notice') noticeCount++
+    }
+  })
+
+  // 2. Console Entries
+  state.console.entries.forEach((e) => {
+    let sev: MatrixSeverity | null = null
+    if (e.level === 'error') {
+      sev = e.count > 3 || (e.stack && e.stack.includes('Uncaught')) ? 'critical' : 'high'
+    } else if (e.level === 'warn') {
+      sev = 'notice'
+    }
+
+    if (sev) {
+      const key = `console:${sev}`
+      cells[key].count++
+      cells[key].itemIds.push(e.id)
+      cells[key].primaryLabel = cells[key].primaryLabel || e.message
+      substrateCounts.console++
+      if (sev === 'critical') criticalCount++
+      else if (sev === 'high') highCount++
+      else if (sev === 'notice') noticeCount++
+    }
+  })
+
+  // 3. Docker Logs
+  ;(state.docker?.logs || []).forEach((d) => {
+    let sev: MatrixSeverity | null = null
+    if (d.level === 'error') {
+      sev = 'critical'
+    } else if (d.level === 'warn') {
+      sev = 'high'
+    }
+
+    if (sev) {
+      const key = `docker:${sev}`
+      cells[key].count++
+      cells[key].itemIds.push(d.id)
+      cells[key].primaryLabel = cells[key].primaryLabel || `[${d.containerName}] ${d.message}`
+      substrateCounts.docker++
+      if (sev === 'critical') criticalCount++
+      else if (sev === 'high') highCount++
+      else if (sev === 'notice') noticeCount++
+    }
+  })
+
+  // 4. System / Memory & Performance
+  if (state.memory && state.memory.trendMBPerMin && state.memory.trendMBPerMin > 2.0) {
+    const key = 'system:high'
+    cells[key].count++
+    cells[key].itemIds.push('mem_leak')
+    cells[key].primaryLabel = `Heap Leak (+${state.memory.trendMBPerMin}MB/min)`
+    substrateCounts.system++
+    highCount++
+  }
+
+  if (state.performance.longTasks.length > 0) {
+    const key = 'system:notice'
+    cells[key].count += state.performance.longTasks.length
+    cells[key].itemIds.push('long_tasks')
+    cells[key].primaryLabel = `${state.performance.longTasks.length} Main Thread Long Tasks (>50ms)`
+    substrateCounts.system += state.performance.longTasks.length
+    noticeCount += state.performance.longTasks.length
+  }
+
+  const totalErrors = criticalCount + highCount + noticeCount
+
+  return {
+    cells,
+    totalErrors,
+    criticalCount,
+    highCount,
+    noticeCount,
+    substrateCounts
+  }
+}
+
+export function generateUnifiedAIDebugPrompt(
+  targetId: string | undefined,
+  state: DebugState
+): string {
+  // 1. Locate target record or pick latest error
+  let targetNetwork = state.network.records.find((r) => r.id === targetId)
+  let targetConsole = state.console.entries.find((e) => e.id === targetId)
+  let targetDocker = (state.docker?.logs || []).find((d) => d.id === targetId)
+
+  if (!targetNetwork && !targetConsole && !targetDocker) {
+    // Pick the most critical recent failure
+    targetNetwork = state.network.records.slice().reverse().find((r) => r.isFailed)
+    targetConsole = state.console.entries.slice().reverse().find((e) => e.level === 'error')
+    targetDocker = (state.docker?.logs || []).slice().reverse().find((d) => d.level === 'error')
+  }
+
+  const promptLines: string[] = []
+  promptLines.push('### 🚨 Dr. Debug Incident Report for AI Assistants (Claude Code / Antigravity)')
+  promptLines.push('')
+
+  let title = 'Uncaught Runtime / Network Failure'
+  let incidentTime = Date.now()
+
+  if (targetNetwork) {
+    title = `HTTP ${targetNetwork.status || 'ERR'} on ${targetNetwork.method} ${targetNetwork.url}`
+    incidentTime = targetNetwork.startTime
+  } else if (targetConsole) {
+    title = `${targetConsole.type.toUpperCase()}: ${targetConsole.message.slice(0, 100)}`
+    incidentTime = targetConsole.timestamp
+  } else if (targetDocker) {
+    title = `Docker [${targetDocker.containerName}] ${targetDocker.level.toUpperCase()}: ${targetDocker.message.slice(0, 100)}`
+    incidentTime = targetDocker.timestamp
+  }
+
+  promptLines.push(`**Issue Title:** \`${title}\``)
+  promptLines.push(`**Timestamp:** ${new Date(incidentTime).toISOString()}`)
+  promptLines.push(`**Page Context:** ${state.pageContext.url || 'http://localhost'} (${state.pageContext.framework || 'Web Application'})`)
+  promptLines.push('')
+
+  // HTTP Transaction Details with cURL reproduction & RFC intelligence
+  if (targetNetwork) {
+    const explainer = getHttpStatusExplainer(targetNetwork.status || 0)
+    promptLines.push('#### 🌐 HTTP Network Transaction:')
+    promptLines.push(`- **Request:** \`${targetNetwork.method} ${targetNetwork.url}\``)
+    promptLines.push(`- **Status:** \`${targetNetwork.status || '0 (Failed / Network Error)'} ${targetNetwork.statusText || ''}\` — *${explainer.title}*`)
+    promptLines.push(`- **Explanation:** ${explainer.explanation}`)
+    promptLines.push(`- **Action Recommended:** ${explainer.recommendation}`)
+    promptLines.push(`- **Duration:** ${targetNetwork.duration !== undefined ? `${targetNetwork.duration}ms` : 'N/A'}`)
+    if (targetNetwork.isCORS) promptLines.push('- **CORS Flag:** ⚠️ CORS preflight/header failure detected')
+    if (targetNetwork.initiator) promptLines.push(`- **Initiator:** \`${targetNetwork.initiator}\``)
+    promptLines.push('')
+
+    // cURL reproduction block
+    promptLines.push('**Terminal Reproduction Command (cURL):**')
+    promptLines.push('```bash')
+    promptLines.push(generateCurlCommand(targetNetwork))
+    promptLines.push('```')
+    promptLines.push('')
+
+    promptLines.push('**Request Headers:**')
+    if (targetNetwork.requestHeaders && Object.keys(targetNetwork.requestHeaders).length > 0) {
+      promptLines.push('```json')
+      promptLines.push(JSON.stringify(targetNetwork.requestHeaders, null, 2))
+      promptLines.push('```')
+    } else {
+      promptLines.push('_None recorded or default browser headers._')
+    }
+    promptLines.push('')
+
+    promptLines.push('**Request Payload / Body:**')
+    if (targetNetwork.requestBodyPreview) {
+      try {
+        const parsed = JSON.parse(targetNetwork.requestBodyPreview)
+        promptLines.push('```json')
+        promptLines.push(JSON.stringify(parsed, null, 2))
+        promptLines.push('```')
+      } catch {
+        promptLines.push('```')
+        promptLines.push(targetNetwork.requestBodyPreview)
+        promptLines.push('```')
+      }
+    } else {
+      promptLines.push('_No request body sent._')
+    }
+    promptLines.push('')
+
+    promptLines.push('**Response Headers:**')
+    if (targetNetwork.responseHeaders && Object.keys(targetNetwork.responseHeaders).length > 0) {
+      promptLines.push('```json')
+      promptLines.push(JSON.stringify(targetNetwork.responseHeaders, null, 2))
+      promptLines.push('```')
+    } else {
+      promptLines.push('_None recorded or opaque response._')
+    }
+    promptLines.push('')
+
+    promptLines.push('**Response Body / Server Error Message:**')
+    if (targetNetwork.responseBodyPreview) {
+      try {
+        const parsed = JSON.parse(targetNetwork.responseBodyPreview)
+        promptLines.push('```json')
+        promptLines.push(JSON.stringify(parsed, null, 2))
+        promptLines.push('```')
+      } catch {
+        promptLines.push('```')
+        promptLines.push(targetNetwork.responseBodyPreview)
+        promptLines.push('```')
+      }
+    } else if (targetNetwork.error) {
+      promptLines.push(`\`\`\`\n${targetNetwork.error}\n\`\`\``)
+    } else {
+      promptLines.push('_Empty response body._')
+    }
+    promptLines.push('')
+  }
+
+  // Console & Runtime Diagnostics with Demangled Frames
+  if (targetConsole || (!targetNetwork && state.console.entries.length > 0)) {
+    const entry = targetConsole || state.console.entries.filter((e) => e.level === 'error')[0]
+    if (entry) {
+      promptLines.push('#### 🔴 Console & Runtime Diagnostics:')
+      promptLines.push(`- **Event Type:** \`${entry.type}\``)
+      promptLines.push(`- **Error Message:** \`${entry.message}\``)
+      promptLines.push(`- **Occurrences:** ${entry.count}`)
+      
+      if (entry.parsedStack && entry.parsedStack.length > 0) {
+        promptLines.push('')
+        promptLines.push('**Demangled Call Frames:**')
+        entry.parsedStack.slice(0, 5).forEach((frame, i) => {
+          const fn = frame.filename || 'unknown'
+          const isUserCode = !fn.includes('node_modules') && !fn.includes('chrome-extension')
+          const tag = isUserCode ? '📌 [App Code]' : '⚙️ [Vendor]'
+          promptLines.push(`${i + 1}. ${tag} \`${frame.functionName || '<anonymous>'}\` at \`${fn}:${frame.lineno || 0}:${frame.colno || 0}\``)
+        })
+      } else if (entry.stack) {
+        promptLines.push('')
+        promptLines.push('**Stack Trace:**')
+        promptLines.push('```')
+        promptLines.push(entry.stack)
+        promptLines.push('```')
+      }
+      promptLines.push('')
+    }
+  }
+
+  // Docker Backend Context (if present)
+  if (targetDocker || (state.docker && state.docker.logs.length > 0)) {
+    const dockerLog = targetDocker || state.docker?.logs.filter((l) => l.level === 'error')[0]
+    if (dockerLog) {
+      promptLines.push('#### 🐳 Backend Container Context:')
+      promptLines.push(`- **Container:** \`${dockerLog.containerName}\` (${dockerLog.stream})`)
+      promptLines.push(`- **Level:** \`${dockerLog.level.toUpperCase()}\``)
+      promptLines.push('```')
+      promptLines.push(dockerLog.message)
+      promptLines.push('```')
+      promptLines.push('')
+    }
+  }
+
+  // Heuristic Correlations / Cross-layer causality
+  const correlations = state.correlations.length > 0 ? state.correlations : computeCorrelations(state)
+  if (correlations.length > 0) {
+    promptLines.push('#### 💡 Cross-Layer Causality & Correlations:')
+    correlations.slice(0, 3).forEach((corr, idx) => {
+      promptLines.push(`${idx + 1}. [${corr.likelihood.toUpperCase()}] ${corr.description}`)
+    })
+    promptLines.push('')
+  }
+
+  // Timeline of surrounding events
+  promptLines.push('#### ⏱️ Surrounding Telemetry Timeline (Chronological Context):')
+  const timelineEvents: Array<{ time: number; text: string }> = []
+
+  state.network.records.slice(-10).forEach((r) => {
+    const status = r.status ? `[${r.status}]` : 'FAILED'
+    const dur = r.duration !== undefined ? `${r.duration}ms` : ''
+    timelineEvents.push({
+      time: r.startTime,
+      text: `[Network] ${r.method} ${r.url} -> ${status} ${dur}`
+    })
+  })
+
+  state.console.entries.slice(-10).forEach((c) => {
+    timelineEvents.push({
+      time: c.timestamp,
+      text: `[Console ${c.level.toUpperCase()}] ${c.message.slice(0, 100)}`
+    })
+  })
+
+  ;(state.docker?.logs || []).slice(-10).forEach((d) => {
+    timelineEvents.push({
+      time: d.timestamp,
+      text: `[Docker ${d.containerName}] ${d.message.slice(0, 100)}`
+    })
+  })
+
+  timelineEvents.sort((a, b) => a.time - b.time)
+  const recentEvents = timelineEvents.slice(-8)
+
+  if (recentEvents.length > 0) {
+    recentEvents.forEach((ev, idx) => {
+      const tStr = new Date(ev.time).toLocaleTimeString()
+      promptLines.push(`${idx + 1}. \`[${tStr}]\` ${ev.text}`)
+    })
+  } else {
+    promptLines.push('_No previous telemetry events._')
+  }
+  promptLines.push('')
+
+  // Framework State Context
+  if (state.framework && state.framework.detectedFramework) {
+    promptLines.push('#### ⚛️ Framework State Context:')
+    promptLines.push(`- **Detected Framework:** \`${state.framework.detectedFramework}\``)
+    if (state.framework.hasReactHook) promptLines.push('- **React DevTools Hook:** Active')
+    if (state.framework.hasReduxHook) promptLines.push('- **Redux Store:** Connected')
+    if (state.framework.hasVueHook) promptLines.push('- **Vue DevTools:** Active')
+    if (state.framework.store) {
+      promptLines.push(`- **Store Keys:** \`[${state.framework.store.topLevelKeys.slice(0, 10).join(', ')}]\``)
+    }
+    if (state.framework.recentEvents.length > 0) {
+      promptLines.push('**Recent Framework Events:**')
+      state.framework.recentEvents.slice(-5).forEach((ev, i) => {
+        promptLines.push(`${i + 1}. [${ev.framework}] ${ev.detail}`)
+      })
+    }
+    promptLines.push('')
+  }
+
+  // Interaction Replay (Last 30s)
+  if (state.interactions && state.interactions.length > 0) {
+    promptLines.push('#### 🖱️ User Interaction Replay (Last 30 Seconds):')
+    state.interactions.slice(-10).forEach((ev, i) => {
+      const ago = ((Date.now() - ev.timestamp) / 1000).toFixed(1)
+      const target = ev.target ? ` on \`${ev.target}\`` : ''
+      promptLines.push(`${i + 1}. [${ago}s ago] \`${ev.type}\`${target} ${ev.detail || ''}`)
+    })
+    promptLines.push('')
+  }
+
+  // Action instructions for LLM assistant
+  promptLines.push('#### 🎯 Task for AI Coding Assistant (Claude Code / Antigravity):')
+  promptLines.push('1. Analyze the exact failure mechanism across the request payload, headers, response, and runtime stack trace provided above.')
+  promptLines.push('2. Identify the root cause file, function, and line number in the codebase.')
+  promptLines.push('3. Provide the minimal, elegant, and verified code fix as a unified diff patch to resolve this issue.')
+
+  return promptLines.join('\n')
+}
+
+

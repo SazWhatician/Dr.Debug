@@ -6,11 +6,18 @@ export class MockLLMClient implements ILLMClient {
   public callHistory: Array<{ messages: ChatMessage[]; tools?: ToolDefinition[] }> = []
 
   constructor(
-    responses?: LLMResponse[],
+    responsesOrOptions?: LLMResponse[] | { responses?: LLMResponse[]; customHandler?: (messages: ChatMessage[], tools?: ToolDefinition[]) => Promise<LLMResponse> | LLMResponse },
     customHandler?: (messages: ChatMessage[], tools?: ToolDefinition[]) => Promise<LLMResponse> | LLMResponse
   ) {
-    if (responses) this.responses = [...responses]
-    this.customHandler = customHandler
+    if (Array.isArray(responsesOrOptions)) {
+      this.responses = [...responsesOrOptions]
+      this.customHandler = customHandler
+    } else if (responsesOrOptions && typeof responsesOrOptions === 'object') {
+      if (responsesOrOptions.responses && Array.isArray(responsesOrOptions.responses)) {
+        this.responses = [...responsesOrOptions.responses]
+      }
+      this.customHandler = responsesOrOptions.customHandler || customHandler
+    }
   }
 
   public enqueue(response: LLMResponse): void {

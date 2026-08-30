@@ -1,8 +1,11 @@
+declare const chrome: any
+
 export interface ExtensionMessage {
   type: string
   payload?: any
   tabId?: number
 }
+
 
 export class BackgroundWorker {
   private tabPorts: Map<number, any> = new Map()

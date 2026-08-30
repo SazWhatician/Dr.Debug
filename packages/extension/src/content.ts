@@ -1,4 +1,7 @@
+declare const chrome: any
+
 import { DrDebug } from 'dr-debug'
+
 
 export class ContentScriptBridge {
   private instance?: DrDebug
@@ -7,25 +10,46 @@ export class ContentScriptBridge {
     if (typeof window === 'undefined') return
     if (this.instance) return
 
-    // Load user settings or default to enabling the floating cockpit UI
-    const defaultOptions = {
+    // Load user settings from chrome.storage or fallback to localStorage
+    const defaultOptions: Record<string, any> = {
       enableUI: true,
       autoInvestigate: false
     }
 
+    const loadLocalFallback = (): Record<string, any> => {
+      try {
+        const raw = localStorage.getItem('dr_debug_settings')
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          return {
+            enableUI: parsed.enableUI !== false,
+            autoInvestigate: parsed.autoInvestigate === true,
+            apiKey: parsed.apiKey,
+            baseURL: parsed.baseURL,
+            model: parsed.model
+          }
+        }
+      } catch {
+        // ignore
+      }
+      return defaultOptions
+    }
+
+
     if (typeof chrome !== 'undefined' && chrome.storage?.local) {
       chrome.storage.local.get(['apiKey', 'baseURL', 'model', 'enableUI', 'autoInvestigate'], (settings: any) => {
+        const localSettings = loadLocalFallback()
         const options = {
-          enableUI: settings?.enableUI !== false,
-          autoInvestigate: settings?.autoInvestigate === true,
-          apiKey: settings?.apiKey,
-          baseURL: settings?.baseURL,
-          model: settings?.model
+          enableUI: settings?.enableUI ?? localSettings.enableUI,
+          autoInvestigate: settings?.autoInvestigate ?? localSettings.autoInvestigate,
+          apiKey: settings?.apiKey || localSettings.apiKey,
+          baseURL: settings?.baseURL || localSettings.baseURL,
+          model: settings?.model || localSettings.model
         }
         this.bootInstance(options)
       })
     } else {
-      this.bootInstance(defaultOptions)
+      this.bootInstance(loadLocalFallback())
     }
 
     // Listen for extension commands
@@ -64,20 +88,28 @@ export class ContentScriptBridge {
 
         if (message.type === 'DR_DEBUG_UPDATE_SETTINGS') {
           if (message.settings) {
-            this.destroy()
-            this.bootInstance({
-              enableUI: message.settings.enableUI !== false,
-              autoInvestigate: message.settings.autoInvestigate === true,
-              apiKey: message.settings.apiKey,
-              baseURL: message.settings.baseURL,
-              model: message.settings.model
-            })
+            if (this.instance) {
+              this.instance.updateLLMConfig({
+                apiKey: message.settings.apiKey,
+                baseURL: message.settings.baseURL,
+                model: message.settings.model
+              })
+            } else {
+              this.bootInstance({
+                enableUI: message.settings.enableUI !== false,
+                autoInvestigate: message.settings.autoInvestigate === true,
+                apiKey: message.settings.apiKey,
+                baseURL: message.settings.baseURL,
+                model: message.settings.model
+              })
+            }
             sendResponse({ status: 'updated' })
           }
           return false
         }
       })
     }
+
   }
 
   private bootInstance(options: any): void {

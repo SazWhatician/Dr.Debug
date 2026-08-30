@@ -71,6 +71,58 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   })
 
+  // Test API Key Live
+  const btnTestKey = document.getElementById('btn-test-key')
+  btnTestKey?.addEventListener('click', async () => {
+    const provider = providerSelect?.value || 'groq'
+    const apiKey = apiKeyInput?.value?.trim() || ''
+
+    if (!apiKey && provider !== 'litert') {
+      showStatus('Please enter an API key first', true)
+      return
+    }
+
+    showStatus('Testing connection with provider...', false)
+    if (btnTestKey) btnTestKey.textContent = '⏳ Testing...'
+
+    let testUrl = 'https://api.groq.com/openai/v1/chat/completions'
+    let testModel = 'llama-3.3-70b-versatile'
+    if (provider === 'openai') {
+      testUrl = 'https://api.openai.com/v1/chat/completions'
+      testModel = 'gpt-4o-mini'
+    } else if (provider === 'gemini') {
+      testUrl = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
+      testModel = 'gemini-1.5-flash'
+    }
+
+    try {
+      const res = await fetch(testUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: testModel,
+          messages: [{ role: 'user', content: 'Ping' }],
+          max_tokens: 5
+        })
+      })
+
+      if (btnTestKey) btnTestKey.innerHTML = '<span>⚡</span> <span>Test Key</span>'
+
+      if (res.ok) {
+        showStatus(`✅ Connected to ${provider.toUpperCase()}!`, false)
+      } else {
+        const err = await res.json().catch(() => ({}))
+        showStatus(`❌ Failed (${res.status}): ${err?.error?.message || res.statusText}`, true)
+      }
+    } catch (err) {
+      if (btnTestKey) btnTestKey.innerHTML = '<span>⚡</span> <span>Test Key</span>'
+      showStatus(`❌ Network error: ${err.message}`, true)
+    }
+  })
+
   // Save Settings & Broadcast
   btnSave?.addEventListener('click', () => {
     const provider = providerSelect?.value || 'groq'
@@ -111,6 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
       })
     }
   })
+
 
   function showStatus(text, isError = false) {
     if (!statusMsg) return

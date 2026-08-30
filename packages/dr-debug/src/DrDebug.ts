@@ -18,6 +18,8 @@ export interface DrDebugOptions {
   language?: string
   enableUI?: boolean
   autoInvestigate?: boolean
+  enableMCP?: boolean
+  mcpPort?: number
 }
 
 export class DrDebug {
@@ -27,7 +29,7 @@ export class DrDebug {
   private ui?: DrDebugUI
   private options: DrDebugOptions
   private isAutoInvestigating = false
-
+  private mcpSocket?: WebSocket
   private syncInterval?: any
 
   constructor(options: DrDebugOptions = {}) {
@@ -62,6 +64,13 @@ export class DrDebug {
       this.ui = new DrDebugUI({
         onInvestigate: async (goal) => {
           await this.investigate(goal)
+        },
+        getController: () => this.controller,
+        onSaveSettings: (settings) => {
+          this.updateLLMConfig(settings)
+        },
+        onTestConnection: async (settings) => {
+          return await this.testLLMConnection(settings)
         }
       })
       this.syncUIStatus()
@@ -79,7 +88,50 @@ export class DrDebug {
       window.addEventListener('error', () => this.handleAutoTrigger())
       window.addEventListener('unhandledrejection', () => this.handleAutoTrigger())
     }
+
+    // 6. Connect to local Dr. Debug MCP Daemon if enabled
+    if (options.enableMCP && typeof window !== 'undefined' && typeof WebSocket !== 'undefined') {
+      this.connectToMCPBridge(options.mcpPort || 9229)
+    }
   }
+
+  public updateLLMConfig(config: Partial<DrDebugOptions>): void {
+    this.options = { ...this.options, ...config }
+
+    if (config.llmClient) {
+      this.llmClient = config.llmClient
+    } else if (config.liteRT || (config.model && config.model.toLowerCase().includes('litert'))) {
+      this.llmClient = new LiteRTClient(config.liteRT || { modelName: config.model })
+    } else if (config.apiKey || config.baseURL || config.model) {
+      this.llmClient = new OpenAIClient({
+        apiKey: config.apiKey || '',
+        baseURL: config.baseURL,
+        model: config.model || 'llama-3.3-70b-versatile'
+      })
+    }
+    this.core = new DrDebugCore(this.controller, this.llmClient)
+  }
+
+  public async testLLMConnection(config?: Partial<DrDebugOptions>): Promise<{ success: boolean; message: string }> {
+    const targetConfig = config ? { ...this.options, ...config } : this.options
+    let client: ILLMClient
+
+    if (targetConfig.liteRT || (targetConfig.model && targetConfig.model.toLowerCase().includes('litert'))) {
+      client = new LiteRTClient(targetConfig.liteRT || { modelName: targetConfig.model })
+    } else {
+      client = new OpenAIClient({
+        apiKey: targetConfig.apiKey || '',
+        baseURL: targetConfig.baseURL,
+        model: targetConfig.model || 'llama-3.3-70b-versatile'
+      })
+    }
+
+    if (client instanceof OpenAIClient) {
+      return await client.testConnection()
+    }
+    return { success: true, message: 'On-device engine ready' }
+  }
+
 
   public getController(): DebugController {
     return this.controller
@@ -96,6 +148,11 @@ export class DrDebug {
   public async investigate(goal?: string, options: InvestigationOptions = {}): Promise<InvestigationResult> {
     const activeGoal = goal || 'Diagnose all active browser errors, network failures, and performance bottlenecks.'
     
+    // Automatically prepare and show HUD cockpit
+    this.ui?.clearTimeline()
+    this.ui?.switchTab('timeline')
+    this.ui?.openCockpit()
+
     this.ui?.updatePillStatus(
       this.controller.getConsoleEntries().filter((e) => e.level === 'error').length,
       this.controller.getNetworkRecords().filter((r) => r.isFailed).length,
@@ -110,7 +167,7 @@ export class DrDebug {
 
     try {
       const result = await this.core.investigate(activeGoal, {
-        maxSteps: options.maxSteps ?? this.options.maxSteps ?? 5,
+        maxSteps: options.maxSteps ?? this.options.maxSteps ?? 8,
         signal: options.signal,
         onStepStart: (stepNumber) => {
           currentStepNumber = stepNumber
@@ -145,6 +202,18 @@ export class DrDebug {
         })
       }
       return result
+    } catch (err: any) {
+      if (this.ui) {
+        this.ui.showPrescription({
+          diagnosis: `AI Investigation failed: ${err.message || 'Unknown error'}`,
+          rootCause: err.message?.includes('API key') || err.message?.includes('401') || err.message?.includes('404')
+            ? `LLM Authentication/Configuration error: ${err.message}. Check your API key or chosen model in the config bar.`
+            : (err.message || 'Execution error during Re-Act investigation'),
+          confidence: 0,
+          fix: ''
+        })
+      }
+      throw err
     } finally {
       this.syncUIStatus()
     }
@@ -174,6 +243,9 @@ export class DrDebug {
     // Sync full-stack causal topology graph
     const graph = this.controller.getCausalGraph()
     this.ui.updateCausalGraph(graph)
+
+    // Sync Errors Matrix & Histogram
+    this.ui.updateErrors()
   }
 
   private async handleAutoTrigger(): Promise<void> {
@@ -187,10 +259,59 @@ export class DrDebug {
     }
   }
 
+  private connectToMCPBridge(port = 9229): void {
+    try {
+      const tabId = `tab_${Date.now()}`
+      const ws = new WebSocket(`ws://localhost:${port}/browser?tabId=${tabId}`)
+      this.mcpSocket = ws
+
+      ws.onopen = () => {
+        const state = this.controller.getSnapshot()
+        ws.send(
+          JSON.stringify({
+            type: 'TELEMETRY_SYNC',
+            state: {
+              ...state,
+              serializedXml: this.controller.serialize(),
+              diagnosticMatrix: this.controller.getDiagnosticMatrix(),
+              interactionsHuman: this.controller.getInteractionReplayHuman()
+            }
+          })
+        )
+      }
+
+      ws.onmessage = async (evt) => {
+        try {
+          const msg = JSON.parse(evt.data)
+          if (msg.type === 'EVAL_SCRIPT') {
+            try {
+              const res = window.eval(msg.expression)
+              ws.send(JSON.stringify({ type: 'COMMAND_RESPONSE', commandId: msg.commandId, result: res }))
+            } catch (err: any) {
+              ws.send(JSON.stringify({ type: 'COMMAND_RESPONSE', commandId: msg.commandId, error: err.message }))
+            }
+          }
+        } catch {
+          // Ignore parse errors
+        }
+      }
+
+      ws.onerror = () => {
+        // Silently handle offline local daemon
+      }
+    } catch {
+      // MCP bridge is optional
+    }
+  }
+
   public destroy(): void {
     if (this.syncInterval) {
       clearInterval(this.syncInterval)
       this.syncInterval = undefined
+    }
+    if (this.mcpSocket) {
+      this.mcpSocket.close()
+      this.mcpSocket = undefined
     }
     this.controller.destroy()
     this.ui?.destroy()

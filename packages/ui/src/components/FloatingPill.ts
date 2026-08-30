@@ -57,7 +57,7 @@ export class FloatingPill {
     isRunning = false
   ): void {
     if (isRunning) {
-      this.badgeText.innerHTML = `<span>Dr. Debug</span> <span class="dr-debug-chip run">⚡ DIAGNOSING</span>`
+      this.badgeText.innerHTML = `<span>Dr. Debug</span> <span class="dr-debug-chip run">DIAGNOSING</span>`
       return
     }
 
@@ -65,9 +65,9 @@ export class FloatingPill {
 
     if (totalIssues > 0) {
       const chips: string[] = []
-      if (errorCount > 0) chips.push(`<span class="dr-debug-chip err">❌ ${errorCount} ERR</span>`)
-      if (failedNetCount > 0) chips.push(`<span class="dr-debug-chip net">⚠️ ${failedNetCount} NET FAIL</span>`)
-      if (slowNetCount > 0) chips.push(`<span class="dr-debug-chip net">⏳ ${slowNetCount} SLOW</span>`)
+      if (errorCount > 0) chips.push(`<span class="dr-debug-chip err">${errorCount} ERR</span>`)
+      if (failedNetCount > 0) chips.push(`<span class="dr-debug-chip net">${failedNetCount} NET</span>`)
+      if (slowNetCount > 0) chips.push(`<span class="dr-debug-chip net">${slowNetCount} SLOW</span>`)
       this.badgeText.innerHTML = chips.join(' ')
     } else {
       this.badgeText.innerHTML = `<span>Dr. Debug</span> <span class="dr-debug-chip ok">HEALTHY</span>`

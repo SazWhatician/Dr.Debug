@@ -38,13 +38,26 @@ Design and build the modern, non-intrusive in-browser developer HUD living insid
     - Syntax-highlighted unified diff code fix with "Copy Patch" clipboard action.
   - [x] **Manual Investigation Input:** Search bar allowing developers to prompt Dr. Debug (e.g. *"Why is checkout lagging?"*).
 
-- [x] **3.4 LiteRT.js / LiteRT-LM On-Device LLM Integration (`@dr-debug/llms`)**
+  - [x] **3.4 Multi-Dimensional Errors & Anomaly Matrix Workbench (`ErrorDashboardView`)**
+    - [x] **2D Substrate × Severity Heatmap Matrix Grid**: Cross-cutting Network, Runtime JS, Docker Backend, and System Health across Critical, High, and Notice severity tiers.
+    - [x] **Interactive Cell Drilldown & Mode Switcher**: Seamless toggling between `🎛️ Matrix Grid` and `⚡ Timeline Stream` with live sub-second search bar.
+    - [x] **1-Click Terminal cURL Generator**: Reconstructs exact executable curl commands with headers, auth, and request payloads for immediate terminal reproduction.
+    - [x] **RFC HTTP Status Intelligence**: Plain-English diagnosis and recommended fixes for 4xx/5xx and CORS failure codes.
+    - [x] **Demangled Stack Frame Inspector**: Differentiates User Application Code (`[App Code]`) from third-party vendor internals (`[Vendor]`).
+    - [x] **Unified AI Incident Capsule**: 1-Click **"📋 Copy for Claude / Antigravity"** incident export containing cURL, stack, headers, and causality metadata.
+  - [x] **3.5 In-Cockpit AI Settings & Live Testing (`SettingsModal`)**
+    - [x] Configure Provider (Groq LPU, OpenAI, Gemini Flash, LiteRT), API Key, and Custom Base URL.
+    - [x] Real-time **"⚡ Test Connection"** validation endpoint with explicit diagnostic error feedback (401, 404, 429).
+    - [x] Auto-synchronization with `localStorage` and `chrome.storage.local`.
+
+- [x] **3.6 LiteRT.js / LiteRT-LM On-Device LLM Integration (`@dr-debug/llms`)**
   - [x] Create `LiteRTClient` implementing `ILLMClient` with WebGPU/WASM local model execution.
   - [x] Support structured prompt templating with `<start_of_turn>` / `<end_of_turn>` and tool call JSON parsing.
   - [x] Add automated unit test suite for prompt generation, tool extraction, and engine mock execution.
 
-- [x] **3.5 Master Orchestrator Package (`dr-debug`)**
+- [x] **3.7 Master Orchestrator Package (`dr-debug`)**
   - [x] Create unified `DrDebug` facade combining Controller, Core, LLMs, and UI.
+  - [x] Dynamic LLM reconfiguration via `updateLLMConfig()` and `testLLMConnection()`.
   - [x] Enable one-line script tag embedding with `data-*` attributes (`data-model`, `data-api-key`, `data-auto-investigate`).
   - [x] Full end-to-end integration test suite verifying telemetry -> investigation -> UI stream pipeline.
 
@@ -52,13 +65,17 @@ Design and build the modern, non-intrusive in-browser developer HUD living insid
 
 ## 🧪 Acceptance Criteria & Verification
 1. **Style Isolation:** Zero style bleed between complex UI frameworks and the Shadow DOM HUD.
-2. **On-Device LLM:** `LiteRTClient` formats prompts with tool calling tags and parses model responses cleanly.
-3. **End-to-End Orchestration:** All 59 unit and integration tests passing across all packages (`npm test`).
+2. **On-Device & Cloud LLM:** `LiteRTClient` and `OpenAIClient` (Groq/OpenAI/Gemini) handle multi-turn tool calling flawlessly.
+3. **End-to-End Orchestration:** All 64 unit and integration tests passing across all packages (`npm test`).
 4. **Type Safety:** 100% strict TypeScript typecheck passes cleanly with zero errors (`npm run typecheck`).
 
 ---
 
 ## 📝 Phase Completion & Change Notes
-- **[2026-08-27]**: Implemented `LiteRTClient` for local on-device inference; built `FloatingPill`, `CockpitPanel`, and `DrDebugUI` with Shadow DOM isolation; created `dr-debug` master orchestrator and end-to-end integration test suite. All 39 tests passing.
+- **[2026-08-27]**: Implemented `LiteRTClient` for local on-device inference; built `FloatingPill`, `CockpitPanel`, and `DrDebugUI` with Shadow DOM isolation; created `dr-debug` master orchestrator and end-to-end integration test suite.
 - **[2026-08-28]**: Added `CausalGraphView` native SVG full-stack topology graph tab to Shadow DOM Cockpit HUD.
+- **[2026-08-29]**: Added `ErrorDashboardView` (with distribution histogram & 1-click Claude/Antigravity markdown prompt generator), `SettingsModal` (with live Groq/OpenAI/Gemini connection testing), and Groq strict multi-turn tool schema compliance. All 62 tests passing.
+- **[2026-08-30]**: Upgraded the Error Matrix into a **2D Substrate × Severity Diagnostic Matrix & Actionable Debugging Workbench** with interactive heatmap cells, 1-Click terminal cURL generator, RFC status intelligence, demangled stack frames, live search query filtering, and elevated Claude/Antigravity diagnostic capsule. 64/64 tests passing with zero TypeScript errors.
+
+
 

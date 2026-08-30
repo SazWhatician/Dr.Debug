@@ -124,7 +124,7 @@ describe('DrDebugUI (Shadow DOM HUD & Cockpit)', () => {
     const shadow = ui.getShadowRoot()
 
     const input = shadow.querySelector('.dr-debug-input') as HTMLInputElement
-    const btn = shadow.querySelector('.dr-debug-btn') as HTMLButtonElement
+    const btn = shadow.querySelector('#dr-debug-query-submit') as HTMLButtonElement
 
     input.value = 'Why is the checkout button unresponsive?'
     btn.click()
@@ -133,4 +133,32 @@ describe('DrDebugUI (Shadow DOM HUD & Cockpit)', () => {
 
     ui.destroy()
   })
+
+  it('switches to errors tab and renders 2D error matrix view with search and mode switcher', () => {
+    const ui = new DrDebugUI()
+    const shadow = ui.getShadowRoot()
+
+    ui.openCockpit()
+    ui.switchTab('errors')
+
+    const errView = shadow.querySelector('.dr-debug-error-dashboard')
+    expect(errView).toBeDefined()
+
+    const matrixGrid = shadow.querySelector('.dr-debug-2d-matrix')
+    expect(matrixGrid).toBeDefined()
+
+    const searchInput = shadow.querySelector('.dr-debug-search-input') as HTMLInputElement
+    expect(searchInput).toBeDefined()
+
+    const btnStream = shadow.querySelector('#btn-mode-stream') as HTMLButtonElement
+    expect(btnStream).toBeDefined()
+    btnStream.click()
+
+    const chartWrapper = shadow.querySelector('.dr-debug-chart-wrapper') as HTMLElement
+    expect(chartWrapper.style.display).toBe('flex')
+
+    ui.destroy()
+  })
 })
+
+

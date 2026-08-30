@@ -6,6 +6,9 @@ import { shadowStyles } from './styles.js'
 export interface DrDebugUIOptions {
   onInvestigate?: (query: string) => Promise<void> | void
   container?: HTMLElement
+  getController?: () => any
+  onSaveSettings?: (settings: any) => void
+  onTestConnection?: (settings: any) => Promise<{ success: boolean; message: string }>
 }
 
 export class DrDebugUI {
@@ -59,9 +62,9 @@ export class DrDebugUI {
     this.shadowRoot.appendChild(styleEl)
 
     // Cockpit Panel
-    this.cockpit = new CockpitPanel(
-      () => this.cockpit.hide(),
-      async (query) => {
+    this.cockpit = new CockpitPanel({
+      onClose: () => this.cockpit.hide(),
+      onInvestigate: async (query) => {
         if (options.onInvestigate) {
           try {
             await options.onInvestigate(query)
@@ -71,8 +74,11 @@ export class DrDebugUI {
         } else {
           this.runDemoInvestigation(query)
         }
-      }
-    )
+      },
+      getController: options.getController,
+      onSaveSettings: options.onSaveSettings,
+      onTestConnection: options.onTestConnection
+    })
 
     // Floating Pill
     this.pill = new FloatingPill(() => {
@@ -118,6 +124,10 @@ export class DrDebugUI {
     this.cockpit.updateTriage(telemetry)
   }
 
+  public updateErrors(): void {
+    this.cockpit.updateErrors()
+  }
+
   public clearTimeline(): void {
     this.cockpit.clearTimeline()
   }
@@ -129,6 +139,11 @@ export class DrDebugUI {
   public updateCausalGraph(graph: CausalErrorGraph): void {
     this.cockpit.updateCausalGraph(graph)
   }
+
+  public switchTab(tab: 'timeline' | 'errors' | 'triage' | 'graph' | 'prescription'): void {
+    this.cockpit.switchTab(tab)
+  }
+
 
   public toggleCockpit(): void {
     this.cockpit.toggle()

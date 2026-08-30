@@ -1,5 +1,7 @@
 import { DR_DEBUG_LOGO } from '../assets/logo.js'
 import { CausalGraphView, type CausalErrorGraph } from './CausalGraphView.js'
+import { ErrorDashboardView } from './ErrorDashboardView.js'
+import { SettingsModal, type SettingsData } from './SettingsModal.js'
 
 export interface StepItem {
   stepNumber: number
@@ -18,33 +20,58 @@ export interface PrescriptionData {
   filesToModify?: string[]
 }
 
+export interface CockpitPanelOptions {
+  onClose: () => void
+  onInvestigate: (query: string) => void
+  getController?: () => any
+  onSaveSettings?: (settings: SettingsData) => void
+  onTestConnection?: (settings: SettingsData) => Promise<{ success: boolean; message: string }>
+}
+
 export class CockpitPanel {
   private element: HTMLElement
   private timelineContainer: HTMLElement
+  private errorsContainer: HTMLElement
   private triageContainer: HTMLElement
   private graphContainer: HTMLElement
   private prescriptionContainer: HTMLElement
+  private errorDashboardView: ErrorDashboardView
+  private settingsModal: SettingsModal
   private causalGraphView: CausalGraphView = new CausalGraphView()
   private queryInput: HTMLInputElement
   private queryButton: HTMLButtonElement
   private tabTimeline: HTMLButtonElement
+  private tabErrors: HTMLButtonElement
   private tabTriage: HTMLButtonElement
   private tabGraph: HTMLButtonElement
   private tabPrescription: HTMLButtonElement
   private heapMetricBadge: HTMLElement
   private uptimeMetricBadge: HTMLElement
-  private activeTab: 'timeline' | 'triage' | 'graph' | 'prescription' = 'timeline'
+  private activeTab: 'timeline' | 'errors' | 'triage' | 'graph' | 'prescription' = 'timeline'
   private steps: StepItem[] = []
   private startTime = Date.now()
   private isMaximized = false
   private maximizeBtn!: HTMLButtonElement
+  private settingsBtn!: HTMLButtonElement
   private thinkingCard: HTMLElement | null = null
+  private onInvestigateHandler: (query: string) => void
 
   constructor(
-    private onClose: () => void,
-    private onInvestigate: (query: string) => void
+    private onCloseOrOptions: (() => void) | CockpitPanelOptions,
+    private legacyOnInvestigate?: (query: string) => void
   ) {
+    const options: CockpitPanelOptions =
+      typeof onCloseOrOptions === 'function'
+        ? {
+            onClose: onCloseOrOptions,
+            onInvestigate: legacyOnInvestigate || (() => {}),
+            getController: () => (typeof window !== 'undefined' ? (window as any).__DR_DEBUG__?.getController() : undefined)
+          }
+        : onCloseOrOptions
+
+    this.onInvestigateHandler = options.onInvestigate
     this.element = document.createElement('div')
+
     this.element.className = 'dr-debug-modal hidden'
 
     // 1. Futuristic Header Bar
@@ -65,11 +92,17 @@ export class CockpitPanel {
 
     this.heapMetricBadge = document.createElement('div')
     this.heapMetricBadge.className = 'dr-debug-metric-badge'
-    this.heapMetricBadge.innerHTML = `<span>🧠</span> <span id="dr-debug-heap-val">Heap: 48MB</span>`
+    this.heapMetricBadge.innerHTML = `<span class="dr-debug-status-dot dot-sys"></span> <span id="dr-debug-heap-val">Heap: 48MB</span>`
 
     this.uptimeMetricBadge = document.createElement('div')
     this.uptimeMetricBadge.className = 'dr-debug-metric-badge'
-    this.uptimeMetricBadge.innerHTML = `<span>⏱️</span> <span id="dr-debug-uptime-val">00:00</span>`
+    this.uptimeMetricBadge.innerHTML = `<span class="dr-debug-status-dot dot-notice"></span> <span id="dr-debug-uptime-val">00:00</span>`
+
+    this.settingsBtn = document.createElement('button')
+    this.settingsBtn.className = 'dr-debug-close-btn'
+    this.settingsBtn.innerHTML = '⚙'
+    this.settingsBtn.title = 'AI Settings & API Keys'
+    this.settingsBtn.addEventListener('click', () => this.settingsModal.toggle())
 
     this.maximizeBtn = document.createElement('button')
     this.maximizeBtn.className = 'dr-debug-close-btn'
@@ -81,10 +114,11 @@ export class CockpitPanel {
     closeBtn.className = 'dr-debug-close-btn'
     closeBtn.innerHTML = '✕'
     closeBtn.title = 'Close Cockpit'
-    closeBtn.addEventListener('click', () => this.onClose())
+    closeBtn.addEventListener('click', () => options.onClose())
 
     metricsWrapper.appendChild(this.heapMetricBadge)
     metricsWrapper.appendChild(this.uptimeMetricBadge)
+    metricsWrapper.appendChild(this.settingsBtn)
     metricsWrapper.appendChild(this.maximizeBtn)
     metricsWrapper.appendChild(closeBtn)
 
@@ -97,25 +131,31 @@ export class CockpitPanel {
 
     this.tabTimeline = document.createElement('button')
     this.tabTimeline.className = 'dr-debug-tab active'
-    this.tabTimeline.innerHTML = `<span>⚡</span> <span>Timeline</span>`
+    this.tabTimeline.innerHTML = `<span>Timeline</span>`
     this.tabTimeline.addEventListener('click', () => this.switchTab('timeline'))
+
+    this.tabErrors = document.createElement('button')
+    this.tabErrors.className = 'dr-debug-tab'
+    this.tabErrors.innerHTML = `<span>Error Matrix</span>`
+    this.tabErrors.addEventListener('click', () => this.switchTab('errors'))
 
     this.tabTriage = document.createElement('button')
     this.tabTriage.className = 'dr-debug-tab'
-    this.tabTriage.innerHTML = `<span>📡</span> <span>Telemetry</span>`
+    this.tabTriage.innerHTML = `<span>Telemetry</span>`
     this.tabTriage.addEventListener('click', () => this.switchTab('triage'))
 
     this.tabGraph = document.createElement('button')
     this.tabGraph.className = 'dr-debug-tab'
-    this.tabGraph.innerHTML = `<span>🕸️</span> <span>Causal Graph</span>`
+    this.tabGraph.innerHTML = `<span>Causal Graph</span>`
     this.tabGraph.addEventListener('click', () => this.switchTab('graph'))
 
     this.tabPrescription = document.createElement('button')
     this.tabPrescription.className = 'dr-debug-tab'
-    this.tabPrescription.innerHTML = `<span>💊</span> <span>Prescription</span>`
+    this.tabPrescription.innerHTML = `<span>Prescription</span>`
     this.tabPrescription.addEventListener('click', () => this.switchTab('prescription'))
 
     tabs.appendChild(this.tabTimeline)
+    tabs.appendChild(this.tabErrors)
     tabs.appendChild(this.tabTriage)
     tabs.appendChild(this.tabGraph)
     tabs.appendChild(this.tabPrescription)
@@ -128,6 +168,20 @@ export class CockpitPanel {
     this.timelineContainer.style.display = 'flex'
     this.timelineContainer.style.flexDirection = 'column'
     this.timelineContainer.style.gap = '10px'
+
+    this.errorDashboardView = new ErrorDashboardView({
+      getController: () => options.getController?.() || (typeof window !== 'undefined' ? (window as any).__DR_DEBUG__?.getController() : undefined),
+      onLaunchDiagnosis: (goal) => {
+        this.queryInput.value = goal
+        this.triggerInvestigate()
+      }
+    })
+    this.errorsContainer = document.createElement('div')
+    this.errorsContainer.style.display = 'none'
+    this.errorsContainer.style.flexDirection = 'column'
+    this.errorsContainer.style.gap = '10px'
+    this.errorsContainer.style.height = '100%'
+    this.errorsContainer.appendChild(this.errorDashboardView.getElement())
 
     this.triageContainer = document.createElement('div')
     this.triageContainer.style.display = 'none'
@@ -146,9 +200,31 @@ export class CockpitPanel {
     this.prescriptionContainer.style.gap = '10px'
 
     body.appendChild(this.timelineContainer)
+    body.appendChild(this.errorsContainer)
     body.appendChild(this.triageContainer)
     body.appendChild(this.graphContainer)
     body.appendChild(this.prescriptionContainer)
+
+    // Settings Modal
+    this.settingsModal = new SettingsModal({
+      onSave: (settings) => {
+        options.onSaveSettings?.(settings)
+        if (typeof window !== 'undefined' && (window as any).__DR_DEBUG__) {
+          (window as any).__DR_DEBUG__.updateLLMConfig?.(settings)
+        }
+      },
+      onTestConnection: async (settings) => {
+        if (options.onTestConnection) {
+          return await options.onTestConnection(settings)
+        }
+        if (typeof window !== 'undefined' && (window as any).__DR_DEBUG__?.testLLMConnection) {
+          return await (window as any).__DR_DEBUG__.testLLMConnection(settings)
+        }
+        return { success: true, message: 'Settings validated' }
+      }
+    })
+    this.element.appendChild(this.settingsModal.getElement())
+
 
     // 4. Quick Prompts & Query Wrapper
     const queryWrapper = document.createElement('div')
@@ -190,6 +266,7 @@ export class CockpitPanel {
     })
 
     this.queryButton = document.createElement('button')
+    this.queryButton.id = 'dr-debug-query-submit'
     this.queryButton.className = 'dr-debug-btn'
     this.queryButton.innerHTML = `<span>⚡</span> <span>Diagnose</span>`
     this.queryButton.addEventListener('click', () => this.triggerInvestigate())
@@ -239,18 +316,29 @@ export class CockpitPanel {
       : `<span>⚡</span> <span>Diagnose</span>`
   }
 
-  public switchTab(tab: 'timeline' | 'triage' | 'graph' | 'prescription'): void {
+  public switchTab(tab: 'timeline' | 'errors' | 'triage' | 'graph' | 'prescription'): void {
     this.activeTab = tab
     this.tabTimeline.classList.toggle('active', tab === 'timeline')
+    this.tabErrors.classList.toggle('active', tab === 'errors')
     this.tabTriage.classList.toggle('active', tab === 'triage')
     this.tabGraph.classList.toggle('active', tab === 'graph')
     this.tabPrescription.classList.toggle('active', tab === 'prescription')
 
     this.timelineContainer.style.display = tab === 'timeline' ? 'flex' : 'none'
+    this.errorsContainer.style.display = tab === 'errors' ? 'flex' : 'none'
     this.triageContainer.style.display = tab === 'triage' ? 'flex' : 'none'
     this.graphContainer.style.display = tab === 'graph' ? 'flex' : 'none'
     this.prescriptionContainer.style.display = tab === 'prescription' ? 'flex' : 'none'
+
+    if (tab === 'errors') {
+      this.errorDashboardView.update()
+    }
   }
+
+  public updateErrors(): void {
+    this.errorDashboardView.update()
+  }
+
 
   public clearTimeline(): void {
     this.steps = []
@@ -593,7 +681,7 @@ export class CockpitPanel {
     if (!query) return
     this.setBusy(true)
     this.switchTab('timeline')
-    this.onInvestigate(query)
+    this.onInvestigateHandler(query)
   }
 
   private formatDiffHtml(diff: string): string {

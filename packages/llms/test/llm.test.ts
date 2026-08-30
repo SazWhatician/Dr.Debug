@@ -30,13 +30,16 @@ describe('LLM Adapters', () => {
     expect(res.content).toBe('Echo: Testing dynamic handler')
   })
 
-  it('OpenAIClient initializes with custom baseURL and model', () => {
+  it('OpenAIClient handles missing key in testConnection gracefully', async () => {
     const client = new OpenAIClient({
-      apiKey: 'test-key',
-      baseURL: 'https://custom.api.io/v1',
-      model: 'claude-3-5-sonnet'
+      apiKey: '',
+      baseURL: 'https://api.groq.com/openai/v1',
+      model: 'llama-3.3-70b-versatile'
     })
 
-    expect(client).toBeDefined()
+    const res = await client.testConnection()
+    expect(res.success).toBe(false)
+    expect(res.message).toContain('No API key provided')
   })
 })
+

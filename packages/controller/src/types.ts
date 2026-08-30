@@ -183,6 +183,8 @@ export interface DebugState {
   }
   correlations: TemporalCorrelation[]
   causalGraph?: CausalErrorGraph
+  framework?: FrameworkState
+  interactions?: InteractionEvent[]
 }
 
 export interface SerializerOptions {
@@ -195,4 +197,105 @@ export interface SerializerOptions {
   includeDocker?: boolean
   includeGraph?: boolean
 }
+
+export type MatrixSubstrate = 'network' | 'console' | 'docker' | 'system'
+export type MatrixSeverity = 'critical' | 'high' | 'notice'
+
+export interface DiagnosticMatrixCell {
+  substrate: MatrixSubstrate
+  severity: MatrixSeverity
+  count: number
+  itemIds: string[]
+  primaryLabel: string
+}
+
+export interface DiagnosticMatrixSnapshot {
+  cells: Record<string, DiagnosticMatrixCell>
+  totalErrors: number
+  criticalCount: number
+  highCount: number
+  noticeCount: number
+  substrateCounts: Record<MatrixSubstrate, number>
+}
+
+export interface HttpStatusDetail {
+  code: number
+  title: string
+  explanation: string
+  recommendation: string
+}
+
+// Phase 5: Framework State Types
+export interface FrameworkEvent {
+  type: 'react_render' | 'redux_dispatch' | 'vue_update' | 'svelte_update' | string
+  framework: string
+  timestamp: number
+  detail: string
+}
+
+export interface ComponentSnapshot {
+  name: string
+  depth: number
+  propKeys: string[]
+  hasState: boolean
+}
+
+export interface StoreSnapshot {
+  type: 'redux' | 'zustand' | 'vuex' | string
+  topLevelKeys: string[]
+  totalKeys: number
+  preview: string
+}
+
+export interface FrameworkState {
+  detectedFramework: string | null
+  hasReactHook: boolean
+  hasReduxHook: boolean
+  hasVueHook: boolean
+  hasSvelteHook: boolean
+  renderers: string[]
+  recentEvents: FrameworkEvent[]
+  components: ComponentSnapshot[]
+  store: StoreSnapshot | null
+}
+
+// Phase 5: Interaction Replay Types
+export interface InteractionEvent {
+  type: 'click' | 'input' | 'scroll' | 'navigation' | 'dom_mutation' | string
+  timestamp: number
+  target?: string
+  detail?: string
+}
+
+// Wave 5: Network Mock Types
+export interface NetworkMockRule {
+  id: string
+  urlPattern: string
+  method?: string
+  mockStatus: number
+  mockBody: string
+  mockHeaders?: Record<string, string>
+  isActive: boolean
+}
+
+// Wave 5: CSS Layout Anomaly Types
+export interface LayoutAnomaly {
+  type: 'overflow_clip' | 'invisible_overlay' | 'zero_size' | 'offscreen' | 'z_index_trap'
+  selector: string
+  description: string
+  severity: 'high' | 'medium' | 'low'
+  computedValues?: Record<string, string>
+}
+
+// Wave 6: SQL Query Correlation Types
+export interface SQLQueryCorrelation {
+  requestId: string
+  url: string
+  queryCount: number
+  totalQueryDurationMs: number
+  isNPlus1: boolean
+  serverTimingEntries: string[]
+}
+
+
 
