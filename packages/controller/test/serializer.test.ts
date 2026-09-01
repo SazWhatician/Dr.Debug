@@ -101,7 +101,7 @@ describe('debugStateToString & computeCorrelations', () => {
       totalJSHeapSize: 80 * 1024 * 1024,
       heapUsagePercent: 56.3,
       trendMBPerMin: 1.4,
-      detachedNodesCount: 180
+      domNodeCount: 180
     },
     correlations: []
   }

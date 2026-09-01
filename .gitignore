@@ -31,3 +31,7 @@ Thumbs.db
 !.vscode/settings.json
 !.vscode/extensions.json
 .idea/
+
+# Stray declaration maps: these belong in dist/, never beside sources
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.d.ts.map

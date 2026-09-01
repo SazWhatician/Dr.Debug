@@ -603,4 +603,4 @@ console.log('Suggested Prescription/Fix:', diagnosis.fix)
 
 ---
 
-*Authored with architectural fidelity to Page Agent & PolarAssist. Designed for modern autonomous web debugging.*
+*Created and engineered by Saswat Kumar Mohanty (AI/ML Engineer, VSSUT Burla, Bhubaneswar). Designed for modern autonomous web debugging.*

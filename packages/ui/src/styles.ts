@@ -584,7 +584,11 @@ export const shadowStyles = `
 .dr-debug-presc-text {
   font-size: 11.5px;
   color: #f1f5f9;
-  line-height: 1.4;
+  line-height: 1.55;
+  /* The root-cause text carries its own paragraph and causal-chain line breaks;
+     collapsing them turns the whole section into one unreadable block. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .dr-debug-prescription-diff {
@@ -1250,6 +1254,8 @@ export const shadowStyles = `
   font-size: 10px;
   color: #94a3b8;
   white-space: pre-wrap;
+}
+
 /* ==========================================================================
    9. ERRORS & ANOMALY MATRIX (2D HEATMAP GRID, STREAM, cURL & WORKBENCH)
    ========================================================================== */
@@ -1258,6 +1264,7 @@ export const shadowStyles = `
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
   gap: 8px;
 }
 
@@ -1267,6 +1274,7 @@ export const shadowStyles = `
   align-items: center;
   padding: 4px 2px;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .dr-debug-err-title {
@@ -1310,6 +1318,8 @@ export const shadowStyles = `
   justify-content: space-between;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .dr-debug-mode-toggle {
@@ -1395,6 +1405,7 @@ export const shadowStyles = `
 .dr-debug-status-dot.dot-sys { background: #34d399; }
 
 .dr-debug-2d-matrix {
+  flex-shrink: 0;
   background: rgba(10, 15, 28, 0.92);
   border: 1px solid rgba(56, 189, 248, 0.22);
   border-radius: 8px;
@@ -1564,6 +1575,7 @@ export const shadowStyles = `
   gap: 4px;
   overflow-x: auto;
   padding: 2px 0;
+  flex-shrink: 0;
 }
 
 .dr-debug-err-filter-bar::-webkit-scrollbar { display: none; }
@@ -1600,13 +1612,14 @@ export const shadowStyles = `
 .dr-debug-err-main-view {
   display: flex;
   gap: 8px;
-  flex: 1;
-  min-height: 240px;
+  flex: 1 1 0;
+  min-height: 0;
   overflow: hidden;
 }
 
 .dr-debug-err-list {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -1696,7 +1709,8 @@ export const shadowStyles = `
 
 /* Inspector Drawer */
 .dr-debug-err-inspector {
-  flex: 1.2;
+  flex: 1.2 1 0;
+  min-width: 0;
   background: rgba(6, 10, 20, 0.95);
   border: 1px solid rgba(56, 189, 248, 0.3);
   border-radius: 8px;
@@ -2211,8 +2225,64 @@ export const shadowStyles = `
   50% { transform: scale(1.12); box-shadow: 0 0 0 8px rgba(244, 63, 94, 0); }
   100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
 }
+
+/* ── Session hand-off: "Copy for AI" ───────────────────────────────────── */
+
+.dr-debug-export-btn {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.18), rgba(129, 140, 248, 0.18));
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  color: #7dd3fc;
+  border-radius: 6px;
+  padding: 5px 11px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.dr-debug-export-btn:hover {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.3), rgba(129, 140, 248, 0.3));
+  border-color: rgba(56, 189, 248, 0.75);
+  color: #e0f2fe;
+  transform: translateY(-1px);
+}
+
+.dr-debug-export-btn.copied,
+.dr-debug-copy-btn.copied {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: rgba(16, 185, 129, 0.6);
+  color: #6ee7b7;
+}
+
+.dr-debug-copy-btn.primary {
+  align-self: flex-start;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.2));
+  border-color: rgba(56, 189, 248, 0.45);
+  color: #7dd3fc;
+  padding: 7px 14px;
+  font-size: 11.5px;
+}
+
+.dr-debug-copy-btn.primary:hover {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.32), rgba(129, 140, 248, 0.32));
+  border-color: rgba(56, 189, 248, 0.8);
+  color: #e0f2fe;
+}
+
+.dr-debug-handoff {
+  border-top: 1px solid rgba(148, 163, 184, 0.16);
+  margin-top: 4px;
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dr-debug-handoff-desc {
+  font-size: 11px;
+  line-height: 1.55;
+  color: #94a3b8;
+}
 `
-
-
-
-

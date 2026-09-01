@@ -39,7 +39,10 @@ export interface NetworkRecord {
   duration?: number
   status?: number
   statusText?: string
+  /** Error text explicitly named CORS. */
   isCORS?: boolean
+  /** Cross-origin request that failed opaquely — CORS, refused connection, DNS or TLS are all indistinguishable from JS. */
+  isCrossOrigin?: boolean
   isFailed?: boolean
   isSlow?: boolean
   requestHeaders?: Record<string, string>
@@ -82,7 +85,8 @@ export interface MemorySnapshot {
   totalJSHeapSize?: number
   jsHeapSizeLimit?: number
   heapUsagePercent?: number
-  detachedNodesCount?: number
+  /** Live element count. Not detached-node detection — that needs a heap snapshot. */
+  domNodeCount?: number
   trendMBPerMin?: number
 }
 

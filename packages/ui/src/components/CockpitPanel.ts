@@ -24,6 +24,8 @@ export interface CockpitPanelOptions {
   onClose: () => void
   onInvestigate: (query: string) => void
   getController?: () => any
+  /** Supplies the paste-ready brief behind the "Copy for AI" action. */
+  getSessionPrompt?: () => string
   onSaveSettings?: (settings: SettingsData) => void
   onTestConnection?: (settings: SettingsData) => Promise<{ success: boolean; message: string }>
 }
@@ -55,6 +57,7 @@ export class CockpitPanel {
   private settingsBtn!: HTMLButtonElement
   private thinkingCard: HTMLElement | null = null
   private onInvestigateHandler: (query: string) => void
+  private getSessionPrompt?: () => string
 
   constructor(
     private onCloseOrOptions: (() => void) | CockpitPanelOptions,
@@ -70,6 +73,7 @@ export class CockpitPanel {
         : onCloseOrOptions
 
     this.onInvestigateHandler = options.onInvestigate
+    this.getSessionPrompt = options.getSessionPrompt
     this.element = document.createElement('div')
 
     this.element.className = 'dr-debug-modal hidden'
@@ -98,6 +102,12 @@ export class CockpitPanel {
     this.uptimeMetricBadge.className = 'dr-debug-metric-badge'
     this.uptimeMetricBadge.innerHTML = `<span class="dr-debug-status-dot dot-notice"></span> <span id="dr-debug-uptime-val">00:00</span>`
 
+    const exportBtn = this.makeSessionPromptButton(
+      'dr-debug-export-btn',
+      'Copy for AI',
+      'Copy the whole session — findings, causal chain, stacks, HTTP detail, timeline — as a paste-ready brief for Claude Code or Antigravity'
+    )
+
     this.settingsBtn = document.createElement('button')
     this.settingsBtn.className = 'dr-debug-close-btn'
     this.settingsBtn.innerHTML = '⚙'
@@ -118,6 +128,7 @@ export class CockpitPanel {
 
     metricsWrapper.appendChild(this.heapMetricBadge)
     metricsWrapper.appendChild(this.uptimeMetricBadge)
+    metricsWrapper.appendChild(exportBtn)
     metricsWrapper.appendChild(this.settingsBtn)
     metricsWrapper.appendChild(this.maximizeBtn)
     metricsWrapper.appendChild(closeBtn)
@@ -439,6 +450,17 @@ export class CockpitPanel {
   }
 
   public showPrescription(prescription: PrescriptionData): void {
+    // Built twice rather than cloned: cloneNode() drops event listeners, which
+    // would leave the copy buttons on the timeline copy inert.
+    this.timelineContainer.appendChild(this.buildPrescriptionCard(prescription))
+    this.prescriptionContainer.innerHTML = ''
+    this.prescriptionContainer.appendChild(this.buildPrescriptionCard(prescription))
+
+    this.timelineContainer.scrollTop = this.timelineContainer.scrollHeight
+    this.switchTab('prescription')
+  }
+
+  private buildPrescriptionCard(prescription: PrescriptionData): HTMLElement {
     const card = document.createElement('div')
     card.className = 'dr-debug-prescription-card'
 
@@ -500,29 +522,41 @@ export class CockpitPanel {
 
       const copyBtn = document.createElement('button')
       copyBtn.className = 'dr-debug-copy-btn'
-      copyBtn.innerHTML = `<span>📋</span> <span>Copy Unified Patch</span>`
-      copyBtn.addEventListener('click', () => {
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(prescription.fix)
-          copyBtn.innerHTML = `<span>✅</span> <span>Patch Copied!</span>`
-          setTimeout(() => {
-            copyBtn.innerHTML = `<span>📋</span> <span>Copy Unified Patch</span>`
-          }, 2000)
-        }
-      })
+      const idle = `<span>📋</span> <span>Copy remediation plan</span>`
+      copyBtn.innerHTML = idle
+      this.bindCopyFeedback(
+        copyBtn,
+        () => prescription.fix,
+        idle,
+        `<span>✅</span> <span>Copied</span>`
+      )
 
       sectionFix.appendChild(diffContainer)
       sectionFix.appendChild(copyBtn)
       card.appendChild(sectionFix)
     }
 
-    // Append to timeline & to prescription tab
-    this.timelineContainer.appendChild(card.cloneNode(true))
-    this.prescriptionContainer.innerHTML = ''
-    this.prescriptionContainer.appendChild(card)
+    // Hand-off row: the full session brief for an external coding agent.
+    const handoff = document.createElement('div')
+    handoff.className = 'dr-debug-presc-section dr-debug-handoff'
+    handoff.innerHTML = `
+      <div class="dr-debug-presc-label">Hand off to a coding agent</div>
+      <div class="dr-debug-handoff-desc">
+        Exports this whole session — every finding with its evidence, the causal chain, demangled stacks,
+        full HTTP transactions with a cURL reproduction, backend logs and the chronological timeline —
+        as one Markdown brief for Claude Code, Antigravity or Cursor.
+      </div>
+    `
+    handoff.appendChild(
+      this.makeSessionPromptButton(
+        'dr-debug-copy-btn primary',
+        '📤 Copy full brief for AI',
+        'Copy the complete session brief as Markdown'
+      )
+    )
+    card.appendChild(handoff)
 
-    this.timelineContainer.scrollTop = this.timelineContainer.scrollHeight
-    this.switchTab('prescription')
+    return card
   }
 
   public updateTriage(telemetry: {
@@ -650,19 +684,85 @@ export class CockpitPanel {
     }
   }
 
+  /**
+   * Clipboard write that reports whether it actually succeeded. The async API
+   * needs a secure context and a focused document, neither of which is
+   * guaranteed here, so fall back to a detached textarea + execCommand.
+   */
+  private async copyToClipboard(text: string): Promise<boolean> {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text)
+        return true
+      }
+    } catch {
+      // fall through to the legacy path
+    }
+
+    try {
+      const scratch = document.createElement('textarea')
+      scratch.value = text
+      scratch.setAttribute('readonly', '')
+      scratch.style.position = 'fixed'
+      scratch.style.top = '-1000px'
+      scratch.style.opacity = '0'
+      document.body.appendChild(scratch)
+      scratch.select()
+      const ok = document.execCommand('copy')
+      document.body.removeChild(scratch)
+      return ok
+    } catch {
+      return false
+    }
+  }
+
+  /** Wires a button to a copy action with honest success/failure feedback. */
+  private bindCopyFeedback(
+    btn: HTMLButtonElement,
+    getText: () => string,
+    idleHtml: string,
+    okHtml: string,
+    failHtml = '<span>Copy failed</span>'
+  ): void {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation()
+      const text = getText()
+      if (!text) {
+        btn.innerHTML = '<span>Nothing to copy</span>'
+        setTimeout(() => { btn.innerHTML = idleHtml }, 1800)
+        return
+      }
+      const ok = await this.copyToClipboard(text)
+      btn.innerHTML = ok ? okHtml : failHtml
+      btn.classList.toggle('copied', ok)
+      setTimeout(() => {
+        btn.innerHTML = idleHtml
+        btn.classList.remove('copied')
+      }, 2200)
+    })
+  }
+
+  private makeSessionPromptButton(className: string, label: string, title: string): HTMLButtonElement {
+    const btn = document.createElement('button')
+    btn.className = className
+    btn.title = title
+    const idle = `<span>${label}</span>`
+    btn.innerHTML = idle
+    this.bindCopyFeedback(
+      btn,
+      () => this.getSessionPrompt?.() || '',
+      idle,
+      '<span>Copied for AI</span>'
+    )
+    return btn
+  }
+
   private makeCopyBtn(text: string): HTMLButtonElement {
     const btn = document.createElement('button')
     btn.className = 'dr-debug-copy-inline'
-    btn.innerHTML = '📋'
     btn.title = 'Copy to clipboard'
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation()
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(text)
-        btn.innerHTML = '✅'
-        setTimeout(() => { btn.innerHTML = '📋' }, 2000)
-      }
-    })
+    btn.innerHTML = '📋'
+    this.bindCopyFeedback(btn, () => text, '📋', '✅', '⚠️')
     return btn
   }
 

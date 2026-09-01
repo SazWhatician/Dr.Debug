@@ -19,10 +19,18 @@
     "zod": "^3.24.1"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -b tsconfig.json",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": ["debugging", "ai-agent", "devtools", "observability", "litert", "react", "browser"],
-  "author": "Dr. Debug Team",
+  "keywords": [
+    "debugging",
+    "ai-agent",
+    "devtools",
+    "observability",
+    "litert",
+    "react",
+    "browser"
+  ],
+  "author": "Saswat Kumar Mohanty (AI/ML Engineer, VSSUT Burla, Bhubaneswar)",
   "license": "MIT"
 }

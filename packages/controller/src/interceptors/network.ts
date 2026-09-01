@@ -113,7 +113,9 @@ export class NetworkInterceptor {
           record.status = 0
           record.statusText = err?.message || 'NetworkError'
           record.isFailed = true
-          record.isCORS = self.detectCORSError(err, record.url)
+          const failureKind = self.classifyFailure(err, record.url)
+          record.isCORS = failureKind.isCORS
+          record.isCrossOrigin = failureKind.isCrossOrigin
           record.error = err?.message || 'Fetch failed'
           throw err
         }
@@ -227,21 +229,32 @@ export class NetworkInterceptor {
     }
   }
 
-  private detectCORSError(err: any, url: string): boolean {
+  /**
+   * A failed cross-origin fetch surfaces to JS as an opaque "Failed to fetch",
+   * which covers a missing CORS header, a refused connection, DNS failure and a
+   * TLS error equally. So `isCORS` is only asserted when the error text actually
+   * says so; the weaker `isCrossOrigin` records "cross-origin and opaque" without
+   * claiming to know which of those it was.
+   */
+  private classifyFailure(err: any, url: string): { isCORS: boolean; isCrossOrigin: boolean } {
     const msg = (err?.message || '').toLowerCase()
-    if (msg.includes('cors') || msg.includes('failed to fetch') || msg.includes('networkerror')) {
-      if (typeof window !== 'undefined' && window.location) {
-        try {
-          const targetOrigin = new URL(url, window.location.href).origin
-          if (targetOrigin !== window.location.origin) {
-            return true
-          }
-        } catch {
-          return true
-        }
+    const isOpaque =
+      msg.includes('failed to fetch') || msg.includes('networkerror') || msg.includes('load failed')
+    const namesCORS = msg.includes('cors') || msg.includes('cross-origin')
+
+    let crossOrigin = false
+    if (typeof window !== 'undefined' && window.location) {
+      try {
+        crossOrigin = new URL(url, window.location.href).origin !== window.location.origin
+      } catch {
+        crossOrigin = true
       }
     }
-    return false
+
+    return {
+      isCORS: namesCORS,
+      isCrossOrigin: crossOrigin && (isOpaque || namesCORS)
+    }
   }
 
   private hookXHR(): void {
@@ -323,7 +336,9 @@ export class NetworkInterceptor {
               state.record.isFailed = this.status === 0 || this.status >= 400
               state.record.isSlow = duration > 1500
               if (this.status === 0) {
-                state.record.isCORS = self.detectCORSError(new Error('XHR Network Error'), state.record.url)
+                const xhrFailure = self.classifyFailure(new Error('XHR Network Error'), state.record.url)
+                state.record.isCORS = xhrFailure.isCORS
+                state.record.isCrossOrigin = xhrFailure.isCrossOrigin
               }
 
               if (this.responseType === '' || this.responseType === 'text') {

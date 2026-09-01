@@ -2,6 +2,7 @@
   "manifest_version": 3,
   "name": "Dr. Debug — Autonomous In-Browser AI Debugger",
   "version": "1.0.0",
+  "author": "Saswat Kumar Mohanty",
   "description": "The AI Doctor Living Inside Your Webpage That Observes, Diagnoses, and Prescribes Fixes for Live Bugs.",
   "icons": {
     "16": "icons/icon16.png",
@@ -19,10 +20,23 @@
   "devtools_page": "devtools.html",
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_start",
       "world": "MAIN"
+    },
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "bridge.js"
+      ],
+      "run_at": "document_start"
     }
   ],
   "permissions": [
@@ -31,6 +45,9 @@
     "scripting"
   ],
   "host_permissions": [
-    "<all_urls>"
+    "https://api.groq.com/*",
+    "https://api.openai.com/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
   ]
 }

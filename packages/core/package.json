@@ -17,10 +17,16 @@
     "zod": "^3.24.1"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -b tsconfig.json",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": ["ai", "agent", "debugging", "react-loop", "diagnostics"],
-  "author": "Dr. Debug Team",
+  "keywords": [
+    "ai",
+    "agent",
+    "debugging",
+    "react-loop",
+    "diagnostics"
+  ],
+  "author": "Saswat Kumar Mohanty (AI/ML Engineer, VSSUT Burla, Bhubaneswar)",
   "license": "MIT"
 }

@@ -1,81 +1,81 @@
-<p align="center">
-  <img src="./drdebug.png" alt="Dr. Debug Logo" width="120" style="border-radius: 16px;" />
-</p>
+# Dr. Debug
 
-<h1 align="center">Dr. Debug</h1>
+> **Autonomous in-browser AI debugging and runtime observability agent.**  
+> Intercepts runtime failures, correlates network telemetry with console errors, and prescribes verified code fixes directly inside the browser.
 
-<p align="center">
-  <strong>Autonomous in-browser runtime diagnostics and root-cause analysis.</strong><br>
-  An in-page diagnostic agent that intercepts runtime failures, correlates network with console errors, and prescribes verified code fixes.
-</p>
-
-<p align="center">
-  <a href="#-why-dr-debug"><img src="https://img.shields.io/badge/Architecture-Re--Act%20Loop-00f0ff?style=flat-square" alt="Re-Act Architecture" /></a>
-  <a href="#-tests--health"><img src="https://img.shields.io/badge/Tests-46%20passing-10b981?style=flat-square" alt="Tests passing" /></a>
-  <a href="#-chrome-extension"><img src="https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-38bdf8?style=flat-square" alt="Manifest V3" /></a>
-  <a href="#-license"><img src="https://img.shields.io/badge/License-MIT-a855f7?style=flat-square" alt="License" /></a>
-</p>
+Created and engineered by **[Saswat Kumar Mohanty](https://github.com/SazWhatician)** — AI/ML Engineer from Bhubaneswar, studying at Veer Surendra Sai University of Technology (VSSUT), Burla.
 
 ---
 
-## 🔍 The Problem
+## Why I Built This
 
-Debugging modern web applications is fragmented:
-1. An endpoint returns `503 Service Unavailable` or `CORS blocked`.
-2. React crashes with an unhandled exception three frames later.
-3. You manually copy the stack trace from the Console, switch to the Network tab to copy headers and payloads, and paste it all into an LLM chat window.
-4. The LLM hallucinates because it lacks the runtime execution context.
+Every frontend and full-stack developer knows the tedious debugging loop:
+1. An endpoint fails with a `503`, a `401 Unauthorized`, or a silent CORS block.
+2. React or your framework throws an unhandled exception three render cycles later.
+3. You manually copy the stack trace from the Console, switch over to the Network tab to copy headers and payloads, and paste it all into an external LLM chat window.
+4. The LLM hallucinates half the solution because it has no access to the live runtime execution state, the source maps, or the causal sequence of events.
 
-**Dr. Debug lives directly inside the browser runtime.** When an anomaly happens, it inspects the telemetry, correlates network failures with console exceptions through a deterministic Re-Act loop, and outputs the root cause with a copy-pasteable unified code diff.
-
----
-
-## ⚡ What It Does
-
-* **🩺 Non-Blocking Telemetry Capture:** Intercepts `console.error`, unhandled rejections, `fetch`/`XHR` requests, and memory heap allocation in memory with zero page slowdown.
-* **🧠 Autonomous Re-Act Diagnostic Engine:** Formulates hypotheses and executes step-by-step diagnostic tools (`inspect_error`, `inspect_request`, `eval_js`, `done`) until it reaches root cause verification.
-* **🎨 Isolated Shadow DOM HUD:** Draggable, responsive frosted-glass cockpit encapsulated inside `#dr-debug-root` (zero CSS pollution or layout shifts).
-* **🌐 Chrome Extension (Manifest V3):** Inject across any site or inspect through a dedicated Chrome DevTools Substrate tab with 1-click Markdown/JSON RCA export.
-* **🔌 Pluggable LLM Providers:** Run locally via LiteRT / Chrome Built-in AI, or connect ultra-fast inference via Groq, Anthropic, or OpenAI.
+I built **Dr. Debug** to eliminate that entire manual feedback loop. Instead of acting as an external chatbot, Dr. Debug embeds directly into the webpage runtime as an autonomous agent. When an anomaly triggers, it captures telemetry with zero overhead, reasons through hypotheses via a deterministic Re-Act loop, inspects the environment with dedicated diagnostic tools, and outputs a concrete root-cause analysis with an actionable unified patch.
 
 ---
 
-## 🛠️ Architecture
+## What It Does
 
-Dr. Debug is built as a modular TypeScript monorepo:
+- **Non-Blocking Telemetry Substrate**: Hooks into `console.error`, unhandled promise rejections, `fetch`/`XMLHttpRequest` traffic, Web Vitals (LCP, FID, CLS), and memory heap allocation. All interceptors are protected with re-entrancy mutexes to prevent recursive loops from React DevTools or analytics trackers.
+- **Deterministic State Serialization**: Compiles fragmented browser events into a structured `<debug_state>` XML payload, complete with RFC-9457 HTTP problem details and source-mapped stack traces.
+- **Autonomous Re-Act Diagnostic Engine**: Executes step-by-step diagnostic reasoning (`Thought -> Action -> Observation`) using tools like `inspect_error`, `inspect_request`, and safe `eval_js` until reaching high-confidence root-cause verification.
+- **Zero-Pollution Shadow DOM HUD**: Draggable, glassmorphic UI cockpit encapsulated in an isolated Shadow Root (`#dr-debug-root`) to guarantee zero style leakage or layout shifts on host applications.
+- **Manifest V3 Chrome Extension & DevTools Panel**: Run as an unpacked browser extension or dock it directly into the native Chrome DevTools workspace with one-click Markdown and JSON RCA exports.
+- **Flexible LLM Provider Layer**: Works with ultra-fast cloud inference (Groq, Anthropic Claude, OpenAI) as well as offline/in-browser models via LiteRT and WebLLM.
+
+---
+
+## System Architecture
+
+Dr. Debug is architected as a modular TypeScript monorepo:
 
 ```
 DebugCopilot/
 ├── packages/
-│   ├── controller/   # Multi-stream interceptors (Console, Fetch, XHR, Vitals, Heap)
-│   ├── core/         # Re-Act reasoning loop, Reflection parser & Diagnostic tools
-│   ├── ui/           # Shadow DOM HUD, Draggable Pill, Live Equalizer & Cockpit Drawer
-│   ├── llms/         # LLM adapter interface (LiteRT local client, Groq, Claude, OpenAI)
-│   ├── extension/    # Manifest V3 Chrome Extension & DevTools Substrate panel
-│   └── dr-debug/     # Top-level orchestrator & standalone bundle
+│   ├── controller/   # Multi-stream interceptors (Console, Fetch, XHR, Memory, Vitals) & XML serializer
+│   ├── core/         # Re-Act reasoning loop, Zod reflection schema, and tool execution registry
+│   ├── ui/           # Shadow DOM HUD, floating draggable pill, live equalizer, and drawer
+│   ├── llms/         # LLM adapter layer (Groq, Anthropic, OpenAI, LiteRT / WebLLM)
+│   ├── extension/    # Manifest V3 Chrome Extension & dedicated DevTools panel
+│   └── dr-debug/     # Top-level orchestrator & standalone browser distribution
+├── playground/       # Interactive live testing environment with simulated failure scenarios
+└── scripts/          # Build and packaging automation
 ```
 
 ---
 
-## 🚀 Quickstart
+## Quickstart
 
-### Option A: Install as a Chrome Extension
+### 1. Run as a Chrome Extension
 
-1. Clone this repository and install dependencies:
-   ```bash
-   git clone https://github.com/your-username/DebugCopilot.git
-   cd DebugCopilot
-   npm install
-   npm run build:extension
-   ```
-2. Open Google Chrome and navigate to `chrome://extensions`.
-3. Enable **Developer mode** (top right toggle).
-4. Click **Load unpacked** and select the `packages/extension` (or `packages/extension/dist`) directory.
-5. Open any webpage — the Dr. Debug floating capsule will appear.
+Clone the repository, install dependencies, and build the extension bundle:
+
+```bash
+git clone https://github.com/SazWhatician/Dr.Debug.git
+cd DebugCopilot
+npm install
+npm run build:extension
+```
+
+To load into your browser:
+1. Open Google Chrome (or Edge / Brave / Arc) and navigate to `chrome://extensions`.
+2. Turn on **Developer mode** (toggle in the top-right corner).
+3. Click **Load unpacked** and select `packages/extension` (or `packages/extension/dist`).
+4. Navigate to any web application — the Dr. Debug floating capsule will appear automatically.
+
+To package as a standalone `.zip` for distribution:
+```powershell
+Compress-Archive -Path packages/extension/dist/* -DestinationPath dr-debug-extension.zip -Force
+```
 
 ---
 
-### Option B: Import into a JavaScript / TypeScript App
+### 2. Install as an NPM Package
 
 ```bash
 npm install dr-debug
@@ -87,99 +87,102 @@ Initialize inside your frontend entry point (`main.ts`, `index.tsx`, etc.):
 import { DrDebug } from 'dr-debug'
 
 const debuggerInstance = new DrDebug({
-  enableUI: true,            // Mount Shadow DOM floating HUD
-  autoInvestigate: false,     // Launch RCA only on demand or error selection
-  modelProvider: 'groq',      // 'groq' | 'litert' | 'anthropic' | 'openai'
+  enableUI: true,            // Mount floating Shadow DOM HUD
+  autoInvestigate: false,     // Triage on demand or on error click
+  modelProvider: 'groq',      // 'groq' | 'anthropic' | 'openai' | 'litert'
   apiKey: process.env.GROQ_API_KEY
 })
 ```
 
 ---
 
-### Option C: Standalone `<script>` Tag
+### 3. Standalone Script Tag
 
-Include the pre-bundled standalone script before your application loads:
+Include the pre-bundled standalone distribution script before your application code:
 
 ```html
 <script src="https://unpkg.com/dr-debug/dist/dr-debug.min.js"></script>
 <script>
   window.__DR_DEBUG__ = new DrDebug({
-    enableUI: true
+    enableUI: true,
+    modelProvider: 'groq',
+    apiKey: 'YOUR_GROQ_API_KEY'
   });
 </script>
 ```
 
 ---
 
-## 🔬 Autonomous Re-Act Diagnostic Loop
+## The Re-Act Diagnostic Workflow
 
-When an investigation is triggered, Dr. Debug gathers raw runtime state into a structured `<debug_state>` XML snapshot and initiates a cyclical diagnostic loop:
+When an investigation starts, Dr. Debug aggregates runtime context and iterates through a closed-loop reasoning process:
 
 ```
-                                  [ Runtime Telemetry ]
-                              (Console + Network + Heap)
-                                         │
-                                         ▼
-                             ┌───────────────────────┐
-                             │  <debug_state> Parse  │
-                             └───────────┬───────────┘
-                                         │
-                 ┌───────────────────────┴───────────────────────┐
-                 ▼                                               ▼
-     ┌───────────────────────┐                       ┌───────────────────────┐
-     │  Hypothesis & Reason  │                       │   Tool Execution      │
-     │  "503 caused by auth" │ ────> [ Re-Act ] ───> │  `inspect_request(0)` │
-     └───────────────────────┘                       └───────────┬───────────┘
-                 ▲                                               │
-                 └────────────────── Output Data ────────────────┘
-                                         │
-                                         ▼ (Confidence Verified)
-                             ┌───────────────────────┐
-                             │  Root Cause Diagnosis │
-                             │   + Unified Diff Fix  │
-                             └───────────────────────┘
+[ Raw Browser Telemetry: Console + Network + Memory ]
+                         │
+                         ▼
+             [ <debug_state> XML Serializer ]
+                         │
+                         ▼
+        ┌───────────────────────────────────┐
+        │  Hypothesis Formulation (Thought) │
+        └─────────────────┬─────────────────┘
+                          │
+                          ▼
+        ┌───────────────────────────────────┐
+        │      Tool Execution (Action)      │
+        │  inspect_request / inspect_error  │
+        └─────────────────┬─────────────────┘
+                          │
+                          ▼
+        ┌───────────────────────────────────┐
+        │   Observation & Confidence Check  │
+        └─────────────────┬─────────────────┘
+                          │
+                 (Confidence Verified)
+                          │
+                          ▼
+        ┌───────────────────────────────────┐
+        │    Root Cause Analysis (RCA)      │
+        │     + Unified Diff Code Patch     │
+        └───────────────────────────────────┘
 ```
 
-### Diagnostic Tools Registry
-* `inspect_error`: Fetches parsed stack frames, source lines, and error metadata.
-* `inspect_request`: Inspects headers, method, status, duration, and response body previews.
-* `eval_js`: Safely tests expressions in the page context.
-* `done`: Concludes investigation with finding, root cause, confidence score, and unified `.patch`.
+### Diagnostic Tools
+- `inspect_error`: Extracts parsed stack frames, demangled sourcemap lines, and error metadata.
+- `inspect_request`: Inspects request/response headers, status codes, timing metrics, and response body payloads.
+- `eval_js`: Executes expressions safely within the isolated page execution context.
+- `done`: Finalizes the diagnostic session with root cause findings, confidence score, and a unified `.patch`.
 
 ---
 
-## 🧪 Testing & Code Health
+## Verification and Testing
 
-Dr. Debug enforces strict unit and integration test coverage across all packages:
+Dr. Debug maintains a strict unit and integration test suite across all subpackages:
 
 ```bash
 npm test
 ```
 
-```
- Test Files  14 passed (14)
-      Tests  46 passed (46)
-   Duration  ~3s
-```
-
-* Interceptor mutex re-entrancy protection (guards against React DevTools / Next.js ping-pong loops).
-* Source map VLQ line/column mapping tests.
-* Deterministic XML state serializer validation.
-* Re-Act autonomous triage loop simulation tests.
+Current test status:
+- **28 test suites passing**
+- **104 total tests passing**
+- Tests cover interceptor mutex re-entrancy, RFC-9457 classification, source map VLQ line mapping, XML serializer determinism, and Re-Act reflection parsing.
 
 ---
 
-## 📋 Roadmap
+## Author & Credits
 
-- [x] **Phase 1: Deep Substrate & XML Serializer** (Console, Network, Web Vitals, Memory).
-- [x] **Phase 2: Autonomous Re-Act Diagnostic Engine** (Zod reflection parser, 9 tools).
-- [x] **Phase 3: Shadow DOM Floating HUD** (Obsidian glassmorphism, live equalizer bars, draggable modal).
-- [x] **Phase 4: Chrome Extension & DevTools Panel** (Manifest V3, source map demangling, Markdown/JSON RCA export).
-- [ ] **Phase 5: Framework Hooks & 30s Session Replay** (React/Redux store inspection, PII-masked `rrweb` interaction recording).
-- [ ] **Phase 6: Model Context Protocol (MCP) Server** (Direct IDE bridge to Cursor, Claude Code, and Antigravity).
+Designed, architected, and built entirely by:
+
+**Saswat Kumar Mohanty**  
+- **Role**: AI/ML Engineer  
+- **Origin**: Bhubaneswar, Odisha, India  
+- **Education**: Veer Surendra Sai University of Technology (VSSUT), Burla  
+- **GitHub**: [@SazWhatician](https://github.com/SazWhatician)
 
 ---
 
-## 📄 License
+## License
 
-MIT © [Saswat / Dr. Debug Team](LICENSE)
+MIT License. See [LICENSE](LICENSE) for details.

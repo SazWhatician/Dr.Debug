@@ -117,9 +117,9 @@ export function buildCausalErrorGraph(
       id: req.id,
       label: `🌐 ${req.method} ${req.url}`,
       layer: 'network',
-      summary: `Status: ${req.status || 'FAILED'}${req.isCORS ? ' (CORS)' : ''} (${Math.round(req.duration || 0)}ms)`,
+      summary: `Status: ${req.status || 'FAILED'}${req.isCORS ? ' (CORS)' : req.isCrossOrigin ? ' (cross-origin, cause unexposed)' : ''} (${Math.round(req.duration || 0)}ms)`,
       timestamp: req.startTime,
-      metadata: { url: req.url, status: req.status, isCORS: req.isCORS, duration: req.duration }
+      metadata: { url: req.url, status: req.status, isCORS: req.isCORS, isCrossOrigin: req.isCrossOrigin, duration: req.duration }
     })
   })
 
@@ -169,6 +169,33 @@ export function buildCausalErrorGraph(
           relationship: 'TRIGGERED_BY'
         })
       }
+    })
+  })
+
+  // C. Docker -> Console, for when the HTTP hop between them was never captured
+  // (a request that succeeded with a degraded body, a WebSocket, a server-render).
+  // Only drawn where no failed request already bridges the pair, so the two-hop
+  // chain stays the preferred explanation when it exists.
+  dockerErrors.forEach((doc) => {
+    consoleErrors.forEach((err) => {
+      const delta = err.timestamp - doc.timestamp
+      if (delta < 0 || delta > timeframe) return
+
+      const bridged = failedRequests.some(
+        (req) => req.startTime >= doc.timestamp && req.startTime <= err.timestamp
+      )
+      if (bridged) return
+
+      edges.push({
+        id: `edge_${doc.id}_${err.id}`,
+        source: doc.id,
+        target: err.id,
+        label: `PRECEDED_CLIENT_ERROR (+${delta}ms)`,
+        timeDeltaMs: delta,
+        // Weaker than the two-hop chain: the mechanism linking them is unobserved.
+        confidence: delta <= 2000 ? 0.7 : 0.55,
+        relationship: 'CORRELATED_WITH'
+      })
     })
   })
 
@@ -345,7 +372,7 @@ export function debugStateToString(state: DebugState, options: SerializerOptions
     networkToRender.forEach((req, idx) => {
       let statusTag = 'OK'
       if (req.isFailed) {
-        statusTag = req.isCORS ? 'CORS_FAIL' : `FAIL(${req.status || 0})`
+        statusTag = req.isCORS ? 'CORS_FAIL' : req.isCrossOrigin ? 'CROSS_ORIGIN_FAIL' : `FAIL(${req.status || 0})`
       } else if (req.isSlow) {
         statusTag = `SLOW(${req.duration}ms)`
       }
@@ -401,8 +428,8 @@ export function debugStateToString(state: DebugState, options: SerializerOptions
       const trendTag = state.memory.trendMBPerMin > 1.0 ? '⚠️ (Elevated Heap Growth)' : '✅ (Stable)'
       lines.push(`  Heap Trend: ${state.memory.trendMBPerMin > 0 ? '+' : ''}${state.memory.trendMBPerMin}MB/min ${trendTag}`)
     }
-    if (state.memory.detachedNodesCount !== undefined) {
-      lines.push(`  DOM Node Count: ${state.memory.detachedNodesCount} nodes`)
+    if (state.memory.domNodeCount !== undefined) {
+      lines.push(`  DOM Node Count: ${state.memory.domNodeCount} nodes`)
     }
     lines.push('</memory_health>')
     lines.push('')
@@ -828,7 +855,13 @@ export function generateUnifiedAIDebugPrompt(
     promptLines.push(`- **Explanation:** ${explainer.explanation}`)
     promptLines.push(`- **Action Recommended:** ${explainer.recommendation}`)
     promptLines.push(`- **Duration:** ${targetNetwork.duration !== undefined ? `${targetNetwork.duration}ms` : 'N/A'}`)
-    if (targetNetwork.isCORS) promptLines.push('- **CORS Flag:** ⚠️ CORS preflight/header failure detected')
+    if (targetNetwork.isCORS) {
+      promptLines.push('- **CORS Flag:** ⚠️ The browser explicitly named CORS for this failure')
+    } else if (targetNetwork.isCrossOrigin) {
+      promptLines.push(
+        '- **Cross-origin:** ⚠️ Failed opaquely. From JS a missing CORS header, a refused connection, a DNS failure and a TLS error are indistinguishable — check the browser console and whether the cURL below succeeds.'
+      )
+    }
     if (targetNetwork.initiator) promptLines.push(`- **Initiator:** \`${targetNetwork.initiator}\``)
     promptLines.push('')
 

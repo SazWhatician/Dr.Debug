@@ -144,7 +144,9 @@ document.addEventListener('DOMContentLoaded', () => {
       model = 'litert'
     }
 
-    const settings = { provider, apiKey, baseURL, model, enableUI: true }
+    // litert means 'use the offline engine'; keeping a key would flip the page
+    // onto the LLM path, so it is cleared deliberately.
+    const settings = { provider, apiKey: provider === 'litert' ? '' : apiKey, baseURL, model, enableUI: true }
 
     if (typeof chrome !== 'undefined' && chrome.storage?.local) {
       chrome.storage.local.set(settings, () => {

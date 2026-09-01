@@ -555,3 +555,73 @@ body {
 .investigation-hint strong {
   color: #94a3b8;
 }
+
+/* Secondary / ghost actions in the investigation bar */
+.btn-secondary {
+  background: rgba(56, 189, 248, 0.14);
+  color: #7dd3fc;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.18s;
+}
+
+.btn-secondary:hover {
+  background: rgba(56, 189, 248, 0.26);
+  border-color: rgba(56, 189, 248, 0.75);
+  color: #e0f2fe;
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-main);
+}
+
+.investigation-bar {
+  flex-wrap: wrap;
+}
+
+/* Explanatory note under the "what it does" strip */
+.hiw-note {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: #94a3b8;
+}
+
+.hiw-note strong {
+  color: #cbd5e1;
+}
+
+/* Correlation-engine telemetry box */
+.graph-telemetry {
+  border-color: rgba(168, 85, 247, 0.22);
+}
+
+.graph-telemetry pre {
+  color: #d8b4fe;
+  white-space: pre-wrap;
+}

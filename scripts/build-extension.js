@@ -18,6 +18,9 @@ async function buildExtension() {
     bundle: true,
     format: 'esm',
     target: ['chrome100'],
+    alias: {
+      '@dr-debug/llms': path.resolve(root, 'packages/llms/src/index.ts')
+    },
     outfile: path.resolve(distDir, 'background.js')
   })
 
@@ -38,6 +41,16 @@ async function buildExtension() {
     outfile: path.resolve(distDir, 'content.js')
   })
 
+
+  // 2b. Bundle ISOLATED-world bridge (chrome.* access; no DrDebug runtime)
+  await esbuild.build({
+    entryPoints: [path.resolve(extDir, 'src/bridge.ts')],
+    bundle: true,
+    format: 'iife',
+    target: ['chrome100'],
+    outfile: path.resolve(distDir, 'bridge.js')
+  })
+
   // 3. Copy public assets to dist
   function copyRecursive(src, dest) {
     if (fs.statSync(src).isDirectory()) {
@@ -56,6 +69,7 @@ async function buildExtension() {
   fs.copyFileSync(path.resolve(publicDir, 'manifest.json'), path.resolve(extDir, 'manifest.json'))
   fs.copyFileSync(path.resolve(distDir, 'background.js'), path.resolve(extDir, 'background.js'))
   fs.copyFileSync(path.resolve(distDir, 'content.js'), path.resolve(extDir, 'content.js'))
+  fs.copyFileSync(path.resolve(distDir, 'bridge.js'), path.resolve(extDir, 'bridge.js'))
   fs.copyFileSync(path.resolve(publicDir, 'devtools.html'), path.resolve(extDir, 'devtools.html'))
   fs.copyFileSync(path.resolve(publicDir, 'devtools.js'), path.resolve(extDir, 'devtools.js'))
   fs.copyFileSync(path.resolve(publicDir, 'panel.html'), path.resolve(extDir, 'panel.html'))

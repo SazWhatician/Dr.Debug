@@ -718,15 +718,14 @@ ${arg.stack || ""}`;
         usedJSHeapSize = memory.usedJSHeapSize;
         totalJSHeapSize = memory.totalJSHeapSize;
         jsHeapSizeLimit = memory.jsHeapSizeLimit;
-        if (usedJSHeapSize && totalJSHeapSize && totalJSHeapSize > 0) {
-          heapUsagePercent = Math.round(usedJSHeapSize / totalJSHeapSize * 1e3) / 10;
+        if (usedJSHeapSize && jsHeapSizeLimit && jsHeapSizeLimit > 0) {
+          heapUsagePercent = Math.round(usedJSHeapSize / jsHeapSizeLimit * 1e3) / 10;
         }
       }
-      let detachedNodesCount;
+      let domNodeCount;
       if (typeof document !== "undefined") {
         try {
-          const totalElements = document.querySelectorAll("*").length;
-          detachedNodesCount = totalElements;
+          domNodeCount = document.querySelectorAll("*").length;
         } catch {
         }
       }
@@ -747,7 +746,7 @@ ${arg.stack || ""}`;
         totalJSHeapSize,
         jsHeapSizeLimit,
         heapUsagePercent,
-        detachedNodesCount,
+        domNodeCount,
         trendMBPerMin
       };
       this.history.push(snapshot);
@@ -842,7 +841,9 @@ ${arg.stack || ""}`;
             record.status = 0;
             record.statusText = err?.message || "NetworkError";
             record.isFailed = true;
-            record.isCORS = self.detectCORSError(err, record.url);
+            const failureKind = self.classifyFailure(err, record.url);
+            record.isCORS = failureKind.isCORS;
+            record.isCrossOrigin = failureKind.isCrossOrigin;
             record.error = err?.message || "Fetch failed";
             throw err;
           }
@@ -933,21 +934,29 @@ ${arg.stack || ""}`;
       } catch {
       }
     }
-    detectCORSError(err, url) {
+    /**
+     * A failed cross-origin fetch surfaces to JS as an opaque "Failed to fetch",
+     * which covers a missing CORS header, a refused connection, DNS failure and a
+     * TLS error equally. So `isCORS` is only asserted when the error text actually
+     * says so; the weaker `isCrossOrigin` records "cross-origin and opaque" without
+     * claiming to know which of those it was.
+     */
+    classifyFailure(err, url) {
       const msg = (err?.message || "").toLowerCase();
-      if (msg.includes("cors") || msg.includes("failed to fetch") || msg.includes("networkerror")) {
-        if (typeof window !== "undefined" && window.location) {
-          try {
-            const targetOrigin = new URL(url, window.location.href).origin;
-            if (targetOrigin !== window.location.origin) {
-              return true;
-            }
-          } catch {
-            return true;
-          }
+      const isOpaque = msg.includes("failed to fetch") || msg.includes("networkerror") || msg.includes("load failed");
+      const namesCORS = msg.includes("cors") || msg.includes("cross-origin");
+      let crossOrigin = false;
+      if (typeof window !== "undefined" && window.location) {
+        try {
+          crossOrigin = new URL(url, window.location.href).origin !== window.location.origin;
+        } catch {
+          crossOrigin = true;
         }
       }
-      return false;
+      return {
+        isCORS: namesCORS,
+        isCrossOrigin: crossOrigin && (isOpaque || namesCORS)
+      };
     }
     hookXHR() {
       const self = this;
@@ -1006,7 +1015,9 @@ ${arg.stack || ""}`;
                 state.record.isFailed = this.status === 0 || this.status >= 400;
                 state.record.isSlow = duration > 1500;
                 if (this.status === 0) {
-                  state.record.isCORS = self.detectCORSError(new Error("XHR Network Error"), state.record.url);
+                  const xhrFailure = self.classifyFailure(new Error("XHR Network Error"), state.record.url);
+                  state.record.isCORS = xhrFailure.isCORS;
+                  state.record.isCrossOrigin = xhrFailure.isCrossOrigin;
                 }
                 if (this.responseType === "" || this.responseType === "text") {
                   state.record.responseBodyPreview = (this.responseText || "").slice(0, 2048);
@@ -1394,9 +1405,9 @@ ${arg.stack || ""}`;
         id: req.id,
         label: `\u{1F310} ${req.method} ${req.url}`,
         layer: "network",
-        summary: `Status: ${req.status || "FAILED"}${req.isCORS ? " (CORS)" : ""} (${Math.round(req.duration || 0)}ms)`,
+        summary: `Status: ${req.status || "FAILED"}${req.isCORS ? " (CORS)" : req.isCrossOrigin ? " (cross-origin, cause unexposed)" : ""} (${Math.round(req.duration || 0)}ms)`,
         timestamp: req.startTime,
-        metadata: { url: req.url, status: req.status, isCORS: req.isCORS, duration: req.duration }
+        metadata: { url: req.url, status: req.status, isCORS: req.isCORS, isCrossOrigin: req.isCrossOrigin, duration: req.duration }
       });
     });
     consoleErrors.forEach((err) => {
@@ -1439,6 +1450,26 @@ ${arg.stack || ""}`;
             relationship: "TRIGGERED_BY"
           });
         }
+      });
+    });
+    dockerErrors.forEach((doc) => {
+      consoleErrors.forEach((err) => {
+        const delta = err.timestamp - doc.timestamp;
+        if (delta < 0 || delta > timeframe) return;
+        const bridged = failedRequests.some(
+          (req) => req.startTime >= doc.timestamp && req.startTime <= err.timestamp
+        );
+        if (bridged) return;
+        edges.push({
+          id: `edge_${doc.id}_${err.id}`,
+          source: doc.id,
+          target: err.id,
+          label: `PRECEDED_CLIENT_ERROR (+${delta}ms)`,
+          timeDeltaMs: delta,
+          // Weaker than the two-hop chain: the mechanism linking them is unobserved.
+          confidence: delta <= 2e3 ? 0.7 : 0.55,
+          relationship: "CORRELATED_WITH"
+        });
       });
     });
     let rootCauseNodeId = void 0;
@@ -1582,7 +1613,7 @@ ${arg.stack || ""}`;
       networkToRender.forEach((req, idx) => {
         let statusTag = "OK";
         if (req.isFailed) {
-          statusTag = req.isCORS ? "CORS_FAIL" : `FAIL(${req.status || 0})`;
+          statusTag = req.isCORS ? "CORS_FAIL" : req.isCrossOrigin ? "CROSS_ORIGIN_FAIL" : `FAIL(${req.status || 0})`;
         } else if (req.isSlow) {
           statusTag = `SLOW(${req.duration}ms)`;
         }
@@ -1628,8 +1659,8 @@ ${arg.stack || ""}`;
         const trendTag = state.memory.trendMBPerMin > 1 ? "\u26A0\uFE0F (Elevated Heap Growth)" : "\u2705 (Stable)";
         lines.push(`  Heap Trend: ${state.memory.trendMBPerMin > 0 ? "+" : ""}${state.memory.trendMBPerMin}MB/min ${trendTag}`);
       }
-      if (state.memory.detachedNodesCount !== void 0) {
-        lines.push(`  DOM Node Count: ${state.memory.detachedNodesCount} nodes`);
+      if (state.memory.domNodeCount !== void 0) {
+        lines.push(`  DOM Node Count: ${state.memory.domNodeCount} nodes`);
       }
       lines.push("</memory_health>");
       lines.push("");
@@ -1987,7 +2018,13 @@ ${arg.stack || ""}`;
       promptLines.push(`- **Explanation:** ${explainer.explanation}`);
       promptLines.push(`- **Action Recommended:** ${explainer.recommendation}`);
       promptLines.push(`- **Duration:** ${targetNetwork.duration !== void 0 ? `${targetNetwork.duration}ms` : "N/A"}`);
-      if (targetNetwork.isCORS) promptLines.push("- **CORS Flag:** \u26A0\uFE0F CORS preflight/header failure detected");
+      if (targetNetwork.isCORS) {
+        promptLines.push("- **CORS Flag:** \u26A0\uFE0F The browser explicitly named CORS for this failure");
+      } else if (targetNetwork.isCrossOrigin) {
+        promptLines.push(
+          "- **Cross-origin:** \u26A0\uFE0F Failed opaquely. From JS a missing CORS header, a refused connection, a DNS failure and a TLS error are indistinguishable \u2014 check the browser console and whether the cURL below succeeds."
+        );
+      }
       if (targetNetwork.initiator) promptLines.push(`- **Initiator:** \`${targetNetwork.initiator}\``);
       promptLines.push("");
       promptLines.push("**Terminal Reproduction Command (cURL):**");
@@ -2348,6 +2385,889 @@ ${targetNetwork.error}
       this.isRunning = false;
     }
   };
+
+  // packages/core/src/analysis/LocalDiagnosticEngine.ts
+  var SEVERITY_RANK = {
+    critical: 0,
+    high: 1,
+    notice: 2
+  };
+  function isAppFrame(frame) {
+    const file = frame.filename || "";
+    if (!file) return false;
+    return !file.includes("node_modules") && !file.startsWith("chrome-extension://") && !file.includes("/.vite/") && !/^https?:\/\/[^/]+\/?$/.test(file);
+  }
+  function frameLabel(frame) {
+    const file = frame.filename || "unknown";
+    const line = frame.lineno ?? 0;
+    const col = frame.colno ?? 0;
+    const fn = frame.functionName || "<anonymous>";
+    return `${fn} (${file}:${line}:${col})`;
+  }
+  function shortUrl(url) {
+    try {
+      const parsed = new URL(url, "http://localhost");
+      return parsed.pathname + (parsed.search || "");
+    } catch {
+      return url;
+    }
+  }
+  function classifyClientError(entry) {
+    const msg = entry.message;
+    const undefRead = msg.match(/Cannot read propert(?:y|ies) of (undefined|null) \(reading ['"]([^'"]+)['"]\)/i);
+    if (undefRead) {
+      const [, nullish, prop] = undefRead;
+      return {
+        kind: `nullish property access`,
+        subject: prop,
+        remediation: `The value being dereferenced was \`${nullish}\` when \`.${prop}\` was read. Guard the access (\`value?.${prop}\`) and handle the ${nullish} branch explicitly \u2014 then fix whatever upstream call is returning ${nullish} instead of data.`
+      };
+    }
+    const notAFn = msg.match(/([\w$.]+) is not a function/i);
+    if (notAFn) {
+      return {
+        kind: "bad call target",
+        subject: notAFn[1],
+        remediation: `\`${notAFn[1]}\` was called but is not callable at runtime. Verify the import/export shape (default vs named), and that the value is initialised before this call site.`
+      };
+    }
+    const notDefined = msg.match(/([\w$]+) is not defined/i);
+    if (notDefined) {
+      return {
+        kind: "unresolved identifier",
+        subject: notDefined[1],
+        remediation: `\`${notDefined[1]}\` is unresolved in this scope. Add the missing import or declaration, or gate the reference behind an environment check if it is host-specific.`
+      };
+    }
+    const undefIter = msg.match(/(?:undefined|null) is not iterable|is not iterable/i);
+    if (undefIter) {
+      return {
+        kind: "non-iterable spread",
+        remediation: `A spread/destructure ran against a non-iterable value. Default it (\`const [a] = list ?? []\`) and check the producer actually returns an array.`
+      };
+    }
+    const jsonParse = msg.match(/(?:Unexpected token|Unexpected end of JSON input|is not valid JSON)/i);
+    if (jsonParse) {
+      return {
+        kind: "JSON parse failure",
+        remediation: `A response body was parsed as JSON but was not JSON \u2014 commonly an HTML error page or empty body from a failed request. Check \`response.ok\` and the \`content-type\` header before calling \`.json()\`.`
+      };
+    }
+    if (entry.type === "unhandled_rejection") {
+      return {
+        kind: "unhandled promise rejection",
+        remediation: `This promise rejected with no \`.catch()\` / \`try-catch\` in its chain. Attach rejection handling at the call site so the failure surfaces as state instead of an unhandled rejection.`
+      };
+    }
+    return {
+      kind: entry.type.replace(/_/g, " "),
+      remediation: `Trace the call frames below to the originating call site and add handling for the failing condition.`
+    };
+  }
+  function classifyDockerError(log) {
+    const msg = log.message.toLowerCase();
+    if (/max_connections|connection slots|connection pool|too many connections|pool timeout|p2024/.test(msg)) {
+      return {
+        kind: "connection pool exhaustion",
+        remediation: `\`${log.containerName}\` reports its connection pool is saturated. Audit that every acquired connection/session is released on both success and error paths, then size the pool against the real concurrency ceiling.`
+      };
+    }
+    if (/oom|out of memory|killed process|memory limit|cannot allocate/.test(msg)) {
+      return {
+        kind: "container memory exhaustion",
+        remediation: `\`${log.containerName}\` hit its memory ceiling and was killed. Profile heap growth in that service and either fix the retention leak or raise the container limit deliberately.`
+      };
+    }
+    if (/can't reach|cannot reach|connection refused|econnrefused|no such host|getaddrinfo|does not exist/.test(msg)) {
+      return {
+        kind: "unreachable dependency",
+        remediation: `\`${log.containerName}\` cannot reach a dependency it needs. Verify the service name/port in its connection string resolves on the compose network and that the dependency is healthy before this container starts.`
+      };
+    }
+    if (/permission denied|eacces|unauthor|forbidden|authentication failed|password/.test(msg)) {
+      return {
+        kind: "credential / permission failure",
+        remediation: `\`${log.containerName}\` was denied access. Check the credentials and mounted-volume ownership this container runs with.`
+      };
+    }
+    if (/timeout|timed out|deadline exceeded/.test(msg)) {
+      return {
+        kind: "upstream timeout",
+        remediation: `\`${log.containerName}\` timed out waiting on an upstream call. Establish whether the upstream is slow or unreachable, then set an explicit timeout plus fallback rather than inheriting the default.`
+      };
+    }
+    if (/migration|schema|relation .* does not exist|column .* does not exist/.test(msg)) {
+      return {
+        kind: "schema drift",
+        remediation: `\`${log.containerName}\` is running against a schema that does not match its code. Apply the pending migration, or roll the image back to the revision matching the live schema.`
+      };
+    }
+    return {
+      kind: "backend error",
+      remediation: `Resolve the error reported by \`${log.containerName}\` shown in the evidence below; it precedes the client-visible failure in the timeline.`
+    };
+  }
+  function buildNetworkFinding(req) {
+    const status = req.status || 0;
+    const explainer = getHttpStatusExplainer(status);
+    const path = shortUrl(req.url);
+    const evidence = [
+      `${req.method} ${req.url} \u2192 ${status || "no response"}${req.statusText ? ` ${req.statusText}` : ""}`
+    ];
+    if (req.duration !== void 0) evidence.push(`Wall time: ${Math.round(req.duration)}ms`);
+    if (req.error) evidence.push(`Transport error: ${req.error}`);
+    if (req.initiator) evidence.push(`Initiator: ${req.initiator}`);
+    if (req.responseBodyPreview) {
+      evidence.push(`Response body: ${req.responseBodyPreview.slice(0, 300)}`);
+    }
+    let severity = "notice";
+    let remediation = explainer.recommendation;
+    let title;
+    let origin = req.url;
+    try {
+      origin = new URL(req.url).origin;
+    } catch {
+    }
+    if (req.isCORS) {
+      severity = "critical";
+      title = `CORS policy blocked ${req.method} ${path}`;
+      remediation = `The browser named CORS when blocking this call to ${origin}. Serve \`Access-Control-Allow-Origin\` (and the matching \`-Methods\`/\`-Headers\` for the preflight) from that origin, or proxy the call through your own origin.`;
+    } else if (req.isCrossOrigin) {
+      severity = "critical";
+      title = `${req.method} ${path} failed opaquely (cross-origin)`;
+      remediation = `The browser refused to say why this cross-origin call to ${origin} failed \u2014 from JS, a missing CORS header, a refused connection, a DNS failure and a TLS error are indistinguishable. Read the browser's own console message, which does name the cause, and run the cURL command below: if cURL succeeds the problem is CORS, and if it fails the host is unreachable.`;
+    } else if (status === 0 || req.isFailed) {
+      severity = "critical";
+      title = `${req.method} ${path} never completed${status ? ` (${status})` : ""}`;
+      remediation = status === 0 ? `The request failed at the transport layer \u2014 the host did not answer. Confirm the service is listening on that host/port and that the URL is correct for this environment.` : explainer.recommendation;
+    } else if (status >= 500) {
+      severity = "critical";
+      title = `${req.method} ${path} returned ${status}`;
+    } else if (status === 401 || status === 403) {
+      severity = "high";
+      title = `${req.method} ${path} rejected the caller (${status})`;
+    } else if (status >= 400) {
+      severity = "high";
+      title = `${req.method} ${path} returned ${status}`;
+    } else if (req.isSlow) {
+      severity = "notice";
+      title = `${req.method} ${path} was slow (${Math.round(req.duration || 0)}ms)`;
+      remediation = `This call is the slowest thing on the timeline. Profile the server handler, and if the latency is inherent, move the call off the critical render path.`;
+    } else {
+      title = `${req.method} ${path} flagged as anomalous`;
+    }
+    return {
+      id: req.id,
+      layer: "network",
+      severity,
+      title,
+      detail: status ? `${explainer.title} \u2014 ${explainer.explanation}` : "The request produced no HTTP response.",
+      evidence,
+      files: [],
+      remediation,
+      confidence: req.isFailed || status >= 500 ? 0.9 : 0.72,
+      timestamp: req.startTime
+    };
+  }
+  function buildConsoleFinding(entry) {
+    const classified = classifyClientError(entry);
+    const frames = entry.parsedStack || [];
+    const appFrames = frames.filter(isAppFrame);
+    const shown = (appFrames.length > 0 ? appFrames : frames).slice(0, 4);
+    const evidence = [entry.message];
+    if (entry.count > 1) {
+      evidence.push(`Repeated ${entry.count}\xD7 between ${new Date(entry.firstSeen).toLocaleTimeString()} and ${new Date(entry.lastSeen).toLocaleTimeString()}`);
+    }
+    shown.forEach((frame, i) => {
+      evidence.push(`Frame ${i + 1}: ${frameLabel(frame)}${isAppFrame(frame) ? " [app]" : " [vendor]"}`);
+    });
+    if (shown.length === 0 && entry.stack) {
+      evidence.push(entry.stack.split("\n").slice(0, 4).join("\n"));
+    }
+    const files = appFrames.map((f) => f.filename && f.lineno ? `${f.filename}:${f.lineno}` : f.filename || "").filter(Boolean);
+    const origin = appFrames[0] ? ` at ${frameLabel(appFrames[0])}` : "";
+    return {
+      id: entry.id,
+      layer: "console",
+      severity: entry.level === "error" ? "critical" : "notice",
+      title: `${classified.kind}${classified.subject ? ` on \`${classified.subject}\`` : ""}${origin}`,
+      detail: entry.message,
+      evidence,
+      files: Array.from(new Set(files)),
+      remediation: classified.remediation,
+      confidence: appFrames.length > 0 ? 0.88 : 0.7,
+      timestamp: entry.timestamp
+    };
+  }
+  function buildDockerFinding(log) {
+    const classified = classifyDockerError(log);
+    return {
+      id: log.id,
+      layer: "docker",
+      severity: log.level === "error" ? "critical" : "notice",
+      title: `${log.containerName}: ${classified.kind}`,
+      detail: log.message,
+      evidence: [
+        `[${log.containerName} \xB7 ${log.stream}] ${log.message}`,
+        `Logged at ${new Date(log.timestamp).toLocaleTimeString()}`
+      ],
+      files: [],
+      remediation: classified.remediation,
+      confidence: 0.85,
+      timestamp: log.timestamp
+    };
+  }
+  function buildResourceFindings(state) {
+    const findings = [];
+    const mem = state.memory;
+    if (mem && mem.heapUsagePercent !== void 0 && mem.heapUsagePercent >= 85) {
+      const evidence = [
+        `Heap ${Math.round((mem.usedJSHeapSize || 0) / 1048576)}MB of ${Math.round((mem.jsHeapSizeLimit || 0) / 1048576)}MB limit (${Math.round(mem.heapUsagePercent)}%)`
+      ];
+      if (mem.trendMBPerMin !== void 0) evidence.push(`Growth trend: ${mem.trendMBPerMin.toFixed(1)}MB/min`);
+      if (mem.domNodeCount) evidence.push(`DOM elements: ${mem.domNodeCount}`);
+      findings.push({
+        id: `mem_${mem.timestamp}`,
+        layer: "memory",
+        severity: mem.heapUsagePercent >= 95 ? "critical" : "high",
+        title: `JS heap at ${Math.round(mem.heapUsagePercent)}% of its limit`,
+        detail: "The tab is close to the heap ceiling; allocation failures and GC pauses become likely.",
+        evidence,
+        files: [],
+        remediation: `Take two heap snapshots a minute apart and diff retained objects. Detached nodes and un-removed listeners are the usual retainers.`,
+        confidence: 0.8,
+        timestamp: mem.timestamp
+      });
+    }
+    const longTasks = state.performance?.longTasks || [];
+    if (longTasks.length > 0) {
+      const worst = longTasks.reduce((a, b) => b.duration > a.duration ? b : a);
+      if (worst.duration >= 200) {
+        findings.push({
+          id: `longtask_${Math.round(worst.startTime)}`,
+          layer: "performance",
+          severity: worst.duration >= 500 ? "high" : "notice",
+          title: `Main thread blocked for ${Math.round(worst.duration)}ms`,
+          detail: `${longTasks.length} long task(s) recorded; the worst blocked the main thread for ${Math.round(worst.duration)}ms.`,
+          evidence: longTasks.slice(-4).map((t) => `${Math.round(t.duration)}ms task at t+${Math.round(t.startTime)}ms${t.name ? ` (${t.name})` : ""}`),
+          files: [],
+          remediation: `Break this work into chunks yielded across frames, or move it to a Web Worker. Anything over 50ms is input-blocking.`,
+          confidence: 0.75,
+          timestamp: Date.now() - Math.round(worst.duration)
+        });
+      }
+    }
+    const poorVitals = Object.values(state.performance?.vitals || {}).filter((v) => v.rating === "poor");
+    poorVitals.forEach((vital) => {
+      findings.push({
+        id: `vital_${vital.name}`,
+        layer: "performance",
+        severity: "notice",
+        title: `${vital.name} is poor (${Math.round(vital.value)}${vital.name === "CLS" ? "" : "ms"})`,
+        detail: `Core Web Vital ${vital.name} measured ${vital.value} which falls in the "poor" band.`,
+        evidence: [`${vital.name} = ${vital.value}${vital.attribution ? ` (attributed to ${vital.attribution})` : ""}`],
+        files: [],
+        remediation: vital.name === "CLS" ? `Reserve space for late-loading media and injected banners so they stop shifting laid-out content.` : `Reduce the work on the critical path feeding ${vital.name} \u2014 defer non-essential scripts and shrink the largest blocking resource.`,
+        confidence: 0.7,
+        timestamp: Date.now()
+      });
+    });
+    return findings;
+  }
+  function describeCausalChain(graph) {
+    if (!graph || graph.nodes.length === 0 || graph.edges.length === 0) return [];
+    const byId = new Map(graph.nodes.map((n) => [n.id, n]));
+    const chain = [];
+    const visited = /* @__PURE__ */ new Set();
+    let cursor = graph.rootCauseNodeId || graph.nodes.slice().sort((a, b) => a.timestamp - b.timestamp)[0]?.id;
+    while (cursor && !visited.has(cursor)) {
+      visited.add(cursor);
+      const node = byId.get(cursor);
+      if (!node) break;
+      const marker = node.isRootCause ? " \u2190 root cause" : "";
+      chain.push(`[${node.layer}] ${node.label} \u2014 ${node.summary}${marker}`);
+      const outgoing = graph.edges.filter((e) => e.source === cursor && !visited.has(e.target)).sort((a, b) => b.confidence - a.confidence)[0];
+      if (!outgoing) break;
+      chain.push(`   \u2193 ${outgoing.relationship} (${Math.round(outgoing.confidence * 100)}% confidence${outgoing.timeDeltaMs !== void 0 ? `, +${Math.abs(outgoing.timeDeltaMs)}ms` : ""})`);
+      cursor = outgoing.target;
+    }
+    return chain;
+  }
+  var LocalDiagnosticEngine = class {
+    analyze(state) {
+      const findings = [];
+      const dockerErrors = (state.docker?.logs || []).filter((l) => l.level === "error");
+      dockerErrors.forEach((log) => findings.push(buildDockerFinding(log)));
+      state.network.records.filter((r) => r.isFailed || r.isSlow || r.status !== void 0 && r.status >= 400).forEach((req) => findings.push(buildNetworkFinding(req)));
+      state.console.entries.filter((e) => e.level === "error" || e.level === "warn").forEach((entry) => findings.push(buildConsoleFinding(entry)));
+      findings.push(...buildResourceFindings(state));
+      findings.sort((a, b) => {
+        const bySeverity = SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity];
+        if (bySeverity !== 0) return bySeverity;
+        return a.timestamp - b.timestamp;
+      });
+      if (findings.length === 0) {
+        return {
+          hasEvidence: false,
+          headline: "No faults in the telemetry buffers",
+          diagnosis: "The console, network, Docker, memory and performance buffers hold no errors, failed requests or threshold breaches for this session. There is nothing to diagnose yet.",
+          rootCause: "No fault observed.",
+          confidence: 0,
+          findings: [],
+          causalChain: [],
+          suggestedFix: "",
+          filesToModify: []
+        };
+      }
+      const graph = state.causalGraph;
+      const causalChain = describeCausalChain(graph);
+      const rootNode = graph?.rootCauseNodeId ? graph.nodes.find((n) => n.id === graph.rootCauseNodeId) : void 0;
+      const primary = rootNode && findings.find((f) => f.id === rootNode.id) || findings[0];
+      const downstream = findings.filter((f) => f.id !== primary.id);
+      const layersHit = Array.from(new Set(findings.map((f) => f.layer)));
+      const criticalCount = findings.filter((f) => f.severity === "critical").length;
+      const headline = primary.title;
+      const diagnosisParts = [];
+      diagnosisParts.push(
+        `${findings.length} fault${findings.length === 1 ? "" : "s"} across ${layersHit.length} layer${layersHit.length === 1 ? "" : "s"} (${layersHit.join(", ")}); ${criticalCount} critical.`
+      );
+      diagnosisParts.push(`The earliest critical signal is in the ${primary.layer} layer: ${primary.title}.`);
+      if (graph && graph.edges.length > 0) {
+        const weakOnly = graph.edges.every((e) => e.relationship === "CORRELATED_WITH");
+        diagnosisParts.push(
+          weakOnly ? `The correlation engine linked ${graph.nodes.length} error nodes with ${graph.edges.length} temporal edge${graph.edges.length === 1 ? "" : "s"}, but the mechanism connecting them was not observed \u2014 treat the ordering as suggestive, not proven.` : `The correlation engine linked ${graph.nodes.length} error nodes with ${graph.edges.length} causal edge${graph.edges.length === 1 ? "" : "s"}, so the later failures are downstream effects rather than independent bugs.`
+        );
+      } else if (downstream.length > 0) {
+        const layerNote = layersHit.length > 1 ? ` They span ${layersHit.join(", ")}, so more than one subsystem is involved.` : "";
+        diagnosisParts.push(
+          `No temporal link was found between these faults, so this is ${findings.length} separate problems rather than one cascade; the signal named above is simply the earliest critical one.${layerNote}`
+        );
+      }
+      const rootCauseParts = [];
+      rootCauseParts.push(`${primary.title}`);
+      rootCauseParts.push(primary.detail);
+      rootCauseParts.push(`Evidence: ${primary.evidence.slice(0, 3).join(" | ")}`);
+      if (causalChain.length > 0) {
+        rootCauseParts.push(`Causal chain:
+${causalChain.join("\n")}`);
+      }
+      rootCauseParts.push(`Remediation: ${primary.remediation}`);
+      let confidence = primary.confidence;
+      if (graph && graph.edges.length > 0) {
+        const best = Math.max(...graph.edges.map((e) => e.confidence));
+        confidence = Math.min(0.95, (confidence + best) / 2 + 0.08);
+      }
+      if (layersHit.length >= 2) confidence = Math.min(0.95, confidence + 0.04);
+      if (findings.length === 1 && primary.files.length === 0) confidence = Math.min(confidence, 0.7);
+      const fixSections = [];
+      fixSections.push(`# Ordered remediation plan (${findings.length} finding${findings.length === 1 ? "" : "s"})`);
+      fixSections.push("");
+      fixSections.push(`## 1. Fix first \u2014 ${primary.title}`);
+      fixSections.push(`Layer: ${primary.layer} \xB7 severity: ${primary.severity}`);
+      fixSections.push(primary.remediation);
+      if (primary.files.length > 0) {
+        fixSections.push(`Source locations: ${primary.files.join(", ")}`);
+      }
+      downstream.slice(0, 4).forEach((finding, i) => {
+        fixSections.push("");
+        fixSections.push(`## ${i + 2}. ${finding.title}`);
+        fixSections.push(`Layer: ${finding.layer} \xB7 severity: ${finding.severity}`);
+        fixSections.push(finding.remediation);
+        if (finding.files.length > 0) {
+          fixSections.push(`Source locations: ${finding.files.join(", ")}`);
+        }
+      });
+      if (graph && graph.edges.length > 0) {
+        fixSections.push("");
+        fixSections.push(
+          `Fixing item 1 should clear the ${graph.edges.length} downstream effect${graph.edges.length === 1 ? "" : "s"} above \u2014 re-run after that change before working the rest.`
+        );
+      }
+      const filesToModify = Array.from(new Set(findings.flatMap((f) => f.files)));
+      return {
+        hasEvidence: true,
+        headline,
+        diagnosis: diagnosisParts.join(" "),
+        rootCause: rootCauseParts.join("\n\n"),
+        confidence: Number(confidence.toFixed(2)),
+        findings,
+        causalChain,
+        suggestedFix: fixSections.join("\n"),
+        filesToModify
+      };
+    }
+  };
+  var localDiagnosticEngine = new LocalDiagnosticEngine();
+
+  // packages/core/src/analysis/HeuristicLLMClient.ts
+  var HeuristicLLMClient = class {
+    controller;
+    engine;
+    constructor(controller, engine = new LocalDiagnosticEngine()) {
+      this.controller = controller;
+      this.engine = engine;
+    }
+    async chat(messages, _tools, _signal) {
+      const executed = this.extractExecutedTools(messages);
+      const state = this.controller.getSnapshot();
+      const step = this.planNextStep(state, executed);
+      const memory = this.summariseEvidence(state);
+      const reflection = {
+        evaluation_previous_goal: executed.length === 0 ? "Starting from the raw telemetry buffers; no prior step to evaluate." : `Completed ${executed.length} step(s) so far (${executed.join(", ")}). Evidence gathered is reflected in the hypothesis below.`,
+        working_hypothesis: step.hypothesis,
+        memory,
+        next_goal: step.goal,
+        action: {
+          name: step.tool,
+          arguments: step.args
+        }
+      };
+      return {
+        content: JSON.stringify(reflection),
+        finishReason: step.tool === "done" ? "stop" : "tool_calls"
+      };
+    }
+    /**
+     * The core appends `Tool Result for [name]:` after each executed tool when the
+     * model answers with reflection JSON, so the transcript is the source of truth
+     * for what has already run.
+     */
+    extractExecutedTools(messages) {
+      const executed = [];
+      for (const message of messages) {
+        if (message.role === "tool" && message.name) {
+          executed.push(message.name);
+          continue;
+        }
+        const match = /Tool Result for \[([a-z_]+)\]/i.exec(message.content || "");
+        if (match) executed.push(match[1]);
+      }
+      return executed;
+    }
+    summariseEvidence(state) {
+      const parts = [];
+      const errors = state.console.entries.filter((e) => e.level === "error");
+      const failedNet = state.network.records.filter((r) => r.isFailed || (r.status ?? 0) >= 400);
+      const slowNet = state.network.records.filter((r) => r.isSlow && !r.isFailed);
+      const dockerErrors = (state.docker?.logs || []).filter((l) => l.level === "error");
+      if (errors.length > 0) parts.push(`${errors.length} console error(s), first: "${errors[0].message.slice(0, 90)}"`);
+      if (failedNet.length > 0) {
+        parts.push(`${failedNet.length} failing request(s), first: ${failedNet[0].method} ${failedNet[0].url} \u2192 ${failedNet[0].status || "no response"}`);
+      }
+      if (slowNet.length > 0) parts.push(`${slowNet.length} slow request(s)`);
+      if (dockerErrors.length > 0) {
+        parts.push(`${dockerErrors.length} backend error(s), first from ${dockerErrors[0].containerName}`);
+      }
+      if (state.correlations.length > 0) parts.push(`${state.correlations.length} temporal correlation(s)`);
+      if (state.causalGraph && state.causalGraph.edges.length > 0) {
+        parts.push(`causal graph: ${state.causalGraph.nodes.length} nodes / ${state.causalGraph.edges.length} edges`);
+      }
+      return parts.length > 0 ? parts.join("; ") : "No faults present in any buffer.";
+    }
+    /**
+     * Builds the candidate step list from evidence that exists right now, then
+     * returns the first one not already executed.
+     */
+    planNextStep(state, executed) {
+      const done = new Set(executed);
+      const candidates = [];
+      const dockerErrors = (state.docker?.logs || []).filter((l) => l.level === "error");
+      const failedNet = state.network.records.filter((r) => r.isFailed || (r.status ?? 0) >= 400);
+      const slowNet = state.network.records.filter((r) => r.isSlow && !r.isFailed);
+      const consoleErrors = state.console.entries.filter((e) => e.level === "error");
+      if (dockerErrors.length > 0) {
+        const first = dockerErrors[0];
+        candidates.push({
+          tool: "inspect_docker_logs",
+          args: { level: "error", tail: Math.min(20, dockerErrors.length + 5) },
+          hypothesis: `${dockerErrors.length} backend error${dockerErrors.length === 1 ? "" : "s"} are in the Docker buffer, the earliest from \`${first.containerName}\` at ${new Date(first.timestamp).toLocaleTimeString()}. If the backend broke first, the browser-side failures are symptoms \u2014 so read the container logs before trusting the client stack trace.`,
+          goal: `Read the error-level logs from ${dockerErrors.length} backend event(s) to find the deepest failure.`
+        });
+      }
+      if (failedNet.length > 0) {
+        const target = failedNet[0];
+        const index = state.network.records.indexOf(target);
+        candidates.push({
+          tool: "inspect_request",
+          args: { requestIndex: Math.max(0, index) },
+          hypothesis: `\`${target.method} ${target.url}\` returned ${target.status || "no response at all"}${target.isCORS ? " and was flagged as a CORS failure" : ""}. Pulling its headers, payload and response body will show whether the fault is the request we sent or the service we called.`,
+          goal: `Inspect the full transaction for ${target.method} ${target.url}.`
+        });
+      }
+      if (consoleErrors.length > 0) {
+        const target = consoleErrors[0];
+        const index = state.console.entries.filter((e) => e.level === "error").indexOf(target);
+        candidates.push({
+          tool: "inspect_error",
+          args: { errorIndex: Math.max(0, index) },
+          hypothesis: `The console holds ${consoleErrors.length} error${consoleErrors.length === 1 ? "" : "s"}; the first is "${target.message.slice(0, 110)}"${target.count > 1 ? ` and it repeated ${target.count} times` : ""}. Demangling its stack will name the app frame that actually threw, as opposed to the vendor frame that reported it.`,
+          goal: `Resolve the stack trace for "${target.message.slice(0, 60)}" down to app source lines.`
+        });
+      }
+      if (slowNet.length > 0 && failedNet.length === 0) {
+        const target = slowNet[0];
+        const index = state.network.records.indexOf(target);
+        candidates.push({
+          tool: "inspect_request",
+          args: { requestIndex: Math.max(0, index) },
+          hypothesis: `Nothing outright failed, but \`${target.method} ${target.url}\` took ${Math.round(target.duration || 0)}ms. Latency this high is usually the complaint behind "the app feels broken", so it is worth inspecting.`,
+          goal: `Inspect the slowest request (${Math.round(target.duration || 0)}ms) for a latency cause.`
+        });
+      }
+      const layersWithSignal = [dockerErrors.length > 0, failedNet.length + slowNet.length > 0, consoleErrors.length > 0].filter(Boolean).length;
+      if (layersWithSignal >= 2) {
+        candidates.push({
+          tool: "graphify_errors",
+          args: { includeDocker: dockerErrors.length > 0, timeframeMs: 8e3 },
+          hypothesis: `Signals exist in ${layersWithSignal} separate layers. Correlating them by timestamp will establish whether one failure caused the others or whether these are unrelated bugs that happen to coincide.`,
+          goal: "Build the cross-layer causal graph and identify the root node."
+        });
+      }
+      if (state.correlations.length > 0) {
+        candidates.push({
+          tool: "find_correlations",
+          args: {},
+          hypothesis: `The correlation engine already flagged ${state.correlations.length} temporal link${state.correlations.length === 1 ? "" : "s"}. Reading them out confirms the ordering behind the causal graph.`,
+          goal: "Confirm the temporal ordering of the correlated events."
+        });
+      }
+      if (state.framework?.detectedFramework && consoleErrors.length > 0) {
+        candidates.push({
+          tool: "query_framework_state",
+          args: {},
+          hypothesis: `${state.framework.detectedFramework} is driving this page and a client error was thrown. Inspecting store/component state shows whether the thrown value came from application state rather than the network.`,
+          goal: `Inspect ${state.framework.detectedFramework} state around the failure.`
+        });
+      }
+      const next = candidates.find((candidate) => !done.has(candidate.tool));
+      if (next) return next;
+      return this.buildConclusion(state);
+    }
+    buildConclusion(state) {
+      const analysis = this.engine.analyze(state);
+      return {
+        tool: "done",
+        args: {
+          diagnosis: analysis.diagnosis,
+          rootCause: analysis.rootCause,
+          fix: analysis.suggestedFix,
+          confidence: analysis.confidence,
+          filesToModify: analysis.filesToModify
+        },
+        hypothesis: analysis.hasEvidence ? `Every layer with evidence has been inspected. ${analysis.headline} is the earliest critical signal and the ${analysis.causalChain.length > 0 ? "causal chain confirms" : "evidence indicates"} it as the root cause. Writing up the conclusion.` : "All buffers are empty \u2014 there is no fault to attribute. Reporting a clean session.",
+        goal: "Conclude the investigation with the derived diagnosis and remediation plan."
+      };
+    }
+  };
+
+  // packages/core/src/analysis/SessionReport.ts
+  function fence(body, lang = "") {
+    return ["```" + lang, body, "```"];
+  }
+  function prettyJson(raw) {
+    try {
+      return fence(JSON.stringify(JSON.parse(raw), null, 2), "json");
+    } catch {
+      return fence(raw);
+    }
+  }
+  function buildTimeline(state, limit) {
+    const rows = [];
+    state.network.records.forEach((r) => {
+      const outcome = r.isFailed ? "FAILED" : `${r.status ?? "?"}`;
+      const flags = [r.isCORS ? "CORS" : r.isCrossOrigin ? "CROSS-ORIGIN" : "", r.isSlow ? "SLOW" : ""].filter(Boolean).join(",");
+      rows.push({
+        time: r.startTime,
+        layer: "network",
+        text: `${r.method} ${r.url} \u2192 ${outcome}${r.duration !== void 0 ? ` (${Math.round(r.duration)}ms)` : ""}${flags ? ` [${flags}]` : ""}`
+      });
+    });
+    state.console.entries.forEach((c) => {
+      rows.push({
+        time: c.timestamp,
+        layer: `console:${c.level}`,
+        text: `${c.message.slice(0, 160)}${c.count > 1 ? ` (\xD7${c.count})` : ""}`
+      });
+    });
+    (state.docker?.logs || []).forEach((d) => {
+      rows.push({
+        time: d.timestamp,
+        layer: `docker:${d.level}`,
+        text: `[${d.containerName}] ${d.message.slice(0, 160)}`
+      });
+    });
+    (state.interactions || []).forEach((i) => {
+      rows.push({
+        time: i.timestamp,
+        layer: "user",
+        text: `${i.type}${i.target ? ` on ${i.target}` : ""}${i.detail ? ` \u2014 ${i.detail}` : ""}`
+      });
+    });
+    rows.sort((a, b) => a.time - b.time);
+    return rows.slice(-limit);
+  }
+  function renderFinding(finding, index, lines) {
+    lines.push(`#### ${index}. ${finding.title}`);
+    lines.push(
+      `\`layer: ${finding.layer}\` \xB7 \`severity: ${finding.severity}\` \xB7 \`confidence: ${Math.round(finding.confidence * 100)}%\` \xB7 \`observed: ${new Date(finding.timestamp).toISOString()}\``
+    );
+    lines.push("");
+    lines.push(finding.detail);
+    lines.push("");
+    lines.push("**Observed evidence:**");
+    finding.evidence.forEach((item) => lines.push(`- ${item}`));
+    if (finding.files.length > 0) {
+      lines.push("");
+      lines.push(`**Source locations from the stack:** ${finding.files.map((f) => `\`${f}\``).join(", ")}`);
+    }
+    lines.push("");
+    lines.push(`**Suggested direction:** ${finding.remediation}`);
+    lines.push("");
+  }
+  function generateSessionDebugPrompt(state, options = {}) {
+    const maxFindings = options.maxFindings ?? 6;
+    const maxTimeline = options.maxTimelineEvents ?? 24;
+    const analysis = new LocalDiagnosticEngine().analyze(state);
+    const lines = [];
+    lines.push("# Debug session brief");
+    lines.push("");
+    lines.push(
+      "Captured live from a running browser session by Dr. Debug. Every value below was observed \u2014 none of it is inferred or synthetic."
+    );
+    lines.push("");
+    lines.push("| | |");
+    lines.push("|---|---|");
+    lines.push(`| Page | \`${state.pageContext.url || "unknown"}\` |`);
+    if (state.pageContext.title) lines.push(`| Title | ${state.pageContext.title} |`);
+    lines.push(`| Captured at | ${new Date(state.pageContext.timestamp).toISOString()} |`);
+    lines.push(`| Session uptime | ${state.pageContext.uptimeSeconds.toFixed(1)}s |`);
+    if (state.framework?.detectedFramework) lines.push(`| Framework | ${state.framework.detectedFramework} |`);
+    lines.push(
+      `| Console | ${state.console.errorCount} error(s), ${state.console.warnCount} warning(s) of ${state.console.total} entries |`
+    );
+    lines.push(
+      `| Network | ${state.network.failedCount} failed, ${state.network.slowCount} slow of ${state.network.total} requests |`
+    );
+    if (state.docker) {
+      lines.push(
+        `| Backend | ${state.docker.errorCount} container error(s) across ${state.docker.containers.length} container(s) |`
+      );
+    }
+    if (state.memory?.heapUsagePercent !== void 0) {
+      lines.push(
+        `| Heap | ${Math.round((state.memory.usedJSHeapSize || 0) / 1048576)}MB (${Math.round(state.memory.heapUsagePercent)}% of limit) |`
+      );
+    }
+    lines.push(`| User agent | \`${state.pageContext.userAgent || "unknown"}\` |`);
+    lines.push("");
+    if (!analysis.hasEvidence && !options.investigation) {
+      lines.push("## Result");
+      lines.push("");
+      lines.push(analysis.diagnosis);
+      lines.push("");
+      lines.push("There is nothing to act on. Reproduce the fault, then capture again.");
+      return lines.join("\n");
+    }
+    lines.push("## Summary");
+    lines.push("");
+    lines.push(`**Most likely root cause:** ${analysis.headline}`);
+    lines.push("");
+    lines.push(analysis.diagnosis);
+    lines.push("");
+    lines.push(`Derived confidence: **${Math.round(analysis.confidence * 100)}%**`);
+    lines.push("");
+    if (analysis.causalChain.length > 0) {
+      lines.push("## Causal chain");
+      lines.push("");
+      lines.push("Ordered by the correlation engine from timestamps across layers:");
+      lines.push("");
+      lines.push(...fence(analysis.causalChain.join("\n")));
+      lines.push("");
+    }
+    if (state.causalGraph && state.causalGraph.edges.length > 0) {
+      lines.push("<details><summary>Causal graph (Mermaid)</summary>");
+      lines.push("");
+      lines.push(...fence(state.causalGraph.mermaidDiagram, "mermaid"));
+      lines.push("");
+      lines.push("</details>");
+      lines.push("");
+    }
+    lines.push(`## Findings (${analysis.findings.length}, ordered by severity then time)`);
+    lines.push("");
+    analysis.findings.slice(0, maxFindings).forEach((finding, i) => renderFinding(finding, i + 1, lines));
+    if (analysis.findings.length > maxFindings) {
+      lines.push(`**${analysis.findings.length - maxFindings} further finding(s), summarised:**`);
+      analysis.findings.slice(maxFindings).forEach((f) => {
+        lines.push(`- \`${f.severity}\` [${f.layer}] ${f.title}`);
+      });
+      lines.push("");
+    }
+    const failing = state.network.records.filter((r) => r.isFailed || (r.status ?? 0) >= 400);
+    if (failing.length > 0) {
+      lines.push("## Failing HTTP transactions (full detail)");
+      lines.push("");
+      failing.slice(0, 3).forEach((req) => {
+        lines.push(`### ${req.method} ${req.url}`);
+        lines.push(
+          `Status \`${req.status || "no response"}${req.statusText ? ` ${req.statusText}` : ""}\`${req.duration !== void 0 ? ` after ${Math.round(req.duration)}ms` : ""}${req.isCORS ? " \xB7 CORS blocked" : req.isCrossOrigin ? " \xB7 cross-origin, cause not exposed to JS" : ""}`
+        );
+        if (req.error) lines.push(`Transport error: \`${req.error}\``);
+        if (req.initiator) lines.push(`Initiator: \`${req.initiator}\``);
+        lines.push("");
+        lines.push("Reproduce in a terminal:");
+        lines.push(...fence(generateCurlCommand(req), "bash"));
+        lines.push("");
+        if (req.requestHeaders && Object.keys(req.requestHeaders).length > 0) {
+          lines.push("<details><summary>Request headers</summary>");
+          lines.push("");
+          lines.push(...fence(JSON.stringify(req.requestHeaders, null, 2), "json"));
+          lines.push("");
+          lines.push("</details>");
+        }
+        if (req.requestBodyPreview) {
+          lines.push("Request body:");
+          lines.push(...prettyJson(req.requestBodyPreview));
+        }
+        if (req.responseHeaders && Object.keys(req.responseHeaders).length > 0) {
+          lines.push("<details><summary>Response headers</summary>");
+          lines.push("");
+          lines.push(...fence(JSON.stringify(req.responseHeaders, null, 2), "json"));
+          lines.push("");
+          lines.push("</details>");
+        }
+        if (req.responseBodyPreview) {
+          lines.push("Response body:");
+          lines.push(...prettyJson(req.responseBodyPreview));
+        }
+        lines.push("");
+      });
+    }
+    const withStacks = state.console.entries.filter((e) => e.level === "error" && (e.stack || e.parsedStack?.length));
+    if (withStacks.length > 0) {
+      lines.push("## Stack traces");
+      lines.push("");
+      withStacks.slice(0, 3).forEach((entry) => {
+        lines.push(`### ${entry.message.slice(0, 160)}`);
+        lines.push(`\`${entry.type}\`${entry.count > 1 ? ` \xB7 repeated ${entry.count}\xD7` : ""}`);
+        lines.push("");
+        if (entry.parsedStack && entry.parsedStack.length > 0) {
+          entry.parsedStack.slice(0, 8).forEach((frame, i) => {
+            const file = frame.filename || "unknown";
+            const vendor = file.includes("node_modules") || file.startsWith("chrome-extension://");
+            lines.push(
+              `${i + 1}. ${vendor ? "[vendor]" : "[app]"} \`${frame.functionName || "<anonymous>"}\` \u2014 \`${file}:${frame.lineno ?? 0}:${frame.colno ?? 0}\``
+            );
+          });
+        } else if (entry.stack) {
+          lines.push(...fence(entry.stack));
+        }
+        lines.push("");
+      });
+    }
+    const dockerLogs = state.docker?.logs || [];
+    if (dockerLogs.length > 0) {
+      const containers = state.docker?.containers || [];
+      lines.push("## Backend container logs");
+      lines.push("");
+      if (containers.length > 0) {
+        containers.forEach((c) => {
+          lines.push(`- \`${c.name}\` \u2014 ${c.image} \xB7 ${c.state}${c.status ? ` (${c.status})` : ""}${c.ports?.length ? ` \xB7 ports ${c.ports.join(", ")}` : ""}`);
+        });
+        lines.push("");
+      }
+      const errorLogs = dockerLogs.filter((l) => l.level === "error");
+      const shown = (errorLogs.length > 0 ? errorLogs : dockerLogs).slice(-12);
+      lines.push(...fence(shown.map((l) => `${new Date(l.timestamp).toISOString()} [${l.containerName}/${l.stream}] ${l.message}`).join("\n")));
+      lines.push("");
+    }
+    const timeline = buildTimeline(state, maxTimeline);
+    if (timeline.length > 0) {
+      const origin = timeline[0].time;
+      lines.push("## Chronological timeline");
+      lines.push("");
+      lines.push(
+        ...fence(
+          timeline.map((row) => `+${String(row.time - origin).padStart(6, " ")}ms  ${row.layer.padEnd(16, " ")}  ${row.text}`).join("\n")
+        )
+      );
+      lines.push("");
+    }
+    if (state.framework?.detectedFramework) {
+      lines.push("## Framework state");
+      lines.push("");
+      lines.push(`- Detected: \`${state.framework.detectedFramework}\``);
+      if (state.framework.store) {
+        lines.push(`- Store (\`${state.framework.store.type}\`) top-level keys: \`${state.framework.store.topLevelKeys.slice(0, 12).join(", ")}\``);
+      }
+      if (state.framework.components.length > 0) {
+        lines.push(`- Components in tree: ${state.framework.components.length}`);
+      }
+      state.framework.recentEvents.slice(-5).forEach((ev) => {
+        lines.push(`- [${ev.framework}] ${ev.detail}`);
+      });
+      lines.push("");
+    }
+    const investigation = options.investigation;
+    if (investigation) {
+      lines.push("## Prior agent investigation");
+      lines.push("");
+      lines.push(
+        `An automated agent ran ${investigation.steps.length} step(s) over ${(investigation.durationMs / 1e3).toFixed(1)}s and reported ${Math.round(investigation.confidence * 100)}% confidence. Treat this as a hypothesis to verify against the evidence above, not as ground truth.`
+      );
+      lines.push("");
+      lines.push(`**Goal given:** ${investigation.goal}`);
+      lines.push("");
+      lines.push(`**Diagnosis:** ${investigation.diagnosis}`);
+      lines.push("");
+      lines.push("**Root cause as reported:**");
+      lines.push("");
+      lines.push(...fence(investigation.rootCause));
+      lines.push("");
+      if (investigation.steps.length > 0) {
+        lines.push("<details><summary>Investigation steps</summary>");
+        lines.push("");
+        investigation.steps.forEach((step) => {
+          lines.push(`**Step ${step.stepNumber} \u2014 \`${step.toolCall.name}\`**`);
+          lines.push("");
+          lines.push(`Hypothesis: ${step.reflection.working_hypothesis}`);
+          lines.push("");
+          lines.push(...fence(step.toolResult.slice(0, 1200)));
+          lines.push("");
+        });
+        lines.push("</details>");
+        lines.push("");
+      }
+      if (investigation.fix) {
+        lines.push("**Remediation the agent proposed:**");
+        lines.push("");
+        lines.push(...fence(investigation.fix));
+        lines.push("");
+      }
+    }
+    if (analysis.suggestedFix) {
+      lines.push("## Remediation plan derived from the evidence");
+      lines.push("");
+      lines.push(analysis.suggestedFix);
+      lines.push("");
+    }
+    if (analysis.filesToModify.length > 0) {
+      lines.push("## Source locations named by the stacks");
+      lines.push("");
+      analysis.filesToModify.forEach((file) => lines.push(`- \`${file}\``));
+      lines.push("");
+    }
+    lines.push("---");
+    lines.push("");
+    lines.push("## Your task");
+    lines.push("");
+    lines.push(`1. Open the source locations named above and find the code that produced ${analysis.headline}.`);
+    lines.push("2. Confirm or refute the suggested root cause against the actual code. The evidence here is real; the attribution is a heuristic and may be wrong.");
+    lines.push("3. Fix the root cause rather than the symptom \u2014 the causal chain shows which failures are downstream.");
+    lines.push("4. Give me the minimal diff, and tell me how to verify it against the reproduction command above.");
+    lines.push("");
+    lines.push("If the evidence is insufficient to locate the cause, say what additional telemetry you need instead of guessing.");
+    return lines.join("\n");
+  }
 
   // packages/core/src/prompts/system_prompt.ts
   function getSystemPrompt() {
@@ -9089,6 +10009,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         getController: () => typeof window !== "undefined" ? window.__DR_DEBUG__?.getController() : void 0
       } : onCloseOrOptions;
       this.onInvestigateHandler = options.onInvestigate;
+      this.getSessionPrompt = options.getSessionPrompt;
       this.element = document.createElement("div");
       this.element.className = "dr-debug-modal hidden";
       const header = document.createElement("div");
@@ -9109,6 +10030,11 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.uptimeMetricBadge = document.createElement("div");
       this.uptimeMetricBadge.className = "dr-debug-metric-badge";
       this.uptimeMetricBadge.innerHTML = `<span class="dr-debug-status-dot dot-notice"></span> <span id="dr-debug-uptime-val">00:00</span>`;
+      const exportBtn = this.makeSessionPromptButton(
+        "dr-debug-export-btn",
+        "Copy for AI",
+        "Copy the whole session \u2014 findings, causal chain, stacks, HTTP detail, timeline \u2014 as a paste-ready brief for Claude Code or Antigravity"
+      );
       this.settingsBtn = document.createElement("button");
       this.settingsBtn.className = "dr-debug-close-btn";
       this.settingsBtn.innerHTML = "\u2699";
@@ -9126,6 +10052,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       closeBtn.addEventListener("click", () => options.onClose());
       metricsWrapper.appendChild(this.heapMetricBadge);
       metricsWrapper.appendChild(this.uptimeMetricBadge);
+      metricsWrapper.appendChild(exportBtn);
       metricsWrapper.appendChild(this.settingsBtn);
       metricsWrapper.appendChild(this.maximizeBtn);
       metricsWrapper.appendChild(closeBtn);
@@ -9289,6 +10216,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     settingsBtn;
     thinkingCard = null;
     onInvestigateHandler;
+    getSessionPrompt;
     getElement() {
       return this.element;
     }
@@ -9405,6 +10333,13 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.timelineContainer.scrollTop = this.timelineContainer.scrollHeight;
     }
     showPrescription(prescription) {
+      this.timelineContainer.appendChild(this.buildPrescriptionCard(prescription));
+      this.prescriptionContainer.innerHTML = "";
+      this.prescriptionContainer.appendChild(this.buildPrescriptionCard(prescription));
+      this.timelineContainer.scrollTop = this.timelineContainer.scrollHeight;
+      this.switchTab("prescription");
+    }
+    buildPrescriptionCard(prescription) {
       const card = document.createElement("div");
       card.className = "dr-debug-prescription-card";
       const header = document.createElement("div");
@@ -9455,25 +10390,37 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         diffContainer.innerHTML = this.formatDiffHtml(prescription.fix);
         const copyBtn = document.createElement("button");
         copyBtn.className = "dr-debug-copy-btn";
-        copyBtn.innerHTML = `<span>\u{1F4CB}</span> <span>Copy Unified Patch</span>`;
-        copyBtn.addEventListener("click", () => {
-          if (navigator.clipboard) {
-            navigator.clipboard.writeText(prescription.fix);
-            copyBtn.innerHTML = `<span>\u2705</span> <span>Patch Copied!</span>`;
-            setTimeout(() => {
-              copyBtn.innerHTML = `<span>\u{1F4CB}</span> <span>Copy Unified Patch</span>`;
-            }, 2e3);
-          }
-        });
+        const idle = `<span>\u{1F4CB}</span> <span>Copy remediation plan</span>`;
+        copyBtn.innerHTML = idle;
+        this.bindCopyFeedback(
+          copyBtn,
+          () => prescription.fix,
+          idle,
+          `<span>\u2705</span> <span>Copied</span>`
+        );
         sectionFix.appendChild(diffContainer);
         sectionFix.appendChild(copyBtn);
         card.appendChild(sectionFix);
       }
-      this.timelineContainer.appendChild(card.cloneNode(true));
-      this.prescriptionContainer.innerHTML = "";
-      this.prescriptionContainer.appendChild(card);
-      this.timelineContainer.scrollTop = this.timelineContainer.scrollHeight;
-      this.switchTab("prescription");
+      const handoff = document.createElement("div");
+      handoff.className = "dr-debug-presc-section dr-debug-handoff";
+      handoff.innerHTML = `
+      <div class="dr-debug-presc-label">Hand off to a coding agent</div>
+      <div class="dr-debug-handoff-desc">
+        Exports this whole session \u2014 every finding with its evidence, the causal chain, demangled stacks,
+        full HTTP transactions with a cURL reproduction, backend logs and the chronological timeline \u2014
+        as one Markdown brief for Claude Code, Antigravity or Cursor.
+      </div>
+    `;
+      handoff.appendChild(
+        this.makeSessionPromptButton(
+          "dr-debug-copy-btn primary",
+          "\u{1F4E4} Copy full brief for AI",
+          "Copy the complete session brief as Markdown"
+        )
+      );
+      card.appendChild(handoff);
+      return card;
     }
     updateTriage(telemetry) {
       this.triageContainer.innerHTML = "";
@@ -9581,21 +10528,76 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         this.element.style.bottom = "";
       }
     }
+    /**
+     * Clipboard write that reports whether it actually succeeded. The async API
+     * needs a secure context and a focused document, neither of which is
+     * guaranteed here, so fall back to a detached textarea + execCommand.
+     */
+    async copyToClipboard(text) {
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+      } catch {
+      }
+      try {
+        const scratch = document.createElement("textarea");
+        scratch.value = text;
+        scratch.setAttribute("readonly", "");
+        scratch.style.position = "fixed";
+        scratch.style.top = "-1000px";
+        scratch.style.opacity = "0";
+        document.body.appendChild(scratch);
+        scratch.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(scratch);
+        return ok;
+      } catch {
+        return false;
+      }
+    }
+    /** Wires a button to a copy action with honest success/failure feedback. */
+    bindCopyFeedback(btn, getText, idleHtml, okHtml, failHtml = "<span>Copy failed</span>") {
+      btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const text = getText();
+        if (!text) {
+          btn.innerHTML = "<span>Nothing to copy</span>";
+          setTimeout(() => {
+            btn.innerHTML = idleHtml;
+          }, 1800);
+          return;
+        }
+        const ok = await this.copyToClipboard(text);
+        btn.innerHTML = ok ? okHtml : failHtml;
+        btn.classList.toggle("copied", ok);
+        setTimeout(() => {
+          btn.innerHTML = idleHtml;
+          btn.classList.remove("copied");
+        }, 2200);
+      });
+    }
+    makeSessionPromptButton(className, label, title) {
+      const btn = document.createElement("button");
+      btn.className = className;
+      btn.title = title;
+      const idle = `<span>${label}</span>`;
+      btn.innerHTML = idle;
+      this.bindCopyFeedback(
+        btn,
+        () => this.getSessionPrompt?.() || "",
+        idle,
+        "<span>Copied for AI</span>"
+      );
+      return btn;
+    }
     makeCopyBtn(text) {
       const btn = document.createElement("button");
       btn.className = "dr-debug-copy-inline";
-      btn.innerHTML = "\u{1F4CB}";
       btn.title = "Copy to clipboard";
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(text);
-          btn.innerHTML = "\u2705";
-          setTimeout(() => {
-            btn.innerHTML = "\u{1F4CB}";
-          }, 2e3);
-        }
-      });
+      btn.innerHTML = "\u{1F4CB}";
+      this.bindCopyFeedback(btn, () => text, "\u{1F4CB}", "\u2705", "\u26A0\uFE0F");
       return btn;
     }
     startUptimeTicker() {
@@ -10363,7 +11365,11 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 .dr-debug-presc-text {
   font-size: 11.5px;
   color: #f1f5f9;
-  line-height: 1.4;
+  line-height: 1.55;
+  /* The root-cause text carries its own paragraph and causal-chain line breaks;
+     collapsing them turns the whole section into one unreadable block. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .dr-debug-prescription-diff {
@@ -11029,6 +12035,8 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   font-size: 10px;
   color: #94a3b8;
   white-space: pre-wrap;
+}
+
 /* ==========================================================================
    9. ERRORS & ANOMALY MATRIX (2D HEATMAP GRID, STREAM, cURL & WORKBENCH)
    ========================================================================== */
@@ -11037,6 +12045,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
   gap: 8px;
 }
 
@@ -11046,6 +12055,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   align-items: center;
   padding: 4px 2px;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .dr-debug-err-title {
@@ -11089,6 +12099,8 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   justify-content: space-between;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .dr-debug-mode-toggle {
@@ -11174,6 +12186,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 .dr-debug-status-dot.dot-sys { background: #34d399; }
 
 .dr-debug-2d-matrix {
+  flex-shrink: 0;
   background: rgba(10, 15, 28, 0.92);
   border: 1px solid rgba(56, 189, 248, 0.22);
   border-radius: 8px;
@@ -11343,6 +12356,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   gap: 4px;
   overflow-x: auto;
   padding: 2px 0;
+  flex-shrink: 0;
 }
 
 .dr-debug-err-filter-bar::-webkit-scrollbar { display: none; }
@@ -11379,13 +12393,14 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 .dr-debug-err-main-view {
   display: flex;
   gap: 8px;
-  flex: 1;
-  min-height: 240px;
+  flex: 1 1 0;
+  min-height: 0;
   overflow: hidden;
 }
 
 .dr-debug-err-list {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -11475,7 +12490,8 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 
 /* Inspector Drawer */
 .dr-debug-err-inspector {
-  flex: 1.2;
+  flex: 1.2 1 0;
+  min-width: 0;
   background: rgba(6, 10, 20, 0.95);
   border: 1px solid rgba(56, 189, 248, 0.3);
   border-radius: 8px;
@@ -11990,6 +13006,66 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   50% { transform: scale(1.12); box-shadow: 0 0 0 8px rgba(244, 63, 94, 0); }
   100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
 }
+
+/* \u2500\u2500 Session hand-off: "Copy for AI" \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+
+.dr-debug-export-btn {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.18), rgba(129, 140, 248, 0.18));
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  color: #7dd3fc;
+  border-radius: 6px;
+  padding: 5px 11px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.dr-debug-export-btn:hover {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.3), rgba(129, 140, 248, 0.3));
+  border-color: rgba(56, 189, 248, 0.75);
+  color: #e0f2fe;
+  transform: translateY(-1px);
+}
+
+.dr-debug-export-btn.copied,
+.dr-debug-copy-btn.copied {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: rgba(16, 185, 129, 0.6);
+  color: #6ee7b7;
+}
+
+.dr-debug-copy-btn.primary {
+  align-self: flex-start;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.2));
+  border-color: rgba(56, 189, 248, 0.45);
+  color: #7dd3fc;
+  padding: 7px 14px;
+  font-size: 11.5px;
+}
+
+.dr-debug-copy-btn.primary:hover {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.32), rgba(129, 140, 248, 0.32));
+  border-color: rgba(56, 189, 248, 0.8);
+  color: #e0f2fe;
+}
+
+.dr-debug-handoff {
+  border-top: 1px solid rgba(148, 163, 184, 0.16);
+  margin-top: 4px;
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dr-debug-handoff-desc {
+  font-size: 11px;
+  line-height: 1.55;
+  color: #94a3b8;
+}
 `;
 
   // packages/ui/src/DrDebugUI.ts
@@ -11998,7 +13074,10 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     shadowRoot;
     pill;
     cockpit;
+    getController;
+    engine = new LocalDiagnosticEngine();
     constructor(options = {}) {
+      this.getController = options.getController;
       let host = document.getElementById("dr-debug-root");
       if (!host) {
         host = document.createElement("div");
@@ -12046,10 +13125,11 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
               this.cockpit.setBusy(false);
             }
           } else {
-            this.runDemoInvestigation(query);
+            await this.runLocalInvestigation();
           }
         },
         getController: options.getController,
+        getSessionPrompt: options.getSessionPrompt || (() => this.buildSessionPrompt()),
         onSaveSettings: options.onSaveSettings,
         onTestConnection: options.onTestConnection
       });
@@ -12102,76 +13182,113 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     closeCockpit() {
       this.cockpit.hide();
     }
-    runDemoInvestigation(_query) {
+    buildSessionPrompt() {
+      const controller = this.getController?.();
+      if (!controller) {
+        return "No debug controller is attached to this UI, so there is no telemetry to export.";
+      }
+      return generateSessionDebugPrompt(controller.getSnapshot());
+    }
+    /**
+     * Fallback path when no LLM-backed investigator is wired in: runs the local
+     * deterministic engine over live telemetry and renders its real findings.
+     * Nothing here is scripted — with empty buffers it reports an empty session.
+     */
+    async runLocalInvestigation() {
+      const controller = this.getController?.();
       this.cockpit.clearTimeline();
       this.cockpit.switchTab("timeline");
-      this.updatePillStatus(0, 0, 0, true);
-      this.cockpit.showThinking("Reading console ring buffer, network timeline, and Docker backend logs...");
-      const steps = [
-        {
+      if (!controller) {
+        this.cockpit.addStep({
           stepNumber: 1,
-          hypothesis: "Inspect the console ring buffer for unhandled exceptions. The TypeError is likely caused by a failed async operation returning undefined instead of an expected response body.",
-          toolName: "inspect_error",
-          toolOutput: '[ConsoleInterceptor] 3 errors in ring buffer\n\u2192 TypeError: Cannot read properties of undefined (reading "data")\n\u2192 NetworkError: Failed to fetch /api/agents/resource/run (503)\n\u2192 Unhandled rejection: Promise chain missing .catch() handler'
-        },
-        {
-          stepNumber: 2,
-          hypothesis: "Cross-reference the network timeline. The TypeError appeared 312ms after a 503 response \u2014 strong causal candidate. Checking the failed request details.",
-          toolName: "inspect_request",
-          toolOutput: "[NetworkInterceptor] 2 anomalies\n\u2192 POST /api/agents/resource/run  [503] 4821ms  \u26A0\uFE0F upstream timeout\n\u2192 GET /api/config                 [0]   ERR_CONNECTION_REFUSED  \u26A0\uFE0F CORS/unreachable"
-        },
-        {
-          stepNumber: 3,
-          hypothesis: "The 503 suggests the backend is down, not just slow. Inspecting Docker container logs to find the root backend failure.",
-          toolName: "inspect_docker_logs",
-          toolOutput: "[DockerInterceptor] 4 backend errors\n\u2192 [postgres-db] FATAL: remaining connection slots reserved for superuser\n\u2192 [postgres-db] ERROR: max_connections (100) reached \u2014 refusing connection\n\u2192 [api-server]  PrismaClientKnownRequestError: P2024 DB connection timeout\n\u2192 [api-server]  Error: POST /api/agents/resource/run \u2192 upstream DB unavailable"
-        },
-        {
-          stepNumber: 4,
-          hypothesis: "Building the full-stack causal graph. The DB pool exhaustion is the root node \u2014 everything else is a downstream effect of that single failure.",
-          toolName: "graphify_errors",
-          toolOutput: "[CausalGraph] 4 nodes, 3 causal links\n\u{1F3AF} ROOT CAUSE: [docker] postgres-db \u2014 max_connections exhausted\n\u2192 [docker] api-server DB timeout          (CAUSED_BY     98%)\n\u2192 [network] POST /api/agents/resource 503  (PROPAGATED_TO 96%)\n\u2192 [console] TypeError: data undefined      (TRIGGERED_BY  94%)\n\nSee Causal Map tab for the interactive dependency graph."
-        }
-      ];
-      const delays = [800, 2300, 3900, 5400];
-      steps.forEach((step, i) => {
-        setTimeout(() => {
-          if (i + 1 < steps.length) {
-            this.cockpit.showThinking(steps[i + 1].hypothesis);
-          } else {
-            this.cockpit.showThinking("Root cause identified. Generating verified code fix...");
-          }
-          this.cockpit.addStep(step);
-        }, delays[i]);
-      });
-      setTimeout(() => {
-        this.showPrescription({
-          diagnosis: "The frontend TypeError is a direct downstream effect of the API returning 503. The API fails because PostgreSQL exhausted its connection pool \u2014 confirmed in Docker stderr. The missing null-guard in the fetch handler turns a silent API failure into an uncaught exception.",
-          rootCause: "PostgreSQL connection leak: backend ORM sessions are never explicitly closed, accumulating until max_connections (100) is hit. This cascades: DB refuses new connections \u2192 API returns 503 on all requests \u2192 frontend fetch handler crashes on undefined response body.",
-          confidence: 0.97,
-          filesToModify: ["backend/src/db/session.py", "frontend/src/api/client.ts"],
-          fix: `--- a/backend/src/db/session.py
-+++ b/backend/src/db/session.py
-@@ -24,5 +24,6 @@
- async def get_db():
--    session = SessionFactory()
--    yield session
-+    async with SessionFactory() as session:
-+        yield session
-+        await session.close()
-
---- a/frontend/src/api/client.ts
-+++ b/frontend/src/api/client.ts
-@@ -8,3 +8,5 @@
- export async function callAPI(url: string) {
-   const res = await fetch(url)
--  return res.json()
-+  if (!res.ok) throw new Error(\`HTTP \${res.status}: \${res.statusText}\`)
-+  return res.json().catch(() => null)
- }`
+          hypothesis: "No DebugController is attached to this UI instance, so there is no telemetry to read. Attach one via the getController option.",
+          toolName: "triage",
+          toolOutput: "No telemetry source available."
         });
-        this.updatePillStatus(1, 1, 0, false);
-      }, 7200);
+        this.cockpit.setBusy(false);
+        return;
+      }
+      this.updatePillStatus(0, 0, 0, true);
+      this.cockpit.showThinking("Reading the console, network, backend, memory and performance buffers\u2026");
+      const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      await wait(420);
+      const state = controller.getSnapshot();
+      const analysis = this.engine.analyze(state);
+      this.cockpit.addStep({
+        stepNumber: 1,
+        hypothesis: `Triaging the raw buffers before forming a theory: ${state.console.errorCount} console error(s), ${state.network.failedCount} failed and ${state.network.slowCount} slow request(s), ${state.docker?.errorCount ?? 0} backend error(s).`,
+        toolName: "triage_telemetry",
+        toolOutput: [
+          `Page:      ${state.pageContext.url || "unknown"}`,
+          `Uptime:    ${state.pageContext.uptimeSeconds.toFixed(1)}s`,
+          `Console:   ${state.console.errorCount} error(s), ${state.console.warnCount} warning(s) of ${state.console.total} entries`,
+          `Network:   ${state.network.failedCount} failed, ${state.network.slowCount} slow of ${state.network.total} requests`,
+          `Backend:   ${state.docker?.errorCount ?? 0} container error(s)`,
+          state.memory?.heapUsagePercent !== void 0 ? `Heap:      ${Math.round((state.memory.usedJSHeapSize || 0) / 1048576)}MB (${Math.round(state.memory.heapUsagePercent)}% of limit)` : "Heap:      not exposed by this browser",
+          `Findings:  ${analysis.findings.length} derived`
+        ].join("\n")
+      });
+      if (!analysis.hasEvidence) {
+        await wait(360);
+        this.cockpit.showThinking("");
+        this.showPrescription({
+          diagnosis: analysis.diagnosis,
+          rootCause: analysis.rootCause,
+          fix: "",
+          confidence: 0,
+          filesToModify: []
+        });
+        this.updatePillStatus(0, 0, 0, false);
+        return;
+      }
+      const shown = analysis.findings.slice(0, 5);
+      for (let i = 0; i < shown.length; i++) {
+        const finding = shown[i];
+        this.cockpit.showThinking(
+          `Examining the ${finding.layer} layer \u2014 ${finding.title} (${finding.severity}, ${Math.round(finding.confidence * 100)}% confidence).`
+        );
+        await wait(560);
+        this.cockpit.addStep({
+          stepNumber: i + 2,
+          hypothesis: `${finding.title}. ${finding.detail}`,
+          toolName: `inspect_${finding.layer}`,
+          toolOutput: [
+            ...finding.evidence.map((line) => `\u2022 ${line}`),
+            finding.files.length > 0 ? `
+Source: ${finding.files.join(", ")}` : "",
+            `
+Direction: ${finding.remediation}`
+          ].filter(Boolean).join("\n")
+        });
+      }
+      if (analysis.causalChain.length > 0) {
+        this.cockpit.showThinking(
+          `Correlating ${state.causalGraph?.nodes.length ?? 0} error nodes across layers to separate causes from symptoms\u2026`
+        );
+        await wait(560);
+        this.cockpit.addStep({
+          stepNumber: shown.length + 2,
+          hypothesis: `The correlation engine linked these faults by timestamp. If the chain holds, only the root needs fixing \u2014 the rest are downstream effects.`,
+          toolName: "graphify_errors",
+          toolOutput: analysis.causalChain.join("\n")
+        });
+      }
+      this.cockpit.showThinking("Composing the remediation plan from the gathered evidence\u2026");
+      await wait(420);
+      this.cockpit.showThinking("");
+      this.showPrescription({
+        diagnosis: analysis.diagnosis,
+        rootCause: analysis.rootCause,
+        fix: analysis.suggestedFix,
+        confidence: analysis.confidence,
+        filesToModify: analysis.filesToModify
+      });
+      this.updatePillStatus(
+        state.console.errorCount,
+        state.network.failedCount,
+        state.network.slowCount,
+        false
+      );
     }
     destroy() {
       if (this.host.parentNode) {
@@ -12190,6 +13307,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     isAutoInvestigating = false;
     mcpSocket;
     syncInterval;
+    lastInvestigation = null;
     constructor(options = {}) {
       this.options = options;
       this.controller = new DebugController();
@@ -12205,7 +13323,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
           model: options.model || "gpt-4o"
         });
       } else {
-        this.llmClient = new LiteRTClient(options.liteRT);
+        this.llmClient = new HeuristicLLMClient(this.controller);
       }
       this.core = new DrDebugCore(this.controller, this.llmClient);
       const shouldEnableUI = options.enableUI !== false && typeof document !== "undefined";
@@ -12215,6 +13333,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
             await this.investigate(goal);
           },
           getController: () => this.controller,
+          getSessionPrompt: () => this.getSessionDebugPrompt(),
           onSaveSettings: (settings) => {
             this.updateLLMConfig(settings);
           },
@@ -12272,6 +13391,19 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     getController() {
       return this.controller;
     }
+    /**
+     * The full paste-ready incident brief for an external coding agent
+     * (Claude Code / Antigravity / Cursor). Composed from live telemetry, and
+     * folds in the last agent investigation when one has run.
+     */
+    getSessionDebugPrompt() {
+      return generateSessionDebugPrompt(this.controller.getSnapshot(), {
+        investigation: this.lastInvestigation
+      });
+    }
+    getLastInvestigation() {
+      return this.lastInvestigation;
+    }
     getCore() {
       return this.core;
     }
@@ -12318,6 +13450,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
             options.onDone?.(res);
           }
         });
+        this.lastInvestigation = result;
         if (this.ui) {
           this.ui.showPrescription({
             diagnosis: result.diagnosis,
@@ -12439,106 +13572,143 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     }
   }
 
+  // packages/extension/src/bridgeProtocol.ts
+  var REQ = "DR_DEBUG_BRIDGE_REQ";
+  var RES = "DR_DEBUG_BRIDGE_RES";
+  var PUSH = "DR_DEBUG_BRIDGE_PUSH";
+  function newRequestId() {
+    return `br_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  // packages/extension/src/BridgeLLMClient.ts
+  var DEFAULT_TIMEOUT_MS = 9e4;
+  var BridgeLLMClient = class {
+    timeoutMs;
+    constructor(options = {}) {
+      this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    }
+    async chat(messages, tools, signal) {
+      return await this.call("LLM_CHAT", { messages, tools }, signal);
+    }
+    async testConnection() {
+      try {
+        return await this.call("TEST_CONNECTION", {});
+      } catch (err) {
+        return { success: false, message: err?.message || "Bridge unreachable" };
+      }
+    }
+    call(op, payload, signal) {
+      if (typeof window === "undefined") {
+        return Promise.reject(new Error("BridgeLLMClient requires a window"));
+      }
+      const id = newRequestId();
+      return new Promise((resolve, reject) => {
+        let settled = false;
+        const cleanup = () => {
+          window.removeEventListener("message", onMessage);
+          clearTimeout(timer);
+          signal?.removeEventListener("abort", onAbort);
+        };
+        const finish = (fn) => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          fn();
+        };
+        const onMessage = (event) => {
+          if (event.source !== window) return;
+          const data = event.data;
+          if (!data || data.source !== RES || data.id !== id) return;
+          finish(
+            () => data.ok ? resolve(data.result) : reject(new Error(data.error || "Bridge request failed"))
+          );
+        };
+        const onAbort = () => finish(() => reject(new DOMException("Aborted", "AbortError")));
+        const timer = setTimeout(
+          () => finish(
+            () => reject(
+              new Error(
+                `LLM bridge timed out after ${this.timeoutMs}ms. The service worker may be asleep \u2014 reload the page.`
+              )
+            )
+          ),
+          this.timeoutMs
+        );
+        window.addEventListener("message", onMessage);
+        if (signal?.aborted) return onAbort();
+        signal?.addEventListener("abort", onAbort);
+        window.postMessage({ source: REQ, id, op, payload }, "*");
+      });
+    }
+  };
+
   // packages/extension/src/content.ts
   var ContentScriptBridge = class {
     instance;
+    llmClient = new BridgeLLMClient();
     init() {
-      if (typeof window === "undefined") return;
-      if (this.instance) return;
-      const defaultOptions = {
-        enableUI: true,
-        autoInvestigate: false
-      };
-      const loadLocalFallback = () => {
-        try {
-          const raw = localStorage.getItem("dr_debug_settings");
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            return {
-              enableUI: parsed.enableUI !== false,
-              autoInvestigate: parsed.autoInvestigate === true,
-              apiKey: parsed.apiKey,
-              baseURL: parsed.baseURL,
-              model: parsed.model
-            };
-          }
-        } catch {
-        }
-        return defaultOptions;
-      };
-      if (typeof chrome !== "undefined" && chrome.storage?.local) {
-        chrome.storage.local.get(["apiKey", "baseURL", "model", "enableUI", "autoInvestigate"], (settings) => {
-          const localSettings = loadLocalFallback();
-          const options = {
-            enableUI: settings?.enableUI ?? localSettings.enableUI,
-            autoInvestigate: settings?.autoInvestigate ?? localSettings.autoInvestigate,
-            apiKey: settings?.apiKey || localSettings.apiKey,
-            baseURL: settings?.baseURL || localSettings.baseURL,
-            model: settings?.model || localSettings.model
-          };
-          this.bootInstance(options);
-        });
-      } else {
-        this.bootInstance(loadLocalFallback());
+      if (typeof window === "undefined" || this.instance) return;
+      this.listenForPushes();
+      this.bootInstance();
+      void this.applySettings();
+    }
+    async requestSettings() {
+      return new Promise((resolve) => {
+        const id = newRequestId();
+        const timer = setTimeout(() => {
+          window.removeEventListener("message", onMessage);
+          resolve({});
+        }, 1200);
+        const onMessage = (event) => {
+          if (event.source !== window) return;
+          const data = event.data;
+          if (!data || data.source !== RES || data.id !== id) return;
+          clearTimeout(timer);
+          window.removeEventListener("message", onMessage);
+          resolve(data.ok ? data.result || {} : {});
+        };
+        window.addEventListener("message", onMessage);
+        window.postMessage({ source: REQ, id, op: "GET_SETTINGS" }, "*");
+      });
+    }
+    /**
+     * Decides whether to route through the worker-backed LLM or stay on the
+     * offline engine, based on whether a key is actually saved.
+     */
+    async applySettings(attempt = 0) {
+      const settings = await this.requestSettings();
+      if (!this.instance) return;
+      if (settings.hasApiKey) {
+        this.instance.updateLLMConfig({ llmClient: this.llmClient });
+        return;
       }
-      if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
-        chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-          if (message.type === "DR_DEBUG_TRIGGER_INVESTIGATION") {
-            this.instance?.investigate(message.goal).then((result) => {
-              sendResponse({ status: "success", result });
-            }).catch((err) => {
-              sendResponse({ status: "error", error: err.message });
-            });
-            return true;
-          }
-          if (message.type === "DR_DEBUG_GET_LIVE_TELEMETRY") {
-            const controller = this.instance?.getController();
-            sendResponse({
-              snapshot: controller?.getSnapshot()
-            });
-            return false;
-          }
-          if (message.type === "DR_DEBUG_TOGGLE_UI") {
-            const ui = this.instance?.getUI();
-            if (ui) {
-              ui.toggleCockpit();
-              sendResponse({ status: "success" });
-            } else {
-              sendResponse({ status: "no_ui" });
-            }
-            return false;
-          }
-          if (message.type === "DR_DEBUG_UPDATE_SETTINGS") {
-            if (message.settings) {
-              if (this.instance) {
-                this.instance.updateLLMConfig({
-                  apiKey: message.settings.apiKey,
-                  baseURL: message.settings.baseURL,
-                  model: message.settings.model
-                });
-              } else {
-                this.bootInstance({
-                  enableUI: message.settings.enableUI !== false,
-                  autoInvestigate: message.settings.autoInvestigate === true,
-                  apiKey: message.settings.apiKey,
-                  baseURL: message.settings.baseURL,
-                  model: message.settings.model
-                });
-              }
-              sendResponse({ status: "updated" });
-            }
-            return false;
-          }
-        });
+      if (attempt < 4) {
+        setTimeout(() => void this.applySettings(attempt + 1), 400 * (attempt + 1));
       }
     }
-    bootInstance(options) {
+    listenForPushes() {
+      window.addEventListener("message", (event) => {
+        if (event.source !== window) return;
+        const data = event.data;
+        if (!data || data.source !== PUSH) return;
+        switch (data.event) {
+          case "TOGGLE_UI":
+            this.instance?.getUI()?.toggleCockpit();
+            break;
+          case "INVESTIGATE":
+            this.instance?.getUI()?.openCockpit();
+            void this.instance?.investigate(data.payload?.goal);
+            break;
+          case "SETTINGS_CHANGED":
+            void this.applySettings();
+            break;
+        }
+      });
+    }
+    bootInstance() {
       if (this.instance) return;
-      this.instance = new DrDebug(options);
-      if (typeof window !== "undefined") {
-        ;
-        window.__DR_DEBUG__ = this.instance;
-      }
+      this.instance = new DrDebug({ enableUI: true });
+      window.__DR_DEBUG__ = this.instance;
     }
     getInstance() {
       return this.instance;
@@ -12553,7 +13723,6 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       const bridge = new ContentScriptBridge();
       bridge.init();
       window.__DR_DEBUG_BRIDGE__ = bridge;
-      window.__DR_DEBUG__ = bridge.getInstance();
     }
   }
 })();

@@ -19,10 +19,16 @@
     "dr-debug": "*"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -b tsconfig.json",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": ["chrome-extension", "devtools", "debugging", "agent", "ai"],
-  "author": "Dr. Debug Team",
+  "keywords": [
+    "chrome-extension",
+    "devtools",
+    "debugging",
+    "agent",
+    "ai"
+  ],
+  "author": "Saswat Kumar Mohanty (AI/ML Engineer, VSSUT Burla, Bhubaneswar)",
   "license": "MIT"
 }

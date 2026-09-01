@@ -1,5 +1,11 @@
 import { DebugController } from '@dr-debug/controller'
-import { DrDebugCore, type InvestigationOptions, type InvestigationResult } from '@dr-debug/core'
+import {
+  DrDebugCore,
+  generateSessionDebugPrompt,
+  HeuristicLLMClient,
+  type InvestigationOptions,
+  type InvestigationResult
+} from '@dr-debug/core'
 import {
   type ILLMClient,
   LiteRTClient,
@@ -31,6 +37,7 @@ export class DrDebug {
   private isAutoInvestigating = false
   private mcpSocket?: WebSocket
   private syncInterval?: any
+  private lastInvestigation: InvestigationResult | null = null
 
   constructor(options: DrDebugOptions = {}) {
     this.options = options
@@ -51,8 +58,9 @@ export class DrDebug {
         model: options.model || 'gpt-4o'
       })
     } else {
-      // Default to on-device LiteRT client
-      this.llmClient = new LiteRTClient(options.liteRT)
+      // No model configured: use the deterministic local engine rather than a
+      // simulated one, so an unconfigured install still gives real answers.
+      this.llmClient = new HeuristicLLMClient(this.controller)
     }
 
     // 3. Core Diagnostic Loop
@@ -66,6 +74,7 @@ export class DrDebug {
           await this.investigate(goal)
         },
         getController: () => this.controller,
+        getSessionPrompt: () => this.getSessionDebugPrompt(),
         onSaveSettings: (settings) => {
           this.updateLLMConfig(settings)
         },
@@ -137,6 +146,21 @@ export class DrDebug {
     return this.controller
   }
 
+  /**
+   * The full paste-ready incident brief for an external coding agent
+   * (Claude Code / Antigravity / Cursor). Composed from live telemetry, and
+   * folds in the last agent investigation when one has run.
+   */
+  public getSessionDebugPrompt(): string {
+    return generateSessionDebugPrompt(this.controller.getSnapshot(), {
+      investigation: this.lastInvestigation
+    })
+  }
+
+  public getLastInvestigation(): InvestigationResult | null {
+    return this.lastInvestigation
+  }
+
   public getCore(): DrDebugCore {
     return this.core
   }
@@ -191,7 +215,10 @@ export class DrDebug {
           options.onDone?.(res)
         }
       })
-      
+
+      // Retained so the "Copy for AI" brief can include the agent's conclusion.
+      this.lastInvestigation = result
+
       if (this.ui) {
         this.ui.showPrescription({
           diagnosis: result.diagnosis,

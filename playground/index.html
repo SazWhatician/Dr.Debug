@@ -25,9 +25,9 @@
         <div class="config-item">
           <label for="provider-select">AI Engine:</label>
           <select id="provider-select">
-            <option value="mock" selected>🤖 Mock Agent (Zero Setup)</option>
-            <option value="groq">⚡ Groq (Ultra-Fast)</option>
-            <option value="openai">🧠 OpenAI (GPT-4o)</option>
+            <option value="local" selected>Local engine (no API key)</option>
+            <option value="groq">Groq — openai/gpt-oss-120b</option>
+            <option value="openai">OpenAI — gpt-4o</option>
           </select>
         </div>
         <div class="config-item" id="api-key-group" style="opacity: 0.4;">
@@ -44,38 +44,44 @@
 
       <!-- How AI Works — top of page, always visible -->
       <section class="how-it-works-banner">
-        <div class="hiw-title">How the AI Agent works</div>
+        <div class="hiw-title">What the agent actually does</div>
         <div class="hiw-steps">
           <div class="hiw-step">
             <div class="hiw-step-icon">📡</div>
-            <div class="hiw-step-label">Reads telemetry</div>
-            <div class="hiw-step-sub">Console · Network · Docker</div>
+            <div class="hiw-step-label">Intercept</div>
+            <div class="hiw-step-sub">console · fetch/XHR · container logs</div>
           </div>
           <div class="hiw-arrow">→</div>
           <div class="hiw-step">
-            <div class="hiw-step-icon">🧠</div>
-            <div class="hiw-step-label">Forms hypothesis</div>
-            <div class="hiw-step-sub">Re-Act reasoning loop</div>
-          </div>
-          <div class="hiw-arrow">→</div>
-          <div class="hiw-step">
-            <div class="hiw-step-icon">🔧</div>
-            <div class="hiw-step-label">Calls tools</div>
-            <div class="hiw-step-sub">inspect_error · graphify_errors</div>
+            <div class="hiw-step-icon">🔍</div>
+            <div class="hiw-step-label">Pick a tool</div>
+            <div class="hiw-step-sub">from evidence that exists</div>
           </div>
           <div class="hiw-arrow">→</div>
           <div class="hiw-step">
             <div class="hiw-step-icon">🕸️</div>
-            <div class="hiw-step-label">Causal graph</div>
-            <div class="hiw-step-sub">Docker → API → Frontend</div>
+            <div class="hiw-step-label">Correlate</div>
+            <div class="hiw-step-sub">timestamps across layers</div>
           </div>
           <div class="hiw-arrow">→</div>
           <div class="hiw-step">
-            <div class="hiw-step-icon">💊</div>
-            <div class="hiw-step-label">Code fix</div>
-            <div class="hiw-step-sub">Unified diff patch</div>
+            <div class="hiw-step-icon">🎯</div>
+            <div class="hiw-step-label">Attribute</div>
+            <div class="hiw-step-sub">root cause vs. symptom</div>
+          </div>
+          <div class="hiw-arrow">→</div>
+          <div class="hiw-step">
+            <div class="hiw-step-icon">📤</div>
+            <div class="hiw-step-label">Hand off</div>
+            <div class="hiw-step-sub">brief for Claude / Antigravity</div>
           </div>
         </div>
+        <p class="hiw-note">
+          The loop is real: on every turn the agent re-reads the live buffers, and only calls a tool when there is
+          unexamined evidence behind it. With empty buffers it reports an empty session rather than inventing one.
+          The <strong>local engine</strong> does this deterministically with no API key; picking Groq or OpenAI hands
+          the same tools to an LLM instead.
+        </p>
       </section>
 
       <!-- Status Banner -->
@@ -156,9 +162,16 @@
         <p class="section-desc">Click a trigger scenario above, then run the investigation. The AI reads all telemetry and returns a root-cause diagnosis with a code fix.</p>
         <div class="investigation-bar">
           <input type="text" id="goal-input" value="Why did the last error occur and how do we fix it?" placeholder="Enter debug goal..." />
-          <button id="btn-run-investigation" class="btn-action">🩺 Investigate Now</button>
+          <button id="btn-run-investigation" class="btn-action">Investigate</button>
+          <button id="btn-copy-brief" class="btn-secondary">Copy brief for AI</button>
+          <button id="btn-clear" class="btn-ghost">Clear buffers</button>
         </div>
-        <p class="investigation-hint">💡 Using <strong>Mock Agent</strong>? No API key needed — it runs a full 4-step Re-Act demonstration.</p>
+        <p class="investigation-hint">
+          <strong>Copy brief for AI</strong> exports the whole session as Markdown — every finding with its evidence,
+          the causal chain, demangled stack frames, full HTTP transactions with a cURL reproduction, container logs and
+          the chronological timeline. Paste it straight into Claude Code or Antigravity. The same button sits in the
+          cockpit header and on the diagnosis card.
+        </p>
       </section>
 
       <!-- Live Telemetry Buffers -->
@@ -176,7 +189,11 @@
           </div>
           <div class="telemetry-box docker-telemetry">
             <h4>Docker Logs <span class="count-badge docker-count-badge" id="docker-count">0</span></h4>
-            <pre id="docker-preview">No Docker logs yet. Click a Docker trigger above.</pre>
+            <pre id="docker-preview">No container logs yet — use a backend trigger above.</pre>
+          </div>
+          <div class="telemetry-box graph-telemetry">
+            <h4>Correlation engine</h4>
+            <pre id="graph-summary">No correlations yet — trigger faults in more than one layer.</pre>
           </div>
         </div>
       </section>

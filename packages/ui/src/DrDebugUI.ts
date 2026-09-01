@@ -1,3 +1,5 @@
+import type { DebugController } from '@dr-debug/controller'
+import { generateSessionDebugPrompt, LocalDiagnosticEngine } from '@dr-debug/core'
 import { CockpitPanel, type PrescriptionData, type StepItem } from './components/CockpitPanel.js'
 import type { CausalErrorGraph } from './components/CausalGraphView.js'
 import { FloatingPill } from './components/FloatingPill.js'
@@ -6,7 +8,9 @@ import { shadowStyles } from './styles.js'
 export interface DrDebugUIOptions {
   onInvestigate?: (query: string) => Promise<void> | void
   container?: HTMLElement
-  getController?: () => any
+  getController?: () => DebugController | undefined
+  /** Supplies the paste-ready brief for the "Copy for AI" action. */
+  getSessionPrompt?: () => string
   onSaveSettings?: (settings: any) => void
   onTestConnection?: (settings: any) => Promise<{ success: boolean; message: string }>
 }
@@ -16,8 +20,12 @@ export class DrDebugUI {
   private shadowRoot: ShadowRoot
   private pill: FloatingPill
   private cockpit: CockpitPanel
+  private getController?: () => DebugController | undefined
+  private engine = new LocalDiagnosticEngine()
 
   constructor(options: DrDebugUIOptions = {}) {
+    this.getController = options.getController
+
     // Check if #dr-debug-root already exists
     let host = document.getElementById('dr-debug-root')
     if (!host) {
@@ -72,10 +80,11 @@ export class DrDebugUI {
             this.cockpit.setBusy(false)
           }
         } else {
-          this.runDemoInvestigation(query)
+          await this.runLocalInvestigation()
         }
       },
       getController: options.getController,
+      getSessionPrompt: options.getSessionPrompt || (() => this.buildSessionPrompt()),
       onSaveSettings: options.onSaveSettings,
       onTestConnection: options.onTestConnection
     })
@@ -144,7 +153,6 @@ export class DrDebugUI {
     this.cockpit.switchTab(tab)
   }
 
-
   public toggleCockpit(): void {
     this.cockpit.toggle()
   }
@@ -157,61 +165,132 @@ export class DrDebugUI {
     this.cockpit.hide()
   }
 
-  private runDemoInvestigation(_query: string): void {
+  private buildSessionPrompt(): string {
+    const controller = this.getController?.()
+    if (!controller) {
+      return 'No debug controller is attached to this UI, so there is no telemetry to export.'
+    }
+    return generateSessionDebugPrompt(controller.getSnapshot())
+  }
+
+  /**
+   * Fallback path when no LLM-backed investigator is wired in: runs the local
+   * deterministic engine over live telemetry and renders its real findings.
+   * Nothing here is scripted — with empty buffers it reports an empty session.
+   */
+  private async runLocalInvestigation(): Promise<void> {
+    const controller = this.getController?.()
+
     this.cockpit.clearTimeline()
     this.cockpit.switchTab('timeline')
-    this.updatePillStatus(0, 0, 0, true)
-    this.cockpit.showThinking('Reading console ring buffer, network timeline, and Docker backend logs...')
 
-    const steps: StepItem[] = [
-      {
+    if (!controller) {
+      this.cockpit.addStep({
         stepNumber: 1,
-        hypothesis: 'Inspect the console ring buffer for unhandled exceptions. The TypeError is likely caused by a failed async operation returning undefined instead of an expected response body.',
-        toolName: 'inspect_error',
-        toolOutput: '[ConsoleInterceptor] 3 errors in ring buffer\n→ TypeError: Cannot read properties of undefined (reading "data")\n→ NetworkError: Failed to fetch /api/agents/resource/run (503)\n→ Unhandled rejection: Promise chain missing .catch() handler'
-      },
-      {
-        stepNumber: 2,
-        hypothesis: 'Cross-reference the network timeline. The TypeError appeared 312ms after a 503 response — strong causal candidate. Checking the failed request details.',
-        toolName: 'inspect_request',
-        toolOutput: '[NetworkInterceptor] 2 anomalies\n→ POST /api/agents/resource/run  [503] 4821ms  ⚠️ upstream timeout\n→ GET /api/config                 [0]   ERR_CONNECTION_REFUSED  ⚠️ CORS/unreachable'
-      },
-      {
-        stepNumber: 3,
-        hypothesis: 'The 503 suggests the backend is down, not just slow. Inspecting Docker container logs to find the root backend failure.',
-        toolName: 'inspect_docker_logs',
-        toolOutput: '[DockerInterceptor] 4 backend errors\n→ [postgres-db] FATAL: remaining connection slots reserved for superuser\n→ [postgres-db] ERROR: max_connections (100) reached — refusing connection\n→ [api-server]  PrismaClientKnownRequestError: P2024 DB connection timeout\n→ [api-server]  Error: POST /api/agents/resource/run → upstream DB unavailable'
-      },
-      {
-        stepNumber: 4,
-        hypothesis: 'Building the full-stack causal graph. The DB pool exhaustion is the root node — everything else is a downstream effect of that single failure.',
-        toolName: 'graphify_errors',
-        toolOutput: '[CausalGraph] 4 nodes, 3 causal links\n🎯 ROOT CAUSE: [docker] postgres-db — max_connections exhausted\n→ [docker] api-server DB timeout          (CAUSED_BY     98%)\n→ [network] POST /api/agents/resource 503  (PROPAGATED_TO 96%)\n→ [console] TypeError: data undefined      (TRIGGERED_BY  94%)\n\nSee Causal Map tab for the interactive dependency graph.'
-      }
-    ]
+        hypothesis:
+          'No DebugController is attached to this UI instance, so there is no telemetry to read. Attach one via the getController option.',
+        toolName: 'triage',
+        toolOutput: 'No telemetry source available.'
+      })
+      this.cockpit.setBusy(false)
+      return
+    }
 
-    const delays = [800, 2300, 3900, 5400]
-    steps.forEach((step, i) => {
-      setTimeout(() => {
-        if (i + 1 < steps.length) {
-          this.cockpit.showThinking(steps[i + 1].hypothesis)
-        } else {
-          this.cockpit.showThinking('Root cause identified. Generating verified code fix...')
-        }
-        this.cockpit.addStep(step)
-      }, delays[i])
+    this.updatePillStatus(0, 0, 0, true)
+    this.cockpit.showThinking('Reading the console, network, backend, memory and performance buffers…')
+
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+    await wait(420)
+
+    const state = controller.getSnapshot()
+    const analysis = this.engine.analyze(state)
+
+    // Step 1 — always real: what the buffers actually contain.
+    this.cockpit.addStep({
+      stepNumber: 1,
+      hypothesis: `Triaging the raw buffers before forming a theory: ${state.console.errorCount} console error(s), ${state.network.failedCount} failed and ${state.network.slowCount} slow request(s), ${state.docker?.errorCount ?? 0} backend error(s).`,
+      toolName: 'triage_telemetry',
+      toolOutput: [
+        `Page:      ${state.pageContext.url || 'unknown'}`,
+        `Uptime:    ${state.pageContext.uptimeSeconds.toFixed(1)}s`,
+        `Console:   ${state.console.errorCount} error(s), ${state.console.warnCount} warning(s) of ${state.console.total} entries`,
+        `Network:   ${state.network.failedCount} failed, ${state.network.slowCount} slow of ${state.network.total} requests`,
+        `Backend:   ${state.docker?.errorCount ?? 0} container error(s)`,
+        state.memory?.heapUsagePercent !== undefined
+          ? `Heap:      ${Math.round((state.memory.usedJSHeapSize || 0) / 1048576)}MB (${Math.round(state.memory.heapUsagePercent)}% of limit)`
+          : 'Heap:      not exposed by this browser',
+        `Findings:  ${analysis.findings.length} derived`
+      ].join('\n')
     })
 
-    setTimeout(() => {
+    if (!analysis.hasEvidence) {
+      await wait(360)
+      this.cockpit.showThinking('')
       this.showPrescription({
-        diagnosis: 'The frontend TypeError is a direct downstream effect of the API returning 503. The API fails because PostgreSQL exhausted its connection pool — confirmed in Docker stderr. The missing null-guard in the fetch handler turns a silent API failure into an uncaught exception.',
-        rootCause: 'PostgreSQL connection leak: backend ORM sessions are never explicitly closed, accumulating until max_connections (100) is hit. This cascades: DB refuses new connections → API returns 503 on all requests → frontend fetch handler crashes on undefined response body.',
-        confidence: 0.97,
-        filesToModify: ['backend/src/db/session.py', 'frontend/src/api/client.ts'],
-        fix: `--- a/backend/src/db/session.py\n+++ b/backend/src/db/session.py\n@@ -24,5 +24,6 @@\n async def get_db():\n-    session = SessionFactory()\n-    yield session\n+    async with SessionFactory() as session:\n+        yield session\n+        await session.close()\n\n--- a/frontend/src/api/client.ts\n+++ b/frontend/src/api/client.ts\n@@ -8,3 +8,5 @@\n export async function callAPI(url: string) {\n   const res = await fetch(url)\n-  return res.json()\n+  if (!res.ok) throw new Error(\`HTTP \${res.status}: \${res.statusText}\`)\n+  return res.json().catch(() => null)\n }`
+        diagnosis: analysis.diagnosis,
+        rootCause: analysis.rootCause,
+        fix: '',
+        confidence: 0,
+        filesToModify: []
       })
-      this.updatePillStatus(1, 1, 0, false)
-    }, 7200)
+      this.updatePillStatus(0, 0, 0, false)
+      return
+    }
+
+    // One step per real finding, highest severity first.
+    const shown = analysis.findings.slice(0, 5)
+    for (let i = 0; i < shown.length; i++) {
+      const finding = shown[i]
+      this.cockpit.showThinking(
+        `Examining the ${finding.layer} layer — ${finding.title} (${finding.severity}, ${Math.round(finding.confidence * 100)}% confidence).`
+      )
+      await wait(560)
+      this.cockpit.addStep({
+        stepNumber: i + 2,
+        hypothesis: `${finding.title}. ${finding.detail}`,
+        toolName: `inspect_${finding.layer}`,
+        toolOutput: [
+          ...finding.evidence.map((line) => `• ${line}`),
+          finding.files.length > 0 ? `\nSource: ${finding.files.join(', ')}` : '',
+          `\nDirection: ${finding.remediation}`
+        ]
+          .filter(Boolean)
+          .join('\n')
+      })
+    }
+
+    // Correlation step only when the graph actually produced edges.
+    if (analysis.causalChain.length > 0) {
+      this.cockpit.showThinking(
+        `Correlating ${state.causalGraph?.nodes.length ?? 0} error nodes across layers to separate causes from symptoms…`
+      )
+      await wait(560)
+      this.cockpit.addStep({
+        stepNumber: shown.length + 2,
+        hypothesis: `The correlation engine linked these faults by timestamp. If the chain holds, only the root needs fixing — the rest are downstream effects.`,
+        toolName: 'graphify_errors',
+        toolOutput: analysis.causalChain.join('\n')
+      })
+    }
+
+    this.cockpit.showThinking('Composing the remediation plan from the gathered evidence…')
+    await wait(420)
+    this.cockpit.showThinking('')
+
+    this.showPrescription({
+      diagnosis: analysis.diagnosis,
+      rootCause: analysis.rootCause,
+      fix: analysis.suggestedFix,
+      confidence: analysis.confidence,
+      filesToModify: analysis.filesToModify
+    })
+
+    this.updatePillStatus(
+      state.console.errorCount,
+      state.network.failedCount,
+      state.network.slowCount,
+      false
+    )
   }
 
   public destroy(): void {

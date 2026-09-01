@@ -12,10 +12,16 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -b tsconfig.json",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": ["debugging", "devtools", "observability", "interceptors", "ai-agent"],
-  "author": "Dr. Debug Team",
+  "keywords": [
+    "debugging",
+    "devtools",
+    "observability",
+    "interceptors",
+    "ai-agent"
+  ],
+  "author": "Saswat Kumar Mohanty (AI/ML Engineer, VSSUT Burla, Bhubaneswar)",
   "license": "MIT"
 }

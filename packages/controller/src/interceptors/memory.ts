@@ -19,18 +19,20 @@ export class MemoryInterceptor {
       usedJSHeapSize = memory.usedJSHeapSize
       totalJSHeapSize = memory.totalJSHeapSize
       jsHeapSizeLimit = memory.jsHeapSizeLimit
-      if (usedJSHeapSize && totalJSHeapSize && totalJSHeapSize > 0) {
-        heapUsagePercent = Math.round((usedJSHeapSize / totalJSHeapSize) * 1000) / 10
+      // Measured against the hard limit, not totalJSHeapSize: the latter is only
+      // the currently-committed heap, which tracks `used` closely and would read
+      // ~100% on every healthy page.
+      if (usedJSHeapSize && jsHeapSizeLimit && jsHeapSizeLimit > 0) {
+        heapUsagePercent = Math.round((usedJSHeapSize / jsHeapSizeLimit) * 1000) / 10
       }
     }
 
-    // Heuristic detached DOM node sampling
-    let detachedNodesCount: number | undefined
+    // Live element count. Genuinely detached nodes cannot be counted without a
+    // heap snapshot, so this is reported as DOM size and nothing more.
+    let domNodeCount: number | undefined
     if (typeof document !== 'undefined') {
       try {
-        const totalElements = document.querySelectorAll('*').length
-        // Simple DOM density check
-        detachedNodesCount = totalElements
+        domNodeCount = document.querySelectorAll('*').length
       } catch {
         // Ignore DOM query failure
       }
@@ -55,7 +57,7 @@ export class MemoryInterceptor {
       totalJSHeapSize,
       jsHeapSizeLimit,
       heapUsagePercent,
-      detachedNodesCount,
+      domNodeCount,
       trendMBPerMin
     }
 
