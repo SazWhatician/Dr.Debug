@@ -226,6 +226,21 @@ if (process.env.NODE_ENV === 'development') {
 `
 
   fs.writeFileSync(path.resolve(releaseDir, 'DOWNLOAD_GUIDE.md'), downloadGuide, 'utf-8')
+
+  // 7. Synchronize Animated Landing Website
+  const landingDir = path.resolve(root, 'landing')
+  if (fs.existsSync(landingDir)) {
+    fs.copyFileSync(path.resolve(releaseDir, 'dr-debug-extension.zip'), path.resolve(landingDir, 'dr-debug-extension.zip'))
+    fs.copyFileSync(path.resolve(releaseDir, 'dr-debug.standalone.min.js'), path.resolve(landingDir, 'dr-debug.standalone.min.js'))
+
+    fs.mkdirSync(path.resolve(releaseDir, 'assets'), { recursive: true })
+    fs.copyFileSync(path.resolve(landingDir, 'index.html'), path.resolve(releaseDir, 'index.html'))
+    fs.copyFileSync(path.resolve(landingDir, 'styles.css'), path.resolve(releaseDir, 'styles.css'))
+    fs.copyFileSync(path.resolve(landingDir, 'app.js'), path.resolve(releaseDir, 'app.js'))
+    fs.copyFileSync(path.resolve(landingDir, 'assets/drdebug.png'), path.resolve(releaseDir, 'assets/drdebug.png'))
+    console.log(`🌐 Animated landing & download website synced to: ${path.resolve(releaseDir, 'index.html')}`)
+  }
+
   console.log(`\n🎉 All release assets successfully packaged in: ${releaseDir}`)
 }
 

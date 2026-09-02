@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dr. Debug — Autonomous In-Browser AI Debugging & Observability Agent</title>
+  <meta name="description" content="Download Dr. Debug: The autonomous in-browser AI debugging agent. Full-stack Docker substrate streaming, causal topology correlation, and instant unified diff auto-patches." />
+  <link rel="icon" type="image/png" href="assets/drdebug.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Ambient Glowing Mesh -->
+  <div class="noise-overlay"></div>
+  <div class="glow-orb orb-1" id="orb-1"></div>
+  <div class="glow-orb orb-2" id="orb-2"></div>
+  <div class="glow-orb orb-3" id="orb-3"></div>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-brand">
+        <img src="assets/drdebug.png" alt="Dr. Debug Logo" class="nav-logo" />
+        <span class="nav-title">DR. DEBUG</span>
+        <span class="nav-badge">v0.1.0</span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#simulator">Live Simulator</a></li>
+        <li><a href="#docker">Host Docker</a></li>
+        <li><a href="#install">Install Guide</a></li>
+        <li><a href="#author">Author</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <a href="https://github.com/SazWhatician" target="_blank" class="btn-icon" title="Saswat Mohanty on GitHub">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span>GitHub</span>
+        </a>
+        <a href="#download" class="btn-nav-download">Download</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero" id="download">
+    <div class="hero-pill">
+      <span class="hero-pill-dot"></span>
+      <span class="hero-pill-text">Autonomous In-Browser AI Debugging & Docker Cockpit</span>
+    </div>
+
+    <h1 class="hero-title">
+      Stop guessing why your web app broke.<br />
+      <span class="gradient-text">Debug full-stack in your browser.</span>
+    </h1>
+
+    <p class="hero-desc">
+      Dr. Debug intercepts console errors, correlates live host Docker logs with failing network requests, and autonomously synthesizes verified unified-diff code patches directly in your browser.
+    </p>
+
+    <!-- Download Buttons -->
+    <div class="hero-cta-group">
+      <a href="dr-debug-extension.zip" download="dr-debug-extension.zip" class="btn-hero-primary" id="btn-dl-extension">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <span>Download Chrome Extension</span>
+        <span style="font-size: 0.75rem; background: rgba(255,255,255,0.2); padding: 2px 7px; border-radius: 4px;">ZIP · 930 KB</span>
+      </a>
+
+      <a href="dr-debug.standalone.min.js" download="dr-debug.standalone.min.js" class="btn-hero-secondary" id="btn-dl-js">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        <span>Standalone Script (.min.js)</span>
+      </a>
+    </div>
+
+    <!-- Quick Terminal Launcher -->
+    <div class="hero-quick-cmd">
+      <span style="font-size: 0.85rem; color: #94a3b8;">Stream Host Docker in 1 command:</span>
+      <code>npx @dr-debug/mcp</code>
+      <button class="btn-copy-code" id="btn-copy-hero-cmd">Copy</button>
+    </div>
+
+    <!-- 3D Interactive Cockpit Preview Card -->
+    <div class="cockpit-showcase-container" id="cockpit-3d">
+      <div class="cockpit-preview-card">
+        <div class="cockpit-header-bar">
+          <div class="cockpit-dots">
+            <span></span><span></span><span></span>
+          </div>
+          <div class="cockpit-tabs-mock">
+            <span class="cockpit-tab-mock">🩺 Diagnostics</span>
+            <span class="cockpit-tab-mock">🌐 Causal Graph</span>
+            <span class="cockpit-tab-mock active">🐳 Docker Cockpit</span>
+            <span class="cockpit-tab-mock">⚙️ Settings</span>
+          </div>
+          <div style="font-size: 0.75rem; color: #34d399; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: #34d399;"></span>
+            DAEMON ACTIVE
+          </div>
+        </div>
+
+        <div class="cockpit-layout-mock">
+          <!-- Sidebar Containers -->
+          <div class="cockpit-sidebar-mock">
+            <span class="sidebar-title">Discovered Containers (4)</span>
+            <div class="container-card-mock active">
+              <div class="container-card-title">
+                <span>polaris-api</span>
+                <span style="color: #f87171;">1 panic</span>
+              </div>
+              <div class="container-card-sub">0.0.0.0:8010 -> 8000/tcp</div>
+            </div>
+            <div class="container-card-mock">
+              <div class="container-card-title">
+                <span>polaris-worker</span>
+                <span style="color: #34d399;">running</span>
+              </div>
+              <div class="container-card-sub">arq app.workers.ocr</div>
+            </div>
+            <div class="container-card-mock">
+              <div class="container-card-title">
+                <span>polaris-qdrant</span>
+                <span style="color: #34d399;">healthy</span>
+              </div>
+              <div class="container-card-sub">port 6333</div>
+            </div>
+          </div>
+
+          <!-- Live Terminal -->
+          <div class="cockpit-terminal-mock">
+            <div class="log-line">
+              <span class="log-ts">18:41:35</span>
+              <span class="log-cont">[polaris-api]</span>
+              <span class="log-level-info">INFO</span>
+              <span class="log-msg">Uvicorn running on http://0.0.0.0:8000</span>
+            </div>
+            <div class="log-line">
+              <span class="log-ts">18:41:37</span>
+              <span class="log-cont">[polaris-api]</span>
+              <span class="log-level-err">ERROR</span>
+              <span class="log-msg">GET /api/documents connection timeout (1515ms)</span>
+              <button class="log-diagnose-btn">⚡ Diagnose</button>
+            </div>
+            <div class="log-line">
+              <span class="log-ts">18:41:38</span>
+              <span class="log-cont">[browser]</span>
+              <span class="log-level-err">CRASH</span>
+              <span class="log-msg">Uncaught TypeError: Cannot read properties of undefined (reading 'map')</span>
+            </div>
+            <div class="log-line" style="margin-top: auto; color: #38bdf8; font-size: 0.75rem;">
+              <span>🩺 Dr. Debug Causal Link: <strong>polaris-api timeout</strong> caused downstream React client crash.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Live Interactive Simulator Section -->
+  <section class="simulator-section" id="simulator">
+    <div class="section-head">
+      <div class="section-tag">Interactive Preview</div>
+      <h2 class="section-title">See Autonomous Correlation in Action</h2>
+      <p class="section-desc">Experience how Dr. Debug traces a backend Docker container panic straight to a frontend browser crash and writes the exact code fix.</p>
+    </div>
+
+    <div class="sim-box">
+      <div class="sim-topbar">
+        <div class="sim-feed-title">
+          <span class="sim-status-dot"></span>
+          <span>Live Telemetry & Docker Stream (Simulated Session)</span>
+        </div>
+        <button class="sim-btn-trigger" id="btn-run-sim">⚡ Trigger Backend Panic & Diagnose</button>
+      </div>
+
+      <div class="sim-grid">
+        <!-- Terminal Stream -->
+        <div class="sim-terminal" id="sim-terminal">
+          <div class="log-line">
+            <span class="log-ts">00:00:01</span>
+            <span class="log-cont">[frontend]</span>
+            <span class="log-level-info">BOOT</span>
+            <span class="log-msg">React 18 mounted on #root (376ms)</span>
+          </div>
+          <div class="log-line">
+            <span class="log-ts">00:00:02</span>
+            <span class="log-cont">[docker:db]</span>
+            <span class="log-level-info">INFO</span>
+            <span class="log-msg">PostgreSQL accepting connections on 5432</span>
+          </div>
+          <div class="log-line">
+            <span class="log-ts">00:00:03</span>
+            <span class="log-cont">[network]</span>
+            <span class="log-level-info">FETCH</span>
+            <span class="log-msg">GET /api/documents -> 200 OK (38ms)</span>
+          </div>
+        </div>
+
+        <!-- AI Reasoning Output -->
+        <div class="sim-ai-pane" id="sim-ai-pane">
+          <div class="ai-reasoning-card">
+            <div class="ai-step-title">
+              <span>🩺 Autonomous Diagnostic Engine</span>
+            </div>
+            <div class="ai-thought">
+              Click <strong>"⚡ Trigger Backend Panic & Diagnose"</strong> above to see Dr. Debug intercept a live crash, traverse the causal graph, and generate a verified unified diff!
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Features Section -->
+  <section class="features-section" id="features">
+    <div class="section-head">
+      <div class="section-tag">Capabilities</div>
+      <h2 class="section-title">Built for Modern Full-Stack Developers</h2>
+      <p class="section-desc">Traditional browser DevTools are blind to your containers. Dr. Debug unifies host Docker logs, client network requests, and framework state into a single autonomous brain.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon-box">🐳</div>
+        <h3 class="feature-title">Host Docker Substrate</h3>
+        <p class="feature-desc">Streams container stdout/stderr, container lifecycle changes, and health checks over local SSE. No Docker plugins needed.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-box">🌐</div>
+        <h3 class="feature-title">Causal Topology DAG</h3>
+        <p class="feature-desc">Connects backend 504 timeouts to downstream React unhandled rejection nodes via temporal and semantic graph correlation.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-box">🧠</div>
+        <h3 class="feature-title">Re-Act AI Engine</h3>
+        <p class="feature-desc">Autonomous multi-turn investigation using Groq LPU, OpenAI, Anthropic, or on-device LiteRT.js with zero server roundtrips.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-box">🛡️</div>
+        <h3 class="feature-title">Zero-Leak Shadow DOM</h3>
+        <p class="feature-desc">Rendered inside an isolated Shadow Root `#dr-debug-root`. 100% CSS immune from your application's Tailwind or Bootstrap styles.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Installation in 30 Seconds -->
+  <section class="install-section" id="install">
+    <div class="section-head">
+      <div class="section-tag">Quickstart</div>
+      <h2 class="section-title">Ready in Under 30 Seconds</h2>
+      <p class="section-desc">No complicated cloud accounts. No telemetry tracking. Runs completely local on your machine.</p>
+    </div>
+
+    <div class="steps-timeline">
+      <div class="step-card">
+        <div class="step-badge">1</div>
+        <h3 class="step-title">Download & Unzip</h3>
+        <p class="step-desc">Download <code>dr-debug-extension.zip</code> and extract it anywhere on your computer.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-badge">2</div>
+        <h3 class="step-title">Load into Chrome</h3>
+        <p class="step-desc">Open <code>chrome://extensions</code>, enable <strong>Developer Mode</strong>, and click <strong>"Load Unpacked"</strong>.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-badge">3</div>
+        <h3 class="step-title">Connect Host Docker</h3>
+        <p class="step-desc">Run <code>npx @dr-debug/mcp</code> or double-click <code>start-docker-bridge.bat</code> inside the folder.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Author Showcase Section -->
+  <section class="author-section" id="author">
+    <div class="author-card">
+      <div class="author-avatar-wrapper">
+        <img src="assets/drdebug.png" alt="Saswat Mohanty" class="author-avatar" />
+      </div>
+
+      <div class="author-info">
+        <div class="author-tag">Architect & Creator</div>
+        <h2 class="author-name">Saswat Mohanty</h2>
+        <div class="author-role">AI / ML Engineer · Veer Surendra Sai University of Technology (VSSUT), Burla</div>
+        <p class="author-bio">
+          Creator of Dr. Debug. Passionate about autonomous agentic systems, real-time observability, and building AI tools that eliminate hours of developer frustration.
+        </p>
+
+        <div class="author-links">
+          <a href="https://github.com/SazWhatician" target="_blank" class="author-btn github">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            <span>GitHub (@SazWhatician)</span>
+          </a>
+
+          <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" class="author-btn linkedin">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+            <span>Connect on LinkedIn</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download Toast -->
+  <div class="toast-notice" id="toast">
+    <span style="font-size: 1.2rem;">🚀</span>
+    <span id="toast-text">Download started! Extract the ZIP and load into chrome://extensions</span>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <img src="assets/drdebug.png" alt="Dr. Debug" style="width: 28px; height: 28px; border-radius: 6px;" />
+        <span style="font-family: var(--font-display); font-weight: 800; color: #fff;">DR. DEBUG</span>
+      </div>
+      <p class="footer-copy">
+        Crafted with pride by <a href="https://github.com/SazWhatician" target="_blank">Saswat Mohanty (@SazWhatician)</a> · MIT License.
+      </p>
+    </div>
+  </footer>
+
+  <!-- Scripts: Lenis, GSAP, ScrollTrigger, App -->
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
