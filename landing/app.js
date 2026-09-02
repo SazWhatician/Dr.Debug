@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   }
 
-  // 9. Download Feedback Toast
+  // 9. Download Feedback Toast & Instant Client-Side Blob Downloader
   function showToast(msg) {
     const toast = document.getElementById('toast')
     const toastText = document.getElementById('toast-text')
@@ -198,12 +198,83 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  document.getElementById('btn-dl-extension')?.addEventListener('click', () => {
-    showToast('🚀 Downloading dr-debug-extension.zip! Unzip & load in chrome://extensions')
-  })
+  function downloadExtensionZip(e) {
+    if (e) e.preventDefault()
+    showToast('🚀 Downloading dr-debug-extension.zip! Extract & load into chrome://extensions')
 
-  document.getElementById('btn-dl-js')?.addEventListener('click', () => {
+    // 1. Try embedded base64 payload (works 100% offline, on file://, or any host)
+    if (window.DR_DEBUG_EXTENSION_BASE64) {
+      try {
+        const bin = atob(window.DR_DEBUG_EXTENSION_BASE64)
+        const len = bin.length
+        const bytes = new Uint8Array(len)
+        for (let i = 0; i < len; i++) {
+          bytes[i] = bin.charCodeAt(i)
+        }
+        const blob = new Blob([bytes], { type: 'application/zip' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'dr-debug-extension.zip'
+        document.body.appendChild(a)
+        a.click()
+        setTimeout(() => {
+          document.body.removeChild(a)
+          URL.revokeObjectURL(url)
+        }, 1500)
+        return
+      } catch (err) {
+        console.warn('Base64 decode fallback:', err)
+      }
+    }
+
+    // 2. Direct URL fallback
+    const a = document.createElement('a')
+    a.href = 'dr-debug-extension.zip'
+    a.download = 'dr-debug-extension.zip'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }
+
+  function downloadStandaloneJs(e) {
+    if (e) e.preventDefault()
     showToast('⚡ Downloading dr-debug.standalone.min.js for zero-build web apps!')
+
+    // 1. Try embedded payload
+    if (window.DR_DEBUG_STANDALONE_CODE) {
+      try {
+        const blob = new Blob([window.DR_DEBUG_STANDALONE_CODE], { type: 'application/javascript' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'dr-debug.standalone.min.js'
+        document.body.appendChild(a)
+        a.click()
+        setTimeout(() => {
+          document.body.removeChild(a)
+          URL.revokeObjectURL(url)
+        }, 1500)
+        return
+      } catch (err) {
+        console.warn('Payload fallback:', err)
+      }
+    }
+
+    // 2. Direct URL fallback
+    const a = document.createElement('a')
+    a.href = 'dr-debug.standalone.min.js'
+    a.download = 'dr-debug.standalone.min.js'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }
+
+  document.getElementById('btn-dl-extension')?.addEventListener('click', downloadExtensionZip)
+  document.getElementById('btn-dl-js')?.addEventListener('click', downloadStandaloneJs)
+  document.querySelector('.btn-nav-download')?.addEventListener('click', (e) => {
+    e.preventDefault()
+    downloadExtensionZip(e)
   })
 
   // 10. Interactive Diagnostic Simulator
