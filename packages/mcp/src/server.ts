@@ -1,3 +1,4 @@
+import { DockerBridge } from './DockerBridge.js'
 import { MCPResourceManager } from './resources.js'
 import { MCPToolManager } from './tools.js'
 import { MCPTransport } from './transport.js'
@@ -5,18 +6,30 @@ import type { MCPRequest, MCPResponse } from './types.js'
 
 export interface DrDebugMCPServerOptions {
   port?: number
+  enableDocker?: boolean
 }
 
 export class DrDebugMCPServer {
   private transport: MCPTransport
+  private dockerBridge: DockerBridge
   private isRunning = false
 
   constructor(options: DrDebugMCPServerOptions = {}) {
-    this.transport = new MCPTransport(options.port || 9229)
+    this.dockerBridge = new DockerBridge()
+    this.transport = new MCPTransport(options.port || 9229, this.dockerBridge)
+  }
+
+  public getDockerBridge(): DockerBridge {
+    return this.dockerBridge
   }
 
   public async start(): Promise<void> {
     if (this.isRunning) return
+
+    // Start Docker bridge discovery in background
+    this.dockerBridge.start().catch((err) => {
+      console.warn('Docker bridge initialization warning:', err.message)
+    })
 
     await this.transport.start(async (req: MCPRequest): Promise<MCPResponse> => {
       return this.handleRequest(req)
@@ -94,6 +107,7 @@ export class DrDebugMCPServer {
   }
 
   public async stop(): Promise<void> {
+    this.dockerBridge.stop()
     await this.transport.stop()
     this.isRunning = false
   }

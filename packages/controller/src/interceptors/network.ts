@@ -47,6 +47,11 @@ export class NetworkInterceptor {
           // Guard against parameter inspection errors
         }
 
+        // Bypass recording for Dr. Debug's internal AI inference and local daemon traffic
+        if (self.isInternalTelemetryRequest(url, headers)) {
+          return originalFetch.apply(this, args)
+        }
+
         const record: NetworkRecord = {
           id: `req_${startTime}_${Math.random().toString(36).substring(2, 7)}`,
           method,
@@ -278,6 +283,11 @@ export class NetworkInterceptor {
       try {
         const method = (args[0] || 'GET').toUpperCase()
         const url = String(args[1] || '')
+
+        if (self.isInternalTelemetryRequest(url)) {
+          return self.originalXHROpen!.apply(this, args as any)
+        }
+
         const startTime = Date.now()
 
         const record: NetworkRecord = {
@@ -417,5 +427,20 @@ export class NetworkInterceptor {
     }
 
     this.isInstalled = false
+  }
+
+  private isInternalTelemetryRequest(url: string, headers?: Record<string, string>): boolean {
+    if (headers) {
+      const isInternalHeader = Object.entries(headers).some(
+        ([k, v]) => k.toLowerCase() === 'x-dr-debug-internal' && v === 'true'
+      )
+      if (isInternalHeader) return true
+    }
+    if (!url) return false
+    return (
+      url.includes(':9229/docker') ||
+      url.includes(':9229/mcp') ||
+      url.includes(':9229/telemetry')
+    )
   }
 }

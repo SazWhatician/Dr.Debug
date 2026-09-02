@@ -2285,4 +2285,689 @@ export const shadowStyles = `
   line-height: 1.55;
   color: #94a3b8;
 }
+
+/* ── 🐳 Dedicated Docker Dashboard Page ── */
+.dr-debug-docker-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+}
+
+.dr-debug-docker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 8px;
+}
+
+.dr-debug-docker-status-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dr-debug-docker-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dr-debug-docker-status-dot.online {
+  background: #34d399;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.6);
+}
+
+.dr-debug-docker-status-dot.offline {
+  background: #fb7185;
+  box-shadow: 0 0 8px rgba(251, 113, 133, 0.5);
+}
+
+.dr-debug-docker-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.dr-debug-docker-badge {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+}
+
+.badge-running {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.badge-stopped {
+  background: rgba(244, 63, 94, 0.15);
+  color: #fb7185;
+  border: 1px solid rgba(244, 63, 94, 0.3);
+}
+
+.dr-debug-docker-sub {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.dr-debug-docker-status-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dr-debug-docker-stat-pill {
+  padding: 4px 10px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 6px;
+  font-size: 11px;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dr-debug-docker-stat-pill.alert {
+  background: rgba(244, 63, 94, 0.15);
+  border-color: rgba(244, 63, 94, 0.4);
+  color: #fda4af;
+}
+
+.dr-debug-dock-btn-refresh {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  color: #38bdf8;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.dr-debug-dock-btn-refresh:hover {
+  background: rgba(56, 189, 248, 0.25);
+  transform: rotate(180deg);
+}
+
+.dr-debug-docker-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dr-debug-docker-section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dr-debug-docker-hint {
+  font-size: 10px;
+  color: #64748b;
+  text-transform: none;
+  font-weight: normal;
+}
+
+.dr-debug-docker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.dr-debug-docker-card {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 7px;
+  padding: 9px 11px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dr-debug-docker-card:hover {
+  background: rgba(30, 41, 59, 0.75);
+  border-color: rgba(56, 189, 248, 0.4);
+  transform: translateY(-1px);
+}
+
+.dr-debug-docker-card.selected {
+  border-color: #38bdf8;
+  background: rgba(14, 165, 233, 0.1);
+  box-shadow: 0 0 12px rgba(14, 165, 233, 0.15);
+}
+
+.dr-debug-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dr-debug-card-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f1f5f9;
+  font-family: ui-monospace, Menlo, monospace;
+}
+
+.dr-debug-card-state {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.state-running {
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+}
+
+.state-exited {
+  background: rgba(244, 63, 94, 0.15);
+  color: #fb7185;
+}
+
+.dr-debug-card-image {
+  font-size: 10.5px;
+  color: #94a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dr-debug-card-ports {
+  font-size: 10px;
+  color: #64748b;
+  font-family: ui-monospace, Menlo, monospace;
+}
+
+.dr-debug-card-errors {
+  font-size: 10px;
+  color: #fb7185;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.dr-debug-card-desc {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.dr-debug-err-badge {
+  background: rgba(244, 63, 94, 0.2);
+  color: #fda4af;
+  border: 1px solid rgba(244, 63, 94, 0.4);
+  padding: 0 5px;
+  border-radius: 9999px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.dr-debug-dock-empty-containers {
+  grid-column: 1 / -1;
+  padding: 18px;
+  text-align: center;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px dashed rgba(148, 163, 184, 0.2);
+  border-radius: 7px;
+  font-size: 12px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.dr-debug-docker-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dr-debug-docker-filters {
+  display: flex;
+  gap: 6px;
+}
+
+.dr-debug-dock-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #94a3b8;
+  padding: 4px 9px;
+  border-radius: 5px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dr-debug-dock-btn:hover {
+  background: rgba(56, 189, 248, 0.15);
+  color: #e2e8f0;
+}
+
+.dr-debug-dock-btn.active {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.dr-debug-docker-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-grow: 1;
+  justify-content: flex-end;
+}
+
+.dr-debug-dock-search {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: #f8fafc;
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 11px;
+  width: 220px;
+  font-family: ui-monospace, Menlo, monospace;
+}
+
+.dr-debug-dock-search:focus {
+  outline: none;
+  border-color: #38bdf8;
+}
+
+.dr-debug-dock-autoscroll {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.dr-debug-dock-action-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #cbd5e1;
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dr-debug-dock-action-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.dr-debug-dock-action-btn.primary {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+}
+
+.dr-debug-dock-action-btn.primary:hover {
+  background: rgba(56, 189, 248, 0.25);
+}
+
+.dr-debug-docker-terminal-wrapper {
+  background: #030712;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 8px;
+  flex-grow: 1;
+  min-height: 220px;
+  max-height: 380px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dr-debug-docker-terminal {
+  padding: 10px 12px;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  overflow-y: auto;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dr-debug-dock-log-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  word-break: break-all;
+}
+
+.dr-debug-dock-log-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.dr-debug-dock-log-row.log-error {
+  background: rgba(244, 63, 94, 0.08);
+  border-left: 2px solid #f43f5e;
+}
+
+.dr-debug-dock-log-row.log-warn {
+  background: rgba(245, 158, 11, 0.06);
+  border-left: 2px solid #f59e0b;
+}
+
+.dr-debug-dock-time {
+  color: #64748b;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.dr-debug-dock-container-tag {
+  color: #818cf8;
+  font-weight: 700;
+  font-size: 10.5px;
+  flex-shrink: 0;
+}
+
+.dr-debug-dock-stream-tag {
+  color: #64748b;
+  font-size: 9.5px;
+  flex-shrink: 0;
+}
+
+.stream-stderr .dr-debug-dock-stream-tag {
+  color: #fb923c;
+}
+
+.dr-debug-dock-msg {
+  color: #e2e8f0;
+  flex-grow: 1;
+}
+
+.dr-debug-dock-inline-diag {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.25), rgba(225, 29, 72, 0.25));
+  border: 1px solid rgba(244, 63, 94, 0.5);
+  color: #fda4af;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 9.5px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  margin-left: 8px;
+}
+
+.dr-debug-dock-inline-diag:hover {
+  background: linear-gradient(135deg, #f43f5e, #e11d48);
+  color: #fff;
+  transform: scale(1.05);
+}
+
+.dr-debug-dock-term-empty {
+  text-align: center;
+  padding: 40px 10px;
+  color: #64748b;
+}
+
+.dr-debug-dock-offline-box {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px dashed rgba(56, 189, 248, 0.3);
+  border-radius: 8px;
+  padding: 30px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dr-debug-dock-cmd-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #030712;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 6px;
+  padding: 6px 12px;
+}
+
+.dr-debug-dock-cmd-box code {
+  color: #38bdf8;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+
+.dr-debug-dock-cmd-box button {
+  background: rgba(56, 189, 248, 0.15);
+  border: none;
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.dr-debug-cockpit-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  font-size: 10.5px;
+  color: #64748b;
+  padding: 8px 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  background: rgba(3, 7, 18, 0.5);
+  backdrop-filter: blur(8px);
+}
+
+/* ── 🐳 Docker Instructions Panel ── */
+.dr-debug-docker-instructions-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.dr-debug-dock-instructions-card {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.7));
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.dr-debug-dock-connected-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  border-radius: 6px;
+  padding: 6px 12px;
+}
+
+.dr-debug-dock-dot-live {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.7);
+  display: inline-block;
+}
+
+.dr-debug-dock-toggle-help {
+  background: transparent;
+  border: none;
+  color: #38bdf8;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dr-debug-dock-help-content {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dr-debug-dock-guide-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dr-debug-dock-guide-badge {
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  letter-spacing: 0.4px;
+}
+
+.dr-debug-dock-guide-desc {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.dr-debug-dock-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.dr-debug-dock-step-box {
+  background: rgba(3, 7, 18, 0.65);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 6px;
+  padding: 9px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dr-debug-dock-step-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dr-debug-dock-step-badge {
+  background: rgba(56, 189, 248, 0.2);
+  color: #7dd3fc;
+  font-size: 8.5px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+
+.dr-debug-dock-step-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.dr-debug-dock-step-text {
+  font-size: 10.5px;
+  color: #94a3b8;
+}
+
+.dr-debug-dock-cmd-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #020617;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 5px;
+  padding: 4px 8px;
+  margin-top: 3px;
+}
+
+.dr-debug-dock-cmd-line code {
+  color: #38bdf8;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.dr-debug-copy-cmd-btn {
+  background: rgba(56, 189, 248, 0.2);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #bae6fd;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.dr-debug-copy-cmd-btn:hover {
+  background: rgba(56, 189, 248, 0.35);
+  color: #fff;
+}
+
+.dr-debug-copy-cmd-btn.copied {
+  background: rgba(16, 185, 129, 0.3);
+  border-color: rgba(52, 211, 153, 0.6);
+  color: #6ee7b7;
+}
+
+.dr-debug-dock-launcher-box {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: #020617;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 5px;
+  padding: 5px 8px;
+  font-size: 10.5px;
+  color: #cbd5e1;
+  font-family: ui-monospace, monospace;
+}
+
+.dr-debug-dock-launcher-box code {
+  color: #a78bfa;
+}
+
+.dr-debug-dock-step-footer {
+  font-size: 10.5px;
+  color: #34d399;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-style: italic;
+}
 `
+

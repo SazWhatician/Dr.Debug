@@ -1,4 +1,5 @@
 export { DebugController } from './DebugController.js'
+export { DockerBridgeClient, type DockerBridgeClientOptions } from './DockerBridgeClient.js'
 export { ConsoleInterceptor } from './interceptors/console.js'
 export { DockerInterceptor } from './interceptors/docker.js'
 export { FrameworkInterceptor } from './interceptors/framework.js'

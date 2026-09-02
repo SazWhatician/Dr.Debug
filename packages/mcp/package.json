@@ -19,5 +19,12 @@
   "devDependencies": {
     "@types/node": "^22.10.0",
     "typescript": "^5.7.2"
-  }
+  },
+  "author": "Saswat Mohanty (https://github.com/SazWhatician)",
+  "homepage": "https://github.com/SazWhatician",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SazWhatician/DebugCopilot"
+  },
+  "license": "MIT"
 }

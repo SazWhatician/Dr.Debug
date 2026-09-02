@@ -2,6 +2,10 @@
 
 Welcome to the comprehensive phase-wise implementation roadmap for **Dr. Debug** (The autonomous in-browser AI debugging & observability agent).
 
+Created and architected by **[Saswat Mohanty (@SazWhatician)](https://github.com/SazWhatician)**.
+- 🔗 **GitHub:** [https://github.com/SazWhatician](https://github.com/SazWhatician)
+- 💼 **LinkedIn:** [https://www.linkedin.com/in/saswat-mohanty-0a4549331/](https://www.linkedin.com/in/saswat-mohanty-0a4549331/)
+
 ---
 
 ## 🗺️ Phase Breakdown Overview
@@ -18,6 +22,7 @@ Welcome to the comprehensive phase-wise implementation roadmap for **Dr. Debug**
 │ Phase 4 │ Chrome Extension & Dedicated DevTools Panel │ @dr-debug/ext  │
 │ Phase 5 │ Framework State, Interaction Replay & Fixes │ @dr-debug/core │
 │ Phase 6 │ Model Context Protocol (MCP) & IDE Bridge   │ @dr-debug/mcp  │
+│ Phase 7 │ Host Docker Bridge & Dedicated Docker Page  │ @dr-debug/ui   │
 └─────────┴─────────────────────────────────────────────┴────────────────┘
 ```
 
@@ -33,6 +38,7 @@ Welcome to the comprehensive phase-wise implementation roadmap for **Dr. Debug**
 | [**phase-4.md**](file:///c:/Users/saswa/Desktop/DebugCopilot/study_docs/phase-4.md) | **Chrome Extension & Dedicated DevTools Panel** | 🟢 *Completed* | Manifest V3 background worker, in-page content bridge, DevTools panel with Docker stream, Errors & Diagnostics Matrix, in-DevTools AI settings tester, Markdown/JSON RCA exporter, and VLQ source map demangler. |
 | [**phase-5.md**](file:///c:/Users/saswa/Desktop/DebugCopilot/study_docs/phase-5.md) | **Framework Hooks, Interaction Replay & Auto-Fix** | 🟢 *Completed* | React/Redux/Vue/Svelte hooks, 30s PII-safe interaction replay buffer, PatchEngine unified diff and GitHub PR generator, `generate_patch` tool. |
 | [**phase-6.md**](file:///c:/Users/saswa/Desktop/DebugCopilot/study_docs/phase-6.md) | **Model Context Protocol (MCP) Server & IDE Bridge**| 🟢 *Completed* | Standalone MCP daemon (`@dr-debug/mcp`), live telemetry transport bridge, 5 MCP resources, 5 MCP tools, zero-dependency `npx @dr-debug/mcp` CLI runner. |
+| [**phase-7.md**](file:///c:/Users/saswa/Desktop/DebugCopilot/study_docs/phase-7.md) | **Host Docker Bridge & Dedicated Docker Cockpit Page**| 🟢 *Completed* | Zero-dependency host Docker CLI bridge (`/docker/stream`), in-browser `DockerBridgeClient`, and dedicated `🐳 Docker` tab with container cards, live terminal & inline AI diagnosis. |
 
 
 ---

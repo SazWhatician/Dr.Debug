@@ -1,9 +1,16 @@
-# Dr. Debug
+# 🩺 Dr. Debug
 
 > **Autonomous in-browser AI debugging and runtime observability agent.**  
-> Intercepts runtime failures, correlates network telemetry with console errors, and prescribes verified code fixes directly inside the browser.
+> Intercepts runtime failures, correlates host Docker logs & network telemetry with console errors, and prescribes verified code fixes directly inside the browser.
 
-Created and engineered by **[Saswat Kumar Mohanty](https://github.com/SazWhatician)** — AI/ML Engineer from Bhubaneswar, studying at Veer Surendra Sai University of Technology (VSSUT), Burla.
+Created, architected, and built entirely by **[Saswat Mohanty (@SazWhatician)](https://github.com/SazWhatician)**.
+- 🔗 **GitHub:** [https://github.com/SazWhatician](https://github.com/SazWhatician)
+- 💼 **LinkedIn:** [https://www.linkedin.com/in/saswat-mohanty-0a4549331/](https://www.linkedin.com/in/saswat-mohanty-0a4549331/)
+
+[![Author: Saswat Mohanty](https://img.shields.io/badge/Author-Saswat%20Mohanty%20(@SazWhatician)-0284c7?style=flat-square&logo=github)](https://github.com/SazWhatician)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect%20on%20LinkedIn-0a66c2?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/saswat-mohanty-0a4549331/)
+[![Tests](https://img.shields.io/badge/Tests-115%2F115%20Passing-34d399?style=flat-square)](https://github.com/SazWhatician/DebugCopilot)
+[![License: MIT](https://img.shields.io/badge/License-MIT-38bdf8?style=flat-square)](LICENSE)
 
 ---
 
@@ -151,38 +158,65 @@ When an investigation starts, Dr. Debug aggregates runtime context and iterates 
 ### Diagnostic Tools
 - `inspect_error`: Extracts parsed stack frames, demangled sourcemap lines, and error metadata.
 - `inspect_request`: Inspects request/response headers, status codes, timing metrics, and response body payloads.
+- `inspect_docker_logs`: Checks backend container logs, panics, and database timeouts.
+- `graphify_errors`: Maps causal DAG relationships between backend errors and client crashes.
 - `eval_js`: Executes expressions safely within the isolated page execution context.
 - `done`: Finalizes the diagnostic session with root cause findings, confidence score, and a unified `.patch`.
 
 ---
 
-## Verification and Testing
+## 📦 Downloadable Releases & Distribution
 
-Dr. Debug maintains a strict unit and integration test suite across all subpackages:
+Dr. Debug is ready to ship and download in three distinct formats:
+
+| Format | File Artifact | How to Use |
+|:---|:---|:---|
+| **Chrome DevTools Extension (ZIP)** | [`release/dr-debug-extension.zip`](release/dr-debug-extension.zip) | Unzip and load into `chrome://extensions` (Developer Mode) |
+| **Chrome DevTools Extension (Folder)** | [`release/chrome-extension/`](release/chrome-extension/) | Direct "Load unpacked" folder in Google Chrome |
+| **In-Browser Standalone Bundle (Minified)** | [`release/dr-debug.standalone.min.js`](release/dr-debug.standalone.min.js) | Drop into any HTML via `<script src="dr-debug.standalone.min.js"></script>` |
+| **In-Browser Standalone Bundle (Full)** | [`release/dr-debug.standalone.js`](release/dr-debug.standalone.js) | Full source with developer comments & sourcemap |
+| **NPM Package Tarball** | [`release/dr-debug-0.1.0.tgz`](release/) | Install in your package: `npm install ./dr-debug-0.1.0.tgz` |
+
+### Building Downloadable Assets
+To compile and package fresh downloadable archives at any time:
+```bash
+npm run package:release
+```
+All release bundles and the distribution guide are automatically created in the [`release/`](release/) directory.
+
+---
+
+## 🧪 Verification and Testing
+
+Dr. Debug maintains a rigorous unit and integration test suite across all subpackages:
 
 ```bash
 npm test
 ```
 
 Current test status:
-- **28 test suites passing**
-- **104 total tests passing**
-- Tests cover interceptor mutex re-entrancy, RFC-9457 classification, source map VLQ line mapping, XML serializer determinism, and Re-Act reflection parsing.
+- **30 test suites passing (100%)**
+- **115 total tests passing (100%)**
+- Tests cover host Docker CLI streamer, interceptor mutex re-entrancy, RFC-9457 classification, source map VLQ line mapping, XML serializer determinism, and Re-Act reflection parsing.
 
 ---
 
-## Author & Credits
+## 👨‍💻 Author & Credits
 
 Designed, architected, and built entirely by:
 
-**Saswat Kumar Mohanty**  
-- **Role**: AI/ML Engineer  
-- **Origin**: Bhubaneswar, Odisha, India  
-- **Education**: Veer Surendra Sai University of Technology (VSSUT), Burla  
-- **GitHub**: [@SazWhatician](https://github.com/SazWhatician)
+**Saswat Mohanty** (`@SazWhatician`)  
+- **Role:** AI/ML Engineer  
+- **Education:** Veer Surendra Sai University of Technology (VSSUT), Burla  
+- **Origin:** Bhubaneswar, Odisha, India  
+- 🔗 **GitHub:** [https://github.com/SazWhatician](https://github.com/SazWhatician)  
+- 💼 **LinkedIn:** [https://www.linkedin.com/in/saswat-mohanty-0a4549331/](https://www.linkedin.com/in/saswat-mohanty-0a4549331/)
+
+If you find Dr. Debug helpful, star the repository on GitHub and connect on LinkedIn!
 
 ---
 
-## License
+## 📄 License
 
 MIT License. See [LICENSE](LICENSE) for details.
+

@@ -1,5 +1,6 @@
 import { DR_DEBUG_LOGO } from '../assets/logo.js'
 import { CausalGraphView, type CausalErrorGraph } from './CausalGraphView.js'
+import { DockerDashboardView } from './DockerDashboardView.js'
 import { ErrorDashboardView } from './ErrorDashboardView.js'
 import { SettingsModal, type SettingsData } from './SettingsModal.js'
 
@@ -37,7 +38,9 @@ export class CockpitPanel {
   private triageContainer: HTMLElement
   private graphContainer: HTMLElement
   private prescriptionContainer: HTMLElement
+  private dockerContainer: HTMLElement
   private errorDashboardView: ErrorDashboardView
+  private dockerDashboardView: DockerDashboardView
   private settingsModal: SettingsModal
   private causalGraphView: CausalGraphView = new CausalGraphView()
   private queryInput: HTMLInputElement
@@ -46,10 +49,11 @@ export class CockpitPanel {
   private tabErrors: HTMLButtonElement
   private tabTriage: HTMLButtonElement
   private tabGraph: HTMLButtonElement
+  private tabDocker: HTMLButtonElement
   private tabPrescription: HTMLButtonElement
   private heapMetricBadge: HTMLElement
   private uptimeMetricBadge: HTMLElement
-  private activeTab: 'timeline' | 'errors' | 'triage' | 'graph' | 'prescription' = 'timeline'
+  private activeTab: 'timeline' | 'errors' | 'triage' | 'graph' | 'prescription' | 'docker' = 'timeline'
   private steps: StepItem[] = []
   private startTime = Date.now()
   private isMaximized = false
@@ -160,6 +164,11 @@ export class CockpitPanel {
     this.tabGraph.innerHTML = `<span>Causal Graph</span>`
     this.tabGraph.addEventListener('click', () => this.switchTab('graph'))
 
+    this.tabDocker = document.createElement('button')
+    this.tabDocker.className = 'dr-debug-tab'
+    this.tabDocker.innerHTML = `<span>🐳 Docker</span>`
+    this.tabDocker.addEventListener('click', () => this.switchTab('docker'))
+
     this.tabPrescription = document.createElement('button')
     this.tabPrescription.className = 'dr-debug-tab'
     this.tabPrescription.innerHTML = `<span>Prescription</span>`
@@ -169,6 +178,7 @@ export class CockpitPanel {
     tabs.appendChild(this.tabErrors)
     tabs.appendChild(this.tabTriage)
     tabs.appendChild(this.tabGraph)
+    tabs.appendChild(this.tabDocker)
     tabs.appendChild(this.tabPrescription)
 
     // 3. Body Containers
@@ -205,6 +215,20 @@ export class CockpitPanel {
     this.graphContainer.style.gap = '10px'
     this.graphContainer.appendChild(this.causalGraphView.getElement())
 
+    this.dockerDashboardView = new DockerDashboardView({
+      getController: () => options.getController?.() || (typeof window !== 'undefined' ? (window as any).__DR_DEBUG__?.getController() : undefined),
+      onLaunchDiagnosis: (goal) => {
+        this.queryInput.value = goal
+        this.triggerInvestigate()
+      }
+    })
+    this.dockerContainer = document.createElement('div')
+    this.dockerContainer.style.display = 'none'
+    this.dockerContainer.style.flexDirection = 'column'
+    this.dockerContainer.style.gap = '10px'
+    this.dockerContainer.style.height = '100%'
+    this.dockerContainer.appendChild(this.dockerDashboardView.getElement())
+
     this.prescriptionContainer = document.createElement('div')
     this.prescriptionContainer.style.display = 'none'
     this.prescriptionContainer.style.flexDirection = 'column'
@@ -214,6 +238,7 @@ export class CockpitPanel {
     body.appendChild(this.errorsContainer)
     body.appendChild(this.triageContainer)
     body.appendChild(this.graphContainer)
+    body.appendChild(this.dockerContainer)
     body.appendChild(this.prescriptionContainer)
 
     // Settings Modal
@@ -293,6 +318,15 @@ export class CockpitPanel {
     this.element.appendChild(body)
     this.element.appendChild(queryWrapper)
 
+    const creditFooter = document.createElement('div')
+    creditFooter.className = 'dr-debug-cockpit-footer'
+    creditFooter.innerHTML = `
+      <span>🩺 Dr. Debug by <a href="https://github.com/SazWhatician" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;text-decoration:none;font-weight:700;">Saswat Mohanty (@SazWhatician)</a></span>
+      <span style="color:#64748b;">·</span>
+      <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" rel="noopener noreferrer" style="color:#818cf8;text-decoration:none;">LinkedIn</a>
+    `
+    this.element.appendChild(creditFooter)
+
     this.renderEmptyTimeline()
     this.renderEmptyPrescription()
     this.startUptimeTicker()
@@ -327,27 +361,45 @@ export class CockpitPanel {
       : `<span>⚡</span> <span>Diagnose</span>`
   }
 
-  public switchTab(tab: 'timeline' | 'errors' | 'triage' | 'graph' | 'prescription'): void {
+  public switchTab(tab: 'timeline' | 'errors' | 'triage' | 'graph' | 'prescription' | 'docker'): void {
     this.activeTab = tab
     this.tabTimeline.classList.toggle('active', tab === 'timeline')
     this.tabErrors.classList.toggle('active', tab === 'errors')
     this.tabTriage.classList.toggle('active', tab === 'triage')
     this.tabGraph.classList.toggle('active', tab === 'graph')
+    this.tabDocker.classList.toggle('active', tab === 'docker')
     this.tabPrescription.classList.toggle('active', tab === 'prescription')
 
     this.timelineContainer.style.display = tab === 'timeline' ? 'flex' : 'none'
     this.errorsContainer.style.display = tab === 'errors' ? 'flex' : 'none'
     this.triageContainer.style.display = tab === 'triage' ? 'flex' : 'none'
     this.graphContainer.style.display = tab === 'graph' ? 'flex' : 'none'
+    this.dockerContainer.style.display = tab === 'docker' ? 'flex' : 'none'
     this.prescriptionContainer.style.display = tab === 'prescription' ? 'flex' : 'none'
 
     if (tab === 'errors') {
       this.errorDashboardView.update()
+    } else if (tab === 'docker') {
+      this.dockerDashboardView.update()
     }
   }
 
   public updateErrors(): void {
     this.errorDashboardView.update()
+  }
+
+  public updateDocker(): void {
+    this.dockerDashboardView.update()
+
+    const controller = typeof this.onCloseOrOptions === 'object' && this.onCloseOrOptions.getController?.()
+    if (controller) {
+      const errorCount = (controller.getDockerLogs?.() || []).filter((l: any) => l.level === 'error').length
+      if (errorCount > 0) {
+        this.tabDocker.innerHTML = `<span>🐳 Docker <span style="background:rgba(244,63,94,0.25);color:#fda4af;border:1px solid rgba(244,63,94,0.5);padding:1px 5px;border-radius:9999px;font-size:9px;font-weight:700">${errorCount}</span></span>`
+      } else {
+        this.tabDocker.innerHTML = `<span>🐳 Docker</span>`
+      }
+    }
   }
 
 

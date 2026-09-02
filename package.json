@@ -3,7 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "description": "Autonomous in-browser AI debugging & observability agent",
-  "author": "Saswat Kumar Mohanty (AI/ML Engineer, VSSUT Burla, Bhubaneswar)",
+  "author": "Saswat Mohanty (https://github.com/SazWhatician)",
+  "homepage": "https://github.com/SazWhatician",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SazWhatician/DebugCopilot"
+  },
   "type": "module",
   "workspaces": [
     "packages/*"
@@ -11,6 +16,7 @@
   "scripts": {
     "dev": "vite",
     "build:extension": "node scripts/build-extension.js",
+    "package:release": "node scripts/package-release.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

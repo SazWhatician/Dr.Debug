@@ -55,6 +55,7 @@ export class OpenAIClient implements ILLMClient {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${this.apiKey}`,
+            'X-Dr-Debug-Internal': 'true',
             ...this.headers
           },
           body: JSON.stringify(body),

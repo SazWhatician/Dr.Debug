@@ -25,6 +25,7 @@ export interface DrDebugOptions {
   enableUI?: boolean
   autoInvestigate?: boolean
   enableMCP?: boolean
+  enableDocker?: boolean
   mcpPort?: number
 }
 
@@ -101,6 +102,11 @@ export class DrDebug {
     // 6. Connect to local Dr. Debug MCP Daemon if enabled
     if (options.enableMCP && typeof window !== 'undefined' && typeof WebSocket !== 'undefined') {
       this.connectToMCPBridge(options.mcpPort || 9229)
+    }
+
+    // 7. Connect to host Docker Bridge if enabled
+    if (options.enableDocker !== false && typeof window !== 'undefined') {
+      this.controller.connectDockerBridge(options.mcpPort || 9229)
     }
   }
 
@@ -273,6 +279,9 @@ export class DrDebug {
 
     // Sync Errors Matrix & Histogram
     this.ui.updateErrors()
+
+    // Sync Docker telemetry & live container logs
+    this.ui.updateDocker()
   }
 
   private async handleAutoTrigger(): Promise<void> {

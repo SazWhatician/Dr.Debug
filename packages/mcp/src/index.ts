@@ -1,3 +1,4 @@
+export { DockerBridge, type DockerBridgeStatus } from './DockerBridge.js'
 export { MCPResourceManager } from './resources.js'
 export { DrDebugMCPServer, type DrDebugMCPServerOptions } from './server.js'
 export { MCPToolManager } from './tools.js'

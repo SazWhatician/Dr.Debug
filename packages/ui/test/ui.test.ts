@@ -159,6 +159,30 @@ describe('DrDebugUI (Shadow DOM HUD & Cockpit)', () => {
 
     ui.destroy()
   })
+
+  it('switches to docker tab and renders dedicated Docker dashboard with containers and log terminal', () => {
+    const ui = new DrDebugUI()
+    const shadow = ui.getShadowRoot()
+
+    ui.openCockpit()
+    ui.switchTab('docker')
+
+    const dockerView = shadow.querySelector('.dr-debug-docker-dashboard')
+    expect(dockerView).toBeDefined()
+
+    const statusBanner = shadow.querySelector('.dr-debug-docker-header')
+    expect(statusBanner).toBeDefined()
+    expect(statusBanner?.textContent).toContain('Docker Engine Bridge')
+
+    const terminal = shadow.querySelector('.dr-debug-docker-terminal')
+    expect(terminal).toBeDefined()
+
+    const searchInput = shadow.querySelector('.dr-debug-dock-search') as HTMLInputElement
+    expect(searchInput).toBeDefined()
+
+    ui.destroy()
+  })
 })
+
 
 

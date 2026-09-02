@@ -25,7 +25,7 @@ function updateStreams() {
           })
           .join('\n')
       } else {
-        dockerEl.textContent = 'No Docker container logs recorded.'
+        dockerEl.textContent = 'Bridge disconnected.\nRun `npx @dr-debug/mcp` or double-click `start-docker-bridge.bat` to stream host containers.'
       }
     }
     if (dockerCount) {

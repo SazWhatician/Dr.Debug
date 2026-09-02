@@ -29,6 +29,11 @@
     "agent",
     "ai"
   ],
-  "author": "Saswat Kumar Mohanty (AI/ML Engineer, VSSUT Burla, Bhubaneswar)",
+  "author": "Saswat Mohanty (https://github.com/SazWhatician)",
+  "homepage": "https://github.com/SazWhatician",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SazWhatician/DebugCopilot"
+  },
   "license": "MIT"
 }

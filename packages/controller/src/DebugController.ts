@@ -1,3 +1,4 @@
+import { DockerBridgeClient, type DockerBridgeClientOptions } from './DockerBridgeClient.js'
 import { ConsoleInterceptor } from './interceptors/console.js'
 import { DockerInterceptor } from './interceptors/docker.js'
 import { FrameworkInterceptor } from './interceptors/framework.js'
@@ -49,6 +50,7 @@ export class DebugController {
   private networkMockInterceptor: NetworkMockInterceptor
   private layoutInspector: LayoutInspector
   private sqlQueryCorrelator: SQLQueryCorrelator
+  private dockerBridgeClient?: DockerBridgeClient
   private startTime: number = Date.now()
   private isRunning = false
 
@@ -181,6 +183,28 @@ export class DebugController {
     this.dockerInterceptor.setContainers(containers)
   }
 
+  public connectDockerBridge(port = 9229, host = 'localhost'): DockerBridgeClient {
+    if (this.dockerBridgeClient) {
+      this.dockerBridgeClient.disconnect()
+    }
+    this.dockerBridgeClient = new DockerBridgeClient({
+      port,
+      host,
+      onContainers: (containers) => {
+        this.setDockerContainers(containers)
+      },
+      onLog: (entry) => {
+        this.pushDockerLog(entry.containerName, entry.message, entry.stream, entry.timestamp, entry.level)
+      }
+    })
+    this.dockerBridgeClient.connect()
+    return this.dockerBridgeClient
+  }
+
+  public getDockerBridgeClient(): DockerBridgeClient | undefined {
+    return this.dockerBridgeClient
+  }
+
   public getCorrelations(): TemporalCorrelation[] {
     return this.getSnapshot().correlations
   }
@@ -270,6 +294,7 @@ export class DebugController {
     this.frameworkInterceptor.destroy()
     this.interactionInterceptor.destroy()
     this.networkMockInterceptor.destroy()
+    this.dockerBridgeClient?.disconnect()
     this.isRunning = false
   }
 }

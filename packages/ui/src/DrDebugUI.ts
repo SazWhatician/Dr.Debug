@@ -149,7 +149,11 @@ export class DrDebugUI {
     this.cockpit.updateCausalGraph(graph)
   }
 
-  public switchTab(tab: 'timeline' | 'errors' | 'triage' | 'graph' | 'prescription'): void {
+  public updateDocker(): void {
+    this.cockpit.updateDocker()
+  }
+
+  public switchTab(tab: 'timeline' | 'errors' | 'triage' | 'graph' | 'prescription' | 'docker'): void {
     this.cockpit.switchTab(tab)
   }
 

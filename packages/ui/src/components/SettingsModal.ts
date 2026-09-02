@@ -70,7 +70,7 @@ export class SettingsModal {
           <div class="dr-debug-form-group">
             <label class="dr-debug-form-label">Model Provider</label>
             <select class="dr-debug-form-select" id="dr-debug-provider">
-              <option value="groq" selected>⚡ Groq LPU (Ultra-Fast · llama-3.3-70b-versatile)</option>
+              <option value="groq" selected>⚡ Groq LPU (Ultra-Fast · openai/gpt-oss-120b)</option>
               <option value="openai">🧠 OpenAI (GPT-4o / GPT-4o-mini)</option>
               <option value="gemini">✨ Gemini Flash (gemini-1.5-flash)</option>
               <option value="litert">💻 LiteRT / Local (On-Device)</option>
@@ -87,7 +87,7 @@ export class SettingsModal {
 
           <div class="dr-debug-form-group">
             <label class="dr-debug-form-label">Model Name</label>
-            <input type="text" class="dr-debug-form-input" id="dr-debug-model" value="llama-3.3-70b-versatile" />
+            <input type="text" class="dr-debug-form-input" id="dr-debug-model" value="openai/gpt-oss-120b" />
           </div>
 
           <div class="dr-debug-form-group">
@@ -104,6 +104,10 @@ export class SettingsModal {
             <button id="dr-debug-btn-save-settings" class="dr-debug-btn">
               <span>💾</span> <span>Save Settings</span>
             </button>
+          </div>
+
+          <div style="text-align:center; font-size:11px; color:#64748b; margin-top:14px; border-top:1px solid rgba(148,163,184,0.15); padding-top:10px;">
+            Created by <a href="https://github.com/SazWhatician" target="_blank" rel="noopener noreferrer" style="color:#38bdf8; text-decoration:none; font-weight:700;">Saswat Mohanty (@SazWhatician)</a> · <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" rel="noopener noreferrer" style="color:#818cf8; text-decoration:none;">LinkedIn</a>
           </div>
         </div>
       </div>
@@ -141,7 +145,7 @@ export class SettingsModal {
     const provider = this.providerSelect.value
     if (provider === 'groq') {
       this.apiKeyGroup.style.display = 'block'
-      this.modelInput.value = 'llama-3.3-70b-versatile'
+      this.modelInput.value = 'openai/gpt-oss-120b'
       this.baseURLInput.value = 'https://api.groq.com/openai/v1'
     } else if (provider === 'openai') {
       this.apiKeyGroup.style.display = 'block'
