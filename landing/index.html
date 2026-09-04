@@ -4,85 +4,452 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dr. Debug — Autonomous In-Browser AI Debugging & Observability Agent</title>
-  <meta name="description" content="Download Dr. Debug: The autonomous in-browser AI debugging agent. Full-stack Docker substrate streaming, causal topology correlation, and instant unified diff auto-patches." />
+  <meta name="description" content="Dr. Debug: Autonomous in-browser AI debugging agent. Full-stack Docker substrate streaming, causal topology correlation, and instant unified diff auto-patches." />
   <link rel="icon" type="image/png" href="assets/drdebug.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:ital,wght@0,300..800;1,300..800&family=Syncopate:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body class="is-loading">
 
-  <!-- Ambient Glowing Mesh -->
+  <!-- ========================================================
+       0-100 MODERN CORNER LOADER + "1-0-0" SLIDE-IN REVEAL
+       ======================================================== -->
+  <div class="corner-preloader" id="corner-preloader">
+    <!-- Sliding Curtains -->
+    <div class="preloader-curtain curtain-top"></div>
+    <div class="preloader-curtain curtain-bottom"></div>
+
+    <!-- Center 1-0-0 Slide-in Typography (Reveals at 100%) -->
+    <div class="slide-reveal-wrap" id="slide-reveal-wrap">
+      <div class="reveal-digits-row">
+        <span class="reveal-digit d1">1</span>
+        <span class="reveal-digit d2">0</span>
+        <span class="reveal-digit d3">0</span>
+      </div>
+      <div class="reveal-sub-status">SYSTEM INITIALIZED // ALL SUBSTRATES ONLINE</div>
+    </div>
+
+    <!-- Bottom-Corner 0-100 Loader Box -->
+    <div class="corner-loader-box">
+      <div class="loader-sys-tag">
+        <span class="sys-pulse-dot"></span>
+        <span class="sys-label">DR. DEBUG · OBSERVABILITY ENGINE</span>
+      </div>
+      <div class="loader-counter-row">
+        <span class="loader-counter-num" id="loader-counter">00</span>
+        <span class="loader-counter-unit">%</span>
+      </div>
+      <div class="loader-progress-track">
+        <div class="loader-progress-bar" id="loader-bar"></div>
+      </div>
+      <div class="loader-status-msg" id="loader-status">CONNECTING DEVTOOLS HOOKS...</div>
+    </div>
+  </div>
+
+  <!-- Ambient Glowing Mesh (Subtle Background) -->
   <div class="noise-overlay"></div>
   <div class="glow-orb orb-1" id="orb-1"></div>
   <div class="glow-orb orb-2" id="orb-2"></div>
   <div class="glow-orb orb-3" id="orb-3"></div>
 
-  <!-- Navigation Bar -->
-  <header class="navbar">
-    <div class="nav-container">
-      <a href="#" class="nav-brand">
-        <img src="assets/drdebug.png" alt="Dr. Debug Logo" class="nav-logo" />
-        <span class="nav-title">DR. DEBUG</span>
-        <span class="nav-badge">v0.1.0</span>
+  <!-- Wrap Main Content for Sticky Footer Reveal Curtain -->
+  <div class="page-content-wrapper">
+
+  <!-- ========================================================
+       MINIMALISTIC & ENTIRELY TRANSPARENT NAVBAR
+       (Left: Logo | Center: Completely Empty | Right: Links)
+       ======================================================== -->
+  <header class="navbar-transparent" id="main-nav">
+    <div class="nav-container-transparent">
+      <!-- Left: Logo of Dr. Debug -->
+      <a href="#hero" class="nav-brand-minimal">
+        <img src="assets/drdebug.png" alt="Dr. Debug Logo" class="nav-logo-minimal" />
+        <span class="nav-title-minimal">DR. DEBUG</span>
       </a>
 
-      <ul class="nav-links">
-        <li><a href="#features">Features</a></li>
-        <li><a href="#simulator">Live Simulator</a></li>
-        <li><a href="#docker">Host Docker</a></li>
-        <li><a href="#install">Install Guide</a></li>
-        <li><a href="#author">Author</a></li>
-      </ul>
+      <!-- Center: Intentionally Empty Negative Space -->
+      <div class="nav-center-spacer"></div>
 
-      <div class="nav-actions">
-        <a href="https://github.com/SazWhatician" target="_blank" class="btn-icon" title="Saswat Mohanty on GitHub">
-          <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-          <span>GitHub</span>
+      <!-- Right: Home | Download (Shining & Distinct) | About -->
+      <nav class="nav-right-actions">
+        <a href="#hero" class="nav-item-link" id="nav-link-home">Home</a>
+        <a href="#cinematic-download-target" class="nav-btn-download-shimmer" id="nav-btn-download">
+          <span class="shimmer-glare"></span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span>Download</span>
         </a>
-        <a href="#download" class="btn-nav-download">Download</a>
-      </div>
+        <a href="#author" class="nav-item-link" id="nav-link-about">About</a>
+      </nav>
     </div>
   </header>
 
-  <!-- Hero Section -->
-  <section class="hero" id="download">
-    <div class="hero-pill">
-      <span class="hero-pill-dot"></span>
-      <span class="hero-pill-text">Autonomous In-Browser AI Debugging & Docker Cockpit</span>
+  <!-- ========================================================
+       CINEMATIC SCROLL-DRIVEN EXPERIENCE
+       (Background Video Scrubbing + Bottom-Hugging Title + Centered Download Card)
+       ======================================================== -->
+  <section class="cinematic-scroll-section" id="hero">
+    <div class="cinematic-sticky-viewport" id="cinematic-viewport">
+      
+      <!-- Canvas for Instant 60fps Zero-Latency Scrubbing -->
+      <div class="cinematic-video-wrap">
+        <canvas id="cinematic-canvas" class="cinematic-canvas-el"></canvas>
+        <div class="cinematic-vignette"></div>
+      </div>
+
+      <!-- Hero Layer: Dr. Debug Full-Width Title Hugging the Bottom -->
+      <div class="hero-bottom-anchor" id="hero-bottom-layer">
+        <div class="hero-top-eyebrow">
+          <span class="eyebrow-line"></span>
+          <span class="eyebrow-text">AUTONOMOUS IN-BROWSER OBSERVABILITY &amp; AI SURGEON</span>
+          <span class="eyebrow-line"></span>
+        </div>
+
+        <div class="hero-title-overflow-mask">
+          <h1 class="hero-giant-bottom-title" id="giant-title">
+            DR. DEBUG
+          </h1>
+        </div>
+      </div>
+
+      <!-- Scrollytelling Chapter 01: Substrate Interception (Surgical HUD Biopsy) -->
+      <div class="cinematic-chapter chapter-01" id="chapter-01">
+        <div class="hud-surgical-card">
+          <div class="hud-scanline-fx"></div>
+          <!-- Tech Corner Brackets -->
+          <div class="hud-corner-bracket br-tl"></div>
+          <div class="hud-corner-bracket br-tr"></div>
+          <div class="hud-corner-bracket br-bl"></div>
+          <div class="hud-corner-bracket br-br"></div>
+
+          <!-- Card Top Bar: ECG Heartbeat Wave & Bio-Status -->
+          <div class="hud-card-header">
+            <div class="hud-meta-group">
+              <span class="hud-live-beacon"></span>
+              <span class="hud-tag-mono">SUBSTRATE // BIO-MONITOR 01</span>
+              <span class="hud-protocol-id">SPECIMEN: V8 RUNTIME</span>
+            </div>
+            <div class="hud-ecg-monitor">
+              <svg class="ecg-wave-svg" viewBox="0 0 160 20" fill="none">
+                <path d="M0 10 L40 10 L48 2 L54 18 L60 4 L66 14 L72 10 L160 10" stroke="var(--accent-cyan)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                <circle cx="60" cy="4" r="3" fill="#00f0ff" class="ecg-pulse-blip" />
+              </svg>
+              <span class="hud-bpm-label">99.8% VITAL</span>
+            </div>
+          </div>
+
+          <h2 class="hud-card-title">
+            ZERO VISION MODELS.<br />
+            <span class="hud-gradient-text">DEEP SUBSTRATE BIOPSY.</span>
+          </h2>
+          <p class="hud-card-desc">
+            Screenshots are slow, blind, and token-expensive. Dr. Debug performs an open-heart biopsy of your browser runtime through raw Web APIs in sub-millisecond real time.
+          </p>
+
+          <!-- Interactive Live Substrate Telemetry Grid with LED VU-Meters -->
+          <div class="hud-telemetry-matrix">
+            <div class="hud-channel">
+              <div class="channel-top">
+                <div class="channel-title-wrap">
+                  <span class="channel-dot dot-cyan"></span>
+                  <span class="channel-label">01. CONSOLE ARTERY</span>
+                </div>
+                <span class="channel-val status-ok">HOOKED</span>
+              </div>
+              <div class="led-vu-meter">
+                <span class="led-seg lit-cyan"></span><span class="led-seg lit-cyan"></span><span class="led-seg lit-cyan"></span><span class="led-seg lit-cyan"></span><span class="led-seg lit-cyan"></span><span class="led-seg lit-cyan"></span><span class="led-seg lit-cyan"></span><span class="led-seg lit-cyan"></span><span class="led-seg lit-cyan"></span><span class="led-seg lit-cyan"></span><span class="led-seg"></span><span class="led-seg"></span>
+              </div>
+              <span class="channel-sub">window.onerror &amp; unhandledrejection tap</span>
+            </div>
+
+            <div class="hud-channel">
+              <div class="channel-top">
+                <div class="channel-title-wrap">
+                  <span class="channel-dot dot-emerald"></span>
+                  <span class="channel-label">02. NETWORK TAP</span>
+                </div>
+                <span class="channel-val status-ok">ACTIVE</span>
+              </div>
+              <div class="led-vu-meter">
+                <span class="led-seg lit-emerald"></span><span class="led-seg lit-emerald"></span><span class="led-seg lit-emerald"></span><span class="led-seg lit-emerald"></span><span class="led-seg lit-emerald"></span><span class="led-seg lit-emerald"></span><span class="led-seg lit-emerald"></span><span class="led-seg lit-emerald"></span><span class="led-seg lit-emerald"></span><span class="led-seg"></span><span class="led-seg"></span><span class="led-seg"></span>
+              </div>
+              <span class="channel-sub">Full fetch() &amp; XHR payload interception</span>
+            </div>
+
+            <div class="hud-channel">
+              <div class="channel-top">
+                <div class="channel-title-wrap">
+                  <span class="channel-dot dot-purple"></span>
+                  <span class="channel-label">03. HEAP MEMORY</span>
+                </div>
+                <span class="channel-val status-ok">38.2 MB</span>
+              </div>
+              <div class="led-vu-meter">
+                <span class="led-seg lit-purple"></span><span class="led-seg lit-purple"></span><span class="led-seg lit-purple"></span><span class="led-seg lit-purple"></span><span class="led-seg lit-purple"></span><span class="led-seg"></span><span class="led-seg"></span><span class="led-seg"></span><span class="led-seg"></span><span class="led-seg"></span><span class="led-seg"></span><span class="led-seg"></span>
+              </div>
+              <span class="channel-sub">Detached DOM nodes &amp; leak detection</span>
+            </div>
+
+            <div class="hud-channel">
+              <div class="channel-top">
+                <div class="channel-title-wrap">
+                  <span class="channel-dot dot-amber"></span>
+                  <span class="channel-label">04. DOCKER DAEMON</span>
+                </div>
+                <span class="channel-val status-alert">SSE STREAM</span>
+              </div>
+              <div class="led-vu-meter">
+                <span class="led-seg lit-amber"></span><span class="led-seg lit-amber"></span><span class="led-seg lit-amber"></span><span class="led-seg lit-amber"></span><span class="led-seg lit-amber"></span><span class="led-seg lit-amber"></span><span class="led-seg lit-amber"></span><span class="led-seg lit-amber"></span><span class="led-seg lit-amber"></span><span class="led-seg lit-amber"></span><span class="led-seg lit-amber"></span><span class="led-seg lit-amber"></span>
+              </div>
+              <span class="channel-sub">Local container stdout/stderr bridge</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scrollytelling Chapter 02: Causal Correlation (Topological DAG Engine) -->
+      <div class="cinematic-chapter chapter-02" id="chapter-02">
+        <div class="hud-surgical-card">
+          <div class="hud-scanline-fx"></div>
+          <!-- Tech Corner Brackets -->
+          <div class="hud-corner-bracket br-tl"></div>
+          <div class="hud-corner-bracket br-tr"></div>
+          <div class="hud-corner-bracket br-bl"></div>
+          <div class="hud-corner-bracket br-br"></div>
+
+          <!-- Card Top Bar: Algorithmic Status -->
+          <div class="hud-card-header">
+            <div class="hud-meta-group">
+              <span class="hud-live-beacon pulse-rose"></span>
+              <span class="hud-tag-mono">CAUSAL ENGINE // RE-ACT LOOP</span>
+              <span class="hud-protocol-id">PATHOGEN IDENTIFIER</span>
+            </div>
+            <div class="hud-badge-pill">
+              <span class="badge-dot"></span>
+              <span>MERMAID TOPOLOGY DAG</span>
+            </div>
+          </div>
+
+          <h2 class="hud-card-title">
+            TRACING THE CONTAINER PANIC<br />
+            <span class="hud-gradient-rose">STRAIGHT TO THE CRASH.</span>
+          </h2>
+          <p class="hud-card-desc">
+            Traditional error trackers dump isolated symptoms. Dr. Debug's Re-Act reflection loop traverses the causal dependency chain backwards to isolate the true pathogen and write the cure.
+          </p>
+
+          <!-- Interactive Causal Flow Visualizer -->
+          <div class="hud-causal-flow-box">
+            <div class="causal-step-row">
+              <div class="causal-node node-docker">
+                <div class="node-icon-cyber">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                </div>
+                <div class="node-details">
+                  <span class="node-name">polaris-api</span>
+                  <span class="node-meta">Timeout (1515ms)</span>
+                </div>
+              </div>
+
+              <!-- Animated Connecting Laser Pipe -->
+              <div class="causal-pipe">
+                <span class="pipe-line"></span>
+                <span class="pipe-photon"></span>
+                <span class="pipe-arrow">▶</span>
+              </div>
+
+              <div class="causal-node node-network">
+                <div class="node-icon-cyber">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                </div>
+                <div class="node-details">
+                  <span class="node-name">GET /api/docs</span>
+                  <span class="node-meta status-bad">504 GATEWAY</span>
+                </div>
+              </div>
+
+              <!-- Animated Connecting Laser Pipe -->
+              <div class="causal-pipe">
+                <span class="pipe-line"></span>
+                <span class="pipe-photon"></span>
+                <span class="pipe-arrow">▶</span>
+              </div>
+
+              <div class="causal-node node-crash">
+                <div class="node-icon-cyber">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                </div>
+                <div class="node-details">
+                  <span class="node-name">TypeError</span>
+                  <span class="node-meta status-panic">undefined.map</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Auto-Generated Unified Diff Solution -->
+            <div class="hud-diff-preview-box">
+              <div class="diff-header-row">
+                <div class="diff-file-tag">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                  <span>app/documents/DocumentList.tsx</span>
+                </div>
+                <div class="diff-status-tag">
+                  <span class="diff-pulse-ring"></span>
+                  <span>ROOT CAUSE ISOLATED · 12ms</span>
+                </div>
+              </div>
+              <div class="diff-code-snippet">
+                <div class="diff-line del"><span class="diff-num">42</span><span class="diff-sign">-</span> <span class="tok-var">const</span> <span class="tok-def">list</span> = <span class="tok-prop">res.data.items</span>.<span class="tok-call">map</span>(renderItem)</div>
+                <div class="diff-line add"><span class="diff-num">42</span><span class="diff-sign">+</span> <span class="tok-var">const</span> <span class="tok-def">list</span> = (<span class="tok-prop">res.data?.items</span> ?? []).<span class="tok-call">map</span>(renderItem)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Final Scene: Centered Surgical Operating Console -->
+      <div class="cinematic-download-overlay" id="cinematic-download-target">
+        <div class="center-download-card surgical-console-card" id="center-download-card">
+          <div class="surgical-tilt-rig">
+            <div class="console-ambient-glow"></div>
+          <div class="hud-scanline-fx"></div>
+          <!-- Tech Corner Brackets -->
+          <div class="hud-corner-bracket br-tl"></div>
+          <div class="hud-corner-bracket br-tr"></div>
+          <div class="hud-corner-bracket br-bl"></div>
+          <div class="hud-corner-bracket br-br"></div>
+
+          <!-- Console Header Bar -->
+          <div class="console-top-strip">
+            <div class="console-status-badge">
+              <span class="pulse-emerald-ring"></span>
+              <span>SURGICAL OPERATING ROOM // ACCESS UNLOCKED</span>
+            </div>
+            <div class="console-security-meta">
+              <span class="console-shield-badge">LEVEL 5 ACCESS</span>
+              <span class="console-version-id">BUILD 2026.09</span>
+            </div>
+          </div>
+
+          <h2 class="console-main-headline">
+            DEPLOY DR. DEBUG TO YOUR<br />
+            <span class="hud-gradient-text">OPERATING TABLE</span>
+          </h2>
+          <p class="console-sub-desc">
+            The autonomous in-browser surgeon that observes, diagnoses, and patches live frontend bugs. Install in 30 seconds as an unpacked extension or drop-in standalone script.
+          </p>
+
+          <!-- Dual Tactile Action Pods -->
+          <div class="console-action-pods">
+            <!-- Pod 1: Primary DevTools Extension -->
+            <a href="dr-debug-extension.zip" download="dr-debug-extension.zip" class="console-pod-cyber primary-pod" id="btn-dl-extension">
+              <div class="pod-ambient-beam"></div>
+              <div class="pod-glow-aura aura-emerald"></div>
+              <div class="pod-header-row">
+                <span class="pod-type-badge badge-emerald">PRIMARY HOOK</span>
+                <span class="pod-size-badge">ZIP · 930 KB</span>
+              </div>
+              <div class="pod-body">
+                <div class="pod-icon-cyber">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                </div>
+                <div class="pod-copy-block">
+                  <span class="pod-title">Chrome DevTools Extension</span>
+                  <span class="pod-subtitle">Manifest V3 · Native DevTools Panel</span>
+                </div>
+              </div>
+              <div class="pod-footer-cta">
+                <span class="pod-cta-label">INJECT EXTENSION</span>
+                <span class="pod-cta-arrow">→</span>
+              </div>
+            </a>
+
+            <!-- Pod 2: Standalone Bio-Script -->
+            <a href="dr-debug.standalone.min.js" download="dr-debug.standalone.min.js" class="console-pod-cyber secondary-pod" id="btn-dl-js">
+              <div class="pod-ambient-beam beam-cyan"></div>
+              <div class="pod-glow-aura aura-cyan"></div>
+              <div class="pod-header-row">
+                <span class="pod-type-badge badge-cyan">STANDALONE BIO-SCRIPT</span>
+                <span class="pod-size-badge">JS · 340 KB</span>
+              </div>
+              <div class="pod-body">
+                <div class="pod-icon-cyber icon-cyan">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </div>
+                <div class="pod-copy-block">
+                  <span class="pod-title">Drop-in Runtime Engine</span>
+                  <span class="pod-subtitle">Zero-Config &bull; Shadow Root Isolated</span>
+                </div>
+              </div>
+              <div class="pod-footer-cta">
+                <span class="pod-cta-label">EXTRACT RUNTIME</span>
+                <span class="pod-cta-arrow">→</span>
+              </div>
+            </a>
+          </div>
+
+          <!-- Medical CLI Terminal Launcher -->
+          <div class="console-terminal-strip">
+            <div class="term-left-meta">
+              <span class="term-sys-icon">💻</span>
+              <span class="term-prompt">dr-debug@host:~$</span>
+              <code class="term-command">npx @dr-debug/mcp</code>
+              <span class="term-cursor-blink"></span>
+            </div>
+            <button class="term-copy-btn" id="btn-copy-hero-cmd" title="Copy CLI Command">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <span>Copy</span>
+            </button>
+          </div>
+
+          <!-- Surgical Safety & Telemetry Trust Seals -->
+          <div class="console-trust-seals">
+            <div class="seal-capsule">
+              <span class="seal-dot-emerald"></span>
+              <span class="seal-text">100% Client-Side Isolated</span>
+            </div>
+            <div class="seal-capsule">
+              <span class="seal-dot-cyan"></span>
+              <span class="seal-text">Zero Cloud Telemetry Leaks</span>
+            </div>
+            <div class="seal-capsule">
+              <span class="seal-dot-purple"></span>
+              <span class="seal-text">Shadow DOM Encapsulated</span>
+            </div>
+            <a href="#install" class="seal-quickstart-link">
+              <span>View 30s Protocol</span>
+              <span>→</span>
+            </a>
+          </div>
+          </div>
+        </div>
+      </div>
+
     </div>
+  </section>
 
-    <h1 class="hero-title">
-      Stop guessing why your web app broke.<br />
-      <span class="gradient-text">Debug full-stack in your browser.</span>
-    </h1>
-
-    <p class="hero-desc">
-      Dr. Debug intercepts console errors, correlates live host Docker logs with failing network requests, and autonomously synthesizes verified unified-diff code patches directly in your browser.
-    </p>
-
-    <!-- Download Buttons -->
-    <div class="hero-cta-group">
-      <a href="dr-debug-extension.zip" download="dr-debug-extension.zip" class="btn-hero-primary" id="btn-dl-extension">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-        <span>Download Chrome Extension</span>
-        <span style="font-size: 0.75rem; background: rgba(255,255,255,0.2); padding: 2px 7px; border-radius: 4px;">ZIP · 930 KB</span>
-      </a>
-
-      <a href="dr-debug.standalone.min.js" download="dr-debug.standalone.min.js" class="btn-hero-secondary" id="btn-dl-js">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-        <span>Standalone Script (.min.js)</span>
-      </a>
-    </div>
-
-    <!-- Quick Terminal Launcher -->
-    <div class="hero-quick-cmd">
-      <span style="font-size: 0.85rem; color: #94a3b8;">Stream Host Docker in 1 command:</span>
-      <code>npx @dr-debug/mcp</code>
-      <button class="btn-copy-code" id="btn-copy-hero-cmd">Copy</button>
+  <!-- ========================================================
+       HOST DOCKER COCKPIT 3D INTERACTIVE PREVIEW
+       ======================================================== -->
+  <section class="cockpit-showcase-section" id="docker">
+    <div class="section-head">
+      <div class="hud-tag-pill">
+        <span class="hud-live-beacon"></span>
+        <span>ZERO-LEAK DEVTOOLS COCKPIT</span>
+      </div>
+      <h2 class="section-title">Host Docker Streaming &amp; Causal Graph</h2>
+      <p class="section-desc">Stream live container stdout/stderr straight into your browser console, correlating panics with user actions in sub-second real time.</p>
     </div>
 
     <!-- 3D Interactive Cockpit Preview Card -->
     <div class="cockpit-showcase-container" id="cockpit-3d">
       <div class="cockpit-preview-card">
+        <div class="hud-scanline-fx"></div>
+        <div class="hud-corner-bracket br-tl"></div>
+        <div class="hud-corner-bracket br-tr"></div>
+        <div class="hud-corner-bracket br-bl"></div>
+        <div class="hud-corner-bracket br-br"></div>
         <div class="cockpit-header-bar">
           <div class="cockpit-dots">
             <span></span><span></span><span></span>
@@ -156,147 +523,271 @@
     </div>
   </section>
 
-  <!-- Live Interactive Simulator Section -->
-  <section class="simulator-section" id="simulator">
-    <div class="section-head">
-      <div class="section-tag">Interactive Preview</div>
-      <h2 class="section-title">See Autonomous Correlation in Action</h2>
-      <p class="section-desc">Experience how Dr. Debug traces a backend Docker container panic straight to a frontend browser crash and writes the exact code fix.</p>
-    </div>
 
-    <div class="sim-box">
-      <div class="sim-topbar">
-        <div class="sim-feed-title">
-          <span class="sim-status-dot"></span>
-          <span>Live Telemetry & Docker Stream (Simulated Session)</span>
-        </div>
-        <button class="sim-btn-trigger" id="btn-run-sim">⚡ Trigger Backend Panic & Diagnose</button>
-      </div>
-
-      <div class="sim-grid">
-        <!-- Terminal Stream -->
-        <div class="sim-terminal" id="sim-terminal">
-          <div class="log-line">
-            <span class="log-ts">00:00:01</span>
-            <span class="log-cont">[frontend]</span>
-            <span class="log-level-info">BOOT</span>
-            <span class="log-msg">React 18 mounted on #root (376ms)</span>
-          </div>
-          <div class="log-line">
-            <span class="log-ts">00:00:02</span>
-            <span class="log-cont">[docker:db]</span>
-            <span class="log-level-info">INFO</span>
-            <span class="log-msg">PostgreSQL accepting connections on 5432</span>
-          </div>
-          <div class="log-line">
-            <span class="log-ts">00:00:03</span>
-            <span class="log-cont">[network]</span>
-            <span class="log-level-info">FETCH</span>
-            <span class="log-msg">GET /api/documents -> 200 OK (38ms)</span>
-          </div>
-        </div>
-
-        <!-- AI Reasoning Output -->
-        <div class="sim-ai-pane" id="sim-ai-pane">
-          <div class="ai-reasoning-card">
-            <div class="ai-step-title">
-              <span>🩺 Autonomous Diagnostic Engine</span>
-            </div>
-            <div class="ai-thought">
-              Click <strong>"⚡ Trigger Backend Panic & Diagnose"</strong> above to see Dr. Debug intercept a live crash, traverse the causal graph, and generate a verified unified diff!
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
 
   <!-- Core Features Section -->
   <section class="features-section" id="features">
     <div class="section-head">
-      <div class="section-tag">Capabilities</div>
-      <h2 class="section-title">Built for Modern Full-Stack Developers</h2>
-      <p class="section-desc">Traditional browser DevTools are blind to your containers. Dr. Debug unifies host Docker logs, client network requests, and framework state into a single autonomous brain.</p>
+      <div class="hud-tag-pill">
+        <span class="hud-live-beacon"></span>
+        <span>NEURAL DIAGNOSTIC SUITE</span>
+      </div>
+      <h2 class="section-title">Engineered for Deep Full-Stack Biopsies</h2>
+      <p class="section-desc">Traditional browser DevTools are completely blind to container runtimes. Dr. Debug unifies host Docker logs, network payloads, and client framework state into an autonomous surgical brain.</p>
     </div>
 
     <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon-box">🐳</div>
-        <h3 class="feature-title">Host Docker Substrate</h3>
-        <p class="feature-desc">Streams container stdout/stderr, container lifecycle changes, and health checks over local SSE. No Docker plugins needed.</p>
+      <!-- Module 01: Host Docker Substrate Harvester -->
+      <div class="feature-card cyber-hud-module">
+        <div class="card-ambient-glow"></div>
+        <div class="hud-corner-bracket br-tl"></div>
+        <div class="hud-corner-bracket br-tr"></div>
+        <div class="hud-corner-bracket br-bl"></div>
+        <div class="hud-corner-bracket br-br"></div>
+
+        <div class="module-top-row">
+          <span class="module-id-tag">MOD // 01 · SUBSTRATE HARVESTER</span>
+          <span class="module-status-pill ok">DAEMON HOOKED</span>
+        </div>
+
+        <div class="feature-icon-cyber">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+        </div>
+
+        <h3 class="feature-title">Host Docker Substrate Harvester</h3>
+        <p class="feature-desc">Streams container stdout/stderr, container lifecycle panics, and health check probes over local SSE directly into the browser DevTools panel with zero daemon modifications.</p>
+
+        <!-- Embedded Micro-HUD -->
+        <div class="module-micro-hud">
+          <div class="micro-hud-header">
+            <span>DOCKER SSE STREAM (PORT 4040)</span>
+            <span class="micro-hud-val">4 ACTIVE</span>
+          </div>
+          <div class="micro-hud-terminal">
+            <div class="hud-log-row"><span class="c-dim">18:41:35</span> <span class="c-cyan">[polaris-api]</span> <span class="c-amber">WARN:</span> Worker lag 14ms</div>
+            <div class="hud-log-row"><span class="c-dim">18:41:37</span> <span class="c-cyan">[polaris-api]</span> <span class="c-rose">CRIT:</span> Pool timeout (1515ms)</div>
+          </div>
+        </div>
       </div>
 
-      <div class="feature-card">
-        <div class="feature-icon-box">🌐</div>
-        <h3 class="feature-title">Causal Topology DAG</h3>
-        <p class="feature-desc">Connects backend 504 timeouts to downstream React unhandled rejection nodes via temporal and semantic graph correlation.</p>
+      <!-- Module 02: Causal Neuro-Topology DAG -->
+      <div class="feature-card cyber-hud-module">
+        <div class="card-ambient-glow"></div>
+        <div class="hud-corner-bracket br-tl"></div>
+        <div class="hud-corner-bracket br-tr"></div>
+        <div class="hud-corner-bracket br-bl"></div>
+        <div class="hud-corner-bracket br-br"></div>
+
+        <div class="module-top-row">
+          <span class="module-id-tag">MOD // 02 · TOPOLOGY TRACER</span>
+          <span class="module-status-pill ok">DAG REAL-TIME</span>
+        </div>
+
+        <div class="feature-icon-cyber">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+        </div>
+
+        <h3 class="feature-title">Causal Neuro-Topology DAG</h3>
+        <p class="feature-desc">Connects backend 504 timeouts to downstream React unhandled promise rejections via temporal alignment and semantic dependency graph correlation.</p>
+
+        <!-- Embedded Micro-HUD -->
+        <div class="module-micro-hud">
+          <div class="micro-hud-header">
+            <span>CAUSAL INFERENCE GRAPH</span>
+            <span class="micro-hud-val c-emerald">12ms ISOLATED</span>
+          </div>
+          <div class="micro-dag-flow">
+            <span class="dag-chip chip-amber">Docker 504</span>
+            <span class="dag-laser-arrow">──►</span>
+            <span class="dag-chip chip-cyan">Network Nil</span>
+            <span class="dag-laser-arrow">──►</span>
+            <span class="dag-chip chip-rose">DOM Crash</span>
+          </div>
+        </div>
       </div>
 
-      <div class="feature-card">
-        <div class="feature-icon-box">🧠</div>
-        <h3 class="feature-title">Re-Act AI Engine</h3>
-        <p class="feature-desc">Autonomous multi-turn investigation using Groq LPU, OpenAI, Anthropic, or on-device LiteRT.js with zero server roundtrips.</p>
+      <!-- Module 03: Re-Act Reflection Loop Surgeon -->
+      <div class="feature-card cyber-hud-module">
+        <div class="card-ambient-glow"></div>
+        <div class="hud-corner-bracket br-tl"></div>
+        <div class="hud-corner-bracket br-tr"></div>
+        <div class="hud-corner-bracket br-bl"></div>
+        <div class="hud-corner-bracket br-br"></div>
+
+        <div class="module-top-row">
+          <span class="module-id-tag">MOD // 03 · REFLECTION LOOP</span>
+          <span class="module-status-pill ok">AUTONOMOUS</span>
+        </div>
+
+        <div class="feature-icon-cyber">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent-purple)" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path><path d="M12 6v6l4 2"></path></svg>
+        </div>
+
+        <h3 class="feature-title">Re-Act Reflection Loop Surgeon</h3>
+        <p class="feature-desc">Autonomous multi-turn investigation using Groq LPU, OpenAI, Anthropic, or on-device LiteRT.js. Operates without vision models, saving 98.4% token overhead.</p>
+
+        <!-- Embedded Micro-HUD -->
+        <div class="module-micro-hud">
+          <div class="micro-hud-header">
+            <span>TOKEN CONSUMPTION BENCHMARK</span>
+            <span class="micro-hud-val c-emerald">98.4% SAVED</span>
+          </div>
+          <div class="token-meter-box">
+            <div class="token-row">
+              <span class="meter-lbl">Vision Model:</span>
+              <div class="meter-track"><div class="meter-bar bar-vision" style="width: 100%;"></div></div>
+              <span class="meter-cnt">1,400 tok</span>
+            </div>
+            <div class="token-row">
+              <span class="meter-lbl">Dr. Debug API:</span>
+              <div class="meter-track"><div class="meter-bar bar-drdebug" style="width: 8%;"></div></div>
+              <span class="meter-cnt c-cyan">22 tok</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="feature-card">
-        <div class="feature-icon-box">🛡️</div>
-        <h3 class="feature-title">Zero-Leak Shadow DOM</h3>
-        <p class="feature-desc">Rendered inside an isolated Shadow Root `#dr-debug-root`. 100% CSS immune from your application's Tailwind or Bootstrap styles.</p>
+      <!-- Module 04: Zero-Leak Shadow Sanitarium -->
+      <div class="feature-card cyber-hud-module">
+        <div class="card-ambient-glow"></div>
+        <div class="hud-corner-bracket br-tl"></div>
+        <div class="hud-corner-bracket br-tr"></div>
+        <div class="hud-corner-bracket br-bl"></div>
+        <div class="hud-corner-bracket br-br"></div>
+
+        <div class="module-top-row">
+          <span class="module-id-tag">MOD // 04 · SECURITY ENCLAVE</span>
+          <span class="module-status-pill ok">SANDBOXED</span>
+        </div>
+
+        <div class="feature-icon-cyber">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent-emerald)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        </div>
+
+        <h3 class="feature-title">Zero-Leak Shadow Sanitarium</h3>
+        <p class="feature-desc">Rendered inside an isolated Shadow Root <code>#dr-debug-root</code>. 100% CSS immune from your application's Tailwind, Bootstrap, or global stylesheet overrides.</p>
+
+        <!-- Embedded Micro-HUD -->
+        <div class="module-micro-hud">
+          <div class="micro-hud-header">
+            <span>SHADOW ENCAPSULATION AUDIT</span>
+            <span class="micro-hud-val c-emerald">0.00% BLEED</span>
+          </div>
+          <div class="security-chip-row">
+            <span class="sec-chip"><span class="dot-green"></span> Tailwind Immune</span>
+            <span class="sec-chip"><span class="dot-green"></span> Zero Cloud Leaks</span>
+            <span class="sec-chip"><span class="dot-green"></span> Localhost Only</span>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Installation in 30 Seconds -->
+  <!-- Installation in 30 Seconds: 3-Stage Surgical Launch Protocol -->
   <section class="install-section" id="install">
     <div class="section-head">
-      <div class="section-tag">Quickstart</div>
-      <h2 class="section-title">Ready in Under 30 Seconds</h2>
-      <p class="section-desc">No complicated cloud accounts. No telemetry tracking. Runs completely local on your machine.</p>
+      <div class="hud-tag-pill">
+        <span class="hud-live-beacon"></span>
+        <span>DEPLOYMENT PROTOCOL</span>
+      </div>
+      <h2 class="section-title">Ready on Your Table in Under 30 Seconds</h2>
+      <p class="section-desc">Zero complicated cloud accounts. Zero external telemetry servers. Pure local-first observability running directly on your machine.</p>
     </div>
 
     <div class="steps-timeline">
-      <div class="step-card">
-        <div class="step-badge">1</div>
-        <h3 class="step-title">Download & Unzip</h3>
-        <p class="step-desc">Download <code>dr-debug-extension.zip</code> and extract it anywhere on your computer.</p>
+      <!-- Step 01 -->
+      <div class="step-card cyber-step-card">
+        <div class="step-top-row">
+          <span class="step-phase-tag">STAGE // 01</span>
+          <div class="step-badge-cyber">
+            <span>01</span>
+          </div>
+        </div>
+        <h3 class="step-title">Extract Specimen Archive</h3>
+        <p class="step-desc">Download <code>dr-debug-extension.zip</code> and extract the files to any local folder on your workstation.</p>
+        <div class="step-micro-preview">
+          <div class="file-spec-row">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+            <span class="c-cyan">dr-debug-extension.zip</span>
+            <span class="file-size-tag">930 KB</span>
+          </div>
+          <span class="sha-verify">SHA256: 8f4a...9b12 Verified</span>
+        </div>
       </div>
 
-      <div class="step-card">
-        <div class="step-badge">2</div>
-        <h3 class="step-title">Load into Chrome</h3>
-        <p class="step-desc">Open <code>chrome://extensions</code>, enable <strong>Developer Mode</strong>, and click <strong>"Load Unpacked"</strong>.</p>
+      <!-- Step 02 -->
+      <div class="step-card cyber-step-card">
+        <div class="step-top-row">
+          <span class="step-phase-tag">STAGE // 02</span>
+          <div class="step-badge-cyber">
+            <span>02</span>
+          </div>
+        </div>
+        <h3 class="step-title">Inject into Chrome DevTools</h3>
+        <p class="step-desc">Open <code>chrome://extensions</code>, flip the <strong>Developer Mode</strong> toggle ON, and click <strong>"Load Unpacked"</strong>.</p>
+        <div class="step-micro-preview">
+          <div class="mock-browser-toggle">
+            <span class="mock-toggle-label">Developer mode</span>
+            <span class="mock-toggle-switch active"></span>
+          </div>
+          <div class="mock-unpacked-btn">📁 Load unpacked</div>
+        </div>
       </div>
 
-      <div class="step-card">
-        <div class="step-badge">3</div>
-        <h3 class="step-title">Connect Host Docker</h3>
-        <p class="step-desc">Run <code>npx @dr-debug/mcp</code> or double-click <code>start-docker-bridge.bat</code> inside the folder.</p>
+      <!-- Step 03 -->
+      <div class="step-card cyber-step-card">
+        <div class="step-top-row">
+          <span class="step-phase-tag">STAGE // 03</span>
+          <div class="step-badge-cyber">
+            <span>03</span>
+          </div>
+        </div>
+        <h3 class="step-title">Ignite Host Docker Bridge</h3>
+        <p class="step-desc">Run <code>npx @dr-debug/mcp</code> or launch <code>start-docker-bridge.bat</code> to connect local container telemetry.</p>
+        <div class="step-micro-preview">
+          <div class="mini-term-cmd">
+            <span class="term-p">$</span>
+            <code>npx @dr-debug/mcp</code>
+          </div>
+          <span class="daemon-ready-badge"><span class="dot-green"></span> SSE Port 4040 Ready</span>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Author Showcase Section -->
+  <!-- Author Showcase Section: Lead Cybernetic Architect Dossier -->
   <section class="author-section" id="author">
-    <div class="author-card">
-      <div class="author-avatar-wrapper">
-        <img src="assets/drdebug.png" alt="Saswat Mohanty" class="author-avatar" />
+    <div class="author-card cyber-dossier-card">
+      <div class="hud-corner-bracket br-tl"></div>
+      <div class="hud-corner-bracket br-tr"></div>
+      <div class="hud-corner-bracket br-bl"></div>
+      <div class="hud-corner-bracket br-br"></div>
+      <div class="card-ambient-glow"></div>
+
+      <div class="author-avatar-cyber-wrap">
+        <div class="avatar-radar-ring"></div>
+        <img src="assets/drdebug.png" alt="Saswat Mohanty" class="author-avatar-cyber" />
+        <div class="avatar-reticle"></div>
       </div>
 
       <div class="author-info">
-        <div class="author-tag">Architect & Creator</div>
+        <div class="dossier-header-row">
+          <span class="author-tag">LEAD ARCHITECT // CLEARANCE: LEVEL 5</span>
+          <span class="author-id-code">DEV_ID // SAZWHATICIAN</span>
+        </div>
         <h2 class="author-name">Saswat Mohanty</h2>
-        <div class="author-role">AI / ML Engineer · Veer Surendra Sai University of Technology (VSSUT), Burla</div>
+        <div class="author-role">AI / ML Engineer &bull; Veer Surendra Sai University of Technology (VSSUT), Burla</div>
         <p class="author-bio">
-          Creator of Dr. Debug. Passionate about autonomous agentic systems, real-time observability, and building AI tools that eliminate hours of developer frustration.
+          Creator and Lead Architect of Dr. Debug. Passionate about autonomous agentic systems, real-time observability, and building AI tools that eliminate hours of developer frustration through direct runtime biopsy and causal intelligence.
         </p>
 
         <div class="author-links">
-          <a href="https://github.com/SazWhatician" target="_blank" class="author-btn github">
+          <a href="https://github.com/SazWhatician" target="_blank" class="author-btn-cyber github">
             <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
             <span>GitHub (@SazWhatician)</span>
           </a>
 
-          <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" class="author-btn linkedin">
+          <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" class="author-btn-cyber linkedin">
             <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
             <span>Connect on LinkedIn</span>
           </a>
@@ -311,22 +802,41 @@
     <span id="toast-text">Download started! Extract the ZIP and load into chrome://extensions</span>
   </div>
 
-  <!-- Footer -->
-  <footer class="footer">
+  </div><!-- /page-content-wrapper -->
+
+  <!-- EXACT REFERENCE FOOTER (REACTOR ZONE) WITH FOOTER REVEAL -->
+  <footer class="reactor-zone">
     <div class="footer-container">
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <img src="assets/drdebug.png" alt="Dr. Debug" style="width: 28px; height: 28px; border-radius: 6px;" />
-        <span style="font-family: var(--font-display); font-weight: 800; color: #fff;">DR. DEBUG</span>
+      <div id="footer-canvas"></div>
+      <div class="footer-content">
+        <div class="footer-row">
+          <div class="footer-col">
+            <h1 class="glow-text">Connect<br> with<br> Us</h1>
+          </div>
+          <div class="footer-col footer-col-right">
+            <div class="footer-sub-col">
+              <h3>Socials</h3>
+              <a href="https://www.instagram.com/enigma_vssut/" target="_blank">Instagram</a>
+              <a href="https://x.com/Enigma_VSSUT" target="_blank">X</a>
+              <a href="https://www.linkedin.com/company/enigma-vssut/posts/?feedView=all" target="_blank">LinkedIn</a>
+            </div>
+            <div class="footer-sub-col">
+              <h3>Menu</h3>
+              <a href="index.html">Home</a>
+              <a href="contact.html">Contact</a>
+            </div>
+          </div>
+        </div>
       </div>
-      <p class="footer-copy">
-        Crafted with pride by <a href="https://github.com/SazWhatician" target="_blank">Saswat Mohanty (@SazWhatician)</a> · MIT License.
-      </p>
+      <!-- FOOTER TEXT -->
+      <div class="footer-bottom-bar">
+        Made with love <span>ENIGMA.</span>
+      </div>
     </div>
   </footer>
 
-  <!-- Scripts: Offline Payloads, Lenis, GSAP, ScrollTrigger, App -->
-  <script src="assets/extension-payload.js"></script>
-  <script src="assets/standalone-payload.js"></script>
+  <!-- Scripts: Three.js, Lenis, GSAP, ScrollTrigger, App -->
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
