@@ -14,38 +14,48 @@
 <body class="is-loading" data-barba="wrapper">
 
   <!-- ========================================================
-       0-100 MODERN CORNER LOADER + "1-0-0" SLIDE-IN REVEAL
+       BARBA.JS LEFT-TO-RIGHT PANE SLIDING PRELOADER
+       (0-100 Count -> "1" folds behind "0" -> "0" folds behind "0" -> Pane Slide Reveal)
        ======================================================== -->
-  <div class="corner-preloader" id="corner-preloader">
-    <!-- Sliding Curtains -->
-    <div class="preloader-curtain curtain-top"></div>
-    <div class="preloader-curtain curtain-bottom"></div>
+  <div class="barba-sliding-preloader" id="barba-preloader">
+    <!-- Layered Panes that slide left to right -->
+    <div class="sliding-pane pane-accent-2"></div>
+    <div class="sliding-pane pane-accent-1"></div>
+    <div class="sliding-pane pane-main">
+      <!-- Center Digits Folding Stage -->
+      <div class="loader-fold-stage" id="loader-fold-stage">
+        <!-- 3-Digit Stacking Row -->
+        <div class="fold-digits-row" id="fold-digits-row">
+          <div class="fold-digit-box d-box-1" id="d-box-1">
+            <span class="fold-digit-char" id="digit-1">1</span>
+          </div>
+          <div class="fold-digit-box d-box-2" id="d-box-2">
+            <span class="fold-digit-char" id="digit-2">0</span>
+          </div>
+          <div class="fold-digit-box d-box-3" id="d-box-3">
+            <span class="fold-digit-char" id="digit-3">0</span>
+          </div>
+        </div>
 
-    <!-- Center 1-0-0 Slide-in Typography (Reveals at 100%) -->
-    <div class="slide-reveal-wrap" id="slide-reveal-wrap">
-      <div class="reveal-digits-row">
-        <span class="reveal-digit d1">1</span>
-        <span class="reveal-digit d2">0</span>
-        <span class="reveal-digit d3">0</span>
+        <!-- Minimal Progress Bar & System Status -->
+        <div class="loader-fold-meta" id="loader-fold-meta">
+          <div class="fold-progress-track">
+            <div class="fold-progress-fill" id="loader-bar"></div>
+          </div>
+          <div class="fold-status-row">
+            <span class="fold-sys-label">DR. DEBUG // RUNTIME</span>
+            <span class="fold-counter-text" id="loader-counter">0%</span>
+          </div>
+        </div>
       </div>
-      <div class="reveal-sub-status">SYSTEM INITIALIZED // ALL SUBSTRATES ONLINE</div>
     </div>
+  </div>
 
-    <!-- Bottom-Corner 0-100 Loader Box -->
-    <div class="corner-loader-box">
-      <div class="loader-sys-tag">
-        <span class="sys-pulse-dot"></span>
-        <span class="sys-label">DR. DEBUG · OBSERVABILITY ENGINE</span>
-      </div>
-      <div class="loader-counter-row">
-        <span class="loader-counter-num" id="loader-counter">00</span>
-        <span class="loader-counter-unit">%</span>
-      </div>
-      <div class="loader-progress-track">
-        <div class="loader-progress-bar" id="loader-bar"></div>
-      </div>
-      <div class="loader-status-msg" id="loader-status">CONNECTING DEVTOOLS HOOKS...</div>
-    </div>
+  <!-- Barba.js Left-to-Right Page Transition Overlay -->
+  <div class="barba-transition-overlay" id="barba-overlay">
+    <div class="barba-transition-pane barba-pane-1"></div>
+    <div class="barba-transition-pane barba-pane-2"></div>
+    <div class="barba-transition-pane barba-pane-3"></div>
   </div>
 
   <!-- Ambient Glowing Mesh (Subtle Background) -->
@@ -59,11 +69,11 @@
 
   <!-- ========================================================
        MINIMALISTIC & ENTIRELY TRANSPARENT NAVBAR
-       (Left: Logo | Center: Completely Empty | Right: Links)
+       (Left: Brand Logo | Center: Empty | Right: Navigation Links)
        ======================================================== -->
   <header class="navbar-transparent" id="main-nav">
     <div class="nav-container-transparent">
-      <!-- Left: Logo of Dr. Debug -->
+      <!-- Left: Main Logo of Dr. Debug with Backgroundless Icon -->
       <a href="#hero" class="nav-brand-minimal">
         <img src="assets/drdebug.png" alt="Dr. Debug Logo" class="nav-logo-minimal" />
         <span class="nav-title-minimal">DR. DEBUG</span>
@@ -126,11 +136,11 @@
               </div>
             </div>
             <p class="card-body-desc">
-              Standard AI pair programmers waste thousands of tokens guessing UI bugs from static screenshots. Dr. Debug intercepts live runtime exceptions, request payloads, and component stacks into structured context, enabling Antigravity to pinpoint and patch the exact source lines in your workspace immediately.
+              Dr. Debug captures live runtime errors, network payloads, and stack traces into a structured Markdown incident report. One click copies it to your clipboard — paste into Antigravity and it gets deterministic context to locate and fix the exact lines, instead of guessing from screenshots.
             </p>
             <div class="card-spec-strip">
-              <span class="spec-chip">Source-Level Demangling</span>
-              <span class="spec-chip">Zero Screenshot Guessing</span>
+              <span class="spec-chip">1-Click Clipboard Export</span>
+              <span class="spec-chip">Structured Debug Context</span>
             </div>
           </div>
 
@@ -142,16 +152,16 @@
             <div class="card-brand-header">
               <img src="assets/Claude_AI_symbol.svg.webp" alt="Claude Code" class="card-brand-icon" />
               <div class="card-brand-meta">
-                <span class="card-tag-badge">MODEL CONTEXT PROTOCOL</span>
-                <h3 class="card-brand-title">Claude Code MCP</h3>
+                <span class="card-tag-badge">AI CODING ASSISTANT</span>
+                <h3 class="card-brand-title">Claude Code</h3>
               </div>
             </div>
             <p class="card-body-desc">
-              Dr. Debug operates a local Model Context Protocol daemon on port 9229. Claude Code queries your running browser tab directly using native tools (<code class="inline-code">drdebug_inspect_error</code>, <code class="inline-code">drdebug_inspect_request</code>) to inspect network failures, error stacks, and container logs without manual copy-pasting.
+              Dr. Debug's "Copy AI Brief" button generates a structured incident report with causal chains, HTTP payloads, stack traces, and timeline data formatted specifically for Claude Code. Paste it into your terminal and Claude has full context to debug without guessing.
             </p>
             <div class="card-spec-strip">
-              <span class="spec-chip">ws://localhost:9229</span>
-              <span class="spec-chip">Native Tool Calling</span>
+              <span class="spec-chip">Paste-Ready Format</span>
+              <span class="spec-chip">Structured Incident Report</span>
             </div>
           </div>
         </div>
@@ -271,95 +281,224 @@
        ======================================================== -->
   <section class="faq-section" id="faq">
     <div class="faq-container">
-      <div class="section-head">
-        <div class="hud-tag-pill">
-          <span class="hud-live-beacon pulse-cyan"></span>
-          <span>DOCUMENTATION &amp; ARCHITECTURE</span>
+      <!-- Big Branded Title -->
+      <div class="faq-hero-header">
+        <div class="faq-logo-row">
+          <svg class="faq-logo-icon" width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="22" stroke="url(#faqGrad)" stroke-width="2.5" fill="rgba(0,240,255,0.06)"/>
+            <text x="24" y="30" text-anchor="middle" font-family="Syncopate, sans-serif" font-size="18" font-weight="700" fill="url(#faqGrad)">?</text>
+            <defs><linearGradient id="faqGrad" x1="0" y1="0" x2="48" y2="48"><stop offset="0%" stop-color="#00f0ff"/><stop offset="100%" stop-color="#10b981"/></linearGradient></defs>
+          </svg>
+          <h2 class="faq-brand-title">DR. DEBUG <span class="faq-title-accent">FAQ</span></h2>
         </div>
-        <h2 class="section-title">Frequently Asked Questions</h2>
-        <p class="section-desc">Straight answers on pairing Dr. Debug with Google Antigravity, Claude Code, and your local development stack.</p>
+        <p class="faq-brand-subtitle">Installation, Docker bridge setup, and honest answers about what Dr. Debug actually does.</p>
       </div>
 
       <div class="faq-accordion">
-        <!-- FAQ 01 -->
+
+        <!-- INSTALLATION GUIDE -->
+        <div class="faq-item faq-item--guide">
+          <button class="faq-trigger" aria-expanded="false">
+            <span class="faq-step-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </span>
+            <span class="faq-question">How do I install Dr. Debug? (Step-by-step guide)</span>
+            <span class="faq-chevron">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner faq-install-guide">
+
+              <!-- Step 1 -->
+              <div class="install-step" data-step="1">
+                <div class="step-icon-wrap">
+                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <rect x="4" y="6" width="24" height="20" rx="3" stroke="#00f0ff" stroke-width="1.5" fill="rgba(0,240,255,0.06)"/>
+                    <path d="M4 12h24" stroke="#00f0ff" stroke-width="1.5" opacity="0.4"/>
+                    <rect x="10" y="16" width="12" height="3" rx="1" fill="#00f0ff" opacity="0.35"/>
+                    <rect x="12" y="21" width="8" height="2" rx="1" fill="#10b981" opacity="0.5"/>
+                  </svg>
+                </div>
+                <div class="step-content">
+                  <h4 class="step-label"><span class="step-num">01</span> Download the ZIP</h4>
+                  <p>Click the <strong>Download Chrome Extension</strong> button above to get <code class="inline-code">dr-debug-extension.zip</code>.</p>
+                </div>
+              </div>
+
+              <!-- Step 2 -->
+              <div class="install-step" data-step="2">
+                <div class="step-icon-wrap">
+                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <path d="M8 8l8 8-8 8" stroke="#00f0ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M18 24h8" stroke="#10b981" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <div class="step-content">
+                  <h4 class="step-label"><span class="step-num">02</span> Extract the archive</h4>
+                  <p>Unzip it to any folder on your machine. You'll see a folder with <code class="inline-code">manifest.json</code>, <code class="inline-code">content.js</code>, and related files inside.</p>
+                </div>
+              </div>
+
+              <!-- Step 3 -->
+              <div class="install-step" data-step="3">
+                <div class="step-icon-wrap">
+                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <circle cx="16" cy="16" r="12" stroke="#00f0ff" stroke-width="1.5" fill="rgba(0,240,255,0.04)"/>
+                    <circle cx="16" cy="16" r="5" fill="#10b981" opacity="0.5"/>
+                    <path d="M16 4v4M16 24v4M4 16h4M24 16h4" stroke="#00f0ff" stroke-width="1" opacity="0.4"/>
+                  </svg>
+                </div>
+                <div class="step-content">
+                  <h4 class="step-label"><span class="step-num">03</span> Open Chrome Extensions</h4>
+                  <p>Navigate to <code class="inline-code">chrome://extensions</code> in your browser. Toggle on <strong>Developer mode</strong> (top-right corner).</p>
+                </div>
+              </div>
+
+              <!-- Step 4 -->
+              <div class="install-step" data-step="4">
+                <div class="step-icon-wrap">
+                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <rect x="6" y="6" width="20" height="20" rx="4" stroke="#10b981" stroke-width="1.5" fill="rgba(16,185,129,0.08)"/>
+                    <path d="M12 16l3 3 5-6" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="step-content">
+                  <h4 class="step-label"><span class="step-num">04</span> Load unpacked</h4>
+                  <p>Click <strong>"Load unpacked"</strong> and select the extracted folder. The <strong>🩺 Dr. Debug</strong> panel will appear inside Chrome DevTools (press <code class="inline-code">F12</code>).</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- DOCKER BRIDGE SETUP -->
+        <div class="faq-item faq-item--guide">
+          <button class="faq-trigger" aria-expanded="false">
+            <span class="faq-step-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 13.5c0-.8-.4-1.5-1-2C21.6 10.7 22 9.9 22 9c0-2.2-2.7-4-6-4-1.3 0-2.5.3-3.5.8"/><rect x="2" y="14" width="4" height="4" rx="0.5"/><rect x="7" y="14" width="4" height="4" rx="0.5"/><rect x="12" y="14" width="4" height="4" rx="0.5"/><rect x="4.5" y="9.5" width="4" height="4" rx="0.5"/><rect x="9.5" y="9.5" width="4" height="4" rx="0.5"/></svg>
+            </span>
+            <span class="faq-question">How do I connect the Docker bridge for container logs?</span>
+            <span class="faq-chevron">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner faq-install-guide">
+
+              <div class="install-step" data-step="1">
+                <div class="step-icon-wrap">
+                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <rect x="6" y="8" width="20" height="16" rx="2" stroke="#00f0ff" stroke-width="1.5" fill="rgba(0,240,255,0.04)"/>
+                    <path d="M10 14h4M10 18h8" stroke="#00f0ff" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+                    <circle cx="22" cy="12" r="2" fill="#10b981" opacity="0.6"/>
+                  </svg>
+                </div>
+                <div class="step-content">
+                  <h4 class="step-label"><span class="step-num">01</span> Make sure Docker is running</h4>
+                  <p>Dr. Debug's bridge reads container logs from Docker on your machine. Start Docker Desktop or ensure the Docker daemon is active.</p>
+                </div>
+              </div>
+
+              <div class="install-step" data-step="2">
+                <div class="step-icon-wrap">
+                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <path d="M8 8l8 8-8 8" stroke="#10b981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M18 24h8" stroke="#10b981" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <div class="step-content">
+                  <h4 class="step-label"><span class="step-num">02</span> Run the bridge launcher</h4>
+                  <p>Double-click <code class="inline-code">start-docker-bridge.bat</code> (Windows) or run <code class="inline-code">./start-docker-bridge.sh</code> (Mac/Linux) from the extracted folder. Alternatively, run:</p>
+                  <div class="step-cli-block">
+                    <span class="step-cli-prompt">$</span>
+                    <code class="step-cli-cmd">npx -y @dr-debug/mcp</code>
+                  </div>
+                </div>
+              </div>
+
+              <div class="install-step" data-step="3">
+                <div class="step-icon-wrap">
+                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <rect x="6" y="6" width="20" height="20" rx="4" stroke="#10b981" stroke-width="1.5" fill="rgba(16,185,129,0.08)"/>
+                    <path d="M12 16l3 3 5-6" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="step-content">
+                  <h4 class="step-label"><span class="step-num">03</span> Done — container logs stream live</h4>
+                  <p>The bridge runs read-only Docker commands (<code class="inline-code">docker ps</code>, <code class="inline-code">docker logs -f</code>) and streams container stdout/stderr to Dr. Debug over local SSE on port <code class="inline-code">9229</code>. It never writes to Docker or executes commands inside containers.</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ: Antigravity (TRUTHFUL) -->
         <div class="faq-item">
           <button class="faq-trigger" aria-expanded="false">
-            <span class="faq-question">How does Dr. Debug pair with Google Antigravity?</span>
+            <span class="faq-question">How does Dr. Debug work with Google Antigravity?</span>
             <span class="faq-chevron">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </span>
           </button>
           <div class="faq-answer">
             <div class="faq-answer-inner">
-              <p>Standard AI coding assistants burn thousands of tokens blindly guessing UI bugs from static screenshots. Dr. Debug intercepts raw browser runtime exceptions, network request bodies, and component stacks into deterministic <code class="inline-code">&lt;debug_state&gt;</code> XML. Antigravity parses this structured context to pinpoint and edit the exact lines in your workspace immediately.</p>
+              <p>Dr. Debug captures live browser telemetry — errors, network failures, console logs, stack traces, and memory snapshots — and serializes it into a structured Markdown incident report. You copy this report with a single click and paste it into Antigravity's chat. This gives the AI agent rich, deterministic runtime context instead of vague descriptions or screenshots, so it can locate and fix the exact lines in your codebase. <strong>It's a clipboard export bridge, not a direct API integration.</strong></p>
             </div>
           </div>
         </div>
 
-        <!-- FAQ 02 -->
+        <!-- FAQ: Claude Code (TRUTHFUL) -->
         <div class="faq-item">
           <button class="faq-trigger" aria-expanded="false">
-            <span class="faq-question">How does Dr. Debug connect to Claude Code via MCP?</span>
+            <span class="faq-question">How does Dr. Debug work with Claude Code?</span>
             <span class="faq-chevron">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </span>
           </button>
           <div class="faq-answer">
             <div class="faq-answer-inner">
-              <p>Dr. Debug runs a local Model Context Protocol (MCP) daemon on port <code class="inline-code">9229</code> (started with <code class="inline-code">npx @dr-debug/mcp</code>). Claude Code connects via standard JSON-RPC tools (<code class="inline-code">drdebug_inspect_error</code>, <code class="inline-code">drdebug_inspect_request</code>) to query your live browser tab without manual copy-pasting.</p>
+              <p>Same approach as Antigravity: Dr. Debug's one-click <strong>"Copy AI Brief"</strong> button generates a structured <code class="inline-code">🚨 Incident Report for AI Assistants (Claude Code / Antigravity)</code> containing causal chains, HTTP payloads, stack traces, and timeline data. Paste it into Claude Code's terminal and it has all the context to debug your issue without guessing. <strong>There is no live API connection</strong> — it's a formatted export optimized for AI coding assistants to parse.</p>
             </div>
           </div>
         </div>
 
-        <!-- FAQ 03 -->
+        <!-- FAQ: Privacy -->
         <div class="faq-item">
           <button class="faq-trigger" aria-expanded="false">
-            <span class="faq-question">Does Dr. Debug transmit telemetry to external cloud servers?</span>
+            <span class="faq-question">Does Dr. Debug send any data to external servers?</span>
             <span class="faq-chevron">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </span>
           </button>
           <div class="faq-answer">
             <div class="faq-answer-inner">
-              <p>No. Dr. Debug is 100% local-first. All telemetry—console logs, network bodies, memory footprints, and Docker logs—stays strictly inside your browser session and your local machine. No tracking, analytics, or external servers are contacted.</p>
+              <p>No. Dr. Debug is 100% local-first. All telemetry — console logs, network bodies, memory footprints, Docker container logs — stays inside your browser session and your local machine. Zero tracking, zero analytics, zero cloud servers contacted. The Docker bridge also runs entirely on localhost.</p>
             </div>
           </div>
         </div>
 
-        <!-- FAQ 04 -->
+        <!-- FAQ: Docker Safety -->
         <div class="faq-item">
           <button class="faq-trigger" aria-expanded="false">
-            <span class="faq-question">How do I install the Chrome DevTools extension?</span>
+            <span class="faq-question">Is the Docker bridge safe to run?</span>
             <span class="faq-chevron">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </span>
           </button>
           <div class="faq-answer">
             <div class="faq-answer-inner">
-              <p>Download <code class="inline-code">dr-debug-extension.zip</code>, extract the archive, open <code class="inline-code">chrome://extensions</code> in Chrome, toggle on <strong>Developer mode</strong> in the top-right corner, and click <strong>"Load unpacked"</strong>. The Dr. Debug tab will immediately appear inside Chrome DevTools (F12).</p>
+              <p>Yes. The bridge daemon exclusively runs <strong>read-only</strong> Docker CLI commands: <code class="inline-code">docker version</code>, <code class="inline-code">docker ps</code>, and <code class="inline-code">docker logs -f</code>. It streams container stdout/stderr over local Server-Sent Events (SSE). It does not write to Docker, exec into containers, or alter volumes, networks, or images.</p>
             </div>
           </div>
         </div>
 
-        <!-- FAQ 05 -->
+        <!-- FAQ: Creator -->
         <div class="faq-item">
           <button class="faq-trigger" aria-expanded="false">
-            <span class="faq-question">How does the host Docker bridge work safely?</span>
-            <span class="faq-chevron">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-            </span>
-          </button>
-          <div class="faq-answer">
-            <div class="faq-answer-inner">
-              <p>The bridge daemon runs safe, 100% read-only Docker CLI commands (<code class="inline-code">docker version</code>, <code class="inline-code">docker ps</code>, <code class="inline-code">docker logs -f</code>) to stream container stdout/stderr over local Server-Sent Events (SSE). It does not write to Docker, execute commands in containers, or alter volumes or networks.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- FAQ 06 -->
-        <div class="faq-item">
-          <button class="faq-trigger" aria-expanded="false">
-            <span class="faq-question">Who architected and created Dr. Debug?</span>
+            <span class="faq-question">Who created Dr. Debug?</span>
             <span class="faq-chevron">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </span>
@@ -370,6 +509,7 @@
             </div>
           </div>
         </div>
+
       </div>
     </div>
   </section>

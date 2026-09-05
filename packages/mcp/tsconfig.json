@@ -17,12 +17,5 @@
   "include": [
     "src/**/*"
   ],
-  "references": [
-    {
-      "path": "../controller"
-    },
-    {
-      "path": "../core"
-    }
-  ]
+  "references": []
 }

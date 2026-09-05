@@ -55,3 +55,24 @@ export interface BrowserTabTelemetry {
   lastSeen: number
   stateSnapshot: any
 }
+
+export type LogLevel = 'error' | 'warn' | 'info' | 'log'
+
+export interface DockerContainerInfo {
+  id: string
+  name: string
+  image: string
+  state: 'running' | 'exited' | 'restarting' | 'paused' | string
+  status: string
+  ports?: string[]
+}
+
+export interface DockerLogEntry {
+  id: string
+  containerName: string
+  timestamp: number
+  stream: 'stdout' | 'stderr'
+  message: string
+  level: LogLevel
+}
+

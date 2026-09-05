@@ -11,9 +11,19 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SazWhatician/DebugCopilot"
+  },
+  "homepage": "https://github.com/SazWhatician",
   "dependencies": {
-    "@dr-debug/controller": "*",
-    "@dr-debug/core": "*"
+    "@dr-debug/controller": "^0.1.0",
+    "@dr-debug/core": "^0.1.0"
   },
   "scripts": {
     "build": "tsc -b tsconfig.json",

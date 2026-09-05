@@ -151,25 +151,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })
 
-  // 3. Corner Preloader (0-100 Loader & 1-0-0 Slide-In Reveal)
-  const preloader = document.getElementById('corner-preloader')
+  // 3. Barba.js Left-to-Right Pane Sliding Preloader
+  const preloader = document.getElementById('barba-preloader')
   const counterNum = document.getElementById('loader-counter')
   const counterBar = document.getElementById('loader-bar')
-  const loaderStatus = document.getElementById('loader-status')
   const giantTitle = document.getElementById('giant-title')
   const heroEyebrow = document.querySelector('.hero-top-eyebrow')
   const mainNav = document.getElementById('main-nav')
 
-  const statusMessages = [
-    'CONNECTING DEVTOOLS HOOKS...',
-    'INTERCEPTING CHROMIUM SUBSTRATES...',
-    'STREAMING DOCKER SSE DAEMON...',
-    'COMPILING CAUSAL GRAPH TOPOLOGY...',
-    'READY // SYSTEM SYNCHRONIZED'
-  ]
+  const dBox1 = document.getElementById('d-box-1')
+  const dBox2 = document.getElementById('d-box-2')
+  const dBox3 = document.getElementById('d-box-3')
+  const digit1 = document.getElementById('digit-1')
+  const digit2 = document.getElementById('digit-2')
+  const digit3 = document.getElementById('digit-3')
+  const foldMeta = document.getElementById('loader-fold-meta')
 
   let loaderObj = { val: 0 }
   let hasRevealedHero = false
+
+  // Initially hide the first box so counting from 00 to 99 is centered
+  if (dBox1) {
+    gsap.set(dBox1, { width: 0, opacity: 0, overflow: 'hidden' })
+  }
 
   // ========================================================
   // 3a. Frame Preloading Engine (120 Ultra-Smooth Frames)
@@ -257,22 +261,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Preloader Count Animation
+  // Preloader Count Animation (0 -> 100)
   gsap.to(loaderObj, {
     val: 100,
-    duration: 0.9,
-    ease: 'power1.inOut',
+    duration: 1.3,
+    ease: 'power2.out',
     onUpdate: () => {
       const current = Math.floor(loaderObj.val)
       if (counterNum) {
-        counterNum.textContent = current < 10 ? `0${current}` : `${current}`
+        counterNum.textContent = `${current}%`
       }
       if (counterBar) {
         counterBar.style.width = `${current}%`
       }
-      if (loaderStatus) {
-        const msgIdx = Math.min(Math.floor((current / 100) * statusMessages.length), statusMessages.length - 1)
-        loaderStatus.textContent = statusMessages[msgIdx]
+      if (current < 100) {
+        const padded = current < 10 ? `0${current}` : `${current}`
+        if (digit2) digit2.textContent = padded[0]
+        if (digit3) digit3.textContent = padded[1]
       }
     },
     onComplete: () => {
@@ -280,14 +285,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })
 
-  // 1-0-0 Slide-In & Curtain Split Reveal
+  // Barba Pane Sliding & Digit Folding Entrance
   function revealEntrance() {
     if (hasRevealedHero) return
     hasRevealedHero = true
 
-    const revealDigits = gsap.utils.toArray('.reveal-digit')
-    const revealSub = document.querySelector('.reveal-sub-status')
-    const cornerBox = document.querySelector('.corner-loader-box')
+    if (counterNum) counterNum.textContent = '100%'
+    if (counterBar) counterBar.style.width = '100%'
+    if (digit1) digit1.textContent = '1'
+    if (digit2) digit2.textContent = '0'
+    if (digit3) digit3.textContent = '0'
+
+    // Compute dynamic spacing between digit boxes
+    const rect2 = dBox2 ? dBox2.getBoundingClientRect() : null
+    const rect3 = dBox3 ? dBox3.getBoundingClientRect() : null
+    const stepDist = (rect2 && rect3) ? Math.round(rect3.left - rect2.left) : 110
+    const targetWidth = rect2 ? rect2.width : 90
+
+    const slidingPanes = gsap.utils.toArray('.sliding-pane')
 
     const entranceTl = gsap.timeline({
       defaults: { ease: 'power4.out' },
@@ -302,35 +317,67 @@ document.addEventListener('DOMContentLoaded', () => {
     })
 
     entranceTl
-      // Fade corner box slightly
-      .to(cornerBox, { opacity: 0, y: 15, duration: 0.25 })
-      // Slide in 1-0-0 digits with dramatic stagger
-      .to(revealDigits, {
-        y: '0%',
-        duration: 0.5,
-        stagger: 0.08,
-        ease: 'power4.out'
+      // 1. Expand the "1" box to complete [ 1 ] [ 0 ] [ 0 ]
+      .to(dBox1, {
+        width: targetWidth,
+        opacity: 1,
+        duration: 0.24,
+        ease: 'power3.out'
       })
-      .to(revealSub, { opacity: 1, y: 0, duration: 0.25 }, '-=0.2')
-      // Hold for dramatic impact then open curtains
-      .to({}, { duration: 0.2 })
+      // Subtle hold to let the viewer register "1 0 0"
+      .to({}, { duration: 0.22 })
+
+      // 2. "1" goes behind first "0"
+      .to(dBox1, {
+        x: stepDist,
+        duration: 0.38,
+        ease: 'power3.inOut'
+      })
+      .set(dBox1, { opacity: 0 })
+
+      // Micro-pause between digit folds
+      .to({}, { duration: 0.08 })
+
+      // 3. That first "0" goes behind the next "0"
+      .to(dBox2, {
+        x: stepDist,
+        duration: 0.38,
+        ease: 'power3.inOut'
+      })
+      .set(dBox2, { opacity: 0 })
+
+      // 4. Pop the final single "0" and fade the progress wire
+      .to(dBox3, {
+        scale: 1.15,
+        duration: 0.15,
+        ease: 'power2.out'
+      })
+      .to([dBox3, foldMeta], {
+        opacity: 0,
+        scale: 0.9,
+        duration: 0.2,
+        ease: 'power2.in'
+      })
+
+      // 5. Left to right pane sliding reveal across the screen!
       .add(() => {
-        // Unlock body scroll immediately so user can scroll without delay
         document.body.classList.remove('is-loading')
-        if (preloader) {
-          preloader.classList.add('curtains-open')
-          preloader.style.pointerEvents = 'none'
-        }
       })
-      .to('.slide-reveal-wrap', { scale: 1.08, opacity: 0, duration: 0.4, ease: 'power3.in' }, '-=0.1')
-      // Hero Bottom Title & Eyebrow Entrance
-      .to(mainNav, { opacity: 1, y: 0, duration: 0.6 }, '-=0.3')
-      .to(heroEyebrow, { opacity: 1, y: 0, duration: 0.6 }, '-=0.4')
+      .to(slidingPanes, {
+        xPercent: 100,
+        duration: 0.8,
+        stagger: 0.08,
+        ease: 'power4.inOut'
+      })
+
+      // 6. Reveal page navbar and hero elements in seamless sync
+      .to(mainNav, { opacity: 1, y: 0, duration: 0.65, ease: 'power4.out' }, '-=0.45')
+      .to(heroEyebrow, { opacity: 1, y: 0, duration: 0.65, ease: 'power4.out' }, '-=0.5')
       .to(giantTitle, {
         y: '0%',
         duration: 1.0,
         ease: 'power4.out'
-      }, '-=0.5')
+      }, '-=0.55')
   }
 
   // Initial nav and eyebrow state
@@ -929,23 +976,32 @@ document.addEventListener('DOMContentLoaded', () => {
           )
         },
         transitions: [{
-          name: 'fashion-fade',
-          leave(data) {
-            return gsap.to(data.current.container, {
-              opacity: 0,
-              y: -15,
-              duration: 0.35,
-              ease: 'power2.inOut'
+          name: 'pane-slide-fashion',
+          async leave(data) {
+            const overlay = document.getElementById('barba-overlay')
+            const panes = gsap.utils.toArray('.barba-transition-pane')
+            if (overlay) overlay.style.display = 'block'
+            gsap.set(panes, { xPercent: -100 })
+            await gsap.to(panes, {
+              xPercent: 0,
+              duration: 0.55,
+              stagger: 0.06,
+              ease: 'power4.inOut'
             })
+            data.current.container.remove()
           },
           enter(data) {
             window.scrollTo(0, 0)
-            return gsap.from(data.next.container, {
-              opacity: 0,
-              y: 15,
-              duration: 0.45,
-              ease: 'power2.out',
+            const overlay = document.getElementById('barba-overlay')
+            const panes = gsap.utils.toArray('.barba-transition-pane')
+            return gsap.to(panes, {
+              xPercent: 100,
+              duration: 0.65,
+              stagger: 0.06,
+              ease: 'power4.inOut',
               onComplete: () => {
+                if (overlay) overlay.style.display = 'none'
+                gsap.set(panes, { xPercent: -100 })
                 ScrollTrigger.refresh()
               }
             })

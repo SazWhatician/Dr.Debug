@@ -1,6 +1,6 @@
 import { spawn, type ChildProcess } from 'node:child_process'
 import { EventEmitter } from 'node:events'
-import type { DockerContainerInfo, DockerLogEntry, LogLevel } from '@dr-debug/controller'
+import type { DockerContainerInfo, DockerLogEntry, LogLevel } from './types.js'
 
 export interface DockerBridgeStatus {
   isAvailable: boolean

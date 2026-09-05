@@ -11,6 +11,16 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SazWhatician/DebugCopilot"
+  },
+  "homepage": "https://github.com/SazWhatician",
   "scripts": {
     "build": "tsc -b tsconfig.json",
     "typecheck": "tsc --noEmit"

@@ -97,10 +97,19 @@ Elevate the Dr. Debug landing page (`landing/index.html`, `landing/styles.css`, 
 - Eliminated redundant middle sections while preserving clean transition to the footer.
 
 ### 6. Barba.js Page Transition Setup
-- Integrated `@barba/core@2.9.7` via CDN with smooth fade-and-glide route transitions.
+- Integrated `@barba/core@2.9.7` via CDN with custom digit-folding sliding reveal loader and smooth transitions.
+
+### 7. Monorepo NPM Packaging & Distribution Architecture
+- **Root Protection**: Marked root `package.json` with `"private": true` to prevent accidental monorepo root publishing.
+- **Extension Isolation**: Marked `packages/extension/package.json` with `"private": true` to enforce distribution via Chrome Web Store rather than npm.
+- **Strict Whitelisting**: Added `"files": ["dist", "README.md", "LICENSE"]` across all publishable workspace packages (`dr-debug`, `@dr-debug/mcp`, `@dr-debug/controller`, `@dr-debug/core`, `@dr-debug/llms`, `@dr-debug/ui`) ensuring zero raw sources, configs, or tests enter the tarball.
+- **MCP Zero-Dependency Decoupling**: Inlined Docker telemetry types in `packages/mcp/src/types.ts`, enabling `@dr-debug/mcp` to run autonomously via `npx -y @dr-debug/mcp` without external monorepo dependencies.
+- **Packaging Verification**: Validated `npm pack --dry-run` produces clean, isolated packages free of `playground/`, `test/`, and root dev assets.
 
 ---
 
 ## 🧪 Verification & Results
 - **Vitest Master Suite**: **115/115 tests passing across 30 test files**.
+- **NPM Package Verification**: Dry-run pack verified for `dr-debug` and `@dr-debug/mcp` with zero bloat.
 - **Asset Sync**: Assets verified in both `landing/` and `release/`.
+

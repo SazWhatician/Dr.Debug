@@ -8,14 +8,16 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc -b tsconfig.json",
     "start": "node dist/cli.js"
   },
-  "dependencies": {
-    "@dr-debug/controller": "^0.1.0",
-    "@dr-debug/core": "^0.1.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^22.10.0",
     "typescript": "^5.7.2"

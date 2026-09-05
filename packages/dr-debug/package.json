@@ -15,11 +15,16 @@
       "import": "./dist/standalone.js"
     }
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
-    "@dr-debug/controller": "*",
-    "@dr-debug/core": "*",
-    "@dr-debug/llms": "*",
-    "@dr-debug/ui": "*",
+    "@dr-debug/controller": "^0.1.0",
+    "@dr-debug/core": "^0.1.0",
+    "@dr-debug/llms": "^0.1.0",
+    "@dr-debug/ui": "^0.1.0",
     "zod": "^3.24.1"
   },
   "scripts": {
