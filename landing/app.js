@@ -871,6 +871,19 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   }
 
+  // Live GitHub Star Counter
+  const starCountEl = document.getElementById('github-star-count')
+  if (starCountEl) {
+    fetch('https://api.github.com/repos/SazWhatician/Dr.Debug')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && typeof data.stargazers_count === 'number') {
+          starCountEl.textContent = data.stargazers_count
+        }
+      })
+      .catch(() => {})
+  }
+
   // ========================================================
   // 10. Reactor Zone Three.js Canvas Engine & Footer Reveal
   // ========================================================
@@ -1049,11 +1062,17 @@ document.addEventListener('DOMContentLoaded', () => {
           triggerLoadGlbModel()
           glbObserver.disconnect()
         }
-      }, { rootMargin: '800px 0px' })
+      }, { rootMargin: '600px 0px' })
       glbObserver.observe(footerZone)
+    } else {
+      // Fallback only if IntersectionObserver is unavailable
+      window.addEventListener('scroll', () => {
+        const rect = footerZone.getBoundingClientRect()
+        if (rect.top <= window.innerHeight + 600) {
+          triggerLoadGlbModel()
+        }
+      }, { once: true, passive: true })
     }
-    // Fallback trigger after 4s idle
-    setTimeout(triggerLoadGlbModel, 4000)
 
     // Mouse tilt interaction
     let targetRotX = 0, targetRotY = 0

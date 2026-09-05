@@ -1018,10 +1018,11 @@ body.is-loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
+  flex-wrap: wrap;
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  color: var(--text-dim);
+  font-size: 0.72rem;
+  color: rgba(226, 232, 240, 0.78);
 }
 
 .trust-dot {
@@ -1029,17 +1030,147 @@ body.is-loading {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--accent-cyan);
+  background: var(--accent-emerald);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.7);
   margin-right: 4px;
 }
 
 .trust-sep {
-  opacity: 0.3;
+  opacity: 0.35;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Premium Liquid Glassmorphic GitHub Star Button */
+.dl-github-star-wrap {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: 35;
+}
+
+.compact-download-card.is-active ~ .dl-github-star-wrap {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto !important;
+}
+
+.github-star-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 20px;
+  background: rgba(11, 19, 38, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 99px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  color: #f8fafc;
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.github-star-pill:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.5);
+  background: rgba(15, 23, 42, 0.92);
+  box-shadow: 0 14px 36px rgba(56, 189, 248, 0.22), 0 0 20px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
+.github-star-pill:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.star-pill-shimmer {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  transform: skewX(-20deg);
+  transition: none;
+  pointer-events: none;
+}
+
+.github-star-pill:hover .star-pill-shimmer {
+  left: 200%;
+  transition: left 0.75s ease-in-out;
+}
+
+.star-pill-icon {
+  display: flex;
+  align-items: center;
+  color: #f8fafc;
+  transition: transform 0.25s ease, color 0.25s ease;
+}
+
+.github-star-pill:hover .star-pill-icon {
+  transform: scale(1.12);
+  color: #38bdf8;
+}
+
+.star-pill-label {
+  font-family: 'Space Grotesk', -apple-system, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-size: 0.82rem;
+}
+
+.star-pill-divider {
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.star-pill-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(251, 191, 36, 0.1);
+  padding: 3px 9px;
+  border-radius: 99px;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fef08a;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: all 0.25s ease;
+}
+
+.github-star-pill:hover .star-pill-count {
+  background: rgba(251, 191, 36, 0.2);
+  border-color: rgba(251, 191, 36, 0.5);
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.35);
+  color: #ffffff;
+}
+
+.star-gold-icon {
+  filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.65));
+  animation: starPulse 2.8s infinite ease-in-out;
+}
+
+@keyframes starPulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.5)); }
+  50% { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.95)); }
 }
 
 /* Subtle Stop & Scroll Hint */
 .dl-scroll-hint {
-  margin-top: 18px;
+  margin-top: 14px;
   display: inline-flex;
   align-items: center;
   gap: 8px;

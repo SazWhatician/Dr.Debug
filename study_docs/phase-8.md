@@ -143,4 +143,4 @@ Elevate the Dr. Debug landing page (`landing/index.html`, `landing/styles.css`, 
   - **Script Parsing Unblocked**: Added `defer` attributes across all CDN and local script tags.
   - **Best Practices Elevation (58 -> 100)**: Secured external links with `rel="noopener noreferrer"` (preventing reverse tabnabbing), and specified explicit `width` and `height` dimensions on all image and brand elements.
   - **Immersive Viewport UX**: Completely hid the visual browser side scrollbar (`::-webkit-scrollbar` display: none, `scrollbar-width: none`) across `html`, `body`, and all containers while preserving smooth Lenis wheel and touch scrolling.
-
+  - **Bespoke Liquid Glassmorphic GitHub Star Pill**: Engineered a custom luxury cyberpunk pill component (`.github-star-pill`) positioned immediately below `#center-download-card`. Features 20px backdrop blur, subtle inner border illumination, Octocat SVG icon, diagonal shimmer sweep on hover, pulsating amber/gold star (`★`), and real-time star counter dynamically fetched from the GitHub REST API (`/repos/SazWhatician/Dr.Debug`). Seamlessly transitions into view alongside the download card.
