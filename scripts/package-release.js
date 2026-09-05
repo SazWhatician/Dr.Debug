@@ -42,6 +42,37 @@ async function packageRelease() {
   copyRecursive(extDistDir, releaseExtDir)
   console.log(`✅ Unpacked extension copied to: ${releaseExtDir}`)
 
+  // Clean compiler artifacts from releaseExtDir so user gets only production runtime files
+  function cleanExtensionDir(dir) {
+    for (const item of fs.readdirSync(dir)) {
+      const fullPath = path.join(dir, item)
+      if (!fs.existsSync(fullPath)) continue
+      const stat = fs.statSync(fullPath)
+      if (stat.isDirectory()) {
+        if (item === 'devtools' || item === 'sourcemaps') {
+          fs.rmSync(fullPath, { recursive: true, force: true })
+        } else if (item === 'icons') {
+          const drdebugIcon = path.join(fullPath, 'drdebug.png')
+          if (fs.existsSync(drdebugIcon)) fs.unlinkSync(drdebugIcon)
+        } else {
+          cleanExtensionDir(fullPath)
+        }
+      } else {
+        if (
+          item.endsWith('.d.ts') ||
+          item.endsWith('.d.ts.map') ||
+          item.endsWith('.js.map') ||
+          item === 'index.js' ||
+          item === 'bridgeProtocol.js' ||
+          item === 'BridgeLLMClient.js'
+        ) {
+          fs.unlinkSync(fullPath)
+        }
+      }
+    }
+  }
+  cleanExtensionDir(releaseExtDir)
+
   // 3b. Create 1-click launcher scripts for Docker bridge
   const batContent = `@echo off
 echo ===================================================
@@ -227,25 +258,7 @@ if (process.env.NODE_ENV === 'development') {
 
   fs.writeFileSync(path.resolve(releaseDir, 'DOWNLOAD_GUIDE.md'), downloadGuide, 'utf-8')
 
-  // 7. Synchronize Animated Landing Website
-  const landingDir = path.resolve(root, 'landing')
-  if (fs.existsSync(landingDir)) {
-    fs.copyFileSync(path.resolve(releaseDir, 'dr-debug-extension.zip'), path.resolve(landingDir, 'dr-debug-extension.zip'))
-    fs.copyFileSync(path.resolve(releaseDir, 'dr-debug.standalone.min.js'), path.resolve(landingDir, 'dr-debug.standalone.min.js'))
 
-    fs.mkdirSync(path.resolve(releaseDir, 'assets'), { recursive: true })
-    fs.copyFileSync(path.resolve(landingDir, 'index.html'), path.resolve(releaseDir, 'index.html'))
-    fs.copyFileSync(path.resolve(landingDir, 'styles.css'), path.resolve(releaseDir, 'styles.css'))
-    fs.copyFileSync(path.resolve(landingDir, 'app.js'), path.resolve(releaseDir, 'app.js'))
-    if (fs.existsSync(path.resolve(landingDir, 'crt-renderer.js'))) {
-      fs.copyFileSync(path.resolve(landingDir, 'crt-renderer.js'), path.resolve(releaseDir, 'crt-renderer.js'))
-    }
-    const landingAssets = path.resolve(landingDir, 'assets')
-    if (fs.existsSync(landingAssets)) {
-      copyRecursive(landingAssets, path.resolve(releaseDir, 'assets'))
-    }
-    console.log(`🌐 Animated landing & download website synced to: ${path.resolve(releaseDir, 'index.html')}`)
-  }
 
   console.log(`\n🎉 All release assets successfully packaged in: ${releaseDir}`)
 }

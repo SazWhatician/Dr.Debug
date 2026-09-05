@@ -65,6 +65,38 @@ async function buildExtension() {
 
   copyRecursive(publicDir, distDir)
 
+  // 3b. Clean compiler artifacts (.d.ts, .map, unused subdirectories) from distDir
+  function cleanCompilerArtifacts(dir) {
+    if (!fs.existsSync(dir)) return
+    for (const item of fs.readdirSync(dir)) {
+      const fullPath = path.join(dir, item)
+      if (!fs.existsSync(fullPath)) continue
+      const stat = fs.statSync(fullPath)
+      if (stat.isDirectory()) {
+        if (item === 'devtools' || item === 'sourcemaps') {
+          fs.rmSync(fullPath, { recursive: true, force: true })
+        } else if (item === 'icons') {
+          const drdebugIcon = path.join(fullPath, 'drdebug.png')
+          if (fs.existsSync(drdebugIcon)) fs.unlinkSync(drdebugIcon)
+        } else {
+          cleanCompilerArtifacts(fullPath)
+        }
+      } else {
+        if (
+          item.endsWith('.d.ts') ||
+          item.endsWith('.d.ts.map') ||
+          item.endsWith('.js.map') ||
+          item === 'index.js' ||
+          item === 'bridgeProtocol.js' ||
+          item === 'BridgeLLMClient.js'
+        ) {
+          fs.unlinkSync(fullPath)
+        }
+      }
+    }
+  }
+  cleanCompilerArtifacts(distDir)
+
   // 4. Also copy manifest & dist files to extDir root for maximum convenience
   fs.copyFileSync(path.resolve(publicDir, 'manifest.json'), path.resolve(extDir, 'manifest.json'))
   fs.copyFileSync(path.resolve(distDir, 'background.js'), path.resolve(extDir, 'background.js'))
@@ -77,6 +109,8 @@ async function buildExtension() {
   fs.copyFileSync(path.resolve(publicDir, 'popup.html'), path.resolve(extDir, 'popup.html'))
   fs.copyFileSync(path.resolve(publicDir, 'popup.js'), path.resolve(extDir, 'popup.js'))
   copyRecursive(path.resolve(publicDir, 'icons'), path.resolve(extDir, 'icons'))
+  const extDrdebugIcon = path.resolve(extDir, 'icons/drdebug.png')
+  if (fs.existsSync(extDrdebugIcon)) fs.unlinkSync(extDrdebugIcon)
 
   console.log('✅ Chrome Extension successfully built!')
   console.log(`📁 Load unpacked target: ${extDir} or ${distDir}`)
