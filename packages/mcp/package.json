@@ -4,7 +4,8 @@
   "description": "Model Context Protocol (MCP) server & IDE bridge for Dr. Debug",
   "type": "module",
   "bin": {
-    "dr-debug-mcp": "./dist/cli.js"
+    "dr-debug-mcp": "./dist/cli.js",
+    "mcp": "./dist/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -26,7 +27,7 @@
   "homepage": "https://github.com/SazWhatician",
   "repository": {
     "type": "git",
-    "url": "https://github.com/SazWhatician/DebugCopilot"
+    "url": "git+https://github.com/SazWhatician/Dr.Debug.git"
   },
   "license": "MIT"
 }
