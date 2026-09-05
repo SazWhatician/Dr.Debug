@@ -827,7 +827,7 @@ body.is-loading {
 
 .compact-download-card.is-active {
   opacity: 1;
-  pointer-events: auto;
+  pointer-events: auto !important;
   transform: scale(1);
 }
 
@@ -886,6 +886,14 @@ body.is-loading {
   box-shadow: 0 12px 35px -5px rgba(16, 185, 129, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   margin-bottom: 16px;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 5;
+}
+
+.dl-zip-button * {
+  pointer-events: none;
 }
 
 .dl-zip-button:hover {
@@ -1647,5 +1655,300 @@ body.is-loading {
   height: 100%;
 }
 
+/* ============================================================
+   NEWSLETTER & UPDATE NOTIFICATION MODAL (Liquid Glassmorphism)
+   Captures emails to send release & `npm update dr-debug` alerts
+   ============================================================ */
+.newsletter-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(2, 6, 12, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
 
+.newsletter-modal-backdrop.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
 
+.newsletter-modal-dialog {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  background: rgba(11, 18, 28, 0.94);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 22px;
+  padding: 34px 30px 26px 30px;
+  box-shadow:
+    0 35px 85px -15px rgba(0, 0, 0, 0.96),
+    0 0 45px -5px rgba(16, 185, 129, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(24px) scale(0.96);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  font-family: 'Space Grotesk', -apple-system, sans-serif;
+  pointer-events: none;
+}
+
+.newsletter-modal-backdrop.is-open .newsletter-modal-dialog {
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.newsletter-modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.newsletter-modal-close:hover {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #10b981;
+  transform: rotate(90deg);
+}
+
+.newsletter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 9999px;
+  padding: 4px 12px;
+  margin-bottom: 16px;
+}
+
+.newsletter-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.newsletter-icon-glow {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+  flex-shrink: 0;
+}
+
+.newsletter-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.newsletter-description {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: #94a3b8;
+  margin: 0 0 22px 0;
+}
+
+.newsletter-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.newsletter-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.newsletter-input-icon {
+  position: absolute;
+  left: 14px;
+  color: #64748b;
+  pointer-events: none;
+  transition: color 0.2s;
+}
+
+.newsletter-input {
+  width: 100%;
+  padding: 13px 14px 13px 42px;
+  background: rgba(15, 23, 42, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 12px;
+  color: #f8fafc;
+  font-family: 'Space Grotesk', -apple-system, sans-serif;
+  font-size: 0.94rem;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.newsletter-input:focus {
+  outline: none;
+  border-color: #10b981;
+  background: rgba(15, 23, 42, 0.95);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.22);
+}
+
+.newsletter-input:focus + .newsletter-input-icon,
+.newsletter-input-wrap:focus-within .newsletter-input-icon {
+  color: #10b981;
+}
+
+.newsletter-submit-btn {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #022c22;
+  font-family: 'Space Grotesk', -apple-system, sans-serif;
+  font-size: 0.96rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.38);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.newsletter-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(16, 185, 129, 0.52);
+  filter: brightness(1.06);
+}
+
+.newsletter-submit-btn:active {
+  transform: translateY(0);
+}
+
+.newsletter-footer-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.newsletter-skip-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-family: 'Space Grotesk', -apple-system, sans-serif;
+  font-size: 0.84rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  transition: color 0.2s ease;
+  padding: 4px 8px;
+}
+
+.newsletter-skip-btn:hover {
+  color: #cbd5e1;
+}
+
+.newsletter-privacy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  color: #475569;
+  margin-top: 16px;
+  text-align: center;
+}
+
+.newsletter-privacy svg {
+  flex-shrink: 0;
+  color: #64748b;
+}
+
+.newsletter-success-state {
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 18, 28, 0.98);
+  border-radius: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 30px;
+  z-index: 10;
+  animation: fadeInModal 0.3s ease-out;
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.success-icon-wrap {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  box-shadow: 0 0 28px rgba(16, 185, 129, 0.45);
+}
+
+.success-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #10b981;
+  margin: 0 0 8px 0;
+}
+
+.success-desc {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(2, 44, 34, 0.25);
+  border-top-color: #022c22;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

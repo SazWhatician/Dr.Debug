@@ -21,14 +21,10 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@dr-debug/controller": "^0.1.0",
-    "@dr-debug/core": "^0.1.0",
-    "@dr-debug/llms": "^0.1.0",
-    "@dr-debug/ui": "^0.1.0",
     "zod": "^3.24.1"
   },
   "scripts": {
-    "build": "tsc -b tsconfig.json",
+    "build": "tsc -b tsconfig.json && esbuild src/index.ts --bundle --format=esm --outfile=dist/index.js --external:zod && esbuild src/standalone.ts --bundle --format=esm --outfile=dist/standalone.js --external:zod",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [

@@ -407,9 +407,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const frameIndex = Math.min(TOTAL_FRAMES - 1, Math.floor(videoProgress * (TOTAL_FRAMES - 1)))
     renderCanvasFrame(frameIndex)
 
-    // Toggle active download card at download scene (0.66 to 0.95)
+    // Toggle active download card at download scene (0.62 to 0.95)
     if (downloadCard) {
-      if (progress >= 0.66 && progress <= 0.95) {
+      if (progress >= 0.62 && progress <= 0.95) {
         downloadCard.classList.add('is-active')
       } else {
         downloadCard.classList.remove('is-active')
@@ -522,14 +522,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // 0.66 -> 1.00: Download Card over the Monitor Screen with Pinned Scroll Stopper
     masterScrollTl
       .fromTo(downloadCard,
-        { opacity: 0, scale: 0.88, y: 35 },
-        { opacity: 1, scale: 1, y: 0, duration: 0.10, ease: 'power3.out' },
+        { opacity: 0, scale: 0.88, y: 35, pointerEvents: 'none' },
+        { opacity: 1, scale: 1, y: 0, pointerEvents: 'auto', duration: 0.10, ease: 'power3.out' },
         0.66
       )
       // EXTENDED STOPPER / HOLD: From 0.70 to 0.92, download card is pinned & steady over the monitor screen
       .to({}, { duration: 0.22 }, 0.70)
       // Smooth exit so user scrolls down into the full-breadth CRT terminal below
-      .to(downloadCard, { opacity: 0, y: -25, duration: 0.06, ease: 'power2.in' }, 0.94)
+      .to(downloadCard, { opacity: 0, y: -25, pointerEvents: 'none', duration: 0.06, ease: 'power2.in' }, 0.94)
   }
 
   // ========================================================
@@ -548,7 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const maxScroll = heroSection.offsetHeight - window.innerHeight
       const targetScroll = heroSection.offsetTop + (maxScroll * 0.78)
       lenis.scrollTo(targetScroll, {
-        duration: 1.6,
+        duration: 1.4,
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t))
       })
     })
@@ -654,8 +654,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function downloadExtensionZip(e) {
-    if (e) e.preventDefault()
+  // ============================================================
+  // 📬 NEWSLETTER & RELEASE UPDATE NOTIFICATION CONFIGURATION
+  // Paste your Google Apps Script Web App URL from scripts/google-sheets-newsletter.js here:
+  const GOOGLE_SHEET_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwnifzDDUDXlNHJ9eIufGpNlBQ1oL0kgVIP1_varNpIOyi_y6nyvTwmSjQnGSIo7J2vyg/exec'
+
+  // Newsletter Modal DOM Elements
+  const newsletterModal = document.getElementById('newsletter-modal')
+  const btnCloseNewsletter = document.getElementById('btn-close-newsletter')
+  const btnSkipNewsletter = document.getElementById('btn-skip-newsletter')
+  const newsletterForm = document.getElementById('newsletter-form')
+  const newsletterEmail = document.getElementById('newsletter-email')
+  const newsletterSuccess = document.getElementById('newsletter-success')
+  const btnNewsletterText = document.getElementById('btn-newsletter-text')
+  const newsletterSpinner = document.getElementById('newsletter-spinner')
+
+  function openNewsletterModal() {
+    if (newsletterModal) {
+      newsletterModal.classList.add('is-open')
+      newsletterModal.setAttribute('aria-hidden', 'false')
+      if (newsletterSuccess) newsletterSuccess.style.display = 'none'
+      if (newsletterEmail) {
+        newsletterEmail.value = ''
+        setTimeout(() => newsletterEmail.focus(), 120)
+      }
+    }
+  }
+
+  function closeNewsletterModal() {
+    if (newsletterModal) {
+      newsletterModal.classList.remove('is-open')
+      newsletterModal.setAttribute('aria-hidden', 'true')
+    }
+  }
+
+  function triggerDirectZipDownload() {
     showToast('🚀 Downloading dr-debug-extension.zip! Extract & load into chrome://extensions')
 
     // 1. Try embedded base64 payload (works 100% offline, on file://, or any host)
@@ -675,7 +708,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(a)
         a.click()
         setTimeout(() => {
-          document.body.removeChild(a)
+          if (a.parentNode) a.parentNode.removeChild(a)
           URL.revokeObjectURL(url)
         }, 1500)
         return
@@ -684,16 +717,114 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // 2. Direct URL fallback
-    const a = document.createElement('a')
-    a.href = 'dr-debug-extension.zip'
-    a.download = 'dr-debug-extension.zip'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
+    // 2. Direct URL download trigger (persistent anchor prevents browser tick cancellation)
+    const dlLink = document.createElement('a')
+    dlLink.href = 'dr-debug-extension.zip'
+    dlLink.setAttribute('download', 'dr-debug-extension.zip')
+    dlLink.style.display = 'none'
+    document.body.appendChild(dlLink)
+    dlLink.click()
+    setTimeout(() => {
+      if (dlLink.parentNode) dlLink.parentNode.removeChild(dlLink)
+    }, 2000)
   }
 
-  document.getElementById('btn-dl-extension')?.addEventListener('click', downloadExtensionZip)
+  function handleDownloadIntent(e) {
+    // If user has already subscribed or already submitted email:
+    if (localStorage.getItem('dr_debug_subscribed')) {
+      // If clicking a link that natively downloads, let the browser handle it
+      if (e && e.currentTarget && e.currentTarget.tagName === 'A' && e.currentTarget.hasAttribute('download')) {
+        showToast('🚀 Downloading dr-debug-extension.zip! Extract & load into chrome://extensions')
+        return
+      }
+      if (e && e.preventDefault) e.preventDefault()
+      triggerDirectZipDownload()
+      return
+    }
+
+    // Otherwise, intercept and open the newsletter modal
+    if (e && e.preventDefault) e.preventDefault()
+    openNewsletterModal()
+  }
+
+  // Expose globally for resilient inline HTML and script access
+  window.handleDownloadIntent = handleDownloadIntent
+  window.openNewsletterModal = openNewsletterModal
+  window.closeNewsletterModal = closeNewsletterModal
+  window.triggerDirectZipDownload = triggerDirectZipDownload
+
+  // Modal event listeners
+  btnCloseNewsletter?.addEventListener('click', closeNewsletterModal)
+  btnSkipNewsletter?.addEventListener('click', (e) => {
+    if (e && e.preventDefault) e.preventDefault()
+    closeNewsletterModal()
+    triggerDirectZipDownload()
+  })
+
+  newsletterModal?.addEventListener('click', (e) => {
+    if (e.target === newsletterModal) {
+      closeNewsletterModal()
+    }
+  })
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && newsletterModal?.classList.contains('is-open')) {
+      closeNewsletterModal()
+    }
+  })
+
+  // Form Submission
+  newsletterForm?.addEventListener('submit', (e) => {
+    e.preventDefault()
+    const email = newsletterEmail?.value?.trim()
+    if (!email || !email.includes('@')) return
+
+    // Show loading spinner
+    if (btnNewsletterText) btnNewsletterText.style.display = 'none'
+    if (newsletterSpinner) newsletterSpinner.style.display = 'inline-block'
+
+    // Synchronous download trigger within trusted user gesture
+    triggerDirectZipDownload()
+
+    // 1. Post to Google Apps Script Web App (background)
+    try {
+      if (GOOGLE_SHEET_ENDPOINT && !GOOGLE_SHEET_ENDPOINT.includes('PASTE_YOUR')) {
+        fetch(GOOGLE_SHEET_ENDPOINT, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: email,
+            timestamp: new Date().toISOString(),
+            source: 'Landing Download Modal'
+          })
+        }).catch((err) => console.warn('Newsletter fetch:', err))
+      }
+    } catch (err) {
+      console.warn('Newsletter submission error:', err)
+    }
+
+    // 2. Persist in localStorage
+    localStorage.setItem('dr_debug_subscribed', 'true')
+    localStorage.setItem('dr_debug_subscriber_email', email)
+
+    // 3. Show success state
+    if (newsletterSuccess) {
+      newsletterSuccess.style.display = 'flex'
+    }
+
+    // 4. Close modal after celebration
+    setTimeout(() => {
+      closeNewsletterModal()
+      if (newsletterSuccess) newsletterSuccess.style.display = 'none'
+      if (btnNewsletterText) btnNewsletterText.style.display = 'inline'
+      if (newsletterSpinner) newsletterSpinner.style.display = 'none'
+      if (newsletterEmail) newsletterEmail.value = ''
+    }, 1500)
+  })
+
+  document.getElementById('btn-dl-extension')?.addEventListener('click', handleDownloadIntent)
+  document.getElementById('faq-step-dl-link')?.addEventListener('click', handleDownloadIntent)
 
   // CLI Command Copy Button
   const copyHeroCmdBtn = document.getElementById('btn-copy-hero-cmd')
@@ -879,7 +1010,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Footer Reveal Parallax
   const reactorZone = document.querySelector('.reactor-zone')
   if (reactorZone) {
-    gsap.fromTo('.reactor-zone .footer-content', 
+    gsap.fromTo('.reactor-zone .footer-content',
       { y: -80, opacity: 0.5 },
       {
         y: 0,

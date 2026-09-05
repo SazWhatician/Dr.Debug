@@ -106,10 +106,19 @@ Elevate the Dr. Debug landing page (`landing/index.html`, `landing/styles.css`, 
 - **MCP Zero-Dependency Decoupling**: Inlined Docker telemetry types in `packages/mcp/src/types.ts`, enabling `@dr-debug/mcp` to run autonomously via `npx -y @dr-debug/mcp` without external monorepo dependencies.
 - **Packaging Verification**: Validated `npm pack --dry-run` produces clean, isolated packages free of `playground/`, `test/`, and root dev assets.
 
+### 8. Download Email Capture & Google Sheets Release Mailer
+- **Liquid Glassmorphic Modal**: Intercepts the Chrome Extension download flow to invite developers to receive notification emails when updates or patches drop (`npm update dr-debug`).
+- **Non-Hostage UX**: Includes a graceful "Skip to download" link that respects user freedom while ensuring immediate download on submit or skip.
+- **Google Sheets Ingestion Webhook**: Ready-to-deploy Google Apps Script (`scripts/google-sheets-newsletter.js`) that automatically appends new subscriber rows (`Timestamp, Email, Source, Status`) with zero server overhead.
+- **1-Click Update Mailer**: Built-in Apps Script menu (`🩺 Dr. Debug > 🚀 Broadcast Release Update Email`) allowing Saswat to prompt for version & changelog and broadcast styled release emails directly through Gmail.
+
 ---
 
 ## 🧪 Verification & Results
 - **Vitest Master Suite**: **115/115 tests passing across 30 test files**.
 - **NPM Package Verification**: Dry-run pack verified for `dr-debug` and `@dr-debug/mcp` with zero bloat.
 - **Asset Sync**: Assets verified in both `landing/` and `release/`.
+- **Newsletter Modal Verification**: Tested via browser subagent with focus states, submit handling, local storage persistence, and skip bypass.
+- **Center Download Button Clickability Fix**: Resolved CSS stacking context trap where `.newsletter-modal-backdrop` (fixed at `z-index: 100000`) had unclosed children inheriting `pointer-events: auto` from `.liquid-glass-card`, creating an invisible hit-box over `#btn-dl-extension`. Added `visibility: hidden;` and explicit `pointer-events: none;` on modal backdrop and dialog when closed, and ensured `.dl-zip-button` has explicit `pointer-events: auto !important` and `cursor: pointer`. Verified using `document.elementFromPoint` returning the exact button anchor and full click -> modal -> download flow in browser automation.
+- **Email Template Encoding & Cross-Client Compatibility**: Fixed Unicode 4-byte surrogate pair mangling (mojibake) in `scripts/google-sheets-newsletter.js`. Replaced raw emojis with HTML numeric entities (`&#129658;` for stethoscope, `&#9889;` for lightning, `&#128268;` for plug) and Unicode escapes in JavaScript strings. Replaced fragile `display: flex` with bulletproof email `<table>` layout, added explicit `UTF-8` content-type headers, and provided a structured plain-text fallback for maximum client compatibility.
 

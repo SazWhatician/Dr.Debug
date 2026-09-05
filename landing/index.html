@@ -223,7 +223,7 @@
           <p class="dl-subtitle">Download the extension ZIP and load it unpacked into Chrome in under 30 seconds.</p>
 
           <!-- Single ZIP Download Button -->
-          <a href="dr-debug-extension.zip" download="dr-debug-extension.zip" class="dl-zip-button" id="btn-dl-extension">
+          <a href="dr-debug-extension.zip" download="dr-debug-extension.zip" class="dl-zip-button" id="btn-dl-extension" onclick="window.handleDownloadIntent ? window.handleDownloadIntent(event) : null">
             <div class="dl-btn-icon">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             </div>
@@ -322,7 +322,7 @@
                 </div>
                 <div class="step-content">
                   <h4 class="step-label"><span class="step-num">01</span> Download the ZIP</h4>
-                  <p>Click the <strong>Download Chrome Extension</strong> button above to get <code class="inline-code">dr-debug-extension.zip</code>.</p>
+                  <p><a href="dr-debug-extension.zip" download="dr-debug-extension.zip" id="faq-step-dl-link" style="color: #34d399; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer;">Download dr-debug-extension.zip (Direct) →</a></p>
                 </div>
               </div>
 
@@ -513,6 +513,92 @@
       </div>
     </div>
   </section>
+
+  <!-- ============================================================
+       NEWSLETTER & UPDATE NOTIFICATION MODAL
+       Appears when user clicks Download, capturing their email
+       to send release and `npm update dr-debug` notifications
+       ============================================================ -->
+  <div class="newsletter-modal-backdrop" id="newsletter-modal" aria-hidden="true">
+    <div class="newsletter-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <!-- Close Button -->
+      <button class="newsletter-modal-close" id="btn-close-newsletter" aria-label="Close modal" onclick="window.closeNewsletterModal ? window.closeNewsletterModal() : null">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <!-- Badge -->
+      <div class="newsletter-badge">
+        <span class="status-dot-green"></span>
+        <span>NEVER MISS A PATCH · RELEASE NOTIFICATIONS</span>
+      </div>
+
+      <!-- Icon & Title -->
+      <div class="newsletter-header">
+        <div class="newsletter-icon-glow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <polyline points="22,6 12,13 2,6"></polyline>
+          </svg>
+        </div>
+        <h3 class="newsletter-title" id="modal-title">Stay Updated with Dr. Debug</h3>
+      </div>
+
+      <p class="newsletter-description">
+        Dr. Debug runs local-first with zero telemetry. Because unpacked extensions and npm packages cannot update silently, enter your email to get notified when new patches or LLM drivers release so you know when to run <code class="inline-code">npm update dr-debug</code>.
+      </p>
+
+      <!-- Form -->
+      <form class="newsletter-form" id="newsletter-form">
+        <div class="newsletter-input-wrap">
+          <svg class="newsletter-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <polyline points="22,6 12,13 2,6"></polyline>
+          </svg>
+          <input 
+            type="email" 
+            id="newsletter-email" 
+            class="newsletter-input" 
+            placeholder="developer@company.com" 
+            required 
+            autocomplete="email"
+            spellcheck="false"
+          />
+        </div>
+
+        <button type="submit" class="newsletter-submit-btn" id="btn-submit-newsletter">
+          <span class="btn-text" id="btn-newsletter-text">⚡ Get Release Alerts & Download ZIP</span>
+          <div class="btn-spinner" id="newsletter-spinner" style="display:none;"></div>
+        </button>
+      </form>
+
+      <!-- Skip & Direct Download Option -->
+      <div class="newsletter-footer-row">
+        <button type="button" class="newsletter-skip-btn" id="btn-skip-newsletter">
+          No thanks, just start the download →
+        </button>
+      </div>
+
+      <!-- Security Guarantee -->
+      <div class="newsletter-privacy">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        <span>Zero spam. Only new version releases and critical security patches.</span>
+      </div>
+
+      <!-- Success Overlay State -->
+      <div class="newsletter-success-state" id="newsletter-success" style="display: none;">
+        <div class="success-icon-wrap">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <h4 class="success-title">You're on the list!</h4>
+        <p class="success-desc">Starting your download of <code class="inline-code">dr-debug-extension.zip</code> now...</p>
+      </div>
+    </div>
+  </div>
 
   <!-- Download Toast -->
   <div class="toast-notice" id="toast">
