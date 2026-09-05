@@ -85,24 +85,13 @@ document.addEventListener('DOMContentLoaded', () => {
       })
     }
 
-    // Floating Holographic Surgical HUD Cards Counter-Parallax
-    gsap.to('.hud-surgical-card', {
-      x: normX * 14,
-      y: normY * 9,
-      rotationY: normX * 3.8,
-      rotationX: normY * -3.2,
-      duration: 1.2,
-      ease: 'power2.out',
-      overwrite: 'auto'
-    })
-
-    // Centered Download Console 3D Tilt Rig
-    gsap.to('.surgical-tilt-rig', {
+    // Floating Liquid Glassmorphic Cards Parallax
+    gsap.to('.liquid-glass-card', {
       x: normX * 10,
-      y: normY * 7,
-      rotationY: normX * 2.8,
-      rotationX: normY * -2.4,
-      duration: 1.3,
+      y: normY * 6,
+      rotationY: normX * 2.5,
+      rotationX: normY * -2.0,
+      duration: 1.2,
       ease: 'power2.out',
       overwrite: 'auto'
     })
@@ -139,17 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
       })
     }
 
-    gsap.to('.hud-surgical-card', {
-      x: 0,
-      y: 0,
-      rotationY: 0,
-      rotationX: 0,
-      duration: 1.5,
-      ease: 'power2.out',
-      overwrite: 'auto'
-    })
-
-    gsap.to('.surgical-tilt-rig', {
+    gsap.to('.liquid-glass-card', {
       x: 0,
       y: 0,
       rotationY: 0,
@@ -376,13 +355,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const scrolled = -rect.top
     const progress = Math.min(1, Math.max(0, scrolled / scrollableDistance))
 
-    // Calculate exact frame 0 to 119
-    const frameIndex = Math.min(TOTAL_FRAMES - 1, Math.floor(progress * (TOTAL_FRAMES - 1)))
+    // Video scrubs smoothly across 0.0 to 0.70, then holds frame 119 for the download scene over the monitor
+    const videoProgress = Math.min(1, Math.max(0, progress / 0.70))
+    const frameIndex = Math.min(TOTAL_FRAMES - 1, Math.floor(videoProgress * (TOTAL_FRAMES - 1)))
     renderCanvasFrame(frameIndex)
 
-    // Toggle active download card at final scene
+    // Toggle active download card at download scene (0.66 to 0.95)
     if (downloadCard) {
-      if (progress >= 0.78) {
+      if (progress >= 0.66 && progress <= 0.95) {
         downloadCard.classList.add('is-active')
       } else {
         downloadCard.classList.remove('is-active')
@@ -402,6 +382,18 @@ document.addEventListener('DOMContentLoaded', () => {
         start: 'top top',
         end: 'bottom bottom',
         scrub: 0.2,
+        snap: {
+          snapTo: (val) => {
+            // Stopper: When user reaches the download card on the monitor, magnetically lock at 0.78
+            if (val >= 0.67 && val <= 0.93) {
+              return 0.78
+            }
+            return val
+          },
+          duration: { min: 0.25, max: 0.6 },
+          delay: 0.1,
+          ease: 'power2.out'
+        },
         onUpdate: (self) => {
           updateScrollScrub()
         }
@@ -409,68 +401,107 @@ document.addEventListener('DOMContentLoaded', () => {
     })
 
     // Timeline Sequence:
-    // 0.00 -> 0.22: Giant Bottom Title dissolves down & fades
+    // 0.00 -> 0.18: Giant Bottom Title dissolves down & fades
     masterScrollTl
       .to(heroBottomLayer, {
         y: 60,
         opacity: 0,
-        duration: 0.22,
+        duration: 0.18,
         ease: 'power2.in'
       }, 0)
 
-    // 0.22 -> 0.48: Chapter 01 (Substrate Interception) reveals and exits
-    masterScrollTl
-      .fromTo(chapter1,
-        { opacity: 0, y: 60 },
-        { opacity: 1, y: 0, duration: 0.12, ease: 'power2.out' },
-        0.24
-      )
-      .to(chapter1, {
-        opacity: 0,
-        y: -50,
-        duration: 0.12,
-        ease: 'power2.in'
-      }, 0.42)
+    // 0.20 -> 0.40: Chapter 01 (Google Antigravity & Claude Code MCP)
+    // Left & Right cards glide in from respective edges, holding the empty center
+    const cardAntigravity = document.getElementById('card-antigravity')
+    const cardClaude = document.getElementById('card-claude')
 
-    // 0.48 -> 0.74: Chapter 02 (Causal Correlation) reveals and exits
     masterScrollTl
-      .fromTo(chapter2,
-        { opacity: 0, y: 60 },
-        { opacity: 1, y: 0, duration: 0.12, ease: 'power2.out' },
-        0.50
+      .to(chapter1, { opacity: 1, duration: 0.02 }, 0.20)
+      .fromTo(cardAntigravity,
+        { opacity: 0, x: -90 },
+        { opacity: 1, x: 0, duration: 0.10, ease: 'power3.out' },
+        0.20
       )
-      .to(chapter2, {
+      .fromTo(cardClaude,
+        { opacity: 0, x: 90 },
+        { opacity: 1, x: 0, duration: 0.10, ease: 'power3.out' },
+        0.20
+      )
+      .to(cardAntigravity, {
         opacity: 0,
-        y: -50,
-        duration: 0.12,
+        x: -50,
+        duration: 0.08,
         ease: 'power2.in'
-      }, 0.68)
+      }, 0.36)
+      .to(cardClaude, {
+        opacity: 0,
+        x: 50,
+        duration: 0.08,
+        ease: 'power2.in'
+      }, 0.36)
+      .to(chapter1, { opacity: 0, duration: 0.02 }, 0.41)
 
-    // 0.75 -> 1.00: Final Scene! Centered Download Card emerges in the Operating Room
+    // 0.43 -> 0.63: Chapter 02 (Substrate Telemetry & Auto-Patches)
+    // Left & Right cards glide in from respective edges, holding the empty center
+    const cardTelemetry = document.getElementById('card-telemetry')
+    const cardPatches = document.getElementById('card-patches')
+
+    masterScrollTl
+      .to(chapter2, { opacity: 1, duration: 0.02 }, 0.43)
+      .fromTo(cardTelemetry,
+        { opacity: 0, x: -90 },
+        { opacity: 1, x: 0, duration: 0.10, ease: 'power3.out' },
+        0.43
+      )
+      .fromTo(cardPatches,
+        { opacity: 0, x: 90 },
+        { opacity: 1, x: 0, duration: 0.10, ease: 'power3.out' },
+        0.43
+      )
+      .to(cardTelemetry, {
+        opacity: 0,
+        x: -50,
+        duration: 0.08,
+        ease: 'power2.in'
+      }, 0.58)
+      .to(cardPatches, {
+        opacity: 0,
+        x: 50,
+        duration: 0.08,
+        ease: 'power2.in'
+      }, 0.58)
+      .to(chapter2, { opacity: 0, duration: 0.02 }, 0.63)
+
+    // 0.66 -> 1.00: Download Card over the Monitor Screen with Pinned Scroll Stopper
     masterScrollTl
       .fromTo(downloadCard,
-        { opacity: 0, scale: 0.82 },
-        { opacity: 1, scale: 1, duration: 0.22, ease: 'power3.out' },
-        0.76
+        { opacity: 0, scale: 0.88, y: 35 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.10, ease: 'power3.out' },
+        0.66
       )
+      // EXTENDED STOPPER / HOLD: From 0.70 to 0.92, download card is pinned & steady over the monitor screen
+      .to({}, { duration: 0.22 }, 0.70)
+      // Smooth exit so user scrolls down into the full-breadth CRT terminal below
+      .to(downloadCard, { opacity: 0, y: -25, duration: 0.06, ease: 'power2.in' }, 0.94)
   }
 
   // ========================================================
-  // 5. Navigation Links & Download Shimmer Direct Scroll
+  // 5. Navigation Links (Home, Download, Terminal, FAQ)
   // ========================================================
   const navDownloadBtn = document.getElementById('nav-btn-download')
   const navHomeBtn = document.getElementById('nav-link-home')
-  const navAboutBtn = document.getElementById('nav-link-about')
+  const navFaqBtn = document.getElementById('nav-link-faq')
+  const footerHomeBtn = document.getElementById('footer-link-home')
+  const footerTerminalBtn = document.getElementById('footer-link-terminal')
+  const footerFaqBtn = document.getElementById('footer-link-faq')
 
-  // Clicking "Download" in navbar scrolls smoothly to the final scene download card
   if (navDownloadBtn && heroSection) {
     navDownloadBtn.addEventListener('click', (e) => {
       e.preventDefault()
-      // The final scene card is fully centered at ~88% of the scrollable distance
       const maxScroll = heroSection.offsetHeight - window.innerHeight
-      const targetScroll = heroSection.offsetTop + (maxScroll * 0.88)
+      const targetScroll = heroSection.offsetTop + (maxScroll * 0.78)
       lenis.scrollTo(targetScroll, {
-        duration: 1.8,
+        duration: 1.6,
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t))
       })
     })
@@ -483,94 +514,65 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   }
 
-  if (navAboutBtn) {
-    navAboutBtn.addEventListener('click', (e) => {
+  if (footerHomeBtn) {
+    footerHomeBtn.addEventListener('click', (e) => {
       e.preventDefault()
-      const authorSec = document.getElementById('author')
-      if (authorSec) {
-        lenis.scrollTo(authorSec, { duration: 1.4 })
+      lenis.scrollTo(0, { duration: 1.2 })
+    })
+  }
+
+  if (footerTerminalBtn) {
+    footerTerminalBtn.addEventListener('click', (e) => {
+      e.preventDefault()
+      const termEl = document.getElementById('crt-terminal')
+      if (termEl) {
+        lenis.scrollTo(termEl, { duration: 1.4, offset: -20 })
       }
     })
   }
 
-  // 3D Perspective Tilt on Cockpit Preview
-  const cockpitCard = document.querySelector('.cockpit-preview-card')
-  const cockpitWrap = document.getElementById('cockpit-3d')
-
-  if (cockpitWrap && cockpitCard) {
-    cockpitWrap.addEventListener('mousemove', (e) => {
-      const rect = cockpitWrap.getBoundingClientRect()
-      const x = e.clientX - rect.left - rect.width / 2
-      const y = e.clientY - rect.top - rect.height / 2
-
-      const rotateX = (-y / rect.height) * 14
-      const rotateY = (x / rect.width) * 14
-
-      gsap.to(cockpitCard, {
-        rotateX: rotateX,
-        rotateY: rotateY,
-        transformPerspective: 1200,
-        duration: 0.5,
-        ease: 'power1.out'
-      })
-    })
-
-    cockpitWrap.addEventListener('mouseleave', () => {
-      gsap.to(cockpitCard, {
-        rotateX: 0,
-        rotateY: 0,
-        duration: 0.8,
-        ease: 'power2.out'
-      })
+  if (navFaqBtn) {
+    navFaqBtn.addEventListener('click', (e) => {
+      e.preventDefault()
+      const faqEl = document.getElementById('faq')
+      if (faqEl) {
+        lenis.scrollTo(faqEl, { duration: 1.4, offset: -20 })
+      }
     })
   }
 
-
-  // 5. ScrollTrigger: Features Stagger
-  gsap.utils.toArray('.feature-card').forEach((card, i) => {
-    gsap.from(card, {
-      scrollTrigger: {
-        trigger: card,
-        start: 'top 85%',
-        toggleActions: 'play none none none'
-      },
-      y: 60,
-      opacity: 0,
-      duration: 0.8,
-      delay: i * 0.12,
-      ease: 'power3.out'
+  if (footerFaqBtn) {
+    footerFaqBtn.addEventListener('click', (e) => {
+      e.preventDefault()
+      const faqEl = document.getElementById('faq')
+      if (faqEl) {
+        lenis.scrollTo(faqEl, { duration: 1.4, offset: -20 })
+      }
     })
-  })
+  }
 
-  // 6. ScrollTrigger: Installation Steps
-  gsap.utils.toArray('.step-card').forEach((card, i) => {
-    gsap.from(card, {
-      scrollTrigger: {
-        trigger: card,
-        start: 'top 85%',
-        toggleActions: 'play none none none'
-      },
-      scale: 0.9,
-      y: 40,
-      opacity: 0,
-      duration: 0.7,
-      delay: i * 0.15,
-      ease: 'back.out(1.4)'
-    })
-  })
-
-  // 7. ScrollTrigger: Author Card Glow Reveal
-  gsap.from('.author-card', {
-    scrollTrigger: {
-      trigger: '.author-card',
-      start: 'top 80%',
-      toggleActions: 'play none none none'
-    },
-    scale: 0.92,
-    y: 50,
-    opacity: 0,
-    duration: 1,
-    ease: 'power3.out'
+  // ========================================================
+  // 6. Interactive Sleek Dropdown FAQs
+  // ========================================================
+  const faqItems = document.querySelectorAll('.faq-item')
+  faqItems.forEach(item => {
+    const trigger = item.querySelector('.faq-trigger')
+    if (trigger) {
+      trigger.addEventListener('click', () => {
+        const isOpen = item.classList.contains('is-open')
+        faqItems.forEach(other => {
+          if (other !== item) {
+            other.classList.remove('is-open')
+            other.querySelector('.faq-trigger')?.setAttribute('aria-expanded', 'false')
+          }
+        })
+        item.classList.toggle('is-open', !isOpen)
+        trigger.setAttribute('aria-expanded', !isOpen ? 'true' : 'false')
+        setTimeout(() => {
+          ScrollTrigger.refresh()
+        }, 360)
+      })
+    }
   })
 
   // 8. 1-Click Terminal Copy Button
@@ -644,45 +646,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.removeChild(a)
   }
 
-  function downloadStandaloneJs(e) {
-    if (e) e.preventDefault()
-    showToast('⚡ Downloading dr-debug.standalone.min.js for zero-build web apps!')
-
-    // 1. Try embedded payload
-    if (window.DR_DEBUG_STANDALONE_CODE) {
-      try {
-        const blob = new Blob([window.DR_DEBUG_STANDALONE_CODE], { type: 'application/javascript' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = 'dr-debug.standalone.min.js'
-        document.body.appendChild(a)
-        a.click()
-        setTimeout(() => {
-          document.body.removeChild(a)
-          URL.revokeObjectURL(url)
-        }, 1500)
-        return
-      } catch (err) {
-        console.warn('Payload fallback:', err)
-      }
-    }
-
-    // 2. Direct URL fallback
-    const a = document.createElement('a')
-    a.href = 'dr-debug.standalone.min.js'
-    a.download = 'dr-debug.standalone.min.js'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-  }
-
   document.getElementById('btn-dl-extension')?.addEventListener('click', downloadExtensionZip)
-  document.getElementById('btn-dl-js')?.addEventListener('click', downloadStandaloneJs)
-  document.querySelector('.btn-nav-download')?.addEventListener('click', (e) => {
-    e.preventDefault()
-    downloadExtensionZip(e)
-  })
 
   // CLI Command Copy Button
   const copyHeroCmdBtn = document.getElementById('btn-copy-hero-cmd')
@@ -713,117 +677,52 @@ document.addEventListener('DOMContentLoaded', () => {
     let width = canvasContainer.clientWidth || window.innerWidth
     let height = canvasContainer.clientHeight || window.innerHeight
 
-    const camera = new THREE.PerspectiveCamera(55, width / height, 1, 2000)
-    camera.position.z = 450
+    const camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000)
+    camera.position.set(0, 0, 160)
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' })
     renderer.setSize(width, height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+    renderer.toneMapping = THREE.ACESFilmicToneMapping
+    renderer.toneMappingExposure = 1.25
     canvasContainer.appendChild(renderer.domElement)
 
-    // Group for rotation
+    // Vibrant lighting setup for 3D retro computer
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.4)
+    scene.add(ambientLight)
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.2)
+    keyLight.position.set(80, 100, 120)
+    scene.add(keyLight)
+
+    const greenFillLight = new THREE.DirectionalLight(0x2BA648, 2.8)
+    greenFillLight.position.set(-80, 40, 50)
+    scene.add(greenFillLight)
+
+    const cyanRimLight = new THREE.DirectionalLight(0x00f0ff, 1.8)
+    cyanRimLight.position.set(0, -60, -70)
+    scene.add(cyanRimLight)
+
+    // Master Group for 3D Computer & Ambient Dust
     const reactorGroup = new THREE.Group()
     scene.add(reactorGroup)
 
-    // 1. Particle Cloud (Orbital Rings & Core)
-    const particleCount = 2000
-    const geometry = new THREE.BufferGeometry()
-    const positions = new Float32Array(particleCount * 3)
-    const colors = new Float32Array(particleCount * 3)
-
-    const colorOrbitGreen = new THREE.Color(0x2BA648)
-    const colorBrightGreen = new THREE.Color(0x48e86c)
-    const colorDeepGreen = new THREE.Color(0x0F3918)
-
-    for (let i = 0; i < particleCount; i++) {
-      const theta = Math.random() * Math.PI * 2
-      const phi = Math.acos(2 * Math.random() - 1)
-      const radius = 120 + Math.random() * 180
-
-      positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta)
-      positions[i * 3 + 1] = (radius * Math.sin(phi) * Math.sin(theta)) * 0.65
-      positions[i * 3 + 2] = radius * Math.cos(phi)
-
-      const mixedColor = colorOrbitGreen.clone()
-      if (Math.random() > 0.6) {
-        mixedColor.lerp(colorBrightGreen, Math.random() * 0.8)
-      } else {
-        mixedColor.lerp(colorDeepGreen, Math.random() * 0.5)
-      }
-
-      colors[i * 3] = mixedColor.r
-      colors[i * 3 + 1] = mixedColor.g
-      colors[i * 3 + 2] = mixedColor.b
-    }
-
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-
-    // Canvas texture for glowing round points
-    const spriteCanvas = document.createElement('canvas')
-    spriteCanvas.width = 64
-    spriteCanvas.height = 64
-    const sCtx = spriteCanvas.getContext('2d')
-    const grad = sCtx.createRadialGradient(32, 32, 0, 32, 32, 30)
-    grad.addColorStop(0, 'rgba(255, 255, 255, 1)')
-    grad.addColorStop(0.3, 'rgba(43, 166, 72, 0.9)')
-    grad.addColorStop(0.7, 'rgba(15, 57, 24, 0.4)')
-    grad.addColorStop(1, 'rgba(0, 0, 0, 0)')
-    sCtx.fillStyle = grad
-    sCtx.fillRect(0, 0, 64, 64)
-    const pointTexture = new THREE.CanvasTexture(spriteCanvas)
-
-    const particleMaterial = new THREE.PointsMaterial({
-      size: 5.5,
-      map: pointTexture,
-      transparent: true,
-      opacity: 0.85,
-      vertexColors: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    })
-
-    const particles = new THREE.Points(geometry, particleMaterial)
-    reactorGroup.add(particles)
-
-    // 2. Wireframe Energy Core (Inner Torus & Icosahedron)
-    const torusGeo = new THREE.TorusGeometry(95, 22, 16, 80)
-    const torusMat = new THREE.MeshBasicMaterial({
-      color: 0x2BA648,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.18
-    })
-    const torusMesh = new THREE.Mesh(torusGeo, torusMat)
-    torusMesh.rotation.x = Math.PI / 2.5
-    reactorGroup.add(torusMesh)
-
-    const innerGeo = new THREE.IcosahedronGeometry(70, 1)
-    const innerMat = new THREE.MeshBasicMaterial({
-      color: 0x38d960,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.22
-    })
-    const innerMesh = new THREE.Mesh(innerGeo, innerMat)
-    reactorGroup.add(innerMesh)
-
-    // 3. Floating Spark Embers
-    const sparkCount = 180
+    // Floating green atmospheric sparks around retro computer
+    const sparkCount = 140
     const sparkGeo = new THREE.BufferGeometry()
     const sparkPositions = new Float32Array(sparkCount * 3)
     const sparkSpeeds = []
 
     for (let i = 0; i < sparkCount; i++) {
-      sparkPositions[i * 3] = (Math.random() - 0.5) * 600
-      sparkPositions[i * 3 + 1] = (Math.random() - 0.5) * 400
-      sparkPositions[i * 3 + 2] = (Math.random() - 0.5) * 300
-      sparkSpeeds.push(0.5 + Math.random() * 0.9)
+      sparkPositions[i * 3] = (Math.random() - 0.5) * 500
+      sparkPositions[i * 3 + 1] = (Math.random() - 0.5) * 350
+      sparkPositions[i * 3 + 2] = (Math.random() - 0.5) * 250
+      sparkSpeeds.push(0.3 + Math.random() * 0.7)
     }
     sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPositions, 3))
     const sparkMat = new THREE.PointsMaterial({
-      size: 3.5,
-      color: 0x48e86c,
+      size: 3.2,
+      color: 0x34d399,
       transparent: true,
       opacity: 0.7,
       blending: THREE.AdditiveBlending,
@@ -832,13 +731,56 @@ document.addEventListener('DOMContentLoaded', () => {
     const sparks = new THREE.Points(sparkGeo, sparkMat)
     scene.add(sparks)
 
-    // Mouse parallax tilt
+    // Retro Computer Model Group
+    const computerWrapper = new THREE.Group()
+    reactorGroup.add(computerWrapper)
+
+    function updateModelPlacement() {
+      const w = canvasContainer.clientWidth || window.innerWidth
+      if (w > 1000) {
+        computerWrapper.position.set(28, -6, 0)
+      } else {
+        computerWrapper.position.set(0, -6, 0)
+      }
+    }
+    updateModelPlacement()
+
+    // Load retro_computer.glb
+    if (typeof THREE.GLTFLoader !== 'undefined') {
+      const loader = new THREE.GLTFLoader()
+      loader.load(
+        'assets/retro_computer.glb',
+        (gltf) => {
+          const model = gltf.scene
+          const box = new THREE.Box3().setFromObject(model)
+          const center = box.getCenter(new THREE.Vector3())
+          const size = box.getSize(new THREE.Vector3())
+
+          // Center origin
+          model.position.x = -center.x
+          model.position.y = -center.y
+          model.position.z = -center.z
+
+          const maxDim = Math.max(size.x, size.y, size.z)
+          const targetDim = 72
+          const scale = targetDim / maxDim
+          computerWrapper.scale.set(scale, scale, scale)
+          computerWrapper.add(model)
+        },
+        undefined,
+        (err) => {
+          console.warn('Could not load retro_computer.glb:', err)
+        }
+      )
+    }
+
+    // Mouse tilt interaction
     let targetRotX = 0, targetRotY = 0
     window.addEventListener('mousemove', (e) => {
       const normX = (e.clientX / window.innerWidth) - 0.5
       const normY = (e.clientY / window.innerHeight) - 0.5
-      targetRotX = normY * 0.6
-      targetRotY = normX * 0.8
+      targetRotX = normY * 0.5
+      targetRotY = normX * 0.7
     })
 
     // Auto-Resize
@@ -849,6 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
       camera.aspect = width / height
       camera.updateProjectionMatrix()
       renderer.setSize(width, height)
+      updateModelPlacement()
     }
     window.addEventListener('resize', onResize)
 
@@ -861,28 +804,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { threshold: 0.05 })
     observer.observe(document.querySelector('.reactor-zone') || canvasContainer)
 
-    let clock = new THREE.Clock()
     function animate() {
       requestAnimationFrame(animate)
       if (!isVisible) return
 
-      const elapsedTime = clock.getElapsedTime()
-
-      reactorGroup.rotation.y += 0.005
-      reactorGroup.rotation.x += (targetRotX - reactorGroup.rotation.x) * 0.05
-      reactorGroup.rotation.z += (targetRotY * 0.5 - reactorGroup.rotation.z) * 0.05
-
-      torusMesh.rotation.z = elapsedTime * 0.2
-      innerMesh.rotation.y = -elapsedTime * 0.3
-      innerMesh.rotation.x = elapsedTime * 0.15
-      const pulse = 1 + Math.sin(elapsedTime * 2.5) * 0.06
-      innerMesh.scale.set(pulse, pulse, pulse)
+      // Smooth continuous rotation + mouse parallax tilt
+      computerWrapper.rotation.y += 0.006
+      computerWrapper.rotation.x += (targetRotX - computerWrapper.rotation.x) * 0.04
+      computerWrapper.rotation.z += (targetRotY * 0.35 - computerWrapper.rotation.z) * 0.04
 
       const sPos = sparkGeo.attributes.position.array
       for (let i = 0; i < sparkCount; i++) {
         sPos[i * 3 + 1] += sparkSpeeds[i]
-        if (sPos[i * 3 + 1] > 250) {
-          sPos[i * 3 + 1] = -250
+        if (sPos[i * 3 + 1] > 200) {
+          sPos[i * 3 + 1] = -200
         }
       }
       sparkGeo.attributes.position.needsUpdate = true
@@ -911,5 +846,114 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     )
+  }
+
+  // ── ThreeUI CrtBackground (Terminal Variant) Initialization ───────────
+  const initCrtTerminal = () => {
+    const crtHost = document.getElementById('crt-terminal-host')
+    const crtCanvas = document.getElementById('crt-terminal-canvas')
+
+    if (!crtHost || !crtCanvas) return
+
+    if (!window.ThreeUiCrt || !window.ThreeUiCrt.createCrtRenderer) {
+      setTimeout(initCrtTerminal, 50)
+      return
+    }
+
+    const options = {
+      variant: 'terminal',
+      speed: 1.00,
+      typeSpeed: 1.00,
+      motion: 1.00,
+      hue: 0,
+      saturation: 1.00,
+      brightness: 1.00,
+      opacity: 1.00
+    }
+
+    try {
+      const renderer = window.ThreeUiCrt.createCrtRenderer(crtHost, crtCanvas, () => options)
+      let frame = 0
+      let visible = true
+
+      const resize = () => {
+        renderer.resize()
+        renderer.render(performance.now())
+      }
+
+      const tick = (now) => {
+        renderer.render(now)
+        frame = visible && !document.hidden ? requestAnimationFrame(tick) : 0
+      }
+
+      const resizeObserver = new ResizeObserver(resize)
+      const intersection = new IntersectionObserver(([entry]) => {
+        visible = entry ? entry.isIntersecting : true
+        if (visible && !frame) frame = requestAnimationFrame(tick)
+        if (!visible && frame) {
+          cancelAnimationFrame(frame)
+          frame = 0
+        }
+      })
+
+      resizeObserver.observe(crtHost)
+      intersection.observe(crtHost)
+      resize()
+      frame = requestAnimationFrame(tick)
+
+      window.addEventListener('beforeunload', () => {
+        if (frame) cancelAnimationFrame(frame)
+        resizeObserver.disconnect()
+        intersection.disconnect()
+        renderer.dispose()
+      })
+    } catch (err) {
+      console.warn('ThreeUI CRT Renderer initialization warning:', err)
+    }
+  }
+
+  initCrtTerminal()
+
+  // ── Barba.js High-Fashion Transition Engine ───────────
+  if (typeof barba !== 'undefined') {
+    try {
+      barba.init({
+        prevent: ({ el }) => {
+          if (!el) return false
+          const hrefAttr = el.getAttribute('href') || ''
+          return (
+            el.classList?.contains('no-barba') ||
+            hrefAttr.startsWith('#') ||
+            el.hasAttribute('download') ||
+            el.getAttribute('target') === '_blank'
+          )
+        },
+        transitions: [{
+          name: 'fashion-fade',
+          leave(data) {
+            return gsap.to(data.current.container, {
+              opacity: 0,
+              y: -15,
+              duration: 0.35,
+              ease: 'power2.inOut'
+            })
+          },
+          enter(data) {
+            window.scrollTo(0, 0)
+            return gsap.from(data.next.container, {
+              opacity: 0,
+              y: 15,
+              duration: 0.45,
+              ease: 'power2.out',
+              onComplete: () => {
+                ScrollTrigger.refresh()
+              }
+            })
+          }
+        }]
+      })
+    } catch (err) {
+      console.warn('Barba.js initialization notice:', err)
+    }
   }
 })

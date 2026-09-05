@@ -237,7 +237,13 @@ if (process.env.NODE_ENV === 'development') {
     fs.copyFileSync(path.resolve(landingDir, 'index.html'), path.resolve(releaseDir, 'index.html'))
     fs.copyFileSync(path.resolve(landingDir, 'styles.css'), path.resolve(releaseDir, 'styles.css'))
     fs.copyFileSync(path.resolve(landingDir, 'app.js'), path.resolve(releaseDir, 'app.js'))
-    fs.copyFileSync(path.resolve(landingDir, 'assets/drdebug.png'), path.resolve(releaseDir, 'assets/drdebug.png'))
+    if (fs.existsSync(path.resolve(landingDir, 'crt-renderer.js'))) {
+      fs.copyFileSync(path.resolve(landingDir, 'crt-renderer.js'), path.resolve(releaseDir, 'crt-renderer.js'))
+    }
+    const landingAssets = path.resolve(landingDir, 'assets')
+    if (fs.existsSync(landingAssets)) {
+      copyRecursive(landingAssets, path.resolve(releaseDir, 'assets'))
+    }
     console.log(`🌐 Animated landing & download website synced to: ${path.resolve(releaseDir, 'index.html')}`)
   }
 

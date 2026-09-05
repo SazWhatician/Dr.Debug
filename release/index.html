@@ -4,302 +4,371 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dr. Debug — Autonomous In-Browser AI Debugging & Observability Agent</title>
-  <meta name="description" content="Download Dr. Debug: The autonomous in-browser AI debugging agent. Full-stack Docker substrate streaming, causal topology correlation, and instant unified diff auto-patches." />
+  <meta name="description" content="Dr. Debug: Autonomous in-browser AI debugging agent. Full-stack Docker substrate streaming, causal topology correlation, and instant unified diff auto-patches." />
   <link rel="icon" type="image/png" href="assets/drdebug.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:ital,wght@0,300..800;1,300..800&family=Space+Grotesk:wght@300;400;500;600;700&family=Syncopate:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body class="is-loading" data-barba="wrapper">
 
-  <!-- Ambient Glowing Mesh -->
+  <!-- ========================================================
+       0-100 MODERN CORNER LOADER + "1-0-0" SLIDE-IN REVEAL
+       ======================================================== -->
+  <div class="corner-preloader" id="corner-preloader">
+    <!-- Sliding Curtains -->
+    <div class="preloader-curtain curtain-top"></div>
+    <div class="preloader-curtain curtain-bottom"></div>
+
+    <!-- Center 1-0-0 Slide-in Typography (Reveals at 100%) -->
+    <div class="slide-reveal-wrap" id="slide-reveal-wrap">
+      <div class="reveal-digits-row">
+        <span class="reveal-digit d1">1</span>
+        <span class="reveal-digit d2">0</span>
+        <span class="reveal-digit d3">0</span>
+      </div>
+      <div class="reveal-sub-status">SYSTEM INITIALIZED // ALL SUBSTRATES ONLINE</div>
+    </div>
+
+    <!-- Bottom-Corner 0-100 Loader Box -->
+    <div class="corner-loader-box">
+      <div class="loader-sys-tag">
+        <span class="sys-pulse-dot"></span>
+        <span class="sys-label">DR. DEBUG · OBSERVABILITY ENGINE</span>
+      </div>
+      <div class="loader-counter-row">
+        <span class="loader-counter-num" id="loader-counter">00</span>
+        <span class="loader-counter-unit">%</span>
+      </div>
+      <div class="loader-progress-track">
+        <div class="loader-progress-bar" id="loader-bar"></div>
+      </div>
+      <div class="loader-status-msg" id="loader-status">CONNECTING DEVTOOLS HOOKS...</div>
+    </div>
+  </div>
+
+  <!-- Ambient Glowing Mesh (Subtle Background) -->
   <div class="noise-overlay"></div>
   <div class="glow-orb orb-1" id="orb-1"></div>
   <div class="glow-orb orb-2" id="orb-2"></div>
   <div class="glow-orb orb-3" id="orb-3"></div>
 
-  <!-- Navigation Bar -->
-  <header class="navbar">
-    <div class="nav-container">
-      <a href="#" class="nav-brand">
-        <img src="assets/drdebug.png" alt="Dr. Debug Logo" class="nav-logo" />
-        <span class="nav-title">DR. DEBUG</span>
-        <span class="nav-badge">v0.1.0</span>
+  <!-- Wrap Main Content for Sticky Footer Reveal Curtain & Barba Container -->
+  <div class="page-content-wrapper" data-barba="container" data-barba-namespace="home">
+
+  <!-- ========================================================
+       MINIMALISTIC & ENTIRELY TRANSPARENT NAVBAR
+       (Left: Logo | Center: Completely Empty | Right: Links)
+       ======================================================== -->
+  <header class="navbar-transparent" id="main-nav">
+    <div class="nav-container-transparent">
+      <!-- Left: Logo of Dr. Debug -->
+      <a href="#hero" class="nav-brand-minimal">
+        <img src="assets/drdebug.png" alt="Dr. Debug Logo" class="nav-logo-minimal" />
+        <span class="nav-title-minimal">DR. DEBUG</span>
       </a>
 
-      <ul class="nav-links">
-        <li><a href="#features">Features</a></li>
-        <li><a href="#simulator">Live Simulator</a></li>
-        <li><a href="#docker">Host Docker</a></li>
-        <li><a href="#install">Install Guide</a></li>
-        <li><a href="#author">Author</a></li>
-      </ul>
+      <!-- Center: Intentionally Empty Negative Space -->
+      <div class="nav-center-spacer"></div>
 
-      <div class="nav-actions">
-        <a href="https://github.com/SazWhatician" target="_blank" class="btn-icon" title="Saswat Mohanty on GitHub">
-          <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-          <span>GitHub</span>
+      <!-- Right: Home | Download (Shining & Distinct) | FAQ -->
+      <nav class="nav-right-actions">
+        <a href="#hero" class="nav-item-link" id="nav-link-home">Home</a>
+        <a href="#cinematic-download-target" class="nav-btn-download-shimmer" id="nav-btn-download">
+          <span class="shimmer-glare"></span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span>Download</span>
         </a>
-        <a href="#download" class="btn-nav-download">Download</a>
-      </div>
+        <a href="#faq" class="nav-item-link" id="nav-link-faq">FAQ</a>
+      </nav>
     </div>
   </header>
 
-  <!-- Hero Section -->
-  <section class="hero" id="download">
-    <div class="hero-pill">
-      <span class="hero-pill-dot"></span>
-      <span class="hero-pill-text">Autonomous In-Browser AI Debugging & Docker Cockpit</span>
-    </div>
+  <!-- ========================================================
+       CINEMATIC SCROLL-DRIVEN EXPERIENCE
+       (Background Video Scrubbing + Bottom-Hugging Title + Centered Download Card)
+       ======================================================== -->
+  <section class="cinematic-scroll-section" id="hero">
+    <div class="cinematic-sticky-viewport" id="cinematic-viewport">
+      
+      <!-- Canvas for Instant 60fps Zero-Latency Scrubbing -->
+      <div class="cinematic-video-wrap">
+        <canvas id="cinematic-canvas" class="cinematic-canvas-el"></canvas>
+        <div class="cinematic-vignette"></div>
+      </div>
 
-    <h1 class="hero-title">
-      Stop guessing why your web app broke.<br />
-      <span class="gradient-text">Debug full-stack in your browser.</span>
-    </h1>
-
-    <p class="hero-desc">
-      Dr. Debug intercepts console errors, correlates live host Docker logs with failing network requests, and autonomously synthesizes verified unified-diff code patches directly in your browser.
-    </p>
-
-    <!-- Download Buttons -->
-    <div class="hero-cta-group">
-      <a href="dr-debug-extension.zip" download="dr-debug-extension.zip" class="btn-hero-primary" id="btn-dl-extension">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-        <span>Download Chrome Extension</span>
-        <span style="font-size: 0.75rem; background: rgba(255,255,255,0.2); padding: 2px 7px; border-radius: 4px;">ZIP · 930 KB</span>
-      </a>
-
-      <a href="dr-debug.standalone.min.js" download="dr-debug.standalone.min.js" class="btn-hero-secondary" id="btn-dl-js">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-        <span>Standalone Script (.min.js)</span>
-      </a>
-    </div>
-
-    <!-- Quick Terminal Launcher -->
-    <div class="hero-quick-cmd">
-      <span style="font-size: 0.85rem; color: #94a3b8;">Stream Host Docker in 1 command:</span>
-      <code>npx @dr-debug/mcp</code>
-      <button class="btn-copy-code" id="btn-copy-hero-cmd">Copy</button>
-    </div>
-
-    <!-- 3D Interactive Cockpit Preview Card -->
-    <div class="cockpit-showcase-container" id="cockpit-3d">
-      <div class="cockpit-preview-card">
-        <div class="cockpit-header-bar">
-          <div class="cockpit-dots">
-            <span></span><span></span><span></span>
-          </div>
-          <div class="cockpit-tabs-mock">
-            <span class="cockpit-tab-mock">🩺 Diagnostics</span>
-            <span class="cockpit-tab-mock">🌐 Causal Graph</span>
-            <span class="cockpit-tab-mock active">🐳 Docker Cockpit</span>
-            <span class="cockpit-tab-mock">⚙️ Settings</span>
-          </div>
-          <div style="font-size: 0.75rem; color: #34d399; font-weight: 700; display: flex; align-items: center; gap: 6px;">
-            <span style="width: 7px; height: 7px; border-radius: 50%; background: #34d399;"></span>
-            DAEMON ACTIVE
-          </div>
+      <!-- Hero Layer: Dr. Debug Full-Width Title Hugging the Bottom -->
+      <div class="hero-bottom-anchor" id="hero-bottom-layer">
+        <div class="hero-top-eyebrow">
+          <span class="eyebrow-line"></span>
+          <span class="eyebrow-text">AUTONOMOUS IN-BROWSER OBSERVABILITY &amp; AI SURGEON</span>
+          <span class="eyebrow-line"></span>
         </div>
 
-        <div class="cockpit-layout-mock">
-          <!-- Sidebar Containers -->
-          <div class="cockpit-sidebar-mock">
-            <span class="sidebar-title">Discovered Containers (4)</span>
-            <div class="container-card-mock active">
-              <div class="container-card-title">
-                <span>polaris-api</span>
-                <span style="color: #f87171;">1 panic</span>
+        <div class="hero-title-overflow-mask">
+          <h1 class="hero-giant-bottom-title" id="giant-title">
+            DR. DEBUG
+          </h1>
+        </div>
+      </div>
+
+      <!-- Scrollytelling Chapter 01: Dual Split Cards (Antigravity & Claude Code) -->
+      <div class="cinematic-chapter chapter-split-stage" id="chapter-01">
+        <div class="split-cards-row">
+          <!-- Card 1: Left - Google Antigravity -->
+          <div class="liquid-glass-card card-pair card-left" id="card-antigravity">
+            <div class="card-brand-header">
+              <img src="assets/antigravity-icon__full-color.png" alt="Google Antigravity" class="card-brand-icon" />
+              <div class="card-brand-meta">
+                <span class="card-tag-badge">ANTIGRAVITY PAIRING</span>
+                <h3 class="card-brand-title">Google Antigravity</h3>
               </div>
-              <div class="container-card-sub">0.0.0.0:8010 -> 8000/tcp</div>
             </div>
-            <div class="container-card-mock">
-              <div class="container-card-title">
-                <span>polaris-worker</span>
-                <span style="color: #34d399;">running</span>
+            <p class="card-body-desc">
+              Standard AI pair programmers waste thousands of tokens guessing UI bugs from static screenshots. Dr. Debug intercepts live runtime exceptions, request payloads, and component stacks into structured context, enabling Antigravity to pinpoint and patch the exact source lines in your workspace immediately.
+            </p>
+            <div class="card-spec-strip">
+              <span class="spec-chip">Source-Level Demangling</span>
+              <span class="spec-chip">Zero Screenshot Guessing</span>
+            </div>
+          </div>
+
+          <!-- Empty Center Space (Keeps Viewport Clear) -->
+          <div class="split-empty-center"></div>
+
+          <!-- Card 2: Right - Claude Code via MCP -->
+          <div class="liquid-glass-card card-pair card-right" id="card-claude">
+            <div class="card-brand-header">
+              <img src="assets/Claude_AI_symbol.svg.webp" alt="Claude Code" class="card-brand-icon" />
+              <div class="card-brand-meta">
+                <span class="card-tag-badge">MODEL CONTEXT PROTOCOL</span>
+                <h3 class="card-brand-title">Claude Code MCP</h3>
               </div>
-              <div class="container-card-sub">arq app.workers.ocr</div>
             </div>
-            <div class="container-card-mock">
-              <div class="container-card-title">
-                <span>polaris-qdrant</span>
-                <span style="color: #34d399;">healthy</span>
+            <p class="card-body-desc">
+              Dr. Debug operates a local Model Context Protocol daemon on port 9229. Claude Code queries your running browser tab directly using native tools (<code class="inline-code">drdebug_inspect_error</code>, <code class="inline-code">drdebug_inspect_request</code>) to inspect network failures, error stacks, and container logs without manual copy-pasting.
+            </p>
+            <div class="card-spec-strip">
+              <span class="spec-chip">ws://localhost:9229</span>
+              <span class="spec-chip">Native Tool Calling</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scrollytelling Chapter 02: Dual Split Cards (Substrate Telemetry & Auto-Patches) -->
+      <div class="cinematic-chapter chapter-split-stage" id="chapter-02">
+        <div class="split-cards-row">
+          <!-- Card 3: Left - Substrate Telemetry -->
+          <div class="liquid-glass-card card-pair card-left" id="card-telemetry">
+            <div class="card-brand-header">
+              <div class="card-tech-symbol">⚡</div>
+              <div class="card-brand-meta">
+                <span class="card-tag-badge">LOCAL SUBSTRATE TAP</span>
+                <h3 class="card-brand-title">Direct Runtime Biopsy</h3>
               </div>
-              <div class="container-card-sub">port 6333</div>
+            </div>
+            <p class="card-body-desc">
+              Taps native <code class="inline-code">window.onerror</code>, unhandled promise rejections, fetch and XHR payloads, heap memory allocations, and host Docker container streams over local SSE. Completely local-first with zero external cloud telemetry servers.
+            </p>
+            <div class="card-spec-strip">
+              <span class="spec-chip">Console · Network · Memory · Docker</span>
+              <span class="spec-chip">100% Localhost</span>
             </div>
           </div>
 
-          <!-- Live Terminal -->
-          <div class="cockpit-terminal-mock">
-            <div class="log-line">
-              <span class="log-ts">18:41:35</span>
-              <span class="log-cont">[polaris-api]</span>
-              <span class="log-level-info">INFO</span>
-              <span class="log-msg">Uvicorn running on http://0.0.0.0:8000</span>
-            </div>
-            <div class="log-line">
-              <span class="log-ts">18:41:37</span>
-              <span class="log-cont">[polaris-api]</span>
-              <span class="log-level-err">ERROR</span>
-              <span class="log-msg">GET /api/documents connection timeout (1515ms)</span>
-              <button class="log-diagnose-btn">⚡ Diagnose</button>
-            </div>
-            <div class="log-line">
-              <span class="log-ts">18:41:38</span>
-              <span class="log-cont">[browser]</span>
-              <span class="log-level-err">CRASH</span>
-              <span class="log-msg">Uncaught TypeError: Cannot read properties of undefined (reading 'map')</span>
-            </div>
-            <div class="log-line" style="margin-top: auto; color: #38bdf8; font-size: 0.75rem;">
-              <span>🩺 Dr. Debug Causal Link: <strong>polaris-api timeout</strong> caused downstream React client crash.</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+          <!-- Empty Center Space (Keeps Viewport Clear) -->
+          <div class="split-empty-center"></div>
 
-  <!-- Live Interactive Simulator Section -->
-  <section class="simulator-section" id="simulator">
-    <div class="section-head">
-      <div class="section-tag">Interactive Preview</div>
-      <h2 class="section-title">See Autonomous Correlation in Action</h2>
-      <p class="section-desc">Experience how Dr. Debug traces a backend Docker container panic straight to a frontend browser crash and writes the exact code fix.</p>
-    </div>
-
-    <div class="sim-box">
-      <div class="sim-topbar">
-        <div class="sim-feed-title">
-          <span class="sim-status-dot"></span>
-          <span>Live Telemetry & Docker Stream (Simulated Session)</span>
-        </div>
-        <button class="sim-btn-trigger" id="btn-run-sim">⚡ Trigger Backend Panic & Diagnose</button>
-      </div>
-
-      <div class="sim-grid">
-        <!-- Terminal Stream -->
-        <div class="sim-terminal" id="sim-terminal">
-          <div class="log-line">
-            <span class="log-ts">00:00:01</span>
-            <span class="log-cont">[frontend]</span>
-            <span class="log-level-info">BOOT</span>
-            <span class="log-msg">React 18 mounted on #root (376ms)</span>
-          </div>
-          <div class="log-line">
-            <span class="log-ts">00:00:02</span>
-            <span class="log-cont">[docker:db]</span>
-            <span class="log-level-info">INFO</span>
-            <span class="log-msg">PostgreSQL accepting connections on 5432</span>
-          </div>
-          <div class="log-line">
-            <span class="log-ts">00:00:03</span>
-            <span class="log-cont">[network]</span>
-            <span class="log-level-info">FETCH</span>
-            <span class="log-msg">GET /api/documents -> 200 OK (38ms)</span>
-          </div>
-        </div>
-
-        <!-- AI Reasoning Output -->
-        <div class="sim-ai-pane" id="sim-ai-pane">
-          <div class="ai-reasoning-card">
-            <div class="ai-step-title">
-              <span>🩺 Autonomous Diagnostic Engine</span>
+          <!-- Card 4: Right - Unified Git Patches -->
+          <div class="liquid-glass-card card-pair card-right" id="card-patches">
+            <div class="card-brand-header">
+              <div class="card-tech-symbol">🛠️</div>
+              <div class="card-brand-meta">
+                <span class="card-tag-badge">UNIFIED PATCH ENGINE</span>
+                <h3 class="card-brand-title">Instant Git Patches</h3>
+              </div>
             </div>
-            <div class="ai-thought">
-              Click <strong>"⚡ Trigger Backend Panic & Diagnose"</strong> above to see Dr. Debug intercept a live crash, traverse the causal graph, and generate a verified unified diff!
+            <p class="card-body-desc">
+              Traces causal relationships between backend container panics and downstream client crashes. Automatically produces standard unified diffs (<code class="inline-code">.patch</code>) with demangled source map line numbers, ready for <code class="inline-code">git apply</code> or immediate IDE review.
+            </p>
+            <div class="card-spec-strip">
+              <span class="spec-chip">VLQ Source Demangling</span>
+              <span class="spec-chip">git apply Ready</span>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- Core Features Section -->
-  <section class="features-section" id="features">
-    <div class="section-head">
-      <div class="section-tag">Capabilities</div>
-      <h2 class="section-title">Built for Modern Full-Stack Developers</h2>
-      <p class="section-desc">Traditional browser DevTools are blind to your containers. Dr. Debug unifies host Docker logs, client network requests, and framework state into a single autonomous brain.</p>
-    </div>
+      <!-- Final Scene: Centered Download Card (Above the Monitor Screen of the Video) -->
+      <div class="cinematic-download-overlay" id="cinematic-download-target">
+        <div class="compact-download-card liquid-glass-card" id="center-download-card">
+          <div class="dl-status-badge">
+            <span class="status-dot-green"></span>
+            <span>CHROMIUM DEVTOOLS EXTENSION</span>
+          </div>
 
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon-box">🐳</div>
-        <h3 class="feature-title">Host Docker Substrate</h3>
-        <p class="feature-desc">Streams container stdout/stderr, container lifecycle changes, and health checks over local SSE. No Docker plugins needed.</p>
-      </div>
+          <h2 class="dl-main-title">Deploy Dr. Debug</h2>
+          <p class="dl-subtitle">Download the extension ZIP and load it unpacked into Chrome in under 30 seconds.</p>
 
-      <div class="feature-card">
-        <div class="feature-icon-box">🌐</div>
-        <h3 class="feature-title">Causal Topology DAG</h3>
-        <p class="feature-desc">Connects backend 504 timeouts to downstream React unhandled rejection nodes via temporal and semantic graph correlation.</p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon-box">🧠</div>
-        <h3 class="feature-title">Re-Act AI Engine</h3>
-        <p class="feature-desc">Autonomous multi-turn investigation using Groq LPU, OpenAI, Anthropic, or on-device LiteRT.js with zero server roundtrips.</p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon-box">🛡️</div>
-        <h3 class="feature-title">Zero-Leak Shadow DOM</h3>
-        <p class="feature-desc">Rendered inside an isolated Shadow Root `#dr-debug-root`. 100% CSS immune from your application's Tailwind or Bootstrap styles.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Installation in 30 Seconds -->
-  <section class="install-section" id="install">
-    <div class="section-head">
-      <div class="section-tag">Quickstart</div>
-      <h2 class="section-title">Ready in Under 30 Seconds</h2>
-      <p class="section-desc">No complicated cloud accounts. No telemetry tracking. Runs completely local on your machine.</p>
-    </div>
-
-    <div class="steps-timeline">
-      <div class="step-card">
-        <div class="step-badge">1</div>
-        <h3 class="step-title">Download & Unzip</h3>
-        <p class="step-desc">Download <code>dr-debug-extension.zip</code> and extract it anywhere on your computer.</p>
-      </div>
-
-      <div class="step-card">
-        <div class="step-badge">2</div>
-        <h3 class="step-title">Load into Chrome</h3>
-        <p class="step-desc">Open <code>chrome://extensions</code>, enable <strong>Developer Mode</strong>, and click <strong>"Load Unpacked"</strong>.</p>
-      </div>
-
-      <div class="step-card">
-        <div class="step-badge">3</div>
-        <h3 class="step-title">Connect Host Docker</h3>
-        <p class="step-desc">Run <code>npx @dr-debug/mcp</code> or double-click <code>start-docker-bridge.bat</code> inside the folder.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Author Showcase Section -->
-  <section class="author-section" id="author">
-    <div class="author-card">
-      <div class="author-avatar-wrapper">
-        <img src="assets/drdebug.png" alt="Saswat Mohanty" class="author-avatar" />
-      </div>
-
-      <div class="author-info">
-        <div class="author-tag">Architect & Creator</div>
-        <h2 class="author-name">Saswat Mohanty</h2>
-        <div class="author-role">AI / ML Engineer · Veer Surendra Sai University of Technology (VSSUT), Burla</div>
-        <p class="author-bio">
-          Creator of Dr. Debug. Passionate about autonomous agentic systems, real-time observability, and building AI tools that eliminate hours of developer frustration.
-        </p>
-
-        <div class="author-links">
-          <a href="https://github.com/SazWhatician" target="_blank" class="author-btn github">
-            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-            <span>GitHub (@SazWhatician)</span>
+          <!-- Single ZIP Download Button -->
+          <a href="dr-debug-extension.zip" download="dr-debug-extension.zip" class="dl-zip-button" id="btn-dl-extension">
+            <div class="dl-btn-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            </div>
+            <div class="dl-btn-text-group">
+              <span class="dl-btn-primary-text">Download Chrome Extension</span>
+              <span class="dl-btn-sub-text">dr-debug-extension.zip · 930 KB · Manifest V3</span>
+            </div>
+            <span class="dl-btn-arrow">→</span>
           </a>
 
-          <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" class="author-btn linkedin">
-            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
-            <span>Connect on LinkedIn</span>
-          </a>
+          <!-- Minimal CLI Quickstart -->
+          <div class="dl-cli-strip">
+            <div class="dl-cli-text">
+              <span class="dl-cli-prompt">$</span>
+              <code class="dl-cli-cmd">npx @dr-debug/mcp</code>
+            </div>
+            <button class="dl-copy-btn" id="btn-copy-hero-cmd" title="Copy CLI Command">Copy</button>
+          </div>
+
+          <!-- Minimal Trust Seals -->
+          <div class="dl-trust-row">
+            <span class="trust-item"><span class="trust-dot"></span> 100% Client-Side</span>
+            <span class="trust-sep">/</span>
+            <span class="trust-item"><span class="trust-dot"></span> Localhost Port 9229</span>
+            <span class="trust-sep">/</span>
+            <span class="trust-item"><span class="trust-dot"></span> Zero Cloud Leaks</span>
+          </div>
+        </div>
+
+        <!-- Subtle Stop & Scroll Hint -->
+        <div class="dl-scroll-hint" id="dl-scroll-hint">
+          <span class="hint-dot"></span>
+          <span>Scroll down for CRT Terminal &amp; FAQs</span>
+          <span class="hint-arrow">↓</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========================================================
+       FULL-BREADTH CRT PHOSPHOR TERMINAL (100vw Edge-to-Edge)
+       Raw WebGL Zion boot sequence crediting Saswat Mohanty
+       ======================================================== -->
+  <section class="crt-terminal-section" id="crt-terminal">
+    <div class="shader-frame full-breadth-frame">
+      <div id="crt-terminal-host" class="threeui-background crt crt-terminal" style="background: #03100a; opacity: 1; filter: hue-rotate(0deg) saturate(1) brightness(1);">
+        <canvas id="crt-terminal-canvas"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================
+       SLEEK DROPDOWN FAQS SECTION
+       ======================================================== -->
+  <section class="faq-section" id="faq">
+    <div class="faq-container">
+      <div class="section-head">
+        <div class="hud-tag-pill">
+          <span class="hud-live-beacon pulse-cyan"></span>
+          <span>DOCUMENTATION &amp; ARCHITECTURE</span>
+        </div>
+        <h2 class="section-title">Frequently Asked Questions</h2>
+        <p class="section-desc">Straight answers on pairing Dr. Debug with Google Antigravity, Claude Code, and your local development stack.</p>
+      </div>
+
+      <div class="faq-accordion">
+        <!-- FAQ 01 -->
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false">
+            <span class="faq-question">How does Dr. Debug pair with Google Antigravity?</span>
+            <span class="faq-chevron">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p>Standard AI coding assistants burn thousands of tokens blindly guessing UI bugs from static screenshots. Dr. Debug intercepts raw browser runtime exceptions, network request bodies, and component stacks into deterministic <code class="inline-code">&lt;debug_state&gt;</code> XML. Antigravity parses this structured context to pinpoint and edit the exact lines in your workspace immediately.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ 02 -->
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false">
+            <span class="faq-question">How does Dr. Debug connect to Claude Code via MCP?</span>
+            <span class="faq-chevron">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p>Dr. Debug runs a local Model Context Protocol (MCP) daemon on port <code class="inline-code">9229</code> (started with <code class="inline-code">npx @dr-debug/mcp</code>). Claude Code connects via standard JSON-RPC tools (<code class="inline-code">drdebug_inspect_error</code>, <code class="inline-code">drdebug_inspect_request</code>) to query your live browser tab without manual copy-pasting.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ 03 -->
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false">
+            <span class="faq-question">Does Dr. Debug transmit telemetry to external cloud servers?</span>
+            <span class="faq-chevron">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p>No. Dr. Debug is 100% local-first. All telemetry—console logs, network bodies, memory footprints, and Docker logs—stays strictly inside your browser session and your local machine. No tracking, analytics, or external servers are contacted.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ 04 -->
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false">
+            <span class="faq-question">How do I install the Chrome DevTools extension?</span>
+            <span class="faq-chevron">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p>Download <code class="inline-code">dr-debug-extension.zip</code>, extract the archive, open <code class="inline-code">chrome://extensions</code> in Chrome, toggle on <strong>Developer mode</strong> in the top-right corner, and click <strong>"Load unpacked"</strong>. The Dr. Debug tab will immediately appear inside Chrome DevTools (F12).</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ 05 -->
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false">
+            <span class="faq-question">How does the host Docker bridge work safely?</span>
+            <span class="faq-chevron">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p>The bridge daemon runs safe, 100% read-only Docker CLI commands (<code class="inline-code">docker version</code>, <code class="inline-code">docker ps</code>, <code class="inline-code">docker logs -f</code>) to stream container stdout/stderr over local Server-Sent Events (SSE). It does not write to Docker, execute commands in containers, or alter volumes or networks.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ 06 -->
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false">
+            <span class="faq-question">Who architected and created Dr. Debug?</span>
+            <span class="faq-chevron">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p>Dr. Debug was architected, engineered, and designed by <strong>Saswat Mohanty</strong> (<a href="https://github.com/SazWhatician" target="_blank" class="faq-link">@SazWhatician</a>), an AI/ML Engineer from Veer Surendra Sai University of Technology (VSSUT), Burla. Connect on <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" class="faq-link">LinkedIn</a> or star the project on <a href="https://github.com/SazWhatician" target="_blank" class="faq-link">GitHub</a>.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -311,25 +380,48 @@
     <span id="toast-text">Download started! Extract the ZIP and load into chrome://extensions</span>
   </div>
 
-  <!-- Footer -->
-  <footer class="footer">
+  </div><!-- /page-content-wrapper -->
+
+  <!-- EXACT REFERENCE FOOTER (REACTOR ZONE) WITH FOOTER REVEAL -->
+  <footer class="reactor-zone">
     <div class="footer-container">
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <img src="assets/drdebug.png" alt="Dr. Debug" style="width: 28px; height: 28px; border-radius: 6px;" />
-        <span style="font-family: var(--font-display); font-weight: 800; color: #fff;">DR. DEBUG</span>
+      <div id="footer-canvas"></div>
+      <div class="footer-content">
+        <div class="footer-row">
+          <div class="footer-col">
+            <h1 class="glow-text">Connect<br> with<br> Us</h1>
+          </div>
+          <div class="footer-col footer-col-right">
+            <div class="footer-sub-col">
+              <h3>Socials</h3>
+              <a href="https://github.com/SazWhatician" target="_blank" rel="noopener noreferrer">GitHub</a>
+              <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+              <a href="https://www.instagram.com/iamsazwat/" target="_blank" rel="noopener noreferrer">Instagram</a>
+            </div>
+            <div class="footer-sub-col">
+              <h3>Navigation</h3>
+              <a href="#hero" id="footer-link-home">Home</a>
+              <a href="#crt-terminal" id="footer-link-terminal">Terminal</a>
+              <a href="#faq" id="footer-link-faq">FAQ</a>
+            </div>
+          </div>
+        </div>
       </div>
-      <p class="footer-copy">
-        Crafted with pride by <a href="https://github.com/SazWhatician" target="_blank">Saswat Mohanty (@SazWhatician)</a> · MIT License.
-      </p>
+      <!-- FOOTER TEXT -->
+      <div class="footer-bottom-bar">
+        Engineered &amp; Crafted by <span>Saswat Mohanty (@SazWhatician)</span> · VSSUT Burla
+      </div>
     </div>
   </footer>
 
-  <!-- Scripts: Offline Payloads, Lenis, GSAP, ScrollTrigger, App -->
-  <script src="assets/extension-payload.js"></script>
-  <script src="assets/standalone-payload.js"></script>
+  <!-- Scripts: Three.js, GLTFLoader, Lenis, GSAP, ScrollTrigger, Barba.js, CRT, App -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js"></script>
+  <script src="assets/GLTFLoader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@barba/core@2.9.7/dist/barba.umd.js"></script>
+  <script src="crt-renderer.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -23,6 +23,7 @@ Created and architected by **[Saswat Mohanty (@SazWhatician)](https://github.com
 │ Phase 5 │ Framework State, Interaction Replay & Fixes │ @dr-debug/core │
 │ Phase 6 │ Model Context Protocol (MCP) & IDE Bridge   │ @dr-debug/mcp  │
 │ Phase 7 │ Host Docker Bridge & Dedicated Docker Page  │ @dr-debug/ui   │
+│ Phase 8 │ Full-Breadth CRT, Split Cards & Barba.js    │ landing        │
 └─────────┴─────────────────────────────────────────────┴────────────────┘
 ```
 
@@ -39,6 +40,7 @@ Created and architected by **[Saswat Mohanty (@SazWhatician)](https://github.com
 | [**phase-5.md**](file:///c:/Users/saswa/Desktop/DebugCopilot/study_docs/phase-5.md) | **Framework Hooks, Interaction Replay & Auto-Fix** | 🟢 *Completed* | React/Redux/Vue/Svelte hooks, 30s PII-safe interaction replay buffer, PatchEngine unified diff and GitHub PR generator, `generate_patch` tool. |
 | [**phase-6.md**](file:///c:/Users/saswa/Desktop/DebugCopilot/study_docs/phase-6.md) | **Model Context Protocol (MCP) Server & IDE Bridge**| 🟢 *Completed* | Standalone MCP daemon (`@dr-debug/mcp`), live telemetry transport bridge, 5 MCP resources, 5 MCP tools, zero-dependency `npx @dr-debug/mcp` CLI runner. |
 | [**phase-7.md**](file:///c:/Users/saswa/Desktop/DebugCopilot/study_docs/phase-7.md) | **Host Docker Bridge & Dedicated Docker Cockpit Page**| 🟢 *Completed* | Zero-dependency host Docker CLI bridge (`/docker/stream`), in-browser `DockerBridgeClient`, and dedicated `🐳 Docker` tab with container cards, live terminal & inline AI diagnosis. |
+| [**phase-8.md**](file:///c:/Users/saswa/Desktop/DebugCopilot/study_docs/phase-8.md) | **Full-Breadth CRT, Split Cards & Barba.js** | 🟢 *Completed* | 100vw edge-to-edge CRT terminal crediting Saswat Mohanty (@SazWhatician), 4 dual split cards with 10px blur liquid glassmorphism (Google Antigravity & Claude Code), compact ZIP download, sleek FAQ dropdowns, and Barba.js transitions. |
 
 
 ---
