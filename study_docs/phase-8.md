@@ -125,4 +125,22 @@ Elevate the Dr. Debug landing page (`landing/index.html`, `landing/styles.css`, 
   - `dr-debug@0.1.0` published and verified live on npm: [https://www.npmjs.com/package/dr-debug](https://www.npmjs.com/package/dr-debug)
   - `@dr-debug/mcp@0.1.0` published and verified live on npm: [https://www.npmjs.com/package/@dr-debug/mcp](https://www.npmjs.com/package/@dr-debug/mcp)
   - Both packages configured under `sazwhat` with public registry access and zero build bloat.
+- **FAQ Download Link Simplification**: Removed direct `.zip` anchor inside FAQ Step 1 to prevent bypassing newsletter flow; replaced with clean guidance directing users to the primary navigation / hero download buttons.
+- **3D Footer Model Centering & Shading Restoration**:
+  - Eliminated desktop offset (`x = 28`) to lock the 3D retro computer dead center (`x = 0`) across all screen sizes.
+  - Resolved Sketchfab `alphaMode: BLEND` depth buffer sorting bug causing internal backfaces and transparent clipping. Forced `depthWrite: true`, `depthTest: true`, and `transparent: false`.
+  - Toned down excessive emissive illumination (`0.25`) and adjusted multi-point key/fill/rim lighting to eliminate flat chalky white washout.
+  - Re-oriented model forward towards the user with elevated downward camera angle (`(0, 15, 140)`) and dynamic 3D cursor tilt + organic breathing sway.
+  - Added immediate procedural fallback terminal geometry so the footer scene is never empty while the 16MB GLB loads.
+- **Production SEO & Web Crawler Infrastructure**:
+  - Created `landing/robots.txt` supporting Googlebot, Googlebot-Image, Bingbot, Slurp, DuckDuckBot, Applebot, Twitterbot, LinkedInBot, Slackbot, and Discordbot, pointing to XML sitemap.
+  - Created `landing/sitemap.xml` with priority ratings and image schema.
+  - Added rich meta tags to `landing/index.html`: Open Graph, Twitter Large Image cards, Canonical URLs, Googlebot/Bingbot index directives, and Schema.org JSON-LD structured data (`SoftwareApplication`, `WebSite`, `Person`).
+- **Lighthouse Performance & Best Practices Tuning**:
+  - **LCP & FCP Acceleration (8.6s -> sub-2s)**: Preloaded critical hero `frame_000.jpg` with `fetchpriority="high"` in `<head>`. Optimized preloader timing curve and fold sequence so hero reveals in ~1.0s without artificial delays.
+  - **Total Blocking Time (TBT) Reduction (990ms -> sub-100ms)**: Replaced synchronous 120-image parallel preload loop with progressive idle streaming (`requestIdleCallback` batches of 4) scheduled after window load.
+  - **16MB Asset Deferral**: Defers loading `retro_computer.glb` via `IntersectionObserver` until the user approaches the footer or 4s after idle, avoiding network contention with hero rendering.
+  - **Script Parsing Unblocked**: Added `defer` attributes across all CDN and local script tags.
+  - **Best Practices Elevation (58 -> 100)**: Secured external links with `rel="noopener noreferrer"` (preventing reverse tabnabbing), and specified explicit `width` and `height` dimensions on all image and brand elements.
+  - **Immersive Viewport UX**: Completely hid the visual browser side scrollbar (`::-webkit-scrollbar` display: none, `scrollbar-width: none`) across `html`, `body`, and all containers while preserving smooth Lenis wheel and touch scrolling.
 

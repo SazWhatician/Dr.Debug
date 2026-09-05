@@ -238,8 +238,9 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.drawImage(img, nx, ny, nw, nh)
   }
 
-  // Preload first frame immediately for instant first paint
+  // Preload first frame immediately for instant first paint (matches <link rel="preload">)
   const firstImg = new Image()
+  firstImg.fetchPriority = 'high'
   firstImg.src = getFrameSrc(0)
   firstImg.onload = () => {
     frameImages[0] = firstImg
@@ -248,23 +249,49 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCanvasFrame(0)
   }
 
-  // Preload all remaining frames in parallel
-  for (let i = 1; i < TOTAL_FRAMES; i++) {
-    const img = new Image()
-    img.src = getFrameSrc(i)
-    img.onload = () => {
-      frameImages[i] = img
-      loadedFramesCount++
+  // Progressive background frame streaming: non-blocking batches of 4 via requestIdleCallback
+  function preloadRemainingFramesProgressively() {
+    let nextIndex = 1
+    const CHUNK_SIZE = 4
+
+    function loadNextBatch() {
+      if (nextIndex >= TOTAL_FRAMES) return
+      const end = Math.min(nextIndex + CHUNK_SIZE, TOTAL_FRAMES)
+      for (let i = nextIndex; i < end; i++) {
+        const img = new Image()
+        img.src = getFrameSrc(i)
+        img.onload = () => {
+          frameImages[i] = img
+          loadedFramesCount++
+        }
+        img.onerror = () => {
+          loadedFramesCount++
+        }
+      }
+      nextIndex = end
+      if (nextIndex < TOTAL_FRAMES) {
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(loadNextBatch, { timeout: 120 })
+        } else {
+          setTimeout(loadNextBatch, 40)
+        }
+      }
     }
-    img.onerror = () => {
-      loadedFramesCount++
+
+    if (document.readyState === 'complete') {
+      setTimeout(loadNextBatch, 100)
+    } else {
+      window.addEventListener('load', () => {
+        setTimeout(loadNextBatch, 150)
+      })
     }
   }
+  preloadRemainingFramesProgressively()
 
-  // Preloader Count Animation (0 -> 100)
+  // Preloader Count Animation (Snappy high-performance curve)
   gsap.to(loaderObj, {
     val: 100,
-    duration: 1.3,
+    duration: 0.45,
     ease: 'power2.out',
     onUpdate: () => {
       const current = Math.floor(loaderObj.val)
@@ -285,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })
 
-  // Barba Pane Sliding & Digit Folding Entrance
+  // Barba Pane Sliding & Digit Folding Entrance (Snappy high-fashion reveal)
   function revealEntrance() {
     if (hasRevealedHero) return
     hasRevealedHero = true
@@ -321,41 +348,41 @@ document.addEventListener('DOMContentLoaded', () => {
       .to(dBox1, {
         width: targetWidth,
         opacity: 1,
-        duration: 0.24,
+        duration: 0.14,
         ease: 'power3.out'
       })
       // Subtle hold to let the viewer register "1 0 0"
-      .to({}, { duration: 0.22 })
+      .to({}, { duration: 0.08 })
 
       // 2. "1" goes behind first "0"
       .to(dBox1, {
         x: stepDist,
-        duration: 0.38,
+        duration: 0.20,
         ease: 'power3.inOut'
       })
       .set(dBox1, { opacity: 0 })
 
       // Micro-pause between digit folds
-      .to({}, { duration: 0.08 })
+      .to({}, { duration: 0.04 })
 
       // 3. That first "0" goes behind the next "0"
       .to(dBox2, {
         x: stepDist,
-        duration: 0.38,
+        duration: 0.20,
         ease: 'power3.inOut'
       })
       .set(dBox2, { opacity: 0 })
 
       // 4. Pop the final single "0" and fade the progress wire
       .to(dBox3, {
-        scale: 1.15,
-        duration: 0.15,
+        scale: 1.12,
+        duration: 0.12,
         ease: 'power2.out'
       })
       .to([dBox3, foldMeta], {
         opacity: 0,
         scale: 0.9,
-        duration: 0.2,
+        duration: 0.12,
         ease: 'power2.in'
       })
 
@@ -365,8 +392,8 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .to(slidingPanes, {
         xPercent: 100,
-        duration: 0.8,
-        stagger: 0.08,
+        duration: 0.55,
+        stagger: 0.05,
         ease: 'power4.inOut'
       })
 
@@ -866,18 +893,18 @@ document.addEventListener('DOMContentLoaded', () => {
     canvasContainer.appendChild(renderer.domElement)
 
     // Vibrant lighting setup for 3D retro computer
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.4)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.0)
     scene.add(ambientLight)
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 2.2)
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.8)
     keyLight.position.set(80, 100, 120)
     scene.add(keyLight)
 
-    const greenFillLight = new THREE.DirectionalLight(0x2BA648, 2.8)
+    const greenFillLight = new THREE.DirectionalLight(0x2BA648, 2.2)
     greenFillLight.position.set(-80, 40, 50)
     scene.add(greenFillLight)
 
-    const cyanRimLight = new THREE.DirectionalLight(0x00f0ff, 1.8)
+    const cyanRimLight = new THREE.DirectionalLight(0x00f0ff, 1.6)
     cyanRimLight.position.set(0, -60, -70)
     scene.add(cyanRimLight)
 
@@ -914,35 +941,78 @@ document.addEventListener('DOMContentLoaded', () => {
     reactorGroup.add(computerWrapper)
 
     function updateModelPlacement() {
+      // Guarantee exact horizontal centering (x = 0) on all screen resolutions
       const w = canvasContainer.clientWidth || window.innerWidth
-      if (w > 1000) {
-        computerWrapper.position.set(28, -6, 0)
+      if (w < 768) {
+        computerWrapper.position.set(0, -2, 0)
       } else {
-        computerWrapper.position.set(0, -6, 0)
+        computerWrapper.position.set(0, -5, 0)
       }
     }
     updateModelPlacement()
 
-    // Load retro_computer.glb
-    if (typeof THREE.GLTFLoader !== 'undefined') {
-      const loader = new THREE.GLTFLoader()
-      loader.load(
+    // Immediate placeholder retro computer so footer is never blank while 16MB GLB downloads
+    const placeholderGroup = new THREE.Group()
+    const monMat = new THREE.MeshStandardMaterial({ color: 0x14281c, roughness: 0.35, metalness: 0.15 })
+    const scrMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff })
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x0e1b13, roughness: 0.5 })
+
+    const monMesh = new THREE.Mesh(new THREE.BoxGeometry(38, 30, 24), monMat)
+    monMesh.position.set(0, 8, 0)
+    placeholderGroup.add(monMesh)
+
+    const scrMesh = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), scrMat)
+    scrMesh.position.set(0, 8, 12.1)
+    placeholderGroup.add(scrMesh)
+
+    const kbMesh = new THREE.Mesh(new THREE.BoxGeometry(42, 6, 26), bodyMat)
+    kbMesh.position.set(0, -10, 6)
+    placeholderGroup.add(kbMesh)
+
+    computerWrapper.add(placeholderGroup)
+
+    // Load retro_computer.glb with material & transparency fixes
+    const loadGlbModel = (loaderInstance) => {
+      loaderInstance.load(
         'assets/retro_computer.glb',
         (gltf) => {
           const model = gltf.scene
+
+          // Fix Sketchfab alphaMode: BLEND bug (makes solid computer see-through / invert faces)
+          model.traverse((child) => {
+            if (child.isMesh) {
+              child.castShadow = true
+              child.receiveShadow = true
+              if (child.material) {
+                child.material.transparent = false
+                child.material.depthWrite = true
+                child.material.depthTest = true
+                child.material.side = THREE.DoubleSide
+                if (child.material.emissive) {
+                  child.material.emissiveIntensity = 0.25
+                }
+                child.material.needsUpdate = true
+              }
+            }
+          })
+
+          model.updateMatrixWorld(true)
           const box = new THREE.Box3().setFromObject(model)
           const center = box.getCenter(new THREE.Vector3())
           const size = box.getSize(new THREE.Vector3())
 
-          // Center origin
+          // Center origin perfectly
           model.position.x = -center.x
           model.position.y = -center.y
           model.position.z = -center.z
 
           const maxDim = Math.max(size.x, size.y, size.z)
           const targetDim = 72
-          const scale = targetDim / maxDim
+          const scale = targetDim / (maxDim || 1)
           computerWrapper.scale.set(scale, scale, scale)
+
+          // Swap out placeholder with full GLTF model
+          computerWrapper.remove(placeholderGroup)
           computerWrapper.add(model)
         },
         undefined,
@@ -952,13 +1022,46 @@ document.addEventListener('DOMContentLoaded', () => {
       )
     }
 
+    // Lazy load the 16MB GLB model when user approaches the footer or on idle
+    let hasRequestedGlb = false
+    function triggerLoadGlbModel() {
+      if (hasRequestedGlb) return
+      hasRequestedGlb = true
+
+      if (typeof THREE.GLTFLoader !== 'undefined') {
+        loadGlbModel(new THREE.GLTFLoader())
+      } else {
+        const script = document.createElement('script')
+        script.src = 'https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/loaders/GLTFLoader.js'
+        script.onload = () => {
+          if (typeof THREE.GLTFLoader !== 'undefined') {
+            loadGlbModel(new THREE.GLTFLoader())
+          }
+        }
+        document.head.appendChild(script)
+      }
+    }
+
+    const footerZone = document.querySelector('.reactor-zone') || canvasContainer
+    if ('IntersectionObserver' in window && footerZone) {
+      const glbObserver = new IntersectionObserver((entries) => {
+        if (entries[0]?.isIntersecting) {
+          triggerLoadGlbModel()
+          glbObserver.disconnect()
+        }
+      }, { rootMargin: '800px 0px' })
+      glbObserver.observe(footerZone)
+    }
+    // Fallback trigger after 4s idle
+    setTimeout(triggerLoadGlbModel, 4000)
+
     // Mouse tilt interaction
     let targetRotX = 0, targetRotY = 0
     window.addEventListener('mousemove', (e) => {
       const normX = (e.clientX / window.innerWidth) - 0.5
       const normY = (e.clientY / window.innerHeight) - 0.5
-      targetRotX = normY * 0.5
-      targetRotY = normX * 0.7
+      targetRotX = normY * 0.4
+      targetRotY = normX * 0.6
     })
 
     // Auto-Resize
@@ -982,14 +1085,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { threshold: 0.05 })
     observer.observe(document.querySelector('.reactor-zone') || canvasContainer)
 
+    const clock = new THREE.Clock()
     function animate() {
       requestAnimationFrame(animate)
       if (!isVisible) return
 
-      // Smooth continuous rotation + mouse parallax tilt
-      computerWrapper.rotation.y += 0.006
-      computerWrapper.rotation.x += (targetRotX - computerWrapper.rotation.x) * 0.04
-      computerWrapper.rotation.z += (targetRotY * 0.35 - computerWrapper.rotation.z) * 0.04
+      const elapsedTime = clock.getElapsedTime()
+      // Interactive 3D forward-facing showcase with subtle organic breathing sway
+      const idleSway = Math.sin(elapsedTime * 0.8) * 0.12
+      const baseAngle = -Math.PI * 0.45
+      computerWrapper.rotation.y = baseAngle + idleSway + (targetRotY * 0.5)
+      computerWrapper.rotation.x = (targetRotX * 0.4) + (Math.sin(elapsedTime * 0.5) * 0.04)
+      computerWrapper.rotation.z = (targetRotY * 0.15)
 
       const sPos = sparkGeo.attributes.position.array
       for (let i = 0; i < sparkCount; i++) {

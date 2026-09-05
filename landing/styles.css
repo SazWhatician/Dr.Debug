@@ -30,6 +30,23 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+/* Hide visual scrollbar for Chrome, Edge, Safari, and Opera */
+*::-webkit-scrollbar,
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+html {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
 html.lenis, html.lenis body {
@@ -56,6 +73,8 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   position: relative;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
 /* Background Atmosphere */

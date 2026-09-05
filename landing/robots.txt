@@ -1,0 +1,56 @@
+# ========================================================
+# Dr. Debug (Autonomous In-Browser AI Debugging Agent)
+# Robots Configuration & Web Crawler Directives
+# Author: Saswat Mohanty (@SazWhatician)
+# GitHub: https://github.com/SazWhatician/Dr.Debug
+# ========================================================
+
+User-agent: *
+Allow: /
+Disallow: /scratch/
+Disallow: /*.zip$
+Disallow: /*.tgz$
+
+# Specific Major Search Engine Crawlers
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /assets/
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+# Social Crawlers for Rich Link Previews
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Slackbot
+Allow: /
+
+User-agent: Discordbot
+Allow: /
+
+# XML Sitemap Location
+Sitemap: https://drdebug.js.org/sitemap.xml
