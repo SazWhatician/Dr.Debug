@@ -463,7 +463,7 @@ btnDtSave?.addEventListener('click', () => {
     model = 'gpt-4o'
   } else if (provider === 'gemini') {
     baseURL = 'https://generativelanguage.googleapis.com/v1beta/openai/'
-    model = 'gemini-1.5-flash'
+    model = 'gemini-flash-latest'
   } else if (provider === 'litert') {
     model = 'litert'
   }
@@ -512,7 +512,7 @@ btnDtTest?.addEventListener('click', async () => {
     testModel = 'gpt-4o-mini'
   } else if (provider === 'gemini') {
     testUrl = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
-    testModel = 'gemini-1.5-flash'
+    testModel = 'gemini-flash-latest'
   }
 
   try {

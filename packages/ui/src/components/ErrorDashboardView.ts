@@ -236,6 +236,8 @@ export class ErrorDashboardView {
     // 5. Update Inspector if item selected
     if (this.selectedErrorId) {
       this.renderInspector(this.selectedErrorId, state)
+    } else {
+      this.inspectorContainer.style.display = 'none'
     }
   }
 
@@ -257,7 +259,7 @@ export class ErrorDashboardView {
       <table class="dr-debug-matrix-table">
         <thead>
           <tr>
-            <th class="dr-debug-matrix-th" style="text-align:left; width:90px;">SEVERITY</th>
+            <th class="dr-debug-matrix-th" style="text-align:left; width:68px;">SEVERITY</th>
     `
 
     substrates.forEach((sub) => {
@@ -523,7 +525,18 @@ export class ErrorDashboardView {
           <div style="font-size:10.5px; margin-top:4px; color:#64748b;">Substrates healthy and within normal operating parameters.</div>
         </div>
       `
+      this.selectedErrorId = null
+      this.inspectorContainer.style.display = 'none'
       return
+    }
+
+    // Auto-select first item if a matrix cell filter is active and nothing is selected,
+    // or if the currently selected error is no longer in the filtered list
+    if (this.selectedErrorId && !filtered.some((item) => item.id === this.selectedErrorId)) {
+      this.selectedErrorId = null
+    }
+    if (!this.selectedErrorId && this.activeMatrixCellKey && filtered.length > 0) {
+      this.selectedErrorId = filtered[0].id
     }
 
     filtered.forEach((item) => {
@@ -615,7 +628,7 @@ export class ErrorDashboardView {
     // AI Prompt Copy Button
     const copyAIBtn = document.createElement('button')
     copyAIBtn.className = 'dr-debug-btn-primary-glow'
-    copyAIBtn.innerHTML = `<span>Copy AI Report</span>`
+    copyAIBtn.innerHTML = `<span>Copy for AI</span>`
     copyAIBtn.title = 'Copy structured debug prompt ready to paste into Claude Code or Antigravity'
     copyAIBtn.addEventListener('click', () => {
       const prompt = controller.getUnifiedAIDebugPrompt(targetId)
@@ -623,7 +636,7 @@ export class ErrorDashboardView {
         navigator.clipboard.writeText(prompt)
         copyAIBtn.innerHTML = `<span>Copied AI Prompt!</span>`
         setTimeout(() => {
-          copyAIBtn.innerHTML = `<span>Copy AI Report</span>`
+          copyAIBtn.innerHTML = `<span>Copy for AI</span>`
         }, 2500)
       }
     })

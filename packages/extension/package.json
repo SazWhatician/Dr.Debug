@@ -1,6 +1,6 @@
 {
   "name": "@dr-debug/extension",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "private": true,
   "description": "Chrome Extension and Dedicated DevTools Panel for Dr. Debug",
   "type": "module",

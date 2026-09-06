@@ -305,17 +305,28 @@
           <h2 class="dl-main-title">Deploy Dr. Debug</h2>
           <p class="dl-subtitle">Download the extension ZIP and load it unpacked into Chrome in under 30 seconds.</p>
 
-          <!-- Single ZIP Download Button -->
-          <a href="dr-debug-extension.zip" download="dr-debug-extension.zip" class="dl-zip-button" id="btn-dl-extension" onclick="window.handleDownloadIntent ? window.handleDownloadIntent(event) : null">
-            <div class="dl-btn-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-            </div>
-            <div class="dl-btn-text-group">
-              <span class="dl-btn-primary-text">Download Chrome Extension</span>
-              <span class="dl-btn-sub-text">dr-debug-extension.zip · 930 KB · Manifest V3</span>
-            </div>
-            <span class="dl-btn-arrow">→</span>
-          </a>
+          <!-- Single ZIP Download Button (Uiverse Luxury Capsule) -->
+          <div class="uiverse-dl-container fx-layer">
+            <a href="dr-debug-extension.zip" download="dr-debug-extension.zip" class="box start-btn uiverse-dl-btn" id="btn-dl-extension" style="--w: 100%; --h: 70px; --tr: 15%;" onclick="window.handleDownloadIntent ? window.handleDownloadIntent(event) : null">
+              <div class="uiverse-text-wrap">
+                <span class="text">Download Chrome Extension</span>
+                <span class="subtext">dr-debug-extension.zip · 930 KB · Manifest V3</span>
+              </div>
+              <div class="btn-icon">
+                <svg
+                  class="svg"
+                  viewBox="0 0 1024 1024"
+                  version="1.1"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M779.180132 473.232045 322.354755 16.406668c-21.413706-21.413706-56.121182-21.413706-77.534887 0-21.413706 21.413706-21.413706 56.122205 0 77.534887l418.057421 418.057421L244.819868 930.057421c-21.413706 21.413706-21.413706 56.122205 0 77.534887 10.706853 10.706853 24.759917 16.059767 38.767955 16.059767s28.061103-5.353938 38.767955-16.059767L779.180132 550.767955C800.593837 529.35425 800.593837 494.64575 779.180132 473.232045z"
+                  ></path>
+                </svg>
+              </div>
+              <div class="circle-overlay"></div>
+            </a>
+          </div>
 
           <!-- Minimal CLI Quickstart -->
           <div class="dl-cli-strip">
@@ -329,8 +340,6 @@
           <!-- Minimal Trust Seals -->
           <div class="dl-trust-row">
             <span class="trust-item"><span class="trust-dot"></span> 100% Client-Side</span>
-            <span class="trust-sep">/</span>
-            <span class="trust-item"><span class="trust-dot"></span> Localhost Port 9229</span>
             <span class="trust-sep">/</span>
             <span class="trust-item"><span class="trust-dot"></span> Zero Cloud Leaks</span>
           </div>

@@ -9437,7 +9437,7 @@ ${msg.content}<end_of_turn>
       this.statusBanner.innerHTML = `
       <div class="dr-debug-docker-status-left">
         <span class="dr-debug-docker-status-dot ${isBridgeConnected ? "online" : "offline"}"></span>
-        <div>
+        <div class="dr-debug-docker-status-info">
           <div class="dr-debug-docker-title">
             <span>Docker Engine Bridge</span>
             <span class="dr-debug-docker-badge ${isDaemonRunning ? "badge-running" : "badge-stopped"}">
@@ -9445,7 +9445,7 @@ ${msg.content}<end_of_turn>
             </span>
           </div>
           <div class="dr-debug-docker-sub">
-            ${isBridgeConnected ? `Connected to local daemon via port 9229 \xB7 ${containers.length} containers discovered` : `Bridge disconnected. Run \`npx @dr-debug/mcp\` to stream host containers.`}
+            ${isBridgeConnected ? `Connected to local daemon via port 9229 \xB7 ${containers.length} containers discovered` : `Bridge disconnected. Run \`start-docker-bridge\` or \`npx @dr-debug/mcp\` to stream host containers.`}
           </div>
         </div>
       </div>
@@ -9523,24 +9523,24 @@ ${msg.content}<end_of_turn>
         <div class="dr-debug-dock-step-box">
           <div class="dr-debug-dock-step-head">
             <span class="dr-debug-dock-step-badge">WAY 1</span>
-            <span class="dr-debug-dock-step-label">Terminal (Zero Installation)</span>
-          </div>
-          <div class="dr-debug-dock-step-text">Run in any terminal with Node &gt;= 18:</div>
-          <div class="dr-debug-dock-cmd-line">
-            <code>npx @dr-debug/mcp</code>
-            <button class="dr-debug-copy-cmd-btn" id="btn-copy-dock-cmd">Copy</button>
-          </div>
-        </div>
-
-        <div class="dr-debug-dock-step-box">
-          <div class="dr-debug-dock-step-head">
-            <span class="dr-debug-dock-step-badge">WAY 2</span>
             <span class="dr-debug-dock-step-label">Double-Click Launcher</span>
           </div>
           <div class="dr-debug-dock-step-text">Zero terminal typing. In downloaded package:</div>
           <div class="dr-debug-dock-launcher-box">
             <span>Windows: <code>start-docker-bridge.bat</code></span>
             <span>Mac/Linux: <code>./start-docker-bridge.sh</code></span>
+          </div>
+        </div>
+
+        <div class="dr-debug-dock-step-box">
+          <div class="dr-debug-dock-step-head">
+            <span class="dr-debug-dock-step-badge">WAY 2</span>
+            <span class="dr-debug-dock-step-label">Terminal (Zero Installation)</span>
+          </div>
+          <div class="dr-debug-dock-step-text">Run in any terminal with Node &gt;= 18:</div>
+          <div class="dr-debug-dock-cmd-line">
+            <code>npx @dr-debug/mcp</code>
+            <button class="dr-debug-copy-cmd-btn" id="btn-copy-dock-cmd">Copy</button>
           </div>
         </div>
       </div>
@@ -9912,6 +9912,8 @@ ${msg.content}<end_of_turn>
       this.renderErrorList(state);
       if (this.selectedErrorId) {
         this.renderInspector(this.selectedErrorId, state);
+      } else {
+        this.inspectorContainer.style.display = "none";
       }
     }
     renderMatrixGrid(matrix) {
@@ -9930,7 +9932,7 @@ ${msg.content}<end_of_turn>
       <table class="dr-debug-matrix-table">
         <thead>
           <tr>
-            <th class="dr-debug-matrix-th" style="text-align:left; width:90px;">SEVERITY</th>
+            <th class="dr-debug-matrix-th" style="text-align:left; width:68px;">SEVERITY</th>
     `;
       substrates.forEach((sub) => {
         html += `<th class="dr-debug-matrix-th">${sub.label}</th>`;
@@ -10160,7 +10162,15 @@ ${msg.content}<end_of_turn>
           <div style="font-size:10.5px; margin-top:4px; color:#64748b;">Substrates healthy and within normal operating parameters.</div>
         </div>
       `;
+        this.selectedErrorId = null;
+        this.inspectorContainer.style.display = "none";
         return;
+      }
+      if (this.selectedErrorId && !filtered.some((item) => item.id === this.selectedErrorId)) {
+        this.selectedErrorId = null;
+      }
+      if (!this.selectedErrorId && this.activeMatrixCellKey && filtered.length > 0) {
+        this.selectedErrorId = filtered[0].id;
       }
       filtered.forEach((item) => {
         const card = document.createElement("div");
@@ -10235,7 +10245,7 @@ ${msg.content}<end_of_turn>
       actionToolbar.className = "dr-debug-insp-actions";
       const copyAIBtn = document.createElement("button");
       copyAIBtn.className = "dr-debug-btn-primary-glow";
-      copyAIBtn.innerHTML = `<span>Copy AI Report</span>`;
+      copyAIBtn.innerHTML = `<span>Copy for AI</span>`;
       copyAIBtn.title = "Copy structured debug prompt ready to paste into Claude Code or Antigravity";
       copyAIBtn.addEventListener("click", () => {
         const prompt = controller.getUnifiedAIDebugPrompt(targetId);
@@ -10243,7 +10253,7 @@ ${msg.content}<end_of_turn>
           navigator.clipboard.writeText(prompt);
           copyAIBtn.innerHTML = `<span>Copied AI Prompt!</span>`;
           setTimeout(() => {
-            copyAIBtn.innerHTML = `<span>Copy AI Report</span>`;
+            copyAIBtn.innerHTML = `<span>Copy for AI</span>`;
           }, 2500);
         }
       });
@@ -10525,7 +10535,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
             <select class="dr-debug-form-select" id="dr-debug-provider">
               <option value="groq" selected>\u26A1 Groq LPU (Ultra-Fast \xB7 openai/gpt-oss-120b)</option>
               <option value="openai">\u{1F9E0} OpenAI (GPT-4o / GPT-4o-mini)</option>
-              <option value="gemini">\u2728 Gemini Flash (gemini-1.5-flash)</option>
+              <option value="gemini">\u2728 Gemini Flash (gemini-flash-latest)</option>
               <option value="litert">\u{1F4BB} LiteRT / Local (On-Device)</option>
             </select>
           </div>
@@ -10559,6 +10569,17 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
             </button>
           </div>
 
+          <div class="dr-debug-settings-update-banner">
+            <div class="dr-debug-update-meta">
+              <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.4</span>
+            </div>
+            <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
+              <span>\u{1F680} Check for Updates</span>
+              <span class="dr-debug-update-arrow">\u2197</span>
+            </button>
+          </div>
+
           <div style="text-align:center; font-size:11px; color:#64748b; margin-top:14px; border-top:1px solid rgba(148,163,184,0.15); padding-top:10px;">
             Created by <a href="https://github.com/SazWhatician" target="_blank" rel="noopener noreferrer" style="color:#38bdf8; text-decoration:none; font-weight:700;">Saswat Mohanty (@SazWhatician)</a> \xB7 <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" rel="noopener noreferrer" style="color:#818cf8; text-decoration:none;">LinkedIn</a>
           </div>
@@ -10588,6 +10609,15 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.providerSelect.addEventListener("change", () => this.handleProviderChange());
       this.testBtn.addEventListener("click", () => this.handleTestConnection());
       this.saveBtn.addEventListener("click", () => this.handleSave());
+      const checkUpdateBtn = this.element.querySelector("#dr-debug-btn-check-update");
+      checkUpdateBtn == null ? void 0 : checkUpdateBtn.addEventListener("click", () => {
+        const url = "https://dr-debug.vercel.app/";
+        if (typeof chrome !== "undefined" && chrome.tabs && chrome.tabs.create) {
+          chrome.tabs.create({ url });
+        } else {
+          window.open(url, "_blank", "noopener,noreferrer");
+        }
+      });
     }
     handleProviderChange() {
       const provider = this.providerSelect.value;
@@ -10601,7 +10631,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         this.baseURLInput.value = "";
       } else if (provider === "gemini") {
         this.apiKeyGroup.style.display = "block";
-        this.modelInput.value = "gemini-1.5-flash";
+        this.modelInput.value = "gemini-flash-latest";
         this.baseURLInput.value = "https://generativelanguage.googleapis.com/v1beta/openai/";
       } else if (provider === "litert") {
         this.apiKeyGroup.style.display = "none";
@@ -10708,7 +10738,10 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       brand.innerHTML = `
       <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo header-logo" alt="Dr. Debug" />
       <div>
-        <div class="dr-debug-title-text">DR. DEBUG // COCKPIT</div>
+        <div class="dr-debug-title-text">
+          <span class="dr-debug-brand-bold">DR. DEBUG</span>
+          <span class="dr-debug-brand-sub"><span class="dr-debug-brand-sep">//</span> COCKPIT</span>
+        </div>
       </div>
     `;
       const metricsWrapper = document.createElement("div");
@@ -10749,12 +10782,8 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       header.appendChild(metricsWrapper);
       const tabs = document.createElement("div");
       tabs.className = "dr-debug-tabs";
-      this.tabTimeline = document.createElement("button");
-      this.tabTimeline.className = "dr-debug-tab active";
-      this.tabTimeline.innerHTML = `<span>Timeline</span>`;
-      this.tabTimeline.addEventListener("click", () => this.switchTab("timeline"));
       this.tabErrors = document.createElement("button");
-      this.tabErrors.className = "dr-debug-tab";
+      this.tabErrors.className = "dr-debug-tab active";
       this.tabErrors.innerHTML = `<span>Error Matrix</span>`;
       this.tabErrors.addEventListener("click", () => this.switchTab("errors"));
       this.tabTriage = document.createElement("button");
@@ -10769,20 +10798,25 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.tabDocker.className = "dr-debug-tab";
       this.tabDocker.innerHTML = `<span>\u{1F433} Docker</span>`;
       this.tabDocker.addEventListener("click", () => this.switchTab("docker"));
+      this.tabTimeline = document.createElement("button");
+      this.tabTimeline.className = "dr-debug-tab";
+      this.tabTimeline.innerHTML = `<span>Timeline</span>`;
+      this.tabTimeline.addEventListener("click", () => this.switchTab("timeline"));
       this.tabPrescription = document.createElement("button");
       this.tabPrescription.className = "dr-debug-tab";
       this.tabPrescription.innerHTML = `<span>Prescription</span>`;
       this.tabPrescription.addEventListener("click", () => this.switchTab("prescription"));
-      tabs.appendChild(this.tabTimeline);
       tabs.appendChild(this.tabErrors);
       tabs.appendChild(this.tabTriage);
       tabs.appendChild(this.tabGraph);
       tabs.appendChild(this.tabDocker);
+      tabs.appendChild(this.tabTimeline);
       tabs.appendChild(this.tabPrescription);
       const body = document.createElement("div");
       body.className = "dr-debug-body";
+      this.bodyElement = body;
       this.timelineContainer = document.createElement("div");
-      this.timelineContainer.style.display = "flex";
+      this.timelineContainer.style.display = "none";
       this.timelineContainer.style.flexDirection = "column";
       this.timelineContainer.style.gap = "10px";
       this.errorDashboardView = new ErrorDashboardView({
@@ -10796,10 +10830,9 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         }
       });
       this.errorsContainer = document.createElement("div");
-      this.errorsContainer.style.display = "none";
+      this.errorsContainer.style.display = "flex";
       this.errorsContainer.style.flexDirection = "column";
       this.errorsContainer.style.gap = "10px";
-      this.errorsContainer.style.height = "100%";
       this.errorsContainer.appendChild(this.errorDashboardView.getElement());
       this.triageContainer = document.createElement("div");
       this.triageContainer.style.display = "none";
@@ -10824,7 +10857,6 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.dockerContainer.style.display = "none";
       this.dockerContainer.style.flexDirection = "column";
       this.dockerContainer.style.gap = "10px";
-      this.dockerContainer.style.height = "100%";
       this.dockerContainer.appendChild(this.dockerDashboardView.getElement());
       this.prescriptionContainer = document.createElement("div");
       this.prescriptionContainer.style.display = "none";
@@ -10858,28 +10890,6 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.element.appendChild(this.settingsModal.getElement());
       const queryWrapper = document.createElement("div");
       queryWrapper.className = "dr-debug-query-wrapper";
-      const chipsRow = document.createElement("div");
-      chipsRow.className = "dr-debug-chips-row";
-      const quickChips = [
-        { label: "\u26A1 Diagnose 503 Error", query: "Why did the /api/ request return 503 and how can we fix it?" },
-        { label: "\u{1F50D} Find Correlations", query: "Find causal links between recent network failures and console exceptions." },
-        { label: "\u{1F9E0} Inspect Heap & Vitals", query: "Check memory heap allocations and identify any potential memory leaks." },
-        { label: "\u{1F9F9} Clear Telemetry", action: "clear" }
-      ];
-      for (const chip of quickChips) {
-        const chipEl = document.createElement("button");
-        chipEl.className = "dr-debug-quick-chip";
-        chipEl.textContent = chip.label;
-        chipEl.addEventListener("click", () => {
-          if (chip.action === "clear") {
-            this.clearTimeline();
-          } else if (chip.query) {
-            this.queryInput.value = chip.query;
-            this.triggerInvestigate();
-          }
-        });
-        chipsRow.appendChild(chipEl);
-      }
       const queryBox = document.createElement("div");
       queryBox.className = "dr-debug-query-box";
       this.queryInput = document.createElement("input");
@@ -10895,7 +10905,6 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.queryButton.addEventListener("click", () => this.triggerInvestigate());
       queryBox.appendChild(this.queryInput);
       queryBox.appendChild(this.queryButton);
-      queryWrapper.appendChild(chipsRow);
       queryWrapper.appendChild(queryBox);
       this.element.appendChild(header);
       this.element.appendChild(tabs);
@@ -10913,8 +10922,10 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.renderEmptyPrescription();
       this.startUptimeTicker();
       this.initDraggable(header);
+      this.errorDashboardView.update();
     }
     element;
+    bodyElement;
     timelineContainer;
     errorsContainer;
     triageContainer;
@@ -10935,7 +10946,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     tabPrescription;
     heapMetricBadge;
     uptimeMetricBadge;
-    activeTab = "timeline";
+    activeTab = "errors";
     steps = [];
     startTime = Date.now();
     isMaximized = false;
@@ -10949,6 +10960,9 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     }
     show() {
       this.element.classList.remove("hidden");
+      if (this.activeTab === "errors") {
+        this.errorDashboardView.update();
+      }
     }
     hide() {
       this.element.classList.add("hidden");
@@ -10965,6 +10979,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.queryButton.innerHTML = busy ? `<span>\u23F3</span> <span>Diagnosing...</span>` : `<span>\u26A1</span> <span>Diagnose</span>`;
     }
     switchTab(tab) {
+      var _a, _b;
       this.activeTab = tab;
       this.tabTimeline.classList.toggle("active", tab === "timeline");
       this.tabErrors.classList.toggle("active", tab === "errors");
@@ -10982,21 +10997,29 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         this.errorDashboardView.update();
       } else if (tab === "docker") {
         this.dockerDashboardView.update();
+      } else if (tab === "graph") {
+        const controller = typeof this.onCloseOrOptions === "object" && ((_b = (_a = this.onCloseOrOptions).getController) == null ? void 0 : _b.call(_a));
+        if (controller) {
+          this.causalGraphView.updateGraph(controller.getCausalGraph());
+        }
       }
     }
     updateErrors() {
-      this.errorDashboardView.update();
+      if (this.activeTab === "errors" && this.isVisible()) {
+        this.errorDashboardView.update();
+      }
     }
     updateDocker() {
       var _a, _b, _c;
-      this.dockerDashboardView.update();
+      if (this.activeTab === "docker" && this.isVisible()) {
+        this.dockerDashboardView.update();
+      }
       const controller = typeof this.onCloseOrOptions === "object" && ((_b = (_a = this.onCloseOrOptions).getController) == null ? void 0 : _b.call(_a));
       if (controller) {
         const errorCount = (((_c = controller.getDockerLogs) == null ? void 0 : _c.call(controller)) || []).filter((l) => l.level === "error").length;
-        if (errorCount > 0) {
-          this.tabDocker.innerHTML = `<span>\u{1F433} Docker <span style="background:rgba(244,63,94,0.25);color:#fda4af;border:1px solid rgba(244,63,94,0.5);padding:1px 5px;border-radius:9999px;font-size:9px;font-weight:700">${errorCount}</span></span>`;
-        } else {
-          this.tabDocker.innerHTML = `<span>\u{1F433} Docker</span>`;
+        const newHtml = errorCount > 0 ? `<span>\u{1F433} Docker <span style="background:rgba(244,63,94,0.25);color:#fda4af;border:1px solid rgba(244,63,94,0.5);padding:1px 5px;border-radius:9999px;font-size:9px;font-weight:700">${errorCount}</span></span>` : `<span>\u{1F433} Docker</span>`;
+        if (this.tabDocker.innerHTML !== newHtml) {
+          this.tabDocker.innerHTML = newHtml;
         }
       }
     }
@@ -11074,13 +11097,19 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         stepCard.appendChild(output);
       }
       this.timelineContainer.appendChild(stepCard);
+      this.scrollTimelineToBottom();
+    }
+    scrollTimelineToBottom() {
       this.timelineContainer.scrollTop = this.timelineContainer.scrollHeight;
+      if (this.bodyElement) {
+        this.bodyElement.scrollTop = this.bodyElement.scrollHeight;
+      }
     }
     showPrescription(prescription) {
       this.timelineContainer.appendChild(this.buildPrescriptionCard(prescription));
       this.prescriptionContainer.innerHTML = "";
       this.prescriptionContainer.appendChild(this.buildPrescriptionCard(prescription));
-      this.timelineContainer.scrollTop = this.timelineContainer.scrollHeight;
+      this.scrollTimelineToBottom();
       this.switchTab("prescription");
     }
     buildPrescriptionCard(prescription) {
@@ -11245,7 +11274,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       </div>
     `;
       this.timelineContainer.appendChild(this.thinkingCard);
-      this.timelineContainer.scrollTop = this.timelineContainer.scrollHeight;
+      this.scrollTimelineToBottom();
       if (this.activeTab !== "timeline") this.switchTab("timeline");
     }
     clearThinking() {
@@ -11255,9 +11284,12 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       }
     }
     updateCausalGraph(graph) {
-      this.causalGraphView.updateGraph(graph);
-      if (graph.nodes.length > 0) {
-        this.tabGraph.innerHTML = `<span>\u{1F578}\uFE0F</span> <span>Causal Map <span style="background:rgba(251,146,60,0.2);color:#fb923c;border:1px solid rgba(251,146,60,0.4);padding:1px 5px;border-radius:9999px;font-size:9px;font-weight:700">${graph.nodes.length}</span></span>`;
+      if (this.activeTab === "graph" && this.isVisible()) {
+        this.causalGraphView.updateGraph(graph);
+      }
+      const newHtml = graph.nodes.length > 0 ? `<span>\u{1F578}\uFE0F</span> <span>Causal Map <span style="background:rgba(251,146,60,0.2);color:#fb923c;border:1px solid rgba(251,146,60,0.4);padding:1px 5px;border-radius:9999px;font-size:9px;font-weight:700">${graph.nodes.length}</span></span>` : `<span>Causal Graph</span>`;
+      if (this.tabGraph.innerHTML !== newHtml) {
+        this.tabGraph.innerHTML = newHtml;
       }
     }
     toggleMaximize() {
@@ -11771,12 +11803,40 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 }
 
 .dr-debug-title-text {
-  font-weight: 700;
-  font-size: 12.5px;
-  letter-spacing: 0.3px;
-  background: linear-gradient(135deg, #ffffff 0%, #38bdf8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  flex-wrap: wrap;
+  line-height: 1.15;
+  user-select: none;
+}
+
+.dr-debug-brand-bold {
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 13.5px;
+  letter-spacing: 0.8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.45), 0 2px 4px rgba(0, 0, 0, 0.85);
+  -webkit-font-smoothing: antialiased;
+  display: inline-block;
+}
+
+.dr-debug-brand-sub {
+  color: #38bdf8;
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  opacity: 0.88;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.dr-debug-brand-sep {
+  color: rgba(56, 189, 248, 0.45);
+  font-weight: 400;
 }
 
 .dr-debug-header-metrics {
@@ -11825,25 +11885,39 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   display: flex;
   background: rgba(6, 9, 16, 0.4);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  padding: 3px 6px;
+  padding: 4px 6px;
   gap: 3px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.dr-debug-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .dr-debug-tab {
-  flex: 1;
-  padding: 6px 8px;
+  flex: 1 1 0;
+  min-width: max-content;
+  height: 28px;
+  padding: 4px 8px;
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   color: #94a3b8;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   border-radius: 6px;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 5px;
-  transition: all 0.2s ease;
+  white-space: nowrap;
+  user-select: none;
+  box-sizing: border-box;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .dr-debug-tab:hover {
@@ -11854,14 +11928,18 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 .dr-debug-tab.active {
   color: #38bdf8;
   background: rgba(56, 189, 248, 0.14);
-  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-color: rgba(56, 189, 248, 0.35);
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15);
 }
+
 
 /* Body Content */
 .dr-debug-body {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.3) rgba(10, 14, 23, 0.4);
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -12792,7 +12870,6 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 .dr-debug-error-dashboard {
   display: flex;
   flex-direction: column;
-  height: 100%;
   min-height: 0;
   gap: 8px;
 }
@@ -12937,39 +13014,42 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   flex-shrink: 0;
   background: rgba(10, 15, 28, 0.92);
   border: 1px solid rgba(56, 189, 248, 0.22);
-  border-radius: 8px;
-  padding: 8px;
+  border-radius: 6px;
+  padding: 4px 6px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .dr-debug-matrix-table {
   width: 100%;
   border-collapse: separate;
-  border-spacing: 5px;
+  border-spacing: 3px 2px;
+  table-layout: fixed;
 }
 
 .dr-debug-matrix-th {
-  font-size: 9.5px;
+  font-size: 8px;
   font-weight: 700;
   color: #94a3b8;
   text-align: center;
-  padding: 4px;
+  padding: 1px 2px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 .dr-debug-matrix-row-label {
-  font-size: 10px;
+  font-size: 8.5px;
   font-weight: 700;
   color: #cbd5e1;
-  padding: 4px 6px;
+  padding: 1px 3px;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   white-space: nowrap;
   letter-spacing: 0.2px;
 }
@@ -12977,13 +13057,14 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 .dr-debug-matrix-cell {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 6px;
-  padding: 6px 4px;
+  border-radius: 3px;
+  padding: 3px 2px;
   text-align: center;
   cursor: pointer;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
-  min-width: 60px;
+  min-width: 44px;
+  box-sizing: border-box;
 }
 
 .dr-debug-matrix-cell:hover {
@@ -13017,7 +13098,8 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 }
 
 .dr-debug-cell-count {
-  font-size: 13px;
+  font-size: 11px;
+  line-height: 1.1;
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
 }
@@ -13025,14 +13107,15 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 .dr-debug-cell-count.critical { color: #fb7185; }
 .dr-debug-cell-count.high { color: #fbbf24; }
 .dr-debug-cell-count.notice { color: #38bdf8; }
-.dr-debug-cell-count.zero { color: #475569; font-size: 11px; font-weight: 400; }
+.dr-debug-cell-count.zero { color: #475569; font-size: 9.5px; font-weight: 400; }
 
 .dr-debug-cell-sub {
-  font-size: 8px;
+  font-size: 6.5px;
   color: #64748b;
-  margin-top: 1px;
+  margin-top: 0px;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.2px;
+  line-height: 1;
 }
 
 /* Histogram Graph */
@@ -13143,13 +13226,12 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   gap: 8px;
   flex: 1 1 0;
   min-height: 0;
-  overflow: hidden;
 }
 
 .dr-debug-err-list {
   flex: 1 1 0;
   min-width: 0;
-  overflow-y: auto;
+  min-height: 380px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -13240,6 +13322,8 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 .dr-debug-err-inspector {
   flex: 1.2 1 0;
   min-width: 0;
+  min-height: 380px;
+  box-sizing: border-box;
   background: rgba(6, 10, 20, 0.95);
   border: 1px solid rgba(56, 189, 248, 0.3);
   border-radius: 8px;
@@ -13677,6 +13761,81 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   color: #00f0ff;
 }
 
+/* Settings Update Banner & Button */
+.dr-debug-settings-update-banner {
+  margin-top: 10px;
+  padding: 9px 12px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.75) 0%, rgba(30, 41, 59, 0.45) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.dr-debug-update-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dr-debug-update-tag {
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #38bdf8;
+  opacity: 0.85;
+}
+
+.dr-debug-update-version {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: 0.2px;
+}
+
+.dr-debug-btn-update {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.18) 0%, rgba(14, 165, 233, 0.28) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 10px rgba(14, 165, 233, 0.25);
+}
+
+.dr-debug-btn-update:hover {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.32) 0%, rgba(14, 165, 233, 0.48) 100%);
+  border-color: #38bdf8;
+  color: #ffffff;
+  box-shadow: 0 4px 18px rgba(56, 189, 248, 0.45);
+  transform: translateY(-1px);
+}
+
+.dr-debug-btn-update:active {
+  transform: translateY(0);
+}
+
+.dr-debug-update-arrow {
+  font-size: 12px;
+  transition: transform 0.2s ease;
+}
+
+.dr-debug-btn-update:hover .dr-debug-update-arrow {
+  transform: translate(1.5px, -1.5px);
+}
+
 @media (max-width: 520px) {
   .dr-debug-modal {
     width: calc(100vw - 20px) !important;
@@ -13718,6 +13877,23 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 
   .dr-debug-err-main-view {
     flex-direction: column;
+  }
+
+  .dr-debug-docker-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 10px;
+  }
+
+  .dr-debug-docker-status-left {
+    width: 100%;
+  }
+
+  .dr-debug-docker-status-right {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 6px;
   }
 }
 
@@ -13827,16 +14003,21 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 12px;
   background: rgba(15, 23, 42, 0.7);
   border: 1px solid rgba(56, 189, 248, 0.2);
   border-radius: 8px;
+  box-sizing: border-box;
 }
 
 .dr-debug-docker-status-left {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
+  min-width: 0;
+  flex: 1 1 240px;
 }
 
 .dr-debug-docker-status-dot {
@@ -13844,6 +14025,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
+  margin-top: 4px;
 }
 
 .dr-debug-docker-status-dot.online {
@@ -13856,6 +14038,13 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   box-shadow: 0 0 8px rgba(251, 113, 133, 0.5);
 }
 
+.dr-debug-docker-status-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
 .dr-debug-docker-title {
   display: flex;
   align-items: center;
@@ -13863,6 +14052,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   font-size: 13px;
   font-weight: 700;
   color: #f8fafc;
+  flex-wrap: wrap;
 }
 
 .dr-debug-docker-badge {
@@ -13871,6 +14061,8 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   border-radius: 4px;
   font-weight: 800;
   letter-spacing: 0.4px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .badge-running {
@@ -13888,25 +14080,31 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 .dr-debug-docker-sub {
   font-size: 11px;
   color: #94a3b8;
-  margin-top: 2px;
+  margin-top: 3px;
+  word-break: break-word;
+  line-height: 1.4;
 }
 
 .dr-debug-docker-status-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .dr-debug-docker-stat-pill {
-  padding: 4px 10px;
+  padding: 4px 9px;
   background: rgba(30, 41, 59, 0.6);
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 10.5px;
   color: #cbd5e1;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .dr-debug-docker-stat-pill.alert {
@@ -13924,6 +14122,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   cursor: pointer;
   font-size: 12px;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .dr-debug-dock-btn-refresh:hover {

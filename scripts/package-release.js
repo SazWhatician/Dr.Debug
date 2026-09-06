@@ -166,6 +166,7 @@ npx -y @dr-debug/mcp
   console.log('\n📦 Step 5/5: Generating NPM package tarball...')
   try {
     const drDebugPkgDir = path.resolve(root, 'packages/dr-debug')
+    execSync('npm run build', { cwd: drDebugPkgDir, stdio: 'inherit' })
     const packOutput = execSync('npm pack', { cwd: drDebugPkgDir, encoding: 'utf-8' }).trim()
     const generatedTgz = path.resolve(drDebugPkgDir, packOutput)
     if (fs.existsSync(generatedTgz)) {
@@ -196,7 +197,7 @@ All pre-built, ready-to-run release assets for **Dr. Debug** are compiled in thi
 | **[\`chrome-extension/\`](./chrome-extension/)** | Unpacked Chrome Extension Folder | Point Chrome directly to this folder via "Load unpacked" |
 | **[\`dr-debug.standalone.min.js\`](./dr-debug.standalone.min.js)** | Single-file zero-dependency in-browser bundle (minified) | Drop into any HTML with \`<script src="dr-debug.standalone.min.js"></script>\` |
 | **[\`dr-debug.standalone.js\`](./dr-debug.standalone.js)** | Development readable bundle with source maps & comments | For local debugging or embedding |
-| **\`dr-debug-*.tgz\`** | Standard NPM Package Tarball | Install with \`npm install ./dr-debug-0.1.0.tgz\` |
+| **\`dr-debug-*.tgz\`** | Standard NPM Package Tarball | Install with \`npm install ./dr-debug-0.1.4.tgz\` |
 
 ---
 
@@ -258,7 +259,19 @@ if (process.env.NODE_ENV === 'development') {
 
   fs.writeFileSync(path.resolve(releaseDir, 'DOWNLOAD_GUIDE.md'), downloadGuide, 'utf-8')
 
-
+  // 8. Mirror release zip and standalone bundle to landing/ for live website downloads
+  const landingDir = path.resolve(root, 'landing')
+  if (fs.existsSync(landingDir)) {
+    if (fs.existsSync(zipPath)) {
+      fs.copyFileSync(zipPath, path.resolve(landingDir, 'dr-debug-extension.zip'))
+      console.log(`✅ Synced fresh extension ZIP to landing/`)
+    }
+    const minJs = path.resolve(releaseDir, 'dr-debug.standalone.min.js')
+    if (fs.existsSync(minJs)) {
+      fs.copyFileSync(minJs, path.resolve(landingDir, 'dr-debug.standalone.min.js'))
+      console.log(`✅ Synced minified bundle to landing/`)
+    }
+  }
 
   console.log(`\n🎉 All release assets successfully packaged in: ${releaseDir}`)
 }

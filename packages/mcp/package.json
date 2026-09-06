@@ -1,11 +1,14 @@
 {
   "name": "@dr-debug/mcp",
-  "version": "0.1.0",
+  "version": "0.1.4",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Model Context Protocol (MCP) server & IDE bridge for Dr. Debug",
   "type": "module",
   "bin": {
-    "dr-debug-mcp": "./dist/cli.js",
-    "mcp": "./dist/cli.js"
+    "dr-debug-mcp": "dist/cli.js",
+    "mcp": "dist/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

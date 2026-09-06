@@ -1,6 +1,6 @@
 {
   "name": "dr-debug",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "description": "Autonomous In-Browser AI Debugging & Observability Agent",
   "type": "module",
   "main": "./dist/index.js",
@@ -40,7 +40,7 @@
   "homepage": "https://github.com/SazWhatician",
   "repository": {
     "type": "git",
-    "url": "https://github.com/SazWhatician/DebugCopilot"
+    "url": "git+https://github.com/SazWhatician/DebugCopilot.git"
   },
   "license": "MIT"
 }

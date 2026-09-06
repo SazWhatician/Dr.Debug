@@ -47,6 +47,22 @@ body::-webkit-scrollbar {
 html {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
+
+body {
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+}
+
+#hero,
+#cinematic-download-target,
+#faq,
+#crt-terminal {
+  scroll-margin-top: 80px;
 }
 
 html.lenis, html.lenis body {
@@ -620,9 +636,9 @@ body.is-loading {
 
 .hero-giant-bottom-title {
   font-family: var(--font-display);
-  font-size: clamp(3.8rem, 14.8vw, 17rem);
+  font-size: clamp(1.8rem, 12.2vw, 15.5rem);
   font-weight: 900;
-  line-height: 0.82;
+  line-height: 0.84;
   letter-spacing: -0.04em;
   color: #FFFFFF;
   text-transform: uppercase;
@@ -891,76 +907,218 @@ body.is-loading {
   margin-bottom: 22px;
 }
 
-/* Single ZIP Download Button */
-.dl-zip-button {
+/* Single ZIP Download Button (Uiverse Luxury Capsule) */
+.uiverse-dl-container {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 14px;
-  padding: 14px 18px;
-  text-decoration: none;
-  color: #FFFFFF;
-  box-shadow: 0 12px 35px -5px rgba(16, 185, 129, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  justify-content: center;
+  width: 100%;
   margin-bottom: 16px;
-  cursor: pointer !important;
-  pointer-events: auto !important;
-  position: relative;
-  z-index: 5;
 }
 
-.dl-zip-button * {
+.uiverse-dl-container.fx-layer {
+  filter: contrast(1.4);
+}
+
+.box.start-btn {
+  --w: 100%;
+  --h: auto;
+  --r: 9999px;
+  --tr: 18%;
+  z-index: 10;
+  position: relative;
+  width: var(--w);
+  min-height: 68px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: var(--r);
+  border: 1px double rgba(56, 189, 248, 0.35);
+  text-decoration: none;
+  padding: 12px 1.2rem 12px 1.5rem;
+  box-sizing: border-box;
+  gap: 12px;
+
+  box-shadow:
+    inset 2px -2px 1px -1px rgba(255, 255, 255, 0.65),
+    inset -2px 2px 1px -1px rgba(255, 255, 255, 0.65),
+    inset 6px -6px 1px -6px rgba(56, 189, 248, 0.35),
+    inset -6px 6px 1px -6px rgba(56, 189, 248, 0.35),
+    inset 0 0 3px rgba(0, 0, 0, 0.8),
+    0 8px 24px rgba(0, 0, 0, 0.35);
+
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.box.start-btn * {
   pointer-events: none;
 }
 
-.dl-zip-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 45px -5px rgba(16, 185, 129, 0.65), inset 0 1px 0 #FFFFFF;
-  border-color: rgba(255, 255, 255, 0.6);
-}
-
-.dl-btn-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.dl-btn-text-group {
+.box.start-btn .uiverse-text-wrap {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   text-align: left;
-  flex: 1;
-  padding: 0 12px;
+  z-index: 4;
+  gap: 2px;
 }
 
-.dl-btn-primary-text {
-  font-family: var(--font-display);
-  font-size: 0.98rem;
+.box.start-btn .text {
+  font-family: var(--font-display, 'Space Grotesk', system-ui, sans-serif);
+  font-size: 1.05rem;
   font-weight: 800;
-  line-height: 1.2;
+  color: #f8fafc;
+  letter-spacing: -0.01em;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
-.dl-btn-sub-text {
-  font-family: var(--font-mono);
+.box.start-btn .subtext {
+  font-family: var(--font-mono, monospace);
   font-size: 0.68rem;
-  opacity: 0.85;
+  color: #94a3b8;
+  letter-spacing: 0.02em;
+  transition: color 0.3s ease;
 }
 
-.dl-btn-arrow {
-  font-size: 1.1rem;
-  font-weight: 800;
-  transition: transform 0.2s ease;
+.box.start-btn .btn-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.35);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+  z-index: 4;
 }
 
-.dl-zip-button:hover .dl-btn-arrow {
-  transform: translateX(4px);
+.box.start-btn .btn-icon .svg {
+  width: 17px;
+  height: 17px;
+  fill: #38bdf8;
+  transition: all 0.3s ease;
+}
+
+.box.start-btn:before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  border-radius: var(--r);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  filter: blur(8px);
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.box.start-btn:after {
+  z-index: 3;
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: var(--r);
+  filter: blur(5px);
+  background: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    transparent var(--tr),
+    transparent calc(100% - var(--tr)),
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.box.start-btn .circle-overlay {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  right: 3px;
+  bottom: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--r);
+  filter: blur(1px);
+  pointer-events: none;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+/* ==========================================================================
+   HOVER STATE: The button changes colour when hovered!
+   Transitions from obsidian glass to vibrant radiant cyber emerald-cyan!
+   ========================================================================== */
+.box.start-btn:hover {
+  background: linear-gradient(135deg, #10b981 0%, #06b6d4 50%, #0284c7 100%);
+  border-color: #ffffff;
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.25),
+    0 16px 40px -6px rgba(16, 185, 129, 0.65),
+    0 0 30px rgba(6, 182, 212, 0.5);
+}
+
+.box.start-btn:hover .text {
+  color: #ffffff;
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.65), 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.box.start-btn:hover .subtext {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.box.start-btn:hover .btn-icon {
+  background: #ffffff;
+  border-color: #ffffff;
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.85), 0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: scale(1.12) translateX(3px);
+}
+
+.box.start-btn:hover .btn-icon .svg {
+  fill: #047857;
+}
+
+.box.start-btn:hover:before {
+  border-color: rgba(255, 255, 255, 0.8);
+  filter: blur(10px);
+}
+
+.box.start-btn:hover:after {
+  background: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.85) 0%,
+    transparent var(--tr),
+    transparent calc(100% - var(--tr)),
+    rgba(255, 255, 255, 0.85) 100%
+  );
+}
+
+.box.start-btn:hover .circle-overlay {
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.box.start-btn:active {
+  transform: translateY(0) scale(0.96);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.4),
+    0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.box.start-btn:active .btn-icon {
+  transform: scale(0.95);
 }
 
 /* Minimal CLI Quickstart */
@@ -2101,4 +2259,373 @@ body.is-loading {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   HIGH-FIDELITY ADAPTIVE RESPONSIVENESS (All Screen Sizes)
+   ============================================================ */
+
+/* 1. Tablet & Medium Screens (max-width: 1024px) */
+@media (max-width: 1024px) {
+  .navbar-transparent {
+    padding: 16px 24px;
+  }
+
+  .nav-right-actions {
+    gap: 14px;
+  }
+
+  .compact-download-card {
+    max-width: 440px;
+    padding: 28px 26px;
+  }
+
+  .footer-container {
+    padding: 3rem 2.2rem;
+  }
+
+  .footer-content {
+    padding-top: 60px;
+  }
+}
+
+/* 2. Small Tablets & Landscape Phones (max-width: 768px) */
+@media (max-width: 768px) {
+  .navbar-transparent {
+    padding: 12px 18px;
+  }
+
+  .nav-title-minimal {
+    font-size: 0.95rem;
+  }
+
+  .nav-right-actions {
+    gap: 10px;
+  }
+
+  .nav-item-link {
+    font-size: 0.8rem;
+  }
+
+  .nav-btn-download-shimmer {
+    padding: 6px 12px;
+    font-size: 0.76rem;
+    gap: 5px;
+  }
+
+  .hero-top-eyebrow {
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .eyebrow-line {
+    width: 24px;
+  }
+
+  .eyebrow-text {
+    font-size: clamp(0.58rem, 2vw, 0.74rem);
+    letter-spacing: 0.16em;
+  }
+
+  .split-cards-row {
+    flex-direction: column;
+    padding: 0 16px;
+    gap: 12px;
+    width: 100%;
+    max-width: 520px;
+  }
+
+  .card-pair {
+    max-width: 100%;
+    width: 100%;
+    padding: 20px 18px;
+  }
+
+  .card-brand-title {
+    font-size: 1.18rem;
+  }
+
+  .card-body-desc {
+    font-size: 0.82rem;
+    line-height: 1.52;
+    margin-bottom: 12px;
+  }
+
+  .compact-download-card {
+    max-width: 420px;
+    padding: 26px 22px;
+  }
+
+  .shader-frame,
+  .shader-frame.full-breadth-frame {
+    height: 65vh;
+    min-height: 420px;
+  }
+
+  .faq-section {
+    padding: 70px 18px 90px;
+  }
+
+  .faq-hero-header {
+    margin-bottom: 36px;
+  }
+
+  .faq-brand-title {
+    font-size: clamp(1.8rem, 6vw, 2.6rem);
+  }
+
+  .faq-trigger {
+    padding: 16px 20px;
+    font-size: 0.96rem;
+    gap: 12px;
+  }
+
+  .faq-step-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .faq-answer {
+    padding: 0 20px 20px 20px;
+    font-size: 0.86rem;
+  }
+
+  .footer-row {
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+
+  .footer-col-right {
+    justify-content: flex-start;
+    gap: 2.5rem;
+  }
+
+  .footer-sub-col {
+    text-align: left;
+  }
+}
+
+/* 3. Mobile Phones (max-width: 520px) */
+@media (max-width: 520px) {
+  .navbar-transparent {
+    padding: 10px 14px;
+  }
+
+  .nav-logo-minimal {
+    width: 26px;
+    height: 26px;
+  }
+
+  .nav-title-minimal {
+    font-size: 0.86rem;
+    letter-spacing: 0.04em;
+  }
+
+  .nav-right-actions {
+    gap: 8px;
+  }
+
+  .nav-item-link {
+    font-size: 0.74rem;
+  }
+
+  .nav-btn-download-shimmer {
+    padding: 5px 9px;
+    font-size: 0.72rem;
+    gap: 4px;
+  }
+
+  .hero-top-eyebrow {
+    gap: 6px;
+  }
+
+  .eyebrow-line {
+    width: 16px;
+  }
+
+  .eyebrow-text {
+    font-size: 0.58rem;
+    letter-spacing: 0.11em;
+  }
+
+  .compact-download-card {
+    max-width: calc(100vw - 22px);
+    padding: 22px 14px 18px;
+    border-radius: 18px;
+  }
+
+  .dl-main-title {
+    font-size: clamp(1.35rem, 5.8vw, 1.75rem);
+    margin-bottom: 4px;
+  }
+
+  .dl-subtitle {
+    font-size: 0.78rem;
+    margin-bottom: 16px;
+  }
+
+  .box.start-btn {
+    min-height: 60px;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .box.start-btn .text {
+    font-size: clamp(0.82rem, 3.8vw, 0.96rem);
+  }
+
+  .box.start-btn .subtext {
+    font-size: 0.62rem;
+  }
+
+  .box.start-btn .btn-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .box.start-btn .btn-icon .svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .dl-cli-strip {
+    padding: 7px 10px;
+    margin-bottom: 12px;
+  }
+
+  .dl-cli-text {
+    font-size: 0.8rem;
+  }
+
+  .dl-trust-row {
+    font-size: 0.7rem;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .github-star-pill {
+    padding: 7px 14px;
+    font-size: 0.72rem;
+    gap: 7px;
+  }
+
+  .dl-scroll-hint {
+    font-size: 0.7rem;
+  }
+
+  .shader-frame,
+  .shader-frame.full-breadth-frame {
+    height: 52vh;
+    min-height: 330px;
+  }
+
+  .faq-section {
+    padding: 50px 12px 70px;
+  }
+
+  .faq-brand-title {
+    font-size: clamp(1.5rem, 7vw, 2.2rem);
+  }
+
+  .faq-brand-subtitle {
+    font-size: 0.84rem;
+  }
+
+  .faq-trigger {
+    padding: 14px 14px;
+    font-size: 0.88rem;
+    gap: 10px;
+  }
+
+  .faq-step-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .faq-answer {
+    padding: 0 14px 16px 14px;
+    font-size: 0.8rem;
+  }
+
+  .newsletter-modal-dialog {
+    padding: 24px 16px 20px;
+    border-radius: 18px;
+    max-width: calc(100vw - 20px);
+  }
+
+  .newsletter-title {
+    font-size: 1.15rem;
+  }
+
+  .newsletter-description {
+    font-size: 0.8rem;
+    margin-bottom: 16px;
+  }
+
+  .newsletter-input {
+    font-size: 0.86rem;
+    padding: 11px 12px 11px 38px;
+  }
+
+  .newsletter-submit-btn {
+    font-size: 0.9rem;
+    padding: 12px 14px;
+  }
+
+  .footer-container {
+    padding: 2rem 1.2rem;
+  }
+
+  .footer-content {
+    padding-top: 30px;
+  }
+
+  .reactor-zone h1 {
+    font-size: 2.2rem;
+  }
+
+  .reactor-zone a {
+    font-size: 1.1rem;
+  }
+
+  .footer-col-right {
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .footer-bottom-bar {
+    font-size: 9.5px;
+    letter-spacing: 1px;
+    padding: 14px 0 65px 0;
+  }
+}
+
+/* 4. Extra Small Screens (max-width: 360px) */
+@media (max-width: 360px) {
+  .navbar-transparent {
+    padding: 8px 10px;
+  }
+
+  .nav-title-minimal {
+    display: none;
+  }
+
+  .box.start-btn {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .box.start-btn .text {
+    font-size: 0.8rem;
+  }
+
+  .box.start-btn .btn-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .compact-download-card {
+    padding: 18px 10px;
+  }
 }

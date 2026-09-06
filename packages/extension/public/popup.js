@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
       testModel = 'gpt-4o-mini'
     } else if (provider === 'gemini') {
       testUrl = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
-      testModel = 'gemini-1.5-flash'
+      testModel = 'gemini-flash-latest'
     }
 
     try {
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
       model = 'gpt-4o'
     } else if (provider === 'gemini') {
       baseURL = 'https://generativelanguage.googleapis.com/v1beta/openai/'
-      model = 'gemini-1.5-flash'
+      model = 'gemini-flash-latest'
     } else if (provider === 'litert') {
       model = 'litert'
     }
@@ -163,6 +163,16 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         })
       })
+    }
+  })
+
+  const btnCheckUpdate = document.getElementById('btn-check-update')
+  btnCheckUpdate?.addEventListener('click', () => {
+    const url = 'https://dr-debug.vercel.app/'
+    if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
+      chrome.tabs.create({ url })
+    } else {
+      window.open(url, '_blank', 'noopener,noreferrer')
     }
   })
 

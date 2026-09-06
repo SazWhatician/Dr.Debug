@@ -16,7 +16,7 @@ All pre-built, ready-to-run release assets for **Dr. Debug** are compiled in thi
 | **[`chrome-extension/`](./chrome-extension/)** | Unpacked Chrome Extension Folder | Point Chrome directly to this folder via "Load unpacked" |
 | **[`dr-debug.standalone.min.js`](./dr-debug.standalone.min.js)** | Single-file zero-dependency in-browser bundle (minified) | Drop into any HTML with `<script src="dr-debug.standalone.min.js"></script>` |
 | **[`dr-debug.standalone.js`](./dr-debug.standalone.js)** | Development readable bundle with source maps & comments | For local debugging or embedding |
-| **`dr-debug-*.tgz`** | Standard NPM Package Tarball | Install with `npm install ./dr-debug-0.1.0.tgz` |
+| **`dr-debug-*.tgz`** | Standard NPM Package Tarball | Install with `npm install ./dr-debug-0.1.4.tgz` |
 
 ---
 

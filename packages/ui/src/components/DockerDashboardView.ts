@@ -153,7 +153,7 @@ export class DockerDashboardView {
     this.statusBanner.innerHTML = `
       <div class="dr-debug-docker-status-left">
         <span class="dr-debug-docker-status-dot ${isBridgeConnected ? 'online' : 'offline'}"></span>
-        <div>
+        <div class="dr-debug-docker-status-info">
           <div class="dr-debug-docker-title">
             <span>Docker Engine Bridge</span>
             <span class="dr-debug-docker-badge ${isDaemonRunning ? 'badge-running' : 'badge-stopped'}">
@@ -163,7 +163,7 @@ export class DockerDashboardView {
           <div class="dr-debug-docker-sub">
             ${isBridgeConnected
               ? `Connected to local daemon via port 9229 · ${containers.length} containers discovered`
-              : `Bridge disconnected. Run \`npx @dr-debug/mcp\` to stream host containers.`}
+              : `Bridge disconnected. Run \`start-docker-bridge\` or \`npx @dr-debug/mcp\` to stream host containers.`}
           </div>
         </div>
       </div>
@@ -250,24 +250,24 @@ export class DockerDashboardView {
         <div class="dr-debug-dock-step-box">
           <div class="dr-debug-dock-step-head">
             <span class="dr-debug-dock-step-badge">WAY 1</span>
-            <span class="dr-debug-dock-step-label">Terminal (Zero Installation)</span>
-          </div>
-          <div class="dr-debug-dock-step-text">Run in any terminal with Node &gt;= 18:</div>
-          <div class="dr-debug-dock-cmd-line">
-            <code>npx @dr-debug/mcp</code>
-            <button class="dr-debug-copy-cmd-btn" id="btn-copy-dock-cmd">Copy</button>
-          </div>
-        </div>
-
-        <div class="dr-debug-dock-step-box">
-          <div class="dr-debug-dock-step-head">
-            <span class="dr-debug-dock-step-badge">WAY 2</span>
             <span class="dr-debug-dock-step-label">Double-Click Launcher</span>
           </div>
           <div class="dr-debug-dock-step-text">Zero terminal typing. In downloaded package:</div>
           <div class="dr-debug-dock-launcher-box">
             <span>Windows: <code>start-docker-bridge.bat</code></span>
             <span>Mac/Linux: <code>./start-docker-bridge.sh</code></span>
+          </div>
+        </div>
+
+        <div class="dr-debug-dock-step-box">
+          <div class="dr-debug-dock-step-head">
+            <span class="dr-debug-dock-step-badge">WAY 2</span>
+            <span class="dr-debug-dock-step-label">Terminal (Zero Installation)</span>
+          </div>
+          <div class="dr-debug-dock-step-text">Run in any terminal with Node &gt;= 18:</div>
+          <div class="dr-debug-dock-cmd-line">
+            <code>npx @dr-debug/mcp</code>
+            <button class="dr-debug-copy-cmd-btn" id="btn-copy-dock-cmd">Copy</button>
           </div>
         </div>
       </div>

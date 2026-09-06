@@ -72,7 +72,7 @@ export class SettingsModal {
             <select class="dr-debug-form-select" id="dr-debug-provider">
               <option value="groq" selected>⚡ Groq LPU (Ultra-Fast · openai/gpt-oss-120b)</option>
               <option value="openai">🧠 OpenAI (GPT-4o / GPT-4o-mini)</option>
-              <option value="gemini">✨ Gemini Flash (gemini-1.5-flash)</option>
+              <option value="gemini">✨ Gemini Flash (gemini-flash-latest)</option>
               <option value="litert">💻 LiteRT / Local (On-Device)</option>
             </select>
           </div>
@@ -103,6 +103,17 @@ export class SettingsModal {
             </button>
             <button id="dr-debug-btn-save-settings" class="dr-debug-btn">
               <span>💾</span> <span>Save Settings</span>
+            </button>
+          </div>
+
+          <div class="dr-debug-settings-update-banner">
+            <div class="dr-debug-update-meta">
+              <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.4</span>
+            </div>
+            <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
+              <span>🚀 Check for Updates</span>
+              <span class="dr-debug-update-arrow">↗</span>
             </button>
           </div>
 
@@ -139,6 +150,16 @@ export class SettingsModal {
     this.providerSelect.addEventListener('change', () => this.handleProviderChange())
     this.testBtn.addEventListener('click', () => this.handleTestConnection())
     this.saveBtn.addEventListener('click', () => this.handleSave())
+
+    const checkUpdateBtn = this.element.querySelector('#dr-debug-btn-check-update')
+    checkUpdateBtn?.addEventListener('click', () => {
+      const url = 'https://dr-debug.vercel.app/'
+      if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
+        chrome.tabs.create({ url })
+      } else {
+        window.open(url, '_blank', 'noopener,noreferrer')
+      }
+    })
   }
 
   private handleProviderChange(): void {
@@ -153,7 +174,7 @@ export class SettingsModal {
       this.baseURLInput.value = ''
     } else if (provider === 'gemini') {
       this.apiKeyGroup.style.display = 'block'
-      this.modelInput.value = 'gemini-1.5-flash'
+      this.modelInput.value = 'gemini-flash-latest'
       this.baseURLInput.value = 'https://generativelanguage.googleapis.com/v1beta/openai/'
     } else if (provider === 'litert') {
       this.apiKeyGroup.style.display = 'none'

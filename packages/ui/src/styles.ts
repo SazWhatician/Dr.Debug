@@ -242,12 +242,40 @@ export const shadowStyles = `
 }
 
 .dr-debug-title-text {
-  font-weight: 700;
-  font-size: 12.5px;
-  letter-spacing: 0.3px;
-  background: linear-gradient(135deg, #ffffff 0%, #38bdf8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  flex-wrap: wrap;
+  line-height: 1.15;
+  user-select: none;
+}
+
+.dr-debug-brand-bold {
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 13.5px;
+  letter-spacing: 0.8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.45), 0 2px 4px rgba(0, 0, 0, 0.85);
+  -webkit-font-smoothing: antialiased;
+  display: inline-block;
+}
+
+.dr-debug-brand-sub {
+  color: #38bdf8;
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  opacity: 0.88;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.dr-debug-brand-sep {
+  color: rgba(56, 189, 248, 0.45);
+  font-weight: 400;
 }
 
 .dr-debug-header-metrics {
@@ -296,25 +324,39 @@ export const shadowStyles = `
   display: flex;
   background: rgba(6, 9, 16, 0.4);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  padding: 3px 6px;
+  padding: 4px 6px;
   gap: 3px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.dr-debug-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .dr-debug-tab {
-  flex: 1;
-  padding: 6px 8px;
+  flex: 1 1 0;
+  min-width: max-content;
+  height: 28px;
+  padding: 4px 8px;
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   color: #94a3b8;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   border-radius: 6px;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 5px;
-  transition: all 0.2s ease;
+  white-space: nowrap;
+  user-select: none;
+  box-sizing: border-box;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .dr-debug-tab:hover {
@@ -325,14 +367,18 @@ export const shadowStyles = `
 .dr-debug-tab.active {
   color: #38bdf8;
   background: rgba(56, 189, 248, 0.14);
-  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-color: rgba(56, 189, 248, 0.35);
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15);
 }
+
 
 /* Body Content */
 .dr-debug-body {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.3) rgba(10, 14, 23, 0.4);
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -1263,7 +1309,6 @@ export const shadowStyles = `
 .dr-debug-error-dashboard {
   display: flex;
   flex-direction: column;
-  height: 100%;
   min-height: 0;
   gap: 8px;
 }
@@ -1408,39 +1453,42 @@ export const shadowStyles = `
   flex-shrink: 0;
   background: rgba(10, 15, 28, 0.92);
   border: 1px solid rgba(56, 189, 248, 0.22);
-  border-radius: 8px;
-  padding: 8px;
+  border-radius: 6px;
+  padding: 4px 6px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .dr-debug-matrix-table {
   width: 100%;
   border-collapse: separate;
-  border-spacing: 5px;
+  border-spacing: 3px 2px;
+  table-layout: fixed;
 }
 
 .dr-debug-matrix-th {
-  font-size: 9.5px;
+  font-size: 8px;
   font-weight: 700;
   color: #94a3b8;
   text-align: center;
-  padding: 4px;
+  padding: 1px 2px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 .dr-debug-matrix-row-label {
-  font-size: 10px;
+  font-size: 8.5px;
   font-weight: 700;
   color: #cbd5e1;
-  padding: 4px 6px;
+  padding: 1px 3px;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   white-space: nowrap;
   letter-spacing: 0.2px;
 }
@@ -1448,13 +1496,14 @@ export const shadowStyles = `
 .dr-debug-matrix-cell {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 6px;
-  padding: 6px 4px;
+  border-radius: 3px;
+  padding: 3px 2px;
   text-align: center;
   cursor: pointer;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
-  min-width: 60px;
+  min-width: 44px;
+  box-sizing: border-box;
 }
 
 .dr-debug-matrix-cell:hover {
@@ -1488,7 +1537,8 @@ export const shadowStyles = `
 }
 
 .dr-debug-cell-count {
-  font-size: 13px;
+  font-size: 11px;
+  line-height: 1.1;
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
 }
@@ -1496,14 +1546,15 @@ export const shadowStyles = `
 .dr-debug-cell-count.critical { color: #fb7185; }
 .dr-debug-cell-count.high { color: #fbbf24; }
 .dr-debug-cell-count.notice { color: #38bdf8; }
-.dr-debug-cell-count.zero { color: #475569; font-size: 11px; font-weight: 400; }
+.dr-debug-cell-count.zero { color: #475569; font-size: 9.5px; font-weight: 400; }
 
 .dr-debug-cell-sub {
-  font-size: 8px;
+  font-size: 6.5px;
   color: #64748b;
-  margin-top: 1px;
+  margin-top: 0px;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.2px;
+  line-height: 1;
 }
 
 /* Histogram Graph */
@@ -1614,13 +1665,12 @@ export const shadowStyles = `
   gap: 8px;
   flex: 1 1 0;
   min-height: 0;
-  overflow: hidden;
 }
 
 .dr-debug-err-list {
   flex: 1 1 0;
   min-width: 0;
-  overflow-y: auto;
+  min-height: 380px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1711,6 +1761,8 @@ export const shadowStyles = `
 .dr-debug-err-inspector {
   flex: 1.2 1 0;
   min-width: 0;
+  min-height: 380px;
+  box-sizing: border-box;
   background: rgba(6, 10, 20, 0.95);
   border: 1px solid rgba(56, 189, 248, 0.3);
   border-radius: 8px;
@@ -2148,6 +2200,81 @@ export const shadowStyles = `
   color: #00f0ff;
 }
 
+/* Settings Update Banner & Button */
+.dr-debug-settings-update-banner {
+  margin-top: 10px;
+  padding: 9px 12px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.75) 0%, rgba(30, 41, 59, 0.45) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.dr-debug-update-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dr-debug-update-tag {
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #38bdf8;
+  opacity: 0.85;
+}
+
+.dr-debug-update-version {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: 0.2px;
+}
+
+.dr-debug-btn-update {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.18) 0%, rgba(14, 165, 233, 0.28) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 10px rgba(14, 165, 233, 0.25);
+}
+
+.dr-debug-btn-update:hover {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.32) 0%, rgba(14, 165, 233, 0.48) 100%);
+  border-color: #38bdf8;
+  color: #ffffff;
+  box-shadow: 0 4px 18px rgba(56, 189, 248, 0.45);
+  transform: translateY(-1px);
+}
+
+.dr-debug-btn-update:active {
+  transform: translateY(0);
+}
+
+.dr-debug-update-arrow {
+  font-size: 12px;
+  transition: transform 0.2s ease;
+}
+
+.dr-debug-btn-update:hover .dr-debug-update-arrow {
+  transform: translate(1.5px, -1.5px);
+}
+
 @media (max-width: 520px) {
   .dr-debug-modal {
     width: calc(100vw - 20px) !important;
@@ -2189,6 +2316,23 @@ export const shadowStyles = `
 
   .dr-debug-err-main-view {
     flex-direction: column;
+  }
+
+  .dr-debug-docker-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 10px;
+  }
+
+  .dr-debug-docker-status-left {
+    width: 100%;
+  }
+
+  .dr-debug-docker-status-right {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 6px;
   }
 }
 
@@ -2298,16 +2442,21 @@ export const shadowStyles = `
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 12px;
   background: rgba(15, 23, 42, 0.7);
   border: 1px solid rgba(56, 189, 248, 0.2);
   border-radius: 8px;
+  box-sizing: border-box;
 }
 
 .dr-debug-docker-status-left {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
+  min-width: 0;
+  flex: 1 1 240px;
 }
 
 .dr-debug-docker-status-dot {
@@ -2315,6 +2464,7 @@ export const shadowStyles = `
   height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
+  margin-top: 4px;
 }
 
 .dr-debug-docker-status-dot.online {
@@ -2327,6 +2477,13 @@ export const shadowStyles = `
   box-shadow: 0 0 8px rgba(251, 113, 133, 0.5);
 }
 
+.dr-debug-docker-status-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
 .dr-debug-docker-title {
   display: flex;
   align-items: center;
@@ -2334,6 +2491,7 @@ export const shadowStyles = `
   font-size: 13px;
   font-weight: 700;
   color: #f8fafc;
+  flex-wrap: wrap;
 }
 
 .dr-debug-docker-badge {
@@ -2342,6 +2500,8 @@ export const shadowStyles = `
   border-radius: 4px;
   font-weight: 800;
   letter-spacing: 0.4px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .badge-running {
@@ -2359,25 +2519,31 @@ export const shadowStyles = `
 .dr-debug-docker-sub {
   font-size: 11px;
   color: #94a3b8;
-  margin-top: 2px;
+  margin-top: 3px;
+  word-break: break-word;
+  line-height: 1.4;
 }
 
 .dr-debug-docker-status-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .dr-debug-docker-stat-pill {
-  padding: 4px 10px;
+  padding: 4px 9px;
   background: rgba(30, 41, 59, 0.6);
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 10.5px;
   color: #cbd5e1;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .dr-debug-docker-stat-pill.alert {
@@ -2395,6 +2561,7 @@ export const shadowStyles = `
   cursor: pointer;
   font-size: 12px;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .dr-debug-dock-btn-refresh:hover {

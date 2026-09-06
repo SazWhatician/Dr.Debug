@@ -1,6 +1,6 @@
 {
   "name": "dr-debug-monorepo",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "private": true,
   "description": "Autonomous in-browser AI debugging & observability agent",
   "author": "Saswat Mohanty (https://github.com/SazWhatician)",
@@ -20,6 +20,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "mcp": "node packages/mcp/dist/cli.js",
     "build": "tsc -b tsconfig.build.json && npm run build:extension",
     "typecheck": "tsc --noEmit",
     "clean": "tsc -b tsconfig.build.json --clean",

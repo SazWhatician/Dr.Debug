@@ -33,6 +33,7 @@ export interface CockpitPanelOptions {
 
 export class CockpitPanel {
   private element: HTMLElement
+  private bodyElement!: HTMLElement
   private timelineContainer: HTMLElement
   private errorsContainer: HTMLElement
   private triageContainer: HTMLElement
@@ -53,7 +54,7 @@ export class CockpitPanel {
   private tabPrescription: HTMLButtonElement
   private heapMetricBadge: HTMLElement
   private uptimeMetricBadge: HTMLElement
-  private activeTab: 'timeline' | 'errors' | 'triage' | 'graph' | 'prescription' | 'docker' = 'timeline'
+  private activeTab: 'timeline' | 'errors' | 'triage' | 'graph' | 'prescription' | 'docker' = 'errors'
   private steps: StepItem[] = []
   private startTime = Date.now()
   private isMaximized = false
@@ -91,7 +92,10 @@ export class CockpitPanel {
     brand.innerHTML = `
       <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo header-logo" alt="Dr. Debug" />
       <div>
-        <div class="dr-debug-title-text">DR. DEBUG // COCKPIT</div>
+        <div class="dr-debug-title-text">
+          <span class="dr-debug-brand-bold">DR. DEBUG</span>
+          <span class="dr-debug-brand-sub"><span class="dr-debug-brand-sep">//</span> COCKPIT</span>
+        </div>
       </div>
     `
 
@@ -144,13 +148,8 @@ export class CockpitPanel {
     const tabs = document.createElement('div')
     tabs.className = 'dr-debug-tabs'
 
-    this.tabTimeline = document.createElement('button')
-    this.tabTimeline.className = 'dr-debug-tab active'
-    this.tabTimeline.innerHTML = `<span>Timeline</span>`
-    this.tabTimeline.addEventListener('click', () => this.switchTab('timeline'))
-
     this.tabErrors = document.createElement('button')
-    this.tabErrors.className = 'dr-debug-tab'
+    this.tabErrors.className = 'dr-debug-tab active'
     this.tabErrors.innerHTML = `<span>Error Matrix</span>`
     this.tabErrors.addEventListener('click', () => this.switchTab('errors'))
 
@@ -169,24 +168,30 @@ export class CockpitPanel {
     this.tabDocker.innerHTML = `<span>🐳 Docker</span>`
     this.tabDocker.addEventListener('click', () => this.switchTab('docker'))
 
+    this.tabTimeline = document.createElement('button')
+    this.tabTimeline.className = 'dr-debug-tab'
+    this.tabTimeline.innerHTML = `<span>Timeline</span>`
+    this.tabTimeline.addEventListener('click', () => this.switchTab('timeline'))
+
     this.tabPrescription = document.createElement('button')
     this.tabPrescription.className = 'dr-debug-tab'
     this.tabPrescription.innerHTML = `<span>Prescription</span>`
     this.tabPrescription.addEventListener('click', () => this.switchTab('prescription'))
 
-    tabs.appendChild(this.tabTimeline)
     tabs.appendChild(this.tabErrors)
     tabs.appendChild(this.tabTriage)
     tabs.appendChild(this.tabGraph)
     tabs.appendChild(this.tabDocker)
+    tabs.appendChild(this.tabTimeline)
     tabs.appendChild(this.tabPrescription)
 
     // 3. Body Containers
     const body = document.createElement('div')
     body.className = 'dr-debug-body'
+    this.bodyElement = body
 
     this.timelineContainer = document.createElement('div')
-    this.timelineContainer.style.display = 'flex'
+    this.timelineContainer.style.display = 'none'
     this.timelineContainer.style.flexDirection = 'column'
     this.timelineContainer.style.gap = '10px'
 
@@ -198,10 +203,9 @@ export class CockpitPanel {
       }
     })
     this.errorsContainer = document.createElement('div')
-    this.errorsContainer.style.display = 'none'
+    this.errorsContainer.style.display = 'flex'
     this.errorsContainer.style.flexDirection = 'column'
     this.errorsContainer.style.gap = '10px'
-    this.errorsContainer.style.height = '100%'
     this.errorsContainer.appendChild(this.errorDashboardView.getElement())
 
     this.triageContainer = document.createElement('div')
@@ -226,7 +230,6 @@ export class CockpitPanel {
     this.dockerContainer.style.display = 'none'
     this.dockerContainer.style.flexDirection = 'column'
     this.dockerContainer.style.gap = '10px'
-    this.dockerContainer.style.height = '100%'
     this.dockerContainer.appendChild(this.dockerDashboardView.getElement())
 
     this.prescriptionContainer = document.createElement('div')
@@ -262,34 +265,9 @@ export class CockpitPanel {
     this.element.appendChild(this.settingsModal.getElement())
 
 
-    // 4. Quick Prompts & Query Wrapper
+    // 4. Interactive Query Wrapper
     const queryWrapper = document.createElement('div')
     queryWrapper.className = 'dr-debug-query-wrapper'
-
-    const chipsRow = document.createElement('div')
-    chipsRow.className = 'dr-debug-chips-row'
-
-    const quickChips = [
-      { label: '⚡ Diagnose 503 Error', query: 'Why did the /api/ request return 503 and how can we fix it?' },
-      { label: '🔍 Find Correlations', query: 'Find causal links between recent network failures and console exceptions.' },
-      { label: '🧠 Inspect Heap & Vitals', query: 'Check memory heap allocations and identify any potential memory leaks.' },
-      { label: '🧹 Clear Telemetry', action: 'clear' }
-    ]
-
-    for (const chip of quickChips) {
-      const chipEl = document.createElement('button')
-      chipEl.className = 'dr-debug-quick-chip'
-      chipEl.textContent = chip.label
-      chipEl.addEventListener('click', () => {
-        if (chip.action === 'clear') {
-          this.clearTimeline()
-        } else if (chip.query) {
-          this.queryInput.value = chip.query
-          this.triggerInvestigate()
-        }
-      })
-      chipsRow.appendChild(chipEl)
-    }
 
     const queryBox = document.createElement('div')
     queryBox.className = 'dr-debug-query-box'
@@ -310,7 +288,6 @@ export class CockpitPanel {
     queryBox.appendChild(this.queryInput)
     queryBox.appendChild(this.queryButton)
 
-    queryWrapper.appendChild(chipsRow)
     queryWrapper.appendChild(queryBox)
 
     this.element.appendChild(header)
@@ -331,6 +308,7 @@ export class CockpitPanel {
     this.renderEmptyPrescription()
     this.startUptimeTicker()
     this.initDraggable(header)
+    this.errorDashboardView.update()
   }
 
   public getElement(): HTMLElement {
@@ -339,6 +317,9 @@ export class CockpitPanel {
 
   public show(): void {
     this.element.classList.remove('hidden')
+    if (this.activeTab === 'errors') {
+      this.errorDashboardView.update()
+    }
   }
 
   public hide(): void {
@@ -381,23 +362,33 @@ export class CockpitPanel {
       this.errorDashboardView.update()
     } else if (tab === 'docker') {
       this.dockerDashboardView.update()
+    } else if (tab === 'graph') {
+      const controller = typeof this.onCloseOrOptions === 'object' && this.onCloseOrOptions.getController?.()
+      if (controller) {
+        this.causalGraphView.updateGraph(controller.getCausalGraph())
+      }
     }
   }
 
   public updateErrors(): void {
-    this.errorDashboardView.update()
+    if (this.activeTab === 'errors' && this.isVisible()) {
+      this.errorDashboardView.update()
+    }
   }
 
   public updateDocker(): void {
-    this.dockerDashboardView.update()
+    if (this.activeTab === 'docker' && this.isVisible()) {
+      this.dockerDashboardView.update()
+    }
 
     const controller = typeof this.onCloseOrOptions === 'object' && this.onCloseOrOptions.getController?.()
     if (controller) {
       const errorCount = (controller.getDockerLogs?.() || []).filter((l: any) => l.level === 'error').length
-      if (errorCount > 0) {
-        this.tabDocker.innerHTML = `<span>🐳 Docker <span style="background:rgba(244,63,94,0.25);color:#fda4af;border:1px solid rgba(244,63,94,0.5);padding:1px 5px;border-radius:9999px;font-size:9px;font-weight:700">${errorCount}</span></span>`
-      } else {
-        this.tabDocker.innerHTML = `<span>🐳 Docker</span>`
+      const newHtml = errorCount > 0
+        ? `<span>🐳 Docker <span style="background:rgba(244,63,94,0.25);color:#fda4af;border:1px solid rgba(244,63,94,0.5);padding:1px 5px;border-radius:9999px;font-size:9px;font-weight:700">${errorCount}</span></span>`
+        : `<span>🐳 Docker</span>`
+      if (this.tabDocker.innerHTML !== newHtml) {
+        this.tabDocker.innerHTML = newHtml
       }
     }
   }
@@ -498,7 +489,14 @@ export class CockpitPanel {
     }
 
     this.timelineContainer.appendChild(stepCard)
+    this.scrollTimelineToBottom()
+  }
+
+  private scrollTimelineToBottom(): void {
     this.timelineContainer.scrollTop = this.timelineContainer.scrollHeight
+    if (this.bodyElement) {
+      this.bodyElement.scrollTop = this.bodyElement.scrollHeight
+    }
   }
 
   public showPrescription(prescription: PrescriptionData): void {
@@ -508,7 +506,7 @@ export class CockpitPanel {
     this.prescriptionContainer.innerHTML = ''
     this.prescriptionContainer.appendChild(this.buildPrescriptionCard(prescription))
 
-    this.timelineContainer.scrollTop = this.timelineContainer.scrollHeight
+    this.scrollTimelineToBottom()
     this.switchTab('prescription')
   }
 
@@ -705,7 +703,7 @@ export class CockpitPanel {
       </div>
     `
     this.timelineContainer.appendChild(this.thinkingCard)
-    this.timelineContainer.scrollTop = this.timelineContainer.scrollHeight
+    this.scrollTimelineToBottom()
     if (this.activeTab !== 'timeline') this.switchTab('timeline')
   }
 
@@ -717,9 +715,14 @@ export class CockpitPanel {
   }
 
   public updateCausalGraph(graph: CausalErrorGraph): void {
-    this.causalGraphView.updateGraph(graph)
-    if (graph.nodes.length > 0) {
-      this.tabGraph.innerHTML = `<span>🕸️</span> <span>Causal Map <span style="background:rgba(251,146,60,0.2);color:#fb923c;border:1px solid rgba(251,146,60,0.4);padding:1px 5px;border-radius:9999px;font-size:9px;font-weight:700">${graph.nodes.length}</span></span>`
+    if (this.activeTab === 'graph' && this.isVisible()) {
+      this.causalGraphView.updateGraph(graph)
+    }
+    const newHtml = graph.nodes.length > 0
+      ? `<span>🕸️</span> <span>Causal Map <span style="background:rgba(251,146,60,0.2);color:#fb923c;border:1px solid rgba(251,146,60,0.4);padding:1px 5px;border-radius:9999px;font-size:9px;font-weight:700">${graph.nodes.length}</span></span>`
+      : `<span>Causal Graph</span>`
+    if (this.tabGraph.innerHTML !== newHtml) {
+      this.tabGraph.innerHTML = newHtml
     }
   }
 

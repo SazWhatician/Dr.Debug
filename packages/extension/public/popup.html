@@ -20,8 +20,21 @@
       --green: #10b981;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
+    html, body {
       width: 320px;
+      max-height: 560px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(56, 189, 248, 0.3) rgba(10, 14, 23, 0.4);
+    }
+    body::-webkit-scrollbar {
+      width: 5px;
+    }
+    body::-webkit-scrollbar-thumb {
+      background: rgba(56, 189, 248, 0.3);
+      border-radius: 9999px;
+    }
+    body {
       font-family: 'Inter', sans-serif;
       background: radial-gradient(circle at top right, rgba(14, 165, 233, 0.12) 0%, transparent 70%), var(--bg);
       color: var(--text);
@@ -197,6 +210,12 @@
       </button>
       <button id="btn-save-settings" style="padding: 6px 10px; font-size: 11px; flex:1;">
         <span>💾</span> <span>Save</span>
+      </button>
+    </div>
+    <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(56, 189, 248, 0.15); display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 10px; color: var(--text-muted); font-weight: 500;">v0.1.4 · Official Portal</span>
+      <button type="button" id="btn-check-update" class="btn-secondary" style="width: auto; padding: 4px 10px; font-size: 10.5px; border-radius: 6px; cursor: pointer;">
+        <span>🚀 Check for Updates ↗</span>
       </button>
     </div>
     <div id="status-msg" class="status-msg"></div>
