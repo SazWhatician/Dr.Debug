@@ -916,7 +916,8 @@ body.is-loading {
 }
 
 .uiverse-dl-container.fx-layer {
-  filter: contrast(1.4);
+  /* contrast filter removed — it created a new stacking context that broke
+     backdrop-filter and overflow clipping on child elements */
 }
 
 .box.start-btn {
@@ -997,6 +998,7 @@ body.is-loading {
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
   z-index: 4;
+  overflow: hidden;
 }
 
 .box.start-btn .btn-icon .svg {
