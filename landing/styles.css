@@ -920,7 +920,10 @@ body.is-loading {
      backdrop-filter and overflow clipping on child elements */
 }
 
-.box.start-btn {
+.box.start-btn,
+a.box.start-btn,
+a.box.start-btn:link,
+a.box.start-btn:visited {
   --w: 100%;
   --h: auto;
   --r: 9999px;
@@ -929,12 +932,13 @@ body.is-loading {
   position: relative;
   width: var(--w);
   min-height: 68px;
-  display: flex;
+  display: flex !important;
   justify-content: space-between;
   align-items: center;
   border-radius: var(--r);
   border: 1px double rgba(56, 189, 248, 0.35);
-  text-decoration: none;
+  text-decoration: none !important;
+  color: inherit !important;
   padding: 12px 1.2rem 12px 1.5rem;
   box-sizing: border-box;
   gap: 12px;

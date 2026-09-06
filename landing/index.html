@@ -95,6 +95,15 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="is-loading" data-barba="wrapper">
+  <script>
+    // Safety timeout: if CDN scripts fail to load (e.g. file:// protocol),
+    // auto-remove the preloader after 3 seconds so the page is still usable.
+    setTimeout(function() {
+      document.body.classList.remove('is-loading');
+      var pre = document.getElementById('barba-preloader');
+      if (pre) pre.style.display = 'none';
+    }, 3000);
+  </script>
 
   <!-- ========================================================
        BARBA.JS LEFT-TO-RIGHT PANE SLIDING PRELOADER
