@@ -317,9 +317,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const frameIndex = Math.min(TOTAL_FRAMES - 1, Math.floor(videoProgress * (TOTAL_FRAMES - 1)))
     renderCanvasFrame(frameIndex)
 
-    // Toggle active download card at download scene (0.62 to 0.95)
+    // Toggle active download card at download scene (0.68 to 0.95)
     if (downloadCard) {
-      if (progress >= 0.62 && progress <= 0.95) {
+      if (progress >= 0.68 && progress <= 0.95) {
         downloadCard.classList.add('is-active')
       } else {
         downloadCard.classList.remove('is-active')
@@ -332,6 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (lenis) {
     lenis.on('scroll', updateScrollScrub)
   }
+  updateScrollScrub()
 
   // Cinematic Master Scroll Timeline with GSAP
   if (heroSection && typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
@@ -422,14 +423,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // 0.66 -> 1.00: Download Card over the Monitor Screen with Pinned Scroll Stopper
     masterScrollTl
       .fromTo(downloadCard,
-        { opacity: 0, scale: 0.88, y: 35, pointerEvents: 'none' },
-        { opacity: 1, scale: 1, y: 0, pointerEvents: 'auto', duration: 0.10, ease: 'power3.out' },
+        { opacity: 0, scale: 0.88, y: 35, pointerEvents: 'none', autoAlpha: 0 },
+        { opacity: 1, scale: 1, y: 0, pointerEvents: 'auto', autoAlpha: 1, duration: 0.10, ease: 'power3.out' },
         0.66
       )
       // EXTENDED STOPPER / HOLD: From 0.70 to 0.92, download card is pinned & steady over the monitor screen
       .to({}, { duration: 0.22 }, 0.70)
       // Smooth exit so user scrolls down into the full-breadth CRT terminal below
-      .to(downloadCard, { opacity: 0, y: -25, pointerEvents: 'none', duration: 0.06, ease: 'power2.in' }, 0.94)
+      .to(downloadCard, { opacity: 0, y: -25, pointerEvents: 'none', autoAlpha: 0, duration: 0.06, ease: 'power2.in' }, 0.94)
   }
 
   // ========================================================

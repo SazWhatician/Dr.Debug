@@ -662,15 +662,25 @@ body {
   padding: 32px 34px;
   text-align: center;
   opacity: 0;
-  pointer-events: none;
+  visibility: hidden;
+  pointer-events: none !important;
   transform: scale(0.88);
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+}
+
+.compact-download-card:not(.is-active) * {
+  pointer-events: none !important;
 }
 
 .compact-download-card.is-active {
   opacity: 1;
+  visibility: visible;
   pointer-events: auto !important;
   transform: scale(1);
+}
+
+.compact-download-card.is-active * {
+  pointer-events: auto;
 }
 
 .dl-status-badge {
