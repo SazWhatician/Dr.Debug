@@ -341,18 +341,6 @@ document.addEventListener('DOMContentLoaded', () => {
         start: 'top top',
         end: 'bottom bottom',
         scrub: 0.2,
-        snap: {
-          snapTo: (val) => {
-            // Stopper: When user reaches the download card on the monitor, magnetically lock at 0.78
-            if (val >= 0.67 && val <= 0.93) {
-              return 0.78
-            }
-            return val
-          },
-          duration: { min: 0.25, max: 0.6 },
-          delay: 0.1,
-          ease: 'power2.out'
-        },
         onUpdate: (self) => {
           updateScrollScrub()
         }
@@ -1102,56 +1090,4 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   initCrtTerminal()
-
-  // ── Barba.js High-Fashion Transition Engine ───────────
-  if (typeof barba !== 'undefined') {
-    try {
-      barba.init({
-        prevent: ({ el }) => {
-          if (!el) return false
-          const hrefAttr = el.getAttribute('href') || ''
-          return (
-            el.classList?.contains('no-barba') ||
-            hrefAttr.startsWith('#') ||
-            el.hasAttribute('download') ||
-            el.getAttribute('target') === '_blank'
-          )
-        },
-        transitions: [{
-          name: 'pane-slide-fashion',
-          async leave(data) {
-            const overlay = document.getElementById('barba-overlay')
-            const panes = gsap.utils.toArray('.barba-transition-pane')
-            if (overlay) overlay.style.display = 'block'
-            gsap.set(panes, { xPercent: -100 })
-            await gsap.to(panes, {
-              xPercent: 0,
-              duration: 0.55,
-              stagger: 0.06,
-              ease: 'power4.inOut'
-            })
-            data.current.container.remove()
-          },
-          enter(data) {
-            window.scrollTo(0, 0)
-            const overlay = document.getElementById('barba-overlay')
-            const panes = gsap.utils.toArray('.barba-transition-pane')
-            return gsap.to(panes, {
-              xPercent: 100,
-              duration: 0.65,
-              stagger: 0.06,
-              ease: 'power4.inOut',
-              onComplete: () => {
-                if (overlay) overlay.style.display = 'none'
-                gsap.set(panes, { xPercent: -100 })
-                ScrollTrigger.refresh()
-              }
-            })
-          }
-        }]
-      })
-    } catch (err) {
-      console.warn('Barba.js initialization notice:', err)
-    }
-  }
 })

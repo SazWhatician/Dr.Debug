@@ -47,15 +47,9 @@ body::-webkit-scrollbar {
 html {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
-  overflow-x: hidden;
+  overflow-x: clip;
   scroll-behavior: smooth;
   scroll-padding-top: 80px;
-}
-
-body {
-  overflow-x: hidden;
-  width: 100%;
-  position: relative;
 }
 
 #hero,
@@ -82,10 +76,11 @@ html.lenis, html.lenis body {
 }
 
 body {
+  width: 100%;
   background-color: var(--bg-dark);
   color: var(--text-main);
   font-family: var(--font-sans);
-  overflow-x: hidden;
+  overflow-x: clip;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   position: relative;
