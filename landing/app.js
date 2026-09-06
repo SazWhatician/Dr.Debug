@@ -172,29 +172,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })
 
-  // 3. Barba.js Left-to-Right Pane Sliding Preloader
-  const preloader = document.getElementById('barba-preloader')
-  const counterNum = document.getElementById('loader-counter')
-  const counterBar = document.getElementById('loader-bar')
-  const giantTitle = document.getElementById('giant-title')
-  const heroEyebrow = document.querySelector('.hero-top-eyebrow')
-  const mainNav = document.getElementById('main-nav')
-
-  const dBox1 = document.getElementById('d-box-1')
-  const dBox2 = document.getElementById('d-box-2')
-  const dBox3 = document.getElementById('d-box-3')
-  const digit1 = document.getElementById('digit-1')
-  const digit2 = document.getElementById('digit-2')
-  const digit3 = document.getElementById('digit-3')
-  const foldMeta = document.getElementById('loader-fold-meta')
-
-  let loaderObj = { val: 0 }
-  let hasRevealedHero = false
-
-  // Initially hide the first box so counting from 00 to 99 is centered
-  if (dBox1) {
-    gsap.set(dBox1, { width: 0, opacity: 0, overflow: 'hidden' })
-  }
 
   // ========================================================
   // 3a. Frame Preloading Engine (120 Ultra-Smooth Frames)
@@ -309,127 +286,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   preloadRemainingFramesProgressively()
 
-  // Preloader Count Animation (Snappy high-performance curve)
-  gsap.to(loaderObj, {
-    val: 100,
-    duration: 0.45,
-    ease: 'power2.out',
-    onUpdate: () => {
-      const current = Math.floor(loaderObj.val)
-      if (counterNum) {
-        counterNum.textContent = `${current}%`
-      }
-      if (counterBar) {
-        counterBar.style.width = `${current}%`
-      }
-      if (current < 100) {
-        const padded = current < 10 ? `0${current}` : `${current}`
-        if (digit2) digit2.textContent = padded[0]
-        if (digit3) digit3.textContent = padded[1]
-      }
-    },
-    onComplete: () => {
-      revealEntrance()
-    }
-  })
-
-  // Barba Pane Sliding & Digit Folding Entrance (Snappy high-fashion reveal)
-  function revealEntrance() {
-    if (hasRevealedHero) return
-    hasRevealedHero = true
-
-    if (counterNum) counterNum.textContent = '100%'
-    if (counterBar) counterBar.style.width = '100%'
-    if (digit1) digit1.textContent = '1'
-    if (digit2) digit2.textContent = '0'
-    if (digit3) digit3.textContent = '0'
-
-    // Compute dynamic spacing between digit boxes
-    const rect2 = dBox2 ? dBox2.getBoundingClientRect() : null
-    const rect3 = dBox3 ? dBox3.getBoundingClientRect() : null
-    const stepDist = (rect2 && rect3) ? Math.round(rect3.left - rect2.left) : 110
-    const targetWidth = rect2 ? rect2.width : 90
-
-    const slidingPanes = gsap.utils.toArray('.sliding-pane')
-
-    const entranceTl = gsap.timeline({
-      defaults: { ease: 'power4.out' },
-      onComplete: () => {
-        if (preloader) {
-          preloader.remove()
-        }
-        resizeCanvas()
-        renderCanvasFrame(0)
-        ScrollTrigger.refresh()
-      }
-    })
-
-    entranceTl
-      // 1. Expand the "1" box to complete [ 1 ] [ 0 ] [ 0 ]
-      .to(dBox1, {
-        width: targetWidth,
-        opacity: 1,
-        duration: 0.14,
-        ease: 'power3.out'
-      })
-      // Subtle hold to let the viewer register "1 0 0"
-      .to({}, { duration: 0.08 })
-
-      // 2. "1" goes behind first "0"
-      .to(dBox1, {
-        x: stepDist,
-        duration: 0.20,
-        ease: 'power3.inOut'
-      })
-      .set(dBox1, { opacity: 0 })
-
-      // Micro-pause between digit folds
-      .to({}, { duration: 0.04 })
-
-      // 3. That first "0" goes behind the next "0"
-      .to(dBox2, {
-        x: stepDist,
-        duration: 0.20,
-        ease: 'power3.inOut'
-      })
-      .set(dBox2, { opacity: 0 })
-
-      // 4. Pop the final single "0" and fade the progress wire
-      .to(dBox3, {
-        scale: 1.12,
-        duration: 0.12,
-        ease: 'power2.out'
-      })
-      .to([dBox3, foldMeta], {
-        opacity: 0,
-        scale: 0.9,
-        duration: 0.12,
-        ease: 'power2.in'
-      })
-
-      // 5. Left to right pane sliding reveal across the screen!
-      .add(() => {
-        document.body.classList.remove('is-loading')
-      })
-      .to(slidingPanes, {
-        xPercent: 100,
-        duration: 0.55,
-        stagger: 0.05,
-        ease: 'power4.inOut'
-      })
-
-      // 6. Reveal page navbar and hero elements in seamless sync
-      .to(mainNav, { opacity: 1, y: 0, duration: 0.65, ease: 'power4.out' }, '-=0.45')
-      .to(heroEyebrow, { opacity: 1, y: 0, duration: 0.65, ease: 'power4.out' }, '-=0.5')
-      .to(giantTitle, {
-        y: '0%',
-        duration: 1.0,
-        ease: 'power4.out'
-      }, '-=0.55')
+  // Ready to scroll & interact immediately with zero delay and no black curtain
+  resizeCanvas()
+  renderCanvasFrame(0)
+  if (typeof ScrollTrigger !== 'undefined') {
+    ScrollTrigger.refresh()
   }
-
-  // Initial nav and eyebrow state
-  gsap.set(mainNav, { opacity: 0, y: -20 })
 
   // ========================================================
   // 4. GSAP ScrollTrigger: Cinematic Video Scrubbing & Chapters

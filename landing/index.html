@@ -263,94 +263,15 @@
     }
   </style>
 </head>
-<body class="is-loading" data-barba="wrapper">
-  <script>
-    // Fast safety timeout: if CDN scripts fail to load (e.g. file:// protocol or offline),
-    // immediately remove the preloader and activate cards so the page is 100% visible and interactive.
-    (function() {
-      function dismissPreloader() {
-        document.body.classList.remove('is-loading');
-        var pre = document.getElementById('barba-preloader');
-        if (pre) {
-          pre.style.opacity = '0';
-          pre.style.transition = 'opacity 0.3s ease';
-          setTimeout(function() { if (pre.parentNode) pre.parentNode.removeChild(pre); }, 300);
-        }
-      }
-      var isFile = window.location.protocol === 'file:';
-      setTimeout(dismissPreloader, isFile ? 300 : 1500);
-
-      // Fallback scroll listener: ensures the download card activates even if GSAP or Lenis is delayed
-      window.addEventListener('scroll', function() {
-        var card = document.getElementById('center-download-card');
-        var hero = document.getElementById('hero');
-        if (!card || !hero) return;
-        var rect = hero.getBoundingClientRect();
-        var scrolled = -rect.top;
-        var total = hero.offsetHeight - window.innerHeight;
-        if (total > 0) {
-          var p = scrolled / total;
-          if (p >= 0.58 && p <= 0.96) {
-            card.classList.add('is-active');
-          }
-        }
-      }, { passive: true });
-    })();
-  </script>
-
-  <!-- ========================================================
-       BARBA.JS LEFT-TO-RIGHT PANE SLIDING PRELOADER
-       (0-100 Count -> "1" folds behind "0" -> "0" folds behind "0" -> Pane Slide Reveal)
-       ======================================================== -->
-  <div class="barba-sliding-preloader" id="barba-preloader">
-    <!-- Layered Panes that slide left to right -->
-    <div class="sliding-pane pane-accent-2"></div>
-    <div class="sliding-pane pane-accent-1"></div>
-    <div class="sliding-pane pane-main">
-      <!-- Center Digits Folding Stage -->
-      <div class="loader-fold-stage" id="loader-fold-stage">
-        <!-- 3-Digit Stacking Row -->
-        <div class="fold-digits-row" id="fold-digits-row">
-          <div class="fold-digit-box d-box-1" id="d-box-1">
-            <span class="fold-digit-char" id="digit-1">1</span>
-          </div>
-          <div class="fold-digit-box d-box-2" id="d-box-2">
-            <span class="fold-digit-char" id="digit-2">0</span>
-          </div>
-          <div class="fold-digit-box d-box-3" id="d-box-3">
-            <span class="fold-digit-char" id="digit-3">0</span>
-          </div>
-        </div>
-
-        <!-- Minimal Progress Bar & System Status -->
-        <div class="loader-fold-meta" id="loader-fold-meta">
-          <div class="fold-progress-track">
-            <div class="fold-progress-fill" id="loader-bar"></div>
-          </div>
-          <div class="fold-status-row">
-            <span class="fold-sys-label">DR. DEBUG // RUNTIME</span>
-            <span class="fold-counter-text" id="loader-counter">0%</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Barba.js Left-to-Right Page Transition Overlay -->
-  <div class="barba-transition-overlay" id="barba-overlay">
-    <div class="barba-transition-pane barba-pane-1"></div>
-    <div class="barba-transition-pane barba-pane-2"></div>
-    <div class="barba-transition-pane barba-pane-3"></div>
-  </div>
-
+<body>
   <!-- Ambient Glowing Mesh (Subtle Background) -->
   <div class="noise-overlay"></div>
   <div class="glow-orb orb-1" id="orb-1"></div>
   <div class="glow-orb orb-2" id="orb-2"></div>
   <div class="glow-orb orb-3" id="orb-3"></div>
 
-  <!-- Wrap Main Content for Sticky Footer Reveal Curtain & Barba Container -->
-  <div class="page-content-wrapper" data-barba="container" data-barba-namespace="home">
+  <!-- Wrap Main Content for Sticky Footer Reveal Curtain -->
+  <div class="page-content-wrapper">
 
   <!-- ========================================================
        MINIMALISTIC & ENTIRELY TRANSPARENT NAVBAR
