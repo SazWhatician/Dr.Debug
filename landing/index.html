@@ -92,17 +92,210 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:ital,wght@0,300..800;1,300..800&family=Space+Grotesk:wght@300;400;500;600;700&family=Syncopate:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=2.2.0" />
+
+  <!-- Critical Inline Styles: Ensures luxury capsule download button renders instantly even if external CSS is cached or delayed -->
+  <style id="critical-dl-btn-styles">
+    .uiverse-dl-container {
+      display: flex !important;
+      justify-content: center !important;
+      width: 100% !important;
+      margin-bottom: 16px !important;
+    }
+
+    #btn-dl-extension,
+    a#btn-dl-extension,
+    a.box.start-btn,
+    .box.start-btn,
+    .dl-zip-button {
+      --w: 100%;
+      --h: auto;
+      --r: 9999px;
+      --tr: 18%;
+      z-index: 10 !important;
+      position: relative !important;
+      width: 100% !important;
+      min-height: 68px !important;
+      display: flex !important;
+      flex-direction: row !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      border-radius: 9999px !important;
+      border: 1px double rgba(56, 189, 248, 0.45) !important;
+      text-decoration: none !important;
+      color: #f8fafc !important;
+      padding: 12px 1.4rem 12px 1.6rem !important;
+      box-sizing: border-box !important;
+      gap: 12px !important;
+      box-shadow:
+        inset 2px -2px 1px -1px rgba(255, 255, 255, 0.65),
+        inset -2px 2px 1px -1px rgba(255, 255, 255, 0.65),
+        inset 6px -6px 1px -6px rgba(56, 189, 248, 0.35),
+        inset -6px 6px 1px -6px rgba(56, 189, 248, 0.35),
+        inset 0 0 3px rgba(0, 0, 0, 0.8),
+        0 8px 28px rgba(0, 0, 0, 0.45),
+        0 0 20px rgba(6, 182, 212, 0.25) !important;
+      background: rgba(15, 23, 42, 0.75) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+      cursor: pointer !important;
+      pointer-events: auto !important;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    #btn-dl-extension:hover,
+    a#btn-dl-extension:hover,
+    a.box.start-btn:hover,
+    .box.start-btn:hover,
+    .dl-zip-button:hover {
+      background: linear-gradient(135deg, #10b981 0%, #06b6d4 50%, #0284c7 100%) !important;
+      border-color: #ffffff !important;
+      transform: translateY(-3px) scale(1.01) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.85),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.25),
+        0 16px 40px -6px rgba(16, 185, 129, 0.65),
+        0 0 35px rgba(6, 182, 212, 0.6) !important;
+    }
+
+    #btn-dl-extension .uiverse-text-wrap,
+    .uiverse-text-wrap,
+    .dl-btn-text-group {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      text-align: left !important;
+      z-index: 4 !important;
+      gap: 3px !important;
+      flex: 1 !important;
+      pointer-events: none !important;
+    }
+
+    #btn-dl-extension .text,
+    .box.start-btn .text,
+    .dl-btn-primary-text {
+      display: block !important;
+      font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif !important;
+      font-size: 1.05rem !important;
+      font-weight: 800 !important;
+      color: #ffffff !important;
+      line-height: 1.25 !important;
+      letter-spacing: -0.01em !important;
+      text-decoration: none !important;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5)) !important;
+      transition: color 0.3s ease !important;
+      pointer-events: none !important;
+    }
+
+    #btn-dl-extension:hover .text,
+    .box.start-btn:hover .text {
+      color: #ffffff !important;
+      text-shadow: 0 0 14px rgba(255, 255, 255, 0.7), 0 2px 4px rgba(0, 0, 0, 0.6) !important;
+    }
+
+    #btn-dl-extension .subtext,
+    .box.start-btn .subtext,
+    .dl-btn-sub-text {
+      display: block !important;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+      font-size: 0.70rem !important;
+      color: #94a3b8 !important;
+      letter-spacing: 0.02em !important;
+      text-decoration: none !important;
+      transition: color 0.3s ease !important;
+      pointer-events: none !important;
+    }
+
+    #btn-dl-extension:hover .subtext,
+    .box.start-btn:hover .subtext {
+      color: rgba(255, 255, 255, 0.95) !important;
+    }
+
+    #btn-dl-extension .btn-icon,
+    .box.start-btn .btn-icon,
+    .dl-btn-icon {
+      width: 44px !important;
+      height: 44px !important;
+      min-width: 44px !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      background: rgba(56, 189, 248, 0.15) !important;
+      border: 1px solid rgba(56, 189, 248, 0.35) !important;
+      border-radius: 50% !important;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.35) !important;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+      flex-shrink: 0 !important;
+      z-index: 4 !important;
+      overflow: hidden !important;
+      pointer-events: none !important;
+    }
+
+    #btn-dl-extension:hover .btn-icon,
+    .box.start-btn:hover .btn-icon {
+      background: #ffffff !important;
+      border-color: #ffffff !important;
+      box-shadow: 0 0 16px rgba(255, 255, 255, 0.85), 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+      transform: scale(1.12) translateX(3px) !important;
+    }
+
+    #btn-dl-extension .btn-icon svg,
+    .box.start-btn .btn-icon .svg {
+      width: 17px !important;
+      height: 17px !important;
+      min-width: 17px !important;
+      max-width: 17px !important;
+      min-height: 17px !important;
+      max-height: 17px !important;
+      fill: #38bdf8 !important;
+      transition: all 0.3s ease !important;
+      pointer-events: none !important;
+    }
+
+    #btn-dl-extension:hover .btn-icon svg,
+    .box.start-btn:hover .btn-icon .svg {
+      fill: #047857 !important;
+    }
+
+    #btn-dl-extension:active,
+    .box.start-btn:active {
+      transform: translateY(0) scale(0.97) !important;
+    }
+  </style>
 </head>
 <body class="is-loading" data-barba="wrapper">
   <script>
-    // Safety timeout: if CDN scripts fail to load (e.g. file:// protocol),
-    // auto-remove the preloader after 3 seconds so the page is still usable.
-    setTimeout(function() {
-      document.body.classList.remove('is-loading');
-      var pre = document.getElementById('barba-preloader');
-      if (pre) pre.style.display = 'none';
-    }, 3000);
+    // Fast safety timeout: if CDN scripts fail to load (e.g. file:// protocol or offline),
+    // immediately remove the preloader and activate cards so the page is 100% visible and interactive.
+    (function() {
+      function dismissPreloader() {
+        document.body.classList.remove('is-loading');
+        var pre = document.getElementById('barba-preloader');
+        if (pre) {
+          pre.style.opacity = '0';
+          pre.style.transition = 'opacity 0.3s ease';
+          setTimeout(function() { if (pre.parentNode) pre.parentNode.removeChild(pre); }, 300);
+        }
+      }
+      var isFile = window.location.protocol === 'file:';
+      setTimeout(dismissPreloader, isFile ? 300 : 1500);
+
+      // Fallback scroll listener: ensures the download card activates even if GSAP or Lenis is delayed
+      window.addEventListener('scroll', function() {
+        var card = document.getElementById('center-download-card');
+        var hero = document.getElementById('hero');
+        if (!card || !hero) return;
+        var rect = hero.getBoundingClientRect();
+        var scrolled = -rect.top;
+        var total = hero.offsetHeight - window.innerHeight;
+        if (total > 0) {
+          var p = scrolled / total;
+          if (p >= 0.58 && p <= 0.96) {
+            card.classList.add('is-active');
+          }
+        }
+      }, { passive: true });
+    })();
   </script>
 
   <!-- ========================================================
@@ -316,12 +509,12 @@
 
           <!-- Single ZIP Download Button (Uiverse Luxury Capsule) -->
           <div class="uiverse-dl-container fx-layer">
-            <a href="dr-debug-extension.zip" download="dr-debug-extension.zip" class="box start-btn uiverse-dl-btn" id="btn-dl-extension" style="--w: 100%; --h: 70px; --tr: 15%;" onclick="window.handleDownloadIntent ? window.handleDownloadIntent(event) : null">
-              <div class="uiverse-text-wrap">
-                <span class="text">Download Chrome Extension</span>
-                <span class="subtext">dr-debug-extension.zip · 930 KB · Manifest V3</span>
+            <a href="dr-debug-extension.zip" download="dr-debug-extension.zip" class="box start-btn uiverse-dl-btn dl-zip-button" id="btn-dl-extension" style="--w: 100%; --h: 70px; --tr: 15%;" onclick="window.handleDownloadIntent ? window.handleDownloadIntent(event) : null">
+              <div class="uiverse-text-wrap dl-btn-text-group">
+                <span class="text dl-btn-primary-text">Download Chrome Extension</span>
+                <span class="subtext dl-btn-sub-text">dr-debug-extension.zip · 930 KB · Manifest V3</span>
               </div>
-              <div class="btn-icon">
+              <div class="btn-icon dl-btn-icon">
                 <svg
                   class="svg"
                   width="17"

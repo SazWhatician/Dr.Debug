@@ -1,21 +1,42 @@
 // 🩺 Dr. Debug — Landing & Download Engine with GSAP, Lenis & ScrollTrigger
 // Architected by Saswat Mohanty (@SazWhatician)
-
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Initialize Lenis Smooth Scroll
-  const lenis = new Lenis({
-    duration: 1.2,
-    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-    smoothWheel: true,
-    smoothTouch: false
-  })
+  // Safe smooth scroll helper (uses Lenis if active, standard smooth scroll fallback otherwise)
+  function safeScrollTo(target, options = {}) {
+    if (lenis) {
+      lenis.scrollTo(target, options)
+    } else {
+      if (typeof target === 'number') {
+        window.scrollTo({ top: target, behavior: 'smooth' })
+      } else if (target && target.getBoundingClientRect) {
+        const top = window.pageYOffset + target.getBoundingClientRect().top + (options.offset || 0)
+        window.scrollTo({ top, behavior: 'smooth' })
+      }
+    }
+  }
 
-  // Synchronize Lenis with GSAP ScrollTrigger
-  lenis.on('scroll', ScrollTrigger.update)
-  gsap.ticker.add((time) => {
-    lenis.raf(time * 1000)
-  })
-  gsap.ticker.lagSmoothing(0)
+  // 1. Initialize Lenis Smooth Scroll safely
+  let lenis = null
+  if (typeof Lenis !== 'undefined') {
+    try {
+      lenis = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        smoothWheel: true,
+        smoothTouch: false
+      })
+
+      if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+        lenis.on('scroll', ScrollTrigger.update)
+        gsap.ticker.add((time) => {
+          lenis.raf(time * 1000)
+        })
+        gsap.ticker.lagSmoothing(0)
+      }
+    } catch (e) {
+      console.warn('Lenis init warning:', e)
+    }
+  }
 
   // 2. Interactive Cinematic Camera Gimbal & Cursor Tracking Engine
   const canvas = document.getElementById('cinematic-canvas')
@@ -446,10 +467,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Bind directly to window scroll & Lenis for ZERO-LATENCY frame updates
   window.addEventListener('scroll', updateScrollScrub, { passive: true })
-  lenis.on('scroll', updateScrollScrub)
+  if (lenis) {
+    lenis.on('scroll', updateScrollScrub)
+  }
 
   // Cinematic Master Scroll Timeline with GSAP
-  if (heroSection) {
+  if (heroSection && typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
     const masterScrollTl = gsap.timeline({
       scrollTrigger: {
         trigger: heroSection,
@@ -574,7 +597,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault()
       const maxScroll = heroSection.offsetHeight - window.innerHeight
       const targetScroll = heroSection.offsetTop + (maxScroll * 0.78)
-      lenis.scrollTo(targetScroll, {
+      safeScrollTo(targetScroll, {
         duration: 1.4,
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t))
       })
@@ -584,14 +607,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (navHomeBtn) {
     navHomeBtn.addEventListener('click', (e) => {
       e.preventDefault()
-      lenis.scrollTo(0, { duration: 1.2 })
+      safeScrollTo(0, { duration: 1.2 })
     })
   }
 
   if (footerHomeBtn) {
     footerHomeBtn.addEventListener('click', (e) => {
       e.preventDefault()
-      lenis.scrollTo(0, { duration: 1.2 })
+      safeScrollTo(0, { duration: 1.2 })
     })
   }
 
@@ -600,7 +623,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault()
       const termEl = document.getElementById('crt-terminal')
       if (termEl) {
-        lenis.scrollTo(termEl, { duration: 1.4, offset: -20 })
+        safeScrollTo(termEl, { duration: 1.4, offset: -20 })
       }
     })
   }
@@ -610,7 +633,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault()
       const faqEl = document.getElementById('faq')
       if (faqEl) {
-        lenis.scrollTo(faqEl, { duration: 1.4, offset: -20 })
+        safeScrollTo(faqEl, { duration: 1.4, offset: -20 })
       }
     })
   }
@@ -620,7 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault()
       const faqEl = document.getElementById('faq')
       if (faqEl) {
-        lenis.scrollTo(faqEl, { duration: 1.4, offset: -20 })
+        safeScrollTo(faqEl, { duration: 1.4, offset: -20 })
       }
     })
   }

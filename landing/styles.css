@@ -544,7 +544,7 @@ body.is-loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #02040a;
+  background: #02040a url('assets/frames/frame_000.jpg') center center / cover no-repeat;
   perspective: 1200px;
 }
 
@@ -923,7 +923,10 @@ body.is-loading {
 .box.start-btn,
 a.box.start-btn,
 a.box.start-btn:link,
-a.box.start-btn:visited {
+a.box.start-btn:visited,
+#btn-dl-extension,
+a#btn-dl-extension,
+.dl-zip-button {
   --w: 100%;
   --h: auto;
   --r: 9999px;
@@ -936,10 +939,10 @@ a.box.start-btn:visited {
   justify-content: space-between;
   align-items: center;
   border-radius: var(--r);
-  border: 1px double rgba(56, 189, 248, 0.35);
+  border: 1px double rgba(56, 189, 248, 0.45);
   text-decoration: none !important;
-  color: inherit !important;
-  padding: 12px 1.2rem 12px 1.5rem;
+  color: #f8fafc !important;
+  padding: 12px 1.4rem 12px 1.6rem;
   box-sizing: border-box;
   gap: 12px;
 
@@ -949,50 +952,67 @@ a.box.start-btn:visited {
     inset 6px -6px 1px -6px rgba(56, 189, 248, 0.35),
     inset -6px 6px 1px -6px rgba(56, 189, 248, 0.35),
     inset 0 0 3px rgba(0, 0, 0, 0.8),
-    0 8px 24px rgba(0, 0, 0, 0.35);
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    0 0 20px rgba(6, 182, 212, 0.25);
 
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(15, 23, 42, 0.75);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.box.start-btn * {
+.box.start-btn *,
+#btn-dl-extension * {
   pointer-events: none;
 }
 
-.box.start-btn .uiverse-text-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
+.box.start-btn .uiverse-text-wrap,
+#btn-dl-extension .uiverse-text-wrap,
+.dl-btn-text-group {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  text-align: left !important;
   z-index: 4;
-  gap: 2px;
+  gap: 3px;
+  flex: 1;
 }
 
-.box.start-btn .text {
+.box.start-btn .text,
+#btn-dl-extension .text,
+.dl-btn-primary-text {
+  display: block !important;
   font-family: var(--font-display, 'Space Grotesk', system-ui, sans-serif);
   font-size: 1.05rem;
   font-weight: 800;
-  color: #f8fafc;
+  color: #ffffff !important;
   letter-spacing: -0.01em;
+  text-decoration: none !important;
+  line-height: 1.25;
   transition: color 0.3s ease, text-shadow 0.3s ease;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
-.box.start-btn .subtext {
+.box.start-btn .subtext,
+#btn-dl-extension .subtext,
+.dl-btn-sub-text {
+  display: block !important;
   font-family: var(--font-mono, monospace);
-  font-size: 0.68rem;
-  color: #94a3b8;
+  font-size: 0.70rem;
+  color: #94a3b8 !important;
   letter-spacing: 0.02em;
+  text-decoration: none !important;
   transition: color 0.3s ease;
 }
 
-.box.start-btn .btn-icon {
+.box.start-btn .btn-icon,
+#btn-dl-extension .btn-icon,
+.dl-btn-icon {
   width: 44px;
   height: 44px;
-  display: flex;
+  min-width: 44px;
+  display: flex !important;
   justify-content: center;
   align-items: center;
   background: rgba(56, 189, 248, 0.15);
@@ -1005,14 +1025,22 @@ a.box.start-btn:visited {
   overflow: hidden;
 }
 
-.box.start-btn .btn-icon .svg {
-  width: 17px;
-  height: 17px;
-  fill: #38bdf8;
+.box.start-btn .btn-icon .svg,
+#btn-dl-extension .btn-icon .svg,
+.box.start-btn .btn-icon svg,
+#btn-dl-extension .btn-icon svg {
+  width: 17px !important;
+  height: 17px !important;
+  min-width: 17px;
+  max-width: 17px;
+  min-height: 17px;
+  max-height: 17px;
+  fill: #38bdf8 !important;
   transition: all 0.3s ease;
 }
 
-.box.start-btn:before {
+.box.start-btn:before,
+#btn-dl-extension:before {
   content: "";
   position: absolute;
   z-index: 1;
@@ -1027,7 +1055,8 @@ a.box.start-btn:visited {
   transition: all 0.3s ease;
 }
 
-.box.start-btn:after {
+.box.start-btn:after,
+#btn-dl-extension:after {
   z-index: 3;
   content: "";
   position: absolute;
@@ -1048,7 +1077,8 @@ a.box.start-btn:visited {
   transition: all 0.3s ease;
 }
 
-.box.start-btn .circle-overlay {
+.box.start-btn .circle-overlay,
+#btn-dl-extension .circle-overlay {
   position: absolute;
   top: 3px;
   left: 3px;
@@ -1066,43 +1096,54 @@ a.box.start-btn:visited {
    HOVER STATE: The button changes colour when hovered!
    Transitions from obsidian glass to vibrant radiant cyber emerald-cyan!
    ========================================================================== */
-.box.start-btn:hover {
-  background: linear-gradient(135deg, #10b981 0%, #06b6d4 50%, #0284c7 100%);
-  border-color: #ffffff;
-  transform: translateY(-3px);
+.box.start-btn:hover,
+a#btn-dl-extension:hover,
+#btn-dl-extension:hover,
+.dl-zip-button:hover {
+  background: linear-gradient(135deg, #10b981 0%, #06b6d4 50%, #0284c7 100%) !important;
+  border-color: #ffffff !important;
+  transform: translateY(-3px) scale(1.01) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.85),
     inset 0 -2px 0 rgba(0, 0, 0, 0.25),
     0 16px 40px -6px rgba(16, 185, 129, 0.65),
-    0 0 30px rgba(6, 182, 212, 0.5);
+    0 0 35px rgba(6, 182, 212, 0.6) !important;
 }
 
-.box.start-btn:hover .text {
-  color: #ffffff;
-  text-shadow: 0 0 14px rgba(255, 255, 255, 0.65), 0 2px 4px rgba(0, 0, 0, 0.6);
+.box.start-btn:hover .text,
+#btn-dl-extension:hover .text {
+  color: #ffffff !important;
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.7), 0 2px 4px rgba(0, 0, 0, 0.6) !important;
 }
 
-.box.start-btn:hover .subtext {
-  color: rgba(255, 255, 255, 0.95);
+.box.start-btn:hover .subtext,
+#btn-dl-extension:hover .subtext {
+  color: rgba(255, 255, 255, 0.95) !important;
 }
 
-.box.start-btn:hover .btn-icon {
-  background: #ffffff;
-  border-color: #ffffff;
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.85), 0 4px 12px rgba(0, 0, 0, 0.3);
-  transform: scale(1.12) translateX(3px);
+.box.start-btn:hover .btn-icon,
+#btn-dl-extension:hover .btn-icon {
+  background: #ffffff !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.85), 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  transform: scale(1.12) translateX(3px) !important;
 }
 
-.box.start-btn:hover .btn-icon .svg {
-  fill: #047857;
+.box.start-btn:hover .btn-icon .svg,
+#btn-dl-extension:hover .btn-icon .svg,
+.box.start-btn:hover .btn-icon svg,
+#btn-dl-extension:hover .btn-icon svg {
+  fill: #047857 !important;
 }
 
-.box.start-btn:hover:before {
+.box.start-btn:hover:before,
+#btn-dl-extension:hover:before {
   border-color: rgba(255, 255, 255, 0.8);
   filter: blur(10px);
 }
 
-.box.start-btn:hover:after {
+.box.start-btn:hover:after,
+#btn-dl-extension:hover:after {
   background: linear-gradient(
     45deg,
     rgba(255, 255, 255, 0.85) 0%,
@@ -1112,11 +1153,13 @@ a.box.start-btn:visited {
   );
 }
 
-.box.start-btn:hover .circle-overlay {
+.box.start-btn:hover .circle-overlay,
+#btn-dl-extension:hover .circle-overlay {
   border-color: rgba(255, 255, 255, 0.45);
 }
 
-.box.start-btn:active {
+.box.start-btn:active,
+#btn-dl-extension:active {
   transform: translateY(0) scale(0.96);
   box-shadow:
     inset 0 2px 4px rgba(0, 0, 0, 0.4),
