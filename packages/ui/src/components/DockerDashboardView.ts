@@ -8,12 +8,14 @@ import type {
 export interface DockerDashboardOptions {
   getController: () => DebugController | undefined
   onLaunchDiagnosis?: (goal: string) => void
+  onShowGuide?: () => void
 }
 
 export class DockerDashboardView {
   private element: HTMLElement
   private getController: () => DebugController | undefined
   private onLaunchDiagnosis?: (goal: string) => void
+  private onShowGuide?: () => void
   private activeContainerFilter: string = 'all'
   private activeLevelFilter: LogLevel | 'all' = 'all'
   private searchQuery: string = ''
@@ -28,6 +30,7 @@ export class DockerDashboardView {
   constructor(options: DockerDashboardOptions) {
     this.getController = options.getController
     this.onLaunchDiagnosis = options.onLaunchDiagnosis
+    this.onShowGuide = options.onShowGuide
 
     this.element = document.createElement('div')
     this.element.className = 'dr-debug-docker-dashboard'
@@ -56,11 +59,24 @@ export class DockerDashboardView {
     const containerSection = document.createElement('div')
     containerSection.className = 'dr-debug-docker-section'
     containerSection.innerHTML = `
-      <div class="dr-debug-docker-section-title">
-        <span>📦 Host Containers</span>
-        <span class="dr-debug-docker-hint">Click a container to isolate logs</span>
+      <div class="dr-debug-docker-section-title" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <span>Host Containers</span>
+          <span class="dr-debug-docker-hint">Click a container to isolate logs</span>
+        </div>
+        <button class="dr-debug-tab-guide-trigger" id="dr-debug-guide-btn-docker" title="What is Docker Tab? Click for guide" aria-label="Docker Guide">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span>Guide</span>
+        </button>
       </div>
     `
+    containerSection.querySelector('#dr-debug-guide-btn-docker')?.addEventListener('click', () => {
+      this.onShowGuide?.()
+    })
     this.containerGrid = document.createElement('div')
     this.containerGrid.className = 'dr-debug-docker-grid'
     containerSection.appendChild(this.containerGrid)
@@ -88,8 +104,8 @@ export class DockerDashboardView {
     this.filterBar.innerHTML = `
       <div class="dr-debug-docker-filters">
         <button class="dr-debug-dock-btn ${this.activeLevelFilter === 'all' ? 'active' : ''}" data-level="all">All Logs</button>
-        <button class="dr-debug-dock-btn ${this.activeLevelFilter === 'error' ? 'active' : ''}" data-level="error">🚨 Panics & Errors</button>
-        <button class="dr-debug-dock-btn ${this.activeLevelFilter === 'warn' ? 'active' : ''}" data-level="warn">⚠️ Warnings</button>
+        <button class="dr-debug-dock-btn ${this.activeLevelFilter === 'error' ? 'active' : ''}" data-level="error">Panics & Errors</button>
+        <button class="dr-debug-dock-btn ${this.activeLevelFilter === 'warn' ? 'active' : ''}" data-level="warn">Warnings</button>
       </div>
       <div class="dr-debug-docker-search-box">
         <input type="text" class="dr-debug-dock-search" placeholder="grep container logs (regex supported)..." value="${this.escapeHtml(this.searchQuery)}" />
@@ -97,8 +113,8 @@ export class DockerDashboardView {
           <input type="checkbox" ${this.autoScroll ? 'checked' : ''} />
           <span>Auto-scroll</span>
         </label>
-        <button class="dr-debug-dock-action-btn" id="dr-debug-dock-clear" title="Clear buffer">🧹 Clear</button>
-        <button class="dr-debug-dock-action-btn primary" id="dr-debug-dock-copy-ai" title="Copy incident prompt">📋 Copy for AI</button>
+        <button class="dr-debug-dock-action-btn" id="dr-debug-dock-clear" title="Clear buffer">Clear</button>
+        <button class="dr-debug-dock-action-btn primary" id="dr-debug-dock-copy-ai" title="Copy incident prompt">Copy for AI</button>
       </div>
     `
 
@@ -174,7 +190,9 @@ export class DockerDashboardView {
         <div class="dr-debug-docker-stat-pill ${errorLogs.length > 0 ? 'alert' : ''}">
           <strong>${errorLogs.length}</strong> <span>Panics / Errors</span>
         </div>
-        <button class="dr-debug-dock-btn-refresh" id="dr-debug-dock-refresh" title="Refresh containers">🔄</button>
+        <button class="dr-debug-dock-btn-refresh" id="dr-debug-dock-refresh" title="Refresh containers">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        </button>
       </div>
     `
 
@@ -228,10 +246,10 @@ export class DockerDashboardView {
         <div class="dr-debug-dock-instructions-card">
           <div class="dr-debug-dock-guide-top">
             <div style="display:flex; align-items:center; gap:8px;">
-              <span style="font-size:15px;">🐳</span>
+              <span class="dr-debug-status-dot dot-sys"></span>
               <span style="font-weight:700; color:#f8fafc; font-size:12px;">Connect Your Host Docker to Dr. Debug</span>
             </div>
-            <span class="dr-debug-dock-guide-badge">⚡ 3-SECOND ZERO-CONFIG SETUP</span>
+            <span class="dr-debug-dock-guide-badge">ZERO-CONFIG SETUP</span>
           </div>
           <div class="dr-debug-dock-guide-desc">
             Browser sandboxes cannot access host Docker sockets directly. Run the zero-install host daemon to stream active containers and correlate backend database panics / 5xx errors directly with client crashes:
@@ -272,7 +290,7 @@ export class DockerDashboardView {
         </div>
       </div>
       <div class="dr-debug-dock-step-footer">
-        <span>✨ The moment the bridge starts, this tab automatically turns green and streams your live containers!</span>
+        <span>The moment the bridge starts, this tab automatically turns green and streams your live containers.</span>
       </div>
     `
   }
@@ -303,7 +321,7 @@ export class DockerDashboardView {
     allCard.className = `dr-debug-docker-card ${this.activeContainerFilter === 'all' ? 'selected' : ''}`
     allCard.innerHTML = `
       <div class="dr-debug-card-top">
-        <span class="dr-debug-card-name">🌐 All Containers</span>
+        <span class="dr-debug-card-name">All Containers</span>
         ${allErrors > 0 ? `<span class="dr-debug-err-badge">${allErrors}</span>` : ''}
       </div>
       <div class="dr-debug-card-desc">Combined host log stream (${logs.length} logs)</div>
@@ -319,7 +337,7 @@ export class DockerDashboardView {
       const emptyNote = document.createElement('div')
       emptyNote.className = 'dr-debug-dock-empty-containers'
       emptyNote.innerHTML = `
-        <span>🐳 No active containers detected in local Docker buffer.</span>
+        <span>No active containers detected in local Docker buffer.</span>
         <button class="dr-debug-btn-inline" id="dr-debug-dock-connect-btn">Connect Daemon</button>
       `
       emptyNote.querySelector('#dr-debug-dock-connect-btn')?.addEventListener('click', () => {
@@ -344,7 +362,7 @@ export class DockerDashboardView {
         </div>
         <div class="dr-debug-card-image">${this.escapeHtml(container.image || 'image')}</div>
         <div class="dr-debug-card-ports">${container.ports?.join(', ') || 'no ports exposed'}</div>
-        ${containerErrors > 0 ? `<div class="dr-debug-card-errors">🚨 ${containerErrors} panic/error events</div>` : ''}
+        ${containerErrors > 0 ? `<div class="dr-debug-card-errors"><span class="dr-debug-status-dot dot-critical"></span> ${containerErrors} panic/error events</div>` : ''}
       `
       card.addEventListener('click', () => {
         this.activeContainerFilter = container.name
@@ -370,7 +388,7 @@ export class DockerDashboardView {
     if (logs.length === 0) {
       this.terminalEl.innerHTML = `
         <div class="dr-debug-dock-term-empty">
-          <span>💤 No log output recorded for current filter criteria.</span>
+          <span>No log output recorded for current filter criteria.</span>
         </div>
       `
       return
@@ -393,7 +411,7 @@ export class DockerDashboardView {
       if (log.level === 'error') {
         const diagBtn = document.createElement('button')
         diagBtn.className = 'dr-debug-dock-inline-diag'
-        diagBtn.innerHTML = `<span>⚡</span> <span>Diagnose</span>`
+        diagBtn.innerHTML = `<span>Diagnose</span>`
         diagBtn.title = 'Launch AI investigation for this container panic'
         diagBtn.addEventListener('click', (e) => {
           e.stopPropagation()
@@ -414,14 +432,16 @@ export class DockerDashboardView {
   private renderOfflineState(): void {
     this.element.innerHTML = `
       <div class="dr-debug-dock-offline-box">
-        <div style="font-size: 36px; margin-bottom: 8px;">🐳</div>
+        <div class="dr-debug-dock-offline-icon" style="margin-bottom: 8px;">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8v4h8V3z"/></svg>
+        </div>
         <h3 style="color: #f8fafc; font-size: 15px; margin-bottom: 6px;">Docker Substrate Daemon Offline</h3>
         <p style="color: #94a3b8; font-size: 12px; max-width: 440px; margin-bottom: 14px; line-height: 1.5;">
           Connect your local Docker engine to stream backend container panics, database connection exhausts, and correlate them with frontend network timeouts.
         </p>
         <div class="dr-debug-dock-cmd-box">
           <code>npx -y @dr-debug/mcp</code>
-          <button id="dr-debug-dock-copy-cmd">📋 Copy</button>
+          <button id="dr-debug-dock-copy-cmd">Copy</button>
         </div>
       </div>
     `
@@ -436,7 +456,7 @@ export class DockerDashboardView {
     const errors = logs.filter((l) => l.level === 'error')
 
     const prompt = [
-      '# 🐳 Docker Container Substrate Telemetry Brief',
+      '# Docker Container Substrate Telemetry Brief',
       `Timestamp: ${new Date().toISOString()}`,
       `Total Containers: ${containers.length} | Errors Recorded: ${errors.length}`,
       '',
@@ -459,7 +479,7 @@ export class DockerDashboardView {
     try {
       await navigator.clipboard.writeText(prompt)
       const orig = btn.innerHTML
-      btn.innerHTML = '✅ Copied'
+      btn.innerHTML = 'Copied'
       setTimeout(() => {
         btn.innerHTML = orig
       }, 2000)

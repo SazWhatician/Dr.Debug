@@ -2,7 +2,7 @@ import { DR_DEBUG_LOGO } from '../assets/logo.js'
 import { CausalGraphView, type CausalErrorGraph } from './CausalGraphView.js'
 import { DockerDashboardView } from './DockerDashboardView.js'
 import { ErrorDashboardView } from './ErrorDashboardView.js'
-import { SettingsModal, type SettingsData } from './SettingsModal.js'
+import { SettingsModal, type SettingsData, type DrDebugTheme } from './SettingsModal.js'
 
 export interface StepItem {
   stepNumber: number
@@ -19,6 +19,105 @@ export interface PrescriptionData {
   fix: string
   confidence?: number
   filesToModify?: string[]
+}
+
+export type CockpitTabKey = 'timeline' | 'errors' | 'triage' | 'graph' | 'prescription' | 'docker'
+
+export interface TabGuideItem {
+  key: CockpitTabKey
+  title: string
+  badge: string
+  icon: string
+  description: string
+  tips: Array<{ bullet: string; text: string }>
+}
+
+export const TAB_GUIDES: Record<CockpitTabKey, TabGuideItem> = {
+  errors: {
+    key: 'errors',
+    title: 'Error Matrix',
+    badge: '2D Anomaly Heatmap',
+    icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>',
+    description:
+      'Aggregates, categorizes, and correlates every runtime anomaly detected in your app — across Console exceptions, HTTP network failures, DOM/React crashes, and Docker backend logs — into a unified 2D Substrate × Severity matrix and chronological timeline.',
+    tips: [
+      { bullet: '•', text: '<strong>Grid & Timeline Switcher:</strong> Toggle between the 2D Substrate Heatmap to spot anomaly clusters and the Timeline Stream for real-time chronological order.' },
+      { bullet: '•', text: '<strong>Sub-Second Search:</strong> Type in the search box to filter anomalies by endpoint, error message, or HTTP status, or click substrate pills (Network, Console, React, Docker).' },
+      { bullet: '•', text: '<strong>Drilldown Inspector:</strong> Click on any error row down the list to inspect demangled stack frames, HTTP request headers, RFC status code diagnosis, and 1-click terminal cURL commands.' },
+      { bullet: '•', text: '<strong>AI Prompt Generator:</strong> Click <strong>"Ask Dr. Debug AI"</strong> or <strong>"Diagnose"</strong> on any error down the list to automatically populate the investigation prompt and launch autonomous root-cause debugging.' }
+    ]
+  },
+  triage: {
+    key: 'triage',
+    title: 'Live Telemetry',
+    badge: 'Real-Time Health & V8 Vitals',
+    icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+    description:
+      'Continuously monitors and triages real-time telemetry from your application runtime — capturing live unhandled exceptions, network latency anomalies, and active V8 heap memory allocations.',
+    tips: [
+      { bullet: '•', text: '<strong>Live Exception Feed:</strong> Watch unhandled runtime exceptions with demangled stack traces in real time as they occur.' },
+      { bullet: '•', text: '<strong>Network Anomaly Tracker:</strong> Automatically flags slow requests (>1000ms latency) and failed HTTP responses (4xx/5xx status codes).' },
+      { bullet: '•', text: '<strong>V8 Memory Subsystem:</strong> Monitors active used vs allocated JavaScript heap memory in real time to catch memory leaks and runaway closures.' },
+      { bullet: '•', text: '<strong>Quick-Copy Diagnostics:</strong> Click the copy icon on any telemetry item to instantly copy the raw exception trace or endpoint payload.' }
+    ]
+  },
+  graph: {
+    key: 'graph',
+    title: 'Causal Graph',
+    badge: 'Multi-Layer Causal Topology (DAG)',
+    icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>',
+    description:
+      'Constructs an interactive Directed Acyclic Graph (DAG) visualizing how upstream failures (such as backend database drops or Docker 500s) propagate through HTTP network layers and trigger downstream client JavaScript and UI errors.',
+    tips: [
+      { bullet: '•', text: '<strong>Locate Root Cause:</strong> Look for the node marked with the pulsing <strong>ROOT CAUSE</strong> indicator to identify the exact origin of the breakdown.' },
+      { bullet: '•', text: '<strong>Animated Pulse Links:</strong> Follow animated pulse paths showing the directional propagation of failure from backend to client UI.' },
+      { bullet: '•', text: '<strong>Node Detail Inspector:</strong> Click on any node in the graph to view timestamp, substrate layer (Docker, Network, Console, UI), severity, and captured payload evidence.' },
+      { bullet: '•', text: '<strong>Mermaid Export:</strong> Click <strong>"Copy Graph"</strong> in the top action bar to export the full architecture topology as a Mermaid diagram for documentation or PRs.' }
+    ]
+  },
+  docker: {
+    key: 'docker',
+    title: 'Docker Containers',
+    badge: 'Full-Stack Host Engine Bridge',
+    icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8v4h8V3z"/></svg>',
+    description:
+      'Bridges your browser directly with your local Docker daemon (via the zero-install MCP bridge) to stream active container states, inspect terminal logs, and correlate backend server crashes with client-side bugs.',
+    tips: [
+      { bullet: '•', text: '<strong>Start the Host Bridge:</strong> Run <code>npx @dr-debug/mcp</code> or double-click <code>start-docker-bridge.bat</code> (Windows) / <code>.sh</code> (Mac/Linux). The indicator turns green once connected.' },
+      { bullet: '•', text: '<strong>Container Telemetry:</strong> Monitor running container states, health status, exposed ports, and real-time CPU/memory consumption.' },
+      { bullet: '•', text: '<strong>Live Terminal Log Feed:</strong> Filter and search through real-time stdout/stderr streams from backend microservices (Node, Python, Go, Spring, Postgres, Redis).' },
+      { bullet: '•', text: '<strong>Cross-Layer AI Diagnosis:</strong> When a backend container panics or logs a 500 error, Dr. Debug highlights it and enables 1-click AI diagnosis correlating server logs with browser errors.' }
+    ]
+  },
+  timeline: {
+    key: 'timeline',
+    title: 'Investigation Timeline',
+    badge: 'Autonomous Re-Act Trajectory',
+    icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    description:
+      'Displays the step-by-step diagnostic reasoning trajectory of Dr. Debug’s autonomous AI agent as it investigates an incident — showing every hypothesis, tool execution, DOM inspection, and telemetry check.',
+    tips: [
+      { bullet: '•', text: '<strong>Observe AI Reasoning:</strong> Watch the agent formulate hypotheses and explain its internal reasoning (<code>AI Reasoning</code>) at each diagnostic step.' },
+      { bullet: '•', text: '<strong>Inspect Dispatched Tools:</strong> Review each tool executed by the agent (DOM queries, network logs, console snapshots, Docker inspection).' },
+      { bullet: '•', text: '<strong>Examine Tool Outputs:</strong> Expand individual step cards to review the exact diagnostic evidence gathered by the agent.' },
+      { bullet: '•', text: '<strong>Copy Step Evidence:</strong> Click the copy button on any step header to copy that specific finding and tool observation to your clipboard.' }
+    ]
+  },
+  prescription: {
+    key: 'prescription',
+    title: 'Prescription & Fix',
+    badge: 'Verified Root Cause & Patch',
+    icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>',
+    description:
+      'Provides the definitive diagnostic prescription formulated by Dr. Debug — containing verified root cause explanations, affected source files, confidence rating, and verified code diff patches.',
+    tips: [
+      { bullet: '•', text: '<strong>Diagnostic Finding & Root Cause:</strong> Read the plain-English explanation of why the failure occurred and its underlying causal mechanism.' },
+      { bullet: '•', text: '<strong>Target Files to Patch:</strong> See the exact source files identified by the agent that need code remediation.' },
+      { bullet: '•', text: '<strong>Unified Code Diff:</strong> Review the color-coded code patch (+ additions in green, - deletions in red) formulated to fix the bug.' },
+      { bullet: '•', text: '<strong>Copy Remediation Plan:</strong> Click <strong>"Copy remediation plan"</strong> to copy the unified diff patch to your clipboard.' },
+      { bullet: '•', text: '<strong>Hand Off to Coding Agent:</strong> Click <strong>"Copy full brief for AI"</strong> to export a comprehensive Markdown brief formatted for Claude Code, Antigravity, or Cursor.' }
+    ]
+  }
 }
 
 export interface CockpitPanelOptions {
@@ -52,9 +151,13 @@ export class CockpitPanel {
   private tabGraph: HTMLButtonElement
   private tabDocker: HTMLButtonElement
   private tabPrescription: HTMLButtonElement
+  private tabInfoBackdrop!: HTMLElement
+  private tabInfoCard!: HTMLElement
+  private activeInfoTab: CockpitTabKey | null = null
+  private currentTheme: DrDebugTheme = 'dr-debug'
   private heapMetricBadge: HTMLElement
   private uptimeMetricBadge: HTMLElement
-  private activeTab: 'timeline' | 'errors' | 'triage' | 'graph' | 'prescription' | 'docker' = 'errors'
+  private activeTab: CockpitTabKey = 'errors'
   private steps: StepItem[] = []
   private startTime = Date.now()
   private isMaximized = false
@@ -148,35 +251,12 @@ export class CockpitPanel {
     const tabs = document.createElement('div')
     tabs.className = 'dr-debug-tabs'
 
-    this.tabErrors = document.createElement('button')
-    this.tabErrors.className = 'dr-debug-tab active'
-    this.tabErrors.innerHTML = `<span>Error Matrix</span>`
-    this.tabErrors.addEventListener('click', () => this.switchTab('errors'))
-
-    this.tabTriage = document.createElement('button')
-    this.tabTriage.className = 'dr-debug-tab'
-    this.tabTriage.innerHTML = `<span>Telemetry</span>`
-    this.tabTriage.addEventListener('click', () => this.switchTab('triage'))
-
-    this.tabGraph = document.createElement('button')
-    this.tabGraph.className = 'dr-debug-tab'
-    this.tabGraph.innerHTML = `<span>Causal Graph</span>`
-    this.tabGraph.addEventListener('click', () => this.switchTab('graph'))
-
-    this.tabDocker = document.createElement('button')
-    this.tabDocker.className = 'dr-debug-tab'
-    this.tabDocker.innerHTML = `<span>🐳 Docker</span>`
-    this.tabDocker.addEventListener('click', () => this.switchTab('docker'))
-
-    this.tabTimeline = document.createElement('button')
-    this.tabTimeline.className = 'dr-debug-tab'
-    this.tabTimeline.innerHTML = `<span>Timeline</span>`
-    this.tabTimeline.addEventListener('click', () => this.switchTab('timeline'))
-
-    this.tabPrescription = document.createElement('button')
-    this.tabPrescription.className = 'dr-debug-tab'
-    this.tabPrescription.innerHTML = `<span>Prescription</span>`
-    this.tabPrescription.addEventListener('click', () => this.switchTab('prescription'))
+    this.tabErrors = this.createTabButton('errors', `<span>Error Matrix</span>`, true)
+    this.tabTriage = this.createTabButton('triage', `<span>Telemetry</span>`, false)
+    this.tabGraph = this.createTabButton('graph', `<span>Causal Graph</span>`, false)
+    this.tabDocker = this.createTabButton('docker', `<span>Docker</span>`, false)
+    this.tabTimeline = this.createTabButton('timeline', `<span>Timeline</span>`, false)
+    this.tabPrescription = this.createTabButton('prescription', `<span>Prescription</span>`, false)
 
     tabs.appendChild(this.tabErrors)
     tabs.appendChild(this.tabTriage)
@@ -184,6 +264,17 @@ export class CockpitPanel {
     tabs.appendChild(this.tabDocker)
     tabs.appendChild(this.tabTimeline)
     tabs.appendChild(this.tabPrescription)
+
+    // Tab Info Guide Overlay Card & Backdrop
+    this.tabInfoBackdrop = document.createElement('div')
+    this.tabInfoBackdrop.className = 'dr-debug-tab-info-backdrop'
+    this.tabInfoBackdrop.style.display = 'none'
+    this.tabInfoBackdrop.addEventListener('click', () => this.hideTabInfo())
+
+    this.tabInfoCard = document.createElement('div')
+    this.tabInfoCard.className = 'dr-debug-tab-info-card'
+    this.tabInfoCard.id = 'dr-debug-tab-info-card'
+    this.tabInfoCard.style.display = 'none'
 
     // 3. Body Containers
     const body = document.createElement('div')
@@ -200,7 +291,8 @@ export class CockpitPanel {
       onLaunchDiagnosis: (goal) => {
         this.queryInput.value = goal
         this.triggerInvestigate()
-      }
+      },
+      onShowGuide: () => this.showTabInfo('errors')
     })
     this.errorsContainer = document.createElement('div')
     this.errorsContainer.style.display = 'flex'
@@ -212,11 +304,13 @@ export class CockpitPanel {
     this.triageContainer.style.display = 'none'
     this.triageContainer.style.flexDirection = 'column'
     this.triageContainer.style.gap = '10px'
+    this.triageContainer.appendChild(this.createInTabHeader('triage', 'Telemetry & Health Substrate', 'dot-sys'))
 
     this.graphContainer = document.createElement('div')
     this.graphContainer.style.display = 'none'
     this.graphContainer.style.flexDirection = 'column'
     this.graphContainer.style.gap = '10px'
+    this.graphContainer.appendChild(this.createInTabHeader('graph', 'Causal Error & Anomaly Map', 'dot-notice'))
     this.graphContainer.appendChild(this.causalGraphView.getElement())
 
     this.dockerDashboardView = new DockerDashboardView({
@@ -224,7 +318,8 @@ export class CockpitPanel {
       onLaunchDiagnosis: (goal) => {
         this.queryInput.value = goal
         this.triggerInvestigate()
-      }
+      },
+      onShowGuide: () => this.showTabInfo('docker')
     })
     this.dockerContainer = document.createElement('div')
     this.dockerContainer.style.display = 'none'
@@ -247,10 +342,16 @@ export class CockpitPanel {
     // Settings Modal
     this.settingsModal = new SettingsModal({
       onSave: (settings) => {
+        if (settings.theme) {
+          this.setTheme(settings.theme)
+        }
         options.onSaveSettings?.(settings)
         if (typeof window !== 'undefined' && (window as any).__DR_DEBUG__) {
           (window as any).__DR_DEBUG__.updateLLMConfig?.(settings)
         }
+      },
+      onThemeChange: (theme) => {
+        this.setTheme(theme)
       },
       onTestConnection: async (settings) => {
         if (options.onTestConnection) {
@@ -263,6 +364,15 @@ export class CockpitPanel {
       }
     })
     this.element.appendChild(this.settingsModal.getElement())
+
+    try {
+      const savedTheme = localStorage.getItem('dr_debug_theme') as DrDebugTheme
+      if (savedTheme) {
+        this.setTheme(savedTheme)
+      }
+    } catch {
+      // ignore
+    }
 
 
     // 4. Interactive Query Wrapper
@@ -282,7 +392,7 @@ export class CockpitPanel {
     this.queryButton = document.createElement('button')
     this.queryButton.id = 'dr-debug-query-submit'
     this.queryButton.className = 'dr-debug-btn'
-    this.queryButton.innerHTML = `<span>⚡</span> <span>Diagnose</span>`
+    this.queryButton.innerHTML = `<span>Diagnose</span>`
     this.queryButton.addEventListener('click', () => this.triggerInvestigate())
 
     queryBox.appendChild(this.queryInput)
@@ -292,13 +402,22 @@ export class CockpitPanel {
 
     this.element.appendChild(header)
     this.element.appendChild(tabs)
+    this.element.appendChild(this.tabInfoBackdrop)
+    this.element.appendChild(this.tabInfoCard)
     this.element.appendChild(body)
     this.element.appendChild(queryWrapper)
+
+    this.element.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.isTabInfoVisible()) {
+        e.stopPropagation()
+        this.hideTabInfo()
+      }
+    })
 
     const creditFooter = document.createElement('div')
     creditFooter.className = 'dr-debug-cockpit-footer'
     creditFooter.innerHTML = `
-      <span>🩺 Dr. Debug by <a href="https://github.com/SazWhatician" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;text-decoration:none;font-weight:700;">Saswat Mohanty (@SazWhatician)</a></span>
+      <span>Dr. Debug by <a href="https://github.com/SazWhatician" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;text-decoration:none;font-weight:700;">Saswat Mohanty (@SazWhatician)</a></span>
       <span style="color:#64748b;">·</span>
       <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" rel="noopener noreferrer" style="color:#818cf8;text-decoration:none;">LinkedIn</a>
     `
@@ -338,11 +457,14 @@ export class CockpitPanel {
     this.queryInput.disabled = busy
     this.queryButton.disabled = busy
     this.queryButton.innerHTML = busy
-      ? `<span>⏳</span> <span>Diagnosing...</span>`
-      : `<span>⚡</span> <span>Diagnose</span>`
+      ? `<span>Diagnosing...</span>`
+      : `<span>Diagnose</span>`
   }
 
-  public switchTab(tab: 'timeline' | 'errors' | 'triage' | 'graph' | 'prescription' | 'docker'): void {
+  public switchTab(tab: CockpitTabKey): void {
+    if (this.isTabInfoVisible()) {
+      this.hideTabInfo()
+    }
     this.activeTab = tab
     this.tabTimeline.classList.toggle('active', tab === 'timeline')
     this.tabErrors.classList.toggle('active', tab === 'errors')
@@ -385,8 +507,8 @@ export class CockpitPanel {
     if (controller) {
       const errorCount = (controller.getDockerLogs?.() || []).filter((l: any) => l.level === 'error').length
       const newHtml = errorCount > 0
-        ? `<span>🐳 Docker <span style="background:rgba(244,63,94,0.25);color:#fda4af;border:1px solid rgba(244,63,94,0.5);padding:1px 5px;border-radius:9999px;font-size:9px;font-weight:700">${errorCount}</span></span>`
-        : `<span>🐳 Docker</span>`
+        ? `<span>Docker <span style="background:rgba(244,63,94,0.25);color:#fda4af;border:1px solid rgba(244,63,94,0.5);padding:1px 5px;border-radius:9999px;font-size:9px;font-weight:700">${errorCount}</span></span>`
+        : `<span>Docker</span>`
       if (this.tabDocker.innerHTML !== newHtml) {
         this.tabDocker.innerHTML = newHtml
       }
@@ -401,36 +523,45 @@ export class CockpitPanel {
   }
 
   public renderEmptyTimeline(): void {
-    this.timelineContainer.innerHTML = `
-      <div class="dr-debug-timeline-empty">
-        <div class="dr-debug-radar-ring">
-          <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo radar-logo" alt="Dr. Debug" />
-        </div>
-        <strong style="color: #f1f5f9; font-size: 13px;">Autonomous Diagnostic Observer Active</strong>
-        <p style="font-size: 12px; max-width: 320px; line-height: 1.5;">
-          Dr. Debug is continuously analyzing DOM mutations, network traffic, and console telemetry. Click <strong>Diagnose</strong> to launch autonomous RCA.
-        </p>
+    this.timelineContainer.innerHTML = ''
+    this.timelineContainer.appendChild(this.createInTabHeader('timeline', 'Diagnostic RCA Timeline', 'dot-warn'))
+    const emptyBox = document.createElement('div')
+    emptyBox.className = 'dr-debug-timeline-empty'
+    emptyBox.innerHTML = `
+      <div class="dr-debug-radar-ring">
+        <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo radar-logo" alt="Dr. Debug" />
       </div>
+      <strong class="dr-debug-empty-title">Autonomous Diagnostic Observer Active</strong>
+      <p class="dr-debug-empty-desc">
+        Dr. Debug is continuously analyzing DOM mutations, network traffic, and console telemetry. Click <strong>Diagnose</strong> to launch autonomous RCA.
+      </p>
     `
+    this.timelineContainer.appendChild(emptyBox)
   }
 
   public renderEmptyPrescription(): void {
-    this.prescriptionContainer.innerHTML = `
-      <div class="dr-debug-timeline-empty">
-        <div class="dr-debug-radar-ring">
-          <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo radar-logo" alt="Dr. Debug" />
-        </div>
-        <strong style="color: #f1f5f9; font-size: 13px;">No Prescription Generated Yet</strong>
-        <p style="font-size: 12px; max-width: 320px; line-height: 1.5;">
-          Launch a diagnosis to formulate verified code fixes, root causes, and unified diff patches.
-        </p>
+    this.prescriptionContainer.innerHTML = ''
+    this.prescriptionContainer.appendChild(this.createInTabHeader('prescription', 'Remediation & Root Cause Prescription', 'dot-ok'))
+    const emptyBox = document.createElement('div')
+    emptyBox.className = 'dr-debug-timeline-empty'
+    emptyBox.innerHTML = `
+      <div class="dr-debug-radar-ring">
+        <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo radar-logo" alt="Dr. Debug" />
       </div>
+      <strong class="dr-debug-empty-title">No Prescription Generated Yet</strong>
+      <p class="dr-debug-empty-desc">
+        Launch a diagnosis to formulate verified code fixes, root causes, and unified diff patches.
+      </p>
     `
+    this.prescriptionContainer.appendChild(emptyBox)
   }
 
   public addStep(step: StepItem): void {
     this.clearThinking()
-    if (this.steps.length === 0) this.timelineContainer.innerHTML = ''
+    if (this.steps.length === 0) {
+      this.timelineContainer.innerHTML = ''
+      this.timelineContainer.appendChild(this.createInTabHeader('timeline', 'Diagnostic RCA Timeline', 'dot-warn'))
+    }
     this.steps.push(step)
 
     const stepCard = document.createElement('div')
@@ -465,7 +596,7 @@ export class CockpitPanel {
     // AI Reasoning block
     const reasoningLabel = document.createElement('div')
     reasoningLabel.className = 'dr-debug-step-reasoning-label'
-    reasoningLabel.textContent = '🧠 AI Reasoning'
+    reasoningLabel.textContent = 'AI Reasoning'
 
     const thought = document.createElement('div')
     thought.className = 'dr-debug-step-thought'
@@ -504,6 +635,7 @@ export class CockpitPanel {
     // would leave the copy buttons on the timeline copy inert.
     this.timelineContainer.appendChild(this.buildPrescriptionCard(prescription))
     this.prescriptionContainer.innerHTML = ''
+    this.prescriptionContainer.appendChild(this.createInTabHeader('prescription', 'Remediation & Root Cause Prescription', 'dot-ok'))
     this.prescriptionContainer.appendChild(this.buildPrescriptionCard(prescription))
 
     this.scrollTimelineToBottom()
@@ -542,7 +674,7 @@ export class CockpitPanel {
     sectionRCA.className = 'dr-debug-presc-section'
     sectionRCA.innerHTML = `
       <div class="dr-debug-presc-label">Root Cause Mechanism</div>
-      <div class="dr-debug-presc-text" style="color: #cbd5e1;">${this.escapeHtml(prescription.rootCause)}</div>
+      <div class="dr-debug-presc-text">${this.escapeHtml(prescription.rootCause)}</div>
     `
 
     card.appendChild(header)
@@ -554,8 +686,8 @@ export class CockpitPanel {
       sectionFiles.className = 'dr-debug-presc-section'
       sectionFiles.innerHTML = `
         <div class="dr-debug-presc-label">Target Files To Patch</div>
-        <div style="font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: #38bdf8;">
-          ${prescription.filesToModify.map((f) => `📄 ${this.escapeHtml(f)}`).join(' &nbsp;|&nbsp; ')}
+        <div class="dr-debug-presc-files">
+          ${prescription.filesToModify.map((f) => this.escapeHtml(f)).join(' &nbsp;|&nbsp; ')}
         </div>
       `
       card.appendChild(sectionFiles)
@@ -572,13 +704,13 @@ export class CockpitPanel {
 
       const copyBtn = document.createElement('button')
       copyBtn.className = 'dr-debug-copy-btn'
-      const idle = `<span>📋</span> <span>Copy remediation plan</span>`
+      const idle = `<span>Copy remediation plan</span>`
       copyBtn.innerHTML = idle
       this.bindCopyFeedback(
         copyBtn,
         () => prescription.fix,
         idle,
-        `<span>✅</span> <span>Copied</span>`
+        `<span>Copied</span>`
       )
 
       sectionFix.appendChild(diffContainer)
@@ -600,7 +732,7 @@ export class CockpitPanel {
     handoff.appendChild(
       this.makeSessionPromptButton(
         'dr-debug-copy-btn primary',
-        '📤 Copy full brief for AI',
+        'Copy full brief for AI',
         'Copy the complete session brief as Markdown'
       )
     )
@@ -616,9 +748,10 @@ export class CockpitPanel {
     memory?: { usedMB?: number; totalMB?: number }
   }): void {
     this.triageContainer.innerHTML = ''
+    this.triageContainer.appendChild(this.createInTabHeader('triage', 'Telemetry & Health Substrate', 'dot-sys'))
 
     if (telemetry.memory && telemetry.memory.usedMB) {
-      this.heapMetricBadge.innerHTML = `<span>🧠</span> <span>Heap: ${telemetry.memory.usedMB}MB</span>`
+      this.heapMetricBadge.innerHTML = `<span class="dr-debug-status-dot dot-sys"></span> <span id="dr-debug-heap-val">Heap: ${telemetry.memory.usedMB}MB</span>`
     }
 
     // 1. Errors section
@@ -628,10 +761,10 @@ export class CockpitPanel {
         item.className = 'dr-debug-telemetry-item error'
         item.innerHTML = `
           <div class="dr-debug-telemetry-meta">
-            <span style="color: #fb7185; font-weight: 700;">🔴 RUNTIME EXCEPTION</span>
-            <span>Just now</span>
+            <span class="dr-debug-telemetry-tag error"><span class="dr-debug-status-dot dot-critical"></span> RUNTIME EXCEPTION</span>
+            <span class="dr-debug-telemetry-time">Just now</span>
           </div>
-          <div style="font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: #f1f5f9;">
+          <div class="dr-debug-telemetry-payload">
             ${this.escapeHtml(err)}
           </div>
         `
@@ -648,12 +781,13 @@ export class CockpitPanel {
         item.className = `dr-debug-telemetry-item ${isFail ? 'net-fail' : 'warn'}`
         item.innerHTML = `
           <div class="dr-debug-telemetry-meta">
-            <span style="color: ${isFail ? '#fbbf24' : '#38bdf8'}; font-weight: 700;">
-              ${isFail ? '⚠️ HTTP NETWORK ANOMALY' : '⏳ LATENCY ANOMALY'}
+            <span class="dr-debug-telemetry-tag ${isFail ? 'net-fail' : 'warn'}">
+              <span class="dr-debug-status-dot ${isFail ? 'dot-critical' : 'dot-warn'}"></span>
+              ${isFail ? 'HTTP NETWORK ANOMALY' : 'LATENCY ANOMALY'}
             </span>
-            <span>Substrate trace</span>
+            <span class="dr-debug-telemetry-time">Substrate trace</span>
           </div>
-          <div style="font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: #f1f5f9;">
+          <div class="dr-debug-telemetry-payload">
             ${this.escapeHtml(req)}
           </div>
         `
@@ -668,24 +802,25 @@ export class CockpitPanel {
       item.className = 'dr-debug-telemetry-item ok'
       item.innerHTML = `
         <div class="dr-debug-telemetry-meta">
-          <span style="color: #34d399; font-weight: 700;">🟢 V8 MEMORY SUBSYSTEM</span>
-          <span>Live Snapshot</span>
+          <span class="dr-debug-telemetry-tag ok"><span class="dr-debug-status-dot dot-ok"></span> V8 MEMORY SUBSYSTEM</span>
+          <span class="dr-debug-telemetry-time">Live Snapshot</span>
         </div>
-        <div style="font-size: 12px; color: #cbd5e1;">
+        <div class="dr-debug-telemetry-text">
           Used Heap: <strong>${telemetry.memory.usedMB || 0} MB</strong> / Allocated: <strong>${telemetry.memory.totalMB || 0} MB</strong>
         </div>
       `
       this.triageContainer.appendChild(item)
     }
 
-    if (this.triageContainer.children.length === 0) {
-      this.triageContainer.innerHTML = `
-        <div style="color: #34d399; text-align: center; padding: 40px 10px; font-size: 13px;">
-          <div style="font-size: 24px; margin-bottom: 6px;">✨</div>
-          <strong>Substrate is completely healthy.</strong>
-          <p style="color: #64748b; font-size: 12px; margin-top: 4px;">Zero unhandled exceptions, zero network timeouts recorded.</p>
-        </div>
+    if (this.triageContainer.children.length === 1) {
+      const emptyState = document.createElement('div')
+      emptyState.className = 'dr-debug-triage-empty'
+      emptyState.innerHTML = `
+        <div class="dr-debug-status-dot dot-ok" style="width: 12px; height: 12px; margin-bottom: 8px;"></div>
+        <strong class="dr-debug-triage-empty-title">Substrate is completely healthy.</strong>
+        <p class="dr-debug-triage-empty-desc">Zero unhandled exceptions, zero network timeouts recorded.</p>
       `
+      this.triageContainer.appendChild(emptyState)
     }
   }
 
@@ -719,7 +854,7 @@ export class CockpitPanel {
       this.causalGraphView.updateGraph(graph)
     }
     const newHtml = graph.nodes.length > 0
-      ? `<span>🕸️</span> <span>Causal Map <span style="background:rgba(251,146,60,0.2);color:#fb923c;border:1px solid rgba(251,146,60,0.4);padding:1px 5px;border-radius:9999px;font-size:9px;font-weight:700">${graph.nodes.length}</span></span>`
+      ? `<span>Causal Graph <span style="background:rgba(251,146,60,0.2);color:#fb923c;border:1px solid rgba(251,146,60,0.4);padding:1px 5px;border-radius:9999px;font-size:9px;font-weight:700">${graph.nodes.length}</span></span>`
       : `<span>Causal Graph</span>`
     if (this.tabGraph.innerHTML !== newHtml) {
       this.tabGraph.innerHTML = newHtml
@@ -816,8 +951,10 @@ export class CockpitPanel {
     const btn = document.createElement('button')
     btn.className = 'dr-debug-copy-inline'
     btn.title = 'Copy to clipboard'
-    btn.innerHTML = '📋'
-    this.bindCopyFeedback(btn, () => text, '📋', '✅', '⚠️')
+    const idle = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>`
+    const copied = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>`
+    btn.innerHTML = idle
+    this.bindCopyFeedback(btn, () => text, idle, copied, '!')
     return btn
   }
 
@@ -916,6 +1053,158 @@ export class CockpitPanel {
     }
 
     header.addEventListener('mousedown', onMouseDown)
+  }
+
+  private createInTabHeader(tabKey: CockpitTabKey, title: string, dotClass = 'dot-sys'): HTMLElement {
+    const header = document.createElement('div')
+    header.className = 'dr-debug-tab-view-header'
+    header.innerHTML = `
+      <div class="dr-debug-tab-view-title">
+        <span class="dr-debug-status-dot ${dotClass}"></span>
+        <span>${title}</span>
+      </div>
+      <button class="dr-debug-tab-guide-trigger" id="dr-debug-guide-btn-${tabKey}" title="What is ${title}? Click for guide" aria-label="${title} Guide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>Guide</span>
+      </button>
+    `
+    header.querySelector(`#dr-debug-guide-btn-${tabKey}`)?.addEventListener('click', (e) => {
+      e.stopPropagation()
+      this.toggleTabInfo(tabKey)
+    })
+    return header
+  }
+
+  private createTabButton(
+    tabKey: CockpitTabKey,
+    labelHtml: string,
+    isActive: boolean
+  ): HTMLButtonElement {
+    const button = document.createElement('button')
+    button.className = `dr-debug-tab${isActive ? ' active' : ''}`
+    button.setAttribute('data-tab', tabKey)
+    button.innerHTML = labelHtml
+    button.addEventListener('click', () => {
+      this.switchTab(tabKey)
+    })
+    return button
+  }
+
+  private renderTabInfoCard(tabKey: CockpitTabKey): void {
+    const guide = TAB_GUIDES[tabKey]
+    const isActive = this.activeTab === tabKey
+
+    this.tabInfoCard.innerHTML = `
+      <div class="dr-debug-tab-info-header">
+        <div class="dr-debug-tab-info-title-box">
+          <span class="dr-debug-tab-info-icon">${guide.icon}</span>
+          <span class="dr-debug-tab-info-title">${guide.title}</span>
+          <span class="dr-debug-tab-info-badge">${guide.badge}</span>
+        </div>
+        <button class="dr-debug-close-btn" id="dr-debug-tab-info-close" title="Close Guide">✕</button>
+      </div>
+      <div class="dr-debug-tab-info-body">
+        <div class="dr-debug-tab-info-section">
+          <div class="dr-debug-tab-info-sec-title"><span>What This Tab Does</span></div>
+          <div class="dr-debug-tab-info-desc">${guide.description}</div>
+        </div>
+        <div class="dr-debug-tab-info-section">
+          <div class="dr-debug-tab-info-sec-title"><span>How To Use It</span></div>
+          <ul class="dr-debug-tab-info-tips">
+            ${guide.tips
+              .map(
+                (tip) => `
+              <li class="dr-debug-tab-info-tip-item">
+                <span class="dr-debug-tab-info-tip-bullet">${tip.bullet}</span>
+                <span class="dr-debug-tab-info-tip-text">${tip.text}</span>
+              </li>
+            `
+              )
+              .join('')}
+          </ul>
+        </div>
+      </div>
+      <div class="dr-debug-tab-info-footer">
+        <div class="dr-debug-tab-info-status ${isActive ? 'active' : ''}">
+          <span>${isActive ? '● Active Tab' : '○ Inactive Tab'}</span>
+        </div>
+        <div class="dr-debug-tab-info-actions">
+          ${
+            !isActive
+              ? `<button class="dr-debug-tab-info-btn-switch" id="dr-debug-tab-info-switch">
+                  <span>Switch to ${guide.title}</span>
+                </button>`
+              : ''
+          }
+          <button class="dr-debug-tab-info-btn-gotit" id="dr-debug-tab-info-gotit">Got it</button>
+        </div>
+      </div>
+    `
+
+    const closeBtn = this.tabInfoCard.querySelector('#dr-debug-tab-info-close')
+    closeBtn?.addEventListener('click', () => this.hideTabInfo())
+
+    const gotItBtn = this.tabInfoCard.querySelector('#dr-debug-tab-info-gotit')
+    gotItBtn?.addEventListener('click', () => this.hideTabInfo())
+
+    const switchBtn = this.tabInfoCard.querySelector('#dr-debug-tab-info-switch')
+    switchBtn?.addEventListener('click', () => {
+      this.switchTab(tabKey)
+      this.hideTabInfo()
+    })
+  }
+
+  public showTabInfo(tabKey: CockpitTabKey): void {
+    this.activeInfoTab = tabKey
+    this.renderTabInfoCard(tabKey)
+    this.tabInfoBackdrop.style.display = 'block'
+    this.tabInfoCard.style.display = 'flex'
+  }
+
+  public hideTabInfo(): void {
+    this.activeInfoTab = null
+    this.tabInfoBackdrop.style.display = 'none'
+    this.tabInfoCard.style.display = 'none'
+  }
+
+  public toggleTabInfo(tabKey: CockpitTabKey): void {
+    if (this.isTabInfoVisible() && this.activeInfoTab === tabKey) {
+      this.hideTabInfo()
+    } else {
+      this.showTabInfo(tabKey)
+    }
+  }
+
+  public isTabInfoVisible(): boolean {
+    return this.tabInfoCard.style.display === 'flex'
+  }
+
+  public getActiveTabInfo(): CockpitTabKey | null {
+    return this.activeInfoTab
+  }
+
+  public setTheme(theme: DrDebugTheme): void {
+    this.currentTheme = theme
+    this.element.classList.remove('theme-minimal-glass', 'theme-monotone-skeuomorphic')
+    if (theme === 'minimal-glass') {
+      this.element.classList.add('theme-minimal-glass')
+    } else if (theme === 'monotone-skeuomorphic') {
+      this.element.classList.add('theme-monotone-skeuomorphic')
+    }
+    try {
+      localStorage.setItem('dr_debug_theme', theme)
+    } catch {
+      // ignore
+    }
+    this.settingsModal.setTheme(theme)
+  }
+
+  public getTheme(): DrDebugTheme {
+    return this.currentTheme
   }
 }
 

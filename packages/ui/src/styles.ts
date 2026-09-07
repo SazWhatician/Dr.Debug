@@ -1,5 +1,5 @@
 export const shadowStyles = `
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
 
 :host {
   all: initial;
@@ -369,6 +369,301 @@ export const shadowStyles = `
   background: rgba(56, 189, 248, 0.14);
   border-color: rgba(56, 189, 248, 0.35);
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+/* In-Tab Guide Trigger & Header */
+.dr-debug-tab-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  flex-shrink: 0;
+}
+
+.dr-debug-tab-view-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.dr-debug-tab-guide-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  color: #38bdf8;
+  border-radius: 9999px;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  line-height: 1;
+}
+
+.dr-debug-tab-guide-trigger:hover {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: rgba(56, 189, 248, 0.6);
+  color: #ffffff;
+  transform: scale(1.04);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+}
+
+.dr-debug-tab-guide-trigger svg {
+  width: 10px;
+  height: 10px;
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+/* Tab Guide Overlay Card */
+.dr-debug-tab-info-backdrop {
+  position: absolute;
+  top: 76px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(4, 7, 15, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 94;
+  animation: tab-info-fade-in 0.2s ease;
+}
+
+.dr-debug-tab-info-card {
+  position: absolute;
+  top: 80px;
+  left: 12px;
+  right: 12px;
+  max-height: calc(100% - 136px);
+  background: rgba(10, 15, 29, 0.96);
+  border: 1px solid rgba(56, 189, 248, 0.38);
+  border-radius: 12px;
+  box-shadow:
+    0 20px 50px -8px rgba(0, 0, 0, 0.88),
+    0 0 30px rgba(6, 182, 212, 0.22),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: tab-info-spring-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dr-debug-tab-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(6, 9, 16, 0.6);
+}
+
+.dr-debug-tab-info-title-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dr-debug-tab-info-icon {
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dr-debug-tab-info-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: -0.2px;
+}
+
+.dr-debug-tab-info-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background: rgba(56, 189, 248, 0.16);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.dr-debug-tab-info-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.3) rgba(10, 14, 23, 0.4);
+}
+
+.dr-debug-tab-info-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.dr-debug-tab-info-body::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.35);
+  border-radius: 9999px;
+}
+
+.dr-debug-tab-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dr-debug-tab-info-sec-title {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dr-debug-tab-info-desc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 9px 11px;
+}
+
+.dr-debug-tab-info-tips {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+
+.dr-debug-tab-info-tip-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #cbd5e1;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 7px 9px;
+}
+
+.dr-debug-tab-info-tip-bullet {
+  font-size: 12px;
+  line-height: 1;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.dr-debug-tab-info-tip-text strong {
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.dr-debug-tab-info-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(6, 9, 16, 0.6);
+  gap: 10px;
+}
+
+.dr-debug-tab-info-status {
+  font-size: 11px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dr-debug-tab-info-status.active {
+  color: #34d399;
+}
+
+.dr-debug-tab-info-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dr-debug-tab-info-btn-switch {
+  background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dr-debug-tab-info-btn-switch:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.5);
+}
+
+.dr-debug-tab-info-btn-gotit {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dr-debug-tab-info-btn-gotit:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+@keyframes tab-info-spring-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes tab-info-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 
@@ -749,12 +1044,92 @@ export const shadowStyles = `
   border-left: 3px solid #10b981;
 }
 
+.dr-debug-telemetry-item.warn {
+  border-left: 3px solid #38bdf8;
+  background: rgba(56, 189, 248, 0.06);
+}
+
 .dr-debug-telemetry-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 10px;
   color: #94a3b8;
+}
+
+.dr-debug-telemetry-tag.error {
+  color: #fb7185;
+  font-weight: 700;
+}
+
+.dr-debug-telemetry-tag.net-fail {
+  color: #fbbf24;
+  font-weight: 700;
+}
+
+.dr-debug-telemetry-tag.warn {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.dr-debug-telemetry-tag.ok {
+  color: #34d399;
+  font-weight: 700;
+}
+
+.dr-debug-telemetry-time {
+  color: #64748b;
+  font-size: 9.5px;
+}
+
+.dr-debug-telemetry-payload {
+  font-family: ui-monospace, 'JetBrains Mono', Menlo, monospace;
+  font-size: 11.5px;
+  color: #f1f5f9;
+  word-break: break-word;
+  line-height: 1.45;
+}
+
+.dr-debug-telemetry-text {
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.dr-debug-triage-empty {
+  color: #34d399;
+  text-align: center;
+  padding: 40px 10px;
+  font-size: 13px;
+}
+
+.dr-debug-triage-empty-title {
+  color: #34d399;
+  font-size: 13px;
+}
+
+.dr-debug-triage-empty-desc {
+  color: #64748b;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.dr-debug-empty-title {
+  color: #f1f5f9;
+  font-size: 13px;
+}
+
+.dr-debug-empty-desc {
+  font-size: 12px;
+  max-width: 320px;
+  line-height: 1.5;
+  color: #94a3b8;
+}
+
+.dr-debug-presc-files {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11.5px;
+  color: #38bdf8;
 }
 
 /* ==========================================================================
@@ -2430,7 +2805,7 @@ export const shadowStyles = `
   color: #94a3b8;
 }
 
-/* ── 🐳 Dedicated Docker Dashboard Page ── */
+/* ── Dedicated Docker Dashboard Page ── */
 .dr-debug-docker-dashboard {
   display: flex;
   flex-direction: column;
@@ -2951,7 +3326,7 @@ export const shadowStyles = `
   backdrop-filter: blur(8px);
 }
 
-/* ── 🐳 Docker Instructions Panel ── */
+/* ── Docker Instructions Panel ── */
 .dr-debug-docker-instructions-wrapper {
   display: flex;
   flex-direction: column;
@@ -3135,6 +3510,951 @@ export const shadowStyles = `
   gap: 6px;
   margin-top: 4px;
   font-style: italic;
+}
+
+/* ==========================================================================
+   THEME 1: Dr.Debug (Original Cyan Dark Glassmorphism)
+   ========================================================================== */
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) button,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) input,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) select,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-tab,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-btn {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) code,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) pre,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-telemetry-payload,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-step-output,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-docker-terminal,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-metric-badge {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+
+/* ==========================================================================
+   THEME 2: Minimalistic Glassmorphism (Light Theme)
+   ========================================================================== */
+.dr-debug-modal.theme-minimal-glass {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  letter-spacing: -0.012em;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow:
+    0 24px 60px -8px rgba(100, 116, 139, 0.25),
+    0 0 20px rgba(56, 189, 248, 0.12),
+    inset 0 1px 1px rgba(255, 255, 255, 0.9);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass button,
+.dr-debug-modal.theme-minimal-glass input,
+.dr-debug-modal.theme-minimal-glass select,
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab,
+.dr-debug-modal.theme-minimal-glass .dr-debug-btn,
+.dr-debug-modal.theme-minimal-glass .dr-debug-brand-bold,
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-title,
+.dr-debug-modal.theme-minimal-glass .dr-debug-presc-title,
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-reasoning-label,
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-title,
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-title,
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-view-title {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.dr-debug-modal.theme-minimal-glass code,
+.dr-debug-modal.theme-minimal-glass pre,
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-payload,
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-output,
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-terminal,
+.dr-debug-modal.theme-minimal-glass .dr-debug-metric-badge {
+  font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-header {
+  background: rgba(248, 250, 252, 0.92);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-brand-bold {
+  color: #0284c7;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-brand-sub {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-metric-badge {
+  background: rgba(241, 245, 249, 0.95);
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-close-btn {
+  background: rgba(241, 245, 249, 0.9);
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-close-btn:hover {
+  background: rgba(244, 63, 94, 0.15);
+  color: #e11d48;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tabs {
+  background: rgba(241, 245, 249, 0.9);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab:hover {
+  color: #000000;
+  background: rgba(226, 232, 240, 0.85);
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab.active {
+  color: #000000;
+  font-weight: 700;
+  background: rgba(2, 132, 199, 0.16);
+  border-color: rgba(2, 132, 199, 0.45);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7);
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-body {
+  background: rgba(248, 250, 252, 0.75);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-view-header {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-view-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-guide-trigger {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.18);
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-guide-trigger:hover {
+  background: rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.35);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-header,
+.dr-debug-modal.theme-minimal-glass .dr-debug-matrix-toolbar,
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-header,
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-section,
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-toolbar {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-stat-chip {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-mode-btn {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-mode-btn.active {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-filter-btn {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-filter-btn.active {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-2d-matrix {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-matrix-th {
+  color: #000000;
+  font-weight: 700;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-matrix-sub-label {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-matrix-cell {
+  background: rgba(248, 250, 252, 0.85);
+  border: 1px solid #cbd5e1;
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-search-input,
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-search,
+.dr-debug-modal.theme-minimal-glass .dr-debug-input,
+.dr-debug-modal.theme-minimal-glass .dr-debug-form-input,
+.dr-debug-modal.theme-minimal-glass .dr-debug-form-select {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+  font-weight: 500;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-search-input::placeholder,
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-search::placeholder,
+.dr-debug-modal.theme-minimal-glass .dr-debug-input::placeholder {
+  color: #475569;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-item,
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-card,
+.dr-debug-modal.theme-minimal-glass .dr-debug-prescription-card,
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-card-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-card-subtitle {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-time {
+  color: #111827;
+  font-weight: 500;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-insp-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-insp-sec-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-code-box {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-curl-preview {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-rfc-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-rfc-desc {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-rfc-rec {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-frame-fn {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-frame-loc {
+  color: #111827;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-empty {
+  color: #000000;
+}
+
+/* Light Mode: Telemetry Substrate High Contrast Black Styling */
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-left: 3.5px solid #ef4444;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.error .dr-debug-telemetry-payload {
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.error .dr-debug-telemetry-tag {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.net-fail {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-left: 3.5px solid #d97706;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.net-fail .dr-debug-telemetry-payload {
+  color: #92400e;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.net-fail .dr-debug-telemetry-tag {
+  color: #b45309;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.warn {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-left: 3.5px solid #0284c7;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.warn .dr-debug-telemetry-payload {
+  color: #0369a1;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.warn .dr-debug-telemetry-tag {
+  color: #0284c7;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.ok {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-left: 3.5px solid #16a34a;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.ok .dr-debug-telemetry-tag {
+  color: #15803d;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-payload {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-text {
+  color: #000000;
+  font-weight: 500;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-meta {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-time {
+  color: #111827;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-triage-empty-title {
+  color: #16a34a;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-triage-empty-desc {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-empty-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-empty-desc {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-presc-files {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-presc-label {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-presc-text {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-confidence-chip {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-prescription-diff {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-handoff {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-handoff-desc {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-pill {
+  background: #e2e8f0;
+  color: #000000;
+  font-weight: 700;
+  border: 1px solid #cbd5e1;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-tool {
+  background: #f1f5f9;
+  color: #000000;
+  font-weight: 600;
+  border: 1px solid #cbd5e1;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-thought {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-output {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-output-label {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-thinking-card {
+  background: rgba(243, 232, 255, 0.7);
+  border: 1px solid #d8b4fe;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-thinking-text {
+  color: #000000;
+}
+
+/* Causal Graph Light Styling */
+.dr-debug-modal.theme-minimal-glass .dr-debug-graph-toolbar {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-graph-node {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-node-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-node-summary {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-node-layer {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-detail-header {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-detail-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-detail-pre {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-graph-empty {
+  color: #000000;
+}
+
+/* Docker Light Styling */
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-terminal-wrapper {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-msg {
+  color: #000000;
+  font-weight: 500;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-time {
+  color: #111827;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-container-tag {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-stream-tag {
+  color: #111827;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-sub {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-hint {
+  color: #111827;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-stat-pill {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-btn {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-btn.active {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-card-name {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-card-desc {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-card-image {
+  color: #111827;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-card-ports {
+  color: #111827;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-step-box {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-step-label {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-step-text {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-step-footer {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-guide-desc {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-term-empty {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-log-row.log-error {
+  background: rgba(239, 68, 68, 0.08);
+  border-left: 2px solid #ef4444;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-log-row.log-error .dr-debug-dock-msg {
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-log-row.log-warn {
+  background: rgba(245, 158, 11, 0.08);
+  border-left: 2px solid #d97706;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-log-row.log-warn .dr-debug-dock-msg {
+  color: #92400e;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-name,
+.dr-debug-modal.theme-minimal-glass .dr-debug-presc-title,
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-reasoning-label {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-msg {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-query-wrapper {
+  background: rgba(248, 250, 252, 0.95);
+  border-top: 1px solid rgba(226, 232, 240, 0.95);
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-query-box {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-cockpit-footer {
+  background: rgba(241, 245, 249, 0.95);
+  border-top: 1px solid rgba(226, 232, 240, 0.95);
+  color: #000000;
+  font-weight: 500;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-cockpit-footer span {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-overlay,
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-card {
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(203, 213, 225, 0.95);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-title,
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-form-label {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-header,
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-footer {
+  background: rgba(248, 250, 252, 0.96);
+  border-color: rgba(226, 232, 240, 0.95);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-sec-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-desc {
+  background: rgba(241, 245, 249, 0.85);
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-tip-item {
+  background: rgba(248, 250, 252, 0.95);
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-tip-bullet {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-tip-text {
+  color: #000000;
+}
+
+/* ==========================================================================
+   THEME 3: Monotone Skeuomorphism (Darker Theme)
+   ========================================================================== */
+.dr-debug-modal.theme-monotone-skeuomorphic {
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: 0.015em;
+  background: #0d0f12;
+  border: 1px solid #23272f;
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.9);
+  color: #f1f5f9;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic button,
+.dr-debug-modal.theme-monotone-skeuomorphic input,
+.dr-debug-modal.theme-monotone-skeuomorphic select,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-tab,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-btn,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-brand-bold,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-err-title,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-presc-title,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-step-reasoning-label,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-settings-title,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-tab-info-title,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-tab-view-title {
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic code,
+.dr-debug-modal.theme-monotone-skeuomorphic pre,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-telemetry-payload,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-step-output,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-docker-terminal,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-metric-badge {
+  font-family: 'IBM Plex Mono', 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-header {
+  background: linear-gradient(180deg, #181c22 0%, #111419 100%);
+  border-bottom: 1px solid #000000;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-brand-bold {
+  color: #f8fafc;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-brand-sub {
+  color: #64748b;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-metric-badge {
+  background: #090a0d;
+  border: 1px solid #1e2229;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.85);
+  color: #cbd5e1;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-close-btn {
+  background: linear-gradient(180deg, #2a2e36 0%, #191c22 100%);
+  border: 1px solid #363c47;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-close-btn:hover {
+  background: linear-gradient(180deg, #373c47 0%, #20242b 100%);
+  color: #ffffff;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-tabs {
+  background: #090b0e;
+  border-bottom: 1px solid #1f232b;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.7);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-tab {
+  color: #64748b;
+  border-radius: 4px;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-tab:hover {
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-tab.active {
+  color: #ffffff;
+  background: linear-gradient(180deg, #2b303a 0%, #1c2026 100%);
+  border: 1px solid #3c4350;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-body {
+  background: #0b0d10;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-tab-view-header {
+  background: linear-gradient(180deg, #181c22 0%, #121419 100%);
+  border: 1px solid #232832;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-err-header,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-matrix-toolbar,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-docker-header,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-docker-section,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-docker-toolbar {
+  background: #111419;
+  border: 1px solid #1f242e;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-2d-matrix {
+  background: #0d0f13;
+  border: 1px solid #1e222a;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-matrix-cell {
+  background: #090a0d;
+  border: 1px solid #1c2028;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-search-input,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-dock-search,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-input,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-form-input,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-form-select {
+  background: #08090b;
+  border: 1px solid #222630;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.9);
+  color: #f1f5f9;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-err-item,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-step-card,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-prescription-card,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-docker-card {
+  background: linear-gradient(180deg, #15181f 0%, #101217 100%);
+  border: 1px solid #222732;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-telemetry-item {
+  background: linear-gradient(180deg, #161920 0%, #111318 100%);
+  border: 1px solid #242935;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-telemetry-payload {
+  color: #f1f5f9;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-telemetry-text {
+  color: #cbd5e1;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-telemetry-time {
+  color: #64748b;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-query-wrapper {
+  background: #111419;
+  border-top: 1px solid #202530;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-query-box {
+  background: #08090c;
+  border: 1px solid #232833;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.9);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-btn {
+  background: linear-gradient(180deg, #373e4b 0%, #242932 100%);
+  border: 1px solid #4a5464;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  color: #f8fafc;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-btn:hover {
+  background: linear-gradient(180deg, #424a59 0%, #2b313c 100%);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-cockpit-footer {
+  background: #0c0e12;
+  border-top: 1px solid #1e222a;
+  color: #64748b;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-settings-overlay,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-tab-info-card {
+  background: #101217;
+  border: 1px solid #282d38;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 `
 

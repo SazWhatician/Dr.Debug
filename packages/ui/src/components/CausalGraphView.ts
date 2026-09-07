@@ -48,13 +48,15 @@ export class CausalGraphView {
   private renderEmpty(): void {
     this.element.innerHTML = `
       <div class="dr-debug-graph-empty">
-        <div style="font-size: 32px; margin-bottom: 8px;">🕸️</div>
+        <div style="margin-bottom: 8px;">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#38bdf8" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </div>
         <div style="font-weight: 700; font-size: 14px; color: #38bdf8;">Autonomous Causal Topology Matrix</div>
         <div style="font-size: 12px; color: #94a3b8; max-width: 360px; margin: 6px auto 14px auto;">
           Cross-correlating Docker backend logs, network requests, and console runtime exceptions in real-time.
         </div>
         <div style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 9999px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; font-size: 12px; font-weight: 600;">
-          <span>🟢</span> <span>No Root Cause Anomalies Detected</span>
+          <span class="dr-debug-status-dot dot-ok"></span> <span>No Root Cause Anomalies Detected</span>
         </div>
       </div>
     `
@@ -147,7 +149,7 @@ export class CausalGraphView {
       const layerClass = `node-${node.layer}`
 
       const rootBadge = isRoot
-        ? `<div class="dr-debug-node-root-badge">🎯 ROOT CAUSE</div>`
+        ? `<div class="dr-debug-node-root-badge">ROOT CAUSE</div>`
         : ''
 
       nodesHtml += `
@@ -168,7 +170,7 @@ export class CausalGraphView {
       <div class="dr-debug-graph-toolbar">
         <div style="display: flex; align-items: center; gap: 10px;">
           <span style="font-weight: 700; font-size: 13px; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
-            <span>🕸️</span> <span>Causal Dependency Graph</span>
+            <span>Causal Dependency Graph</span>
           </span>
           <span class="dr-debug-badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">
             ${nodes.length} Nodes / ${edges.length} Causal Links
@@ -176,7 +178,7 @@ export class CausalGraphView {
         </div>
         <div style="display: flex; gap: 8px;">
           <button id="dr-debug-btn-copy-mermaid" class="dr-debug-btn-secondary" title="Copy Mermaid DAG markdown to clipboard">
-            <span>📋</span> <span>Copy Mermaid</span>
+            <span>Copy Mermaid</span>
           </button>
         </div>
       </div>
@@ -210,7 +212,7 @@ export class CausalGraphView {
       navigator.clipboard?.writeText(mermaidDiagram)
       if (copyBtn) {
         const originalText = copyBtn.innerHTML
-        copyBtn.innerHTML = '<span>✅</span> <span>Copied!</span>'
+        copyBtn.innerHTML = '<span>Copied!</span>'
         setTimeout(() => {
           copyBtn.innerHTML = originalText
         }, 1500)
@@ -252,7 +254,7 @@ export class CausalGraphView {
 
     if (box && title && content) {
       box.style.display = 'block'
-      title.textContent = `[${node.layer.toUpperCase()}] ${node.label} ${node.isRootCause ? '🎯 (ROOT CAUSE)' : ''}`
+      title.textContent = `[${node.layer.toUpperCase()}] ${node.label} ${node.isRootCause ? '(ROOT CAUSE)' : ''}`
       content.textContent = JSON.stringify(
         {
           id: node.id,

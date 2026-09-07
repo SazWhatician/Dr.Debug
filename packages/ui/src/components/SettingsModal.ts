@@ -1,23 +1,27 @@
 declare const chrome: any
 
+export type DrDebugTheme = 'dr-debug' | 'minimal-glass' | 'monotone-skeuomorphic'
+
 export interface SettingsData {
   provider: 'groq' | 'openai' | 'gemini' | 'litert'
   apiKey?: string
   baseURL?: string
   model?: string
+  theme?: DrDebugTheme
   enableUI?: boolean
   autoInvestigate?: boolean
 }
 
-
 export interface SettingsModalOptions {
   onSave: (settings: SettingsData) => void
   onTestConnection: (settings: SettingsData) => Promise<{ success: boolean; message: string }>
+  onThemeChange?: (theme: DrDebugTheme) => void
   initialSettings?: SettingsData
 }
 
 export class SettingsModal {
   private element: HTMLElement
+  private themeSelect!: HTMLSelectElement
   private providerSelect!: HTMLSelectElement
   private apiKeyInput!: HTMLInputElement
   private apiKeyGroup!: HTMLElement
@@ -56,24 +60,43 @@ export class SettingsModal {
     else this.show()
   }
 
+  public setTheme(theme: DrDebugTheme): void {
+    if (this.themeSelect && this.themeSelect.value !== theme) {
+      this.themeSelect.value = theme
+    }
+  }
+
+  public getTheme(): DrDebugTheme {
+    return (this.themeSelect?.value as DrDebugTheme) || 'dr-debug'
+  }
+
   private render(): void {
     this.element.innerHTML = `
       <div class="dr-debug-settings-modal">
         <div class="dr-debug-settings-header">
           <div class="dr-debug-settings-title">
-            <span>⚙️</span> <span>Dr. Debug · AI Engine Settings</span>
+            <span>Dr. Debug · AI Engine Settings</span>
           </div>
           <button class="dr-debug-close-btn" id="dr-debug-settings-close">✕</button>
         </div>
 
         <div class="dr-debug-settings-body">
           <div class="dr-debug-form-group">
+            <label class="dr-debug-form-label">Cockpit Theme</label>
+            <select class="dr-debug-form-select" id="dr-debug-theme">
+              <option value="dr-debug" selected>Dr.Debug (original)</option>
+              <option value="minimal-glass">Minimalistic glassmorphism (light theme)</option>
+              <option value="monotone-skeuomorphic">Monotone skeuomorphism (darker theme)</option>
+            </select>
+          </div>
+
+          <div class="dr-debug-form-group">
             <label class="dr-debug-form-label">Model Provider</label>
             <select class="dr-debug-form-select" id="dr-debug-provider">
-              <option value="groq" selected>⚡ Groq LPU (Ultra-Fast · openai/gpt-oss-120b)</option>
-              <option value="openai">🧠 OpenAI (GPT-4o / GPT-4o-mini)</option>
-              <option value="gemini">✨ Gemini Flash (gemini-flash-latest)</option>
-              <option value="litert">💻 LiteRT / Local (On-Device)</option>
+              <option value="groq" selected>Groq LPU (Ultra-Fast · openai/gpt-oss-120b)</option>
+              <option value="openai">OpenAI (GPT-4o / GPT-4o-mini)</option>
+              <option value="gemini">Gemini Flash (gemini-flash-latest)</option>
+              <option value="litert">LiteRT / Local (On-Device)</option>
             </select>
           </div>
 
@@ -99,10 +122,10 @@ export class SettingsModal {
 
           <div class="dr-debug-settings-actions">
             <button id="dr-debug-btn-test-conn" class="dr-debug-btn-outline">
-              <span>⚡</span> <span>Test Connection</span>
+              <span>Test Connection</span>
             </button>
             <button id="dr-debug-btn-save-settings" class="dr-debug-btn">
-              <span>💾</span> <span>Save Settings</span>
+              <span>Save Settings</span>
             </button>
           </div>
 
@@ -112,7 +135,7 @@ export class SettingsModal {
               <span class="dr-debug-update-version">Dr. Debug v0.1.4</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
-              <span>🚀 Check for Updates</span>
+              <span>Check for Updates</span>
               <span class="dr-debug-update-arrow">↗</span>
             </button>
           </div>
@@ -123,6 +146,12 @@ export class SettingsModal {
         </div>
       </div>
     `
+
+    this.themeSelect = this.element.querySelector('#dr-debug-theme')!
+    this.themeSelect.addEventListener('change', () => {
+      const theme = (this.themeSelect.value as DrDebugTheme) || 'dr-debug'
+      this.options.onThemeChange?.(theme)
+    })
 
     this.providerSelect = this.element.querySelector('#dr-debug-provider')!
     this.apiKeyInput = this.element.querySelector('#dr-debug-api-key')!
@@ -185,7 +214,7 @@ export class SettingsModal {
 
   private async handleTestConnection(): Promise<void> {
     this.testBtn.disabled = true
-    this.testBtn.innerHTML = `<span>⏳</span> <span>Testing...</span>`
+    this.testBtn.textContent = 'Testing...'
     this.statusMessage.textContent = 'Testing connection with LLM endpoint...'
     this.statusMessage.style.color = '#38bdf8'
 
@@ -193,18 +222,18 @@ export class SettingsModal {
     try {
       const result = await this.options.onTestConnection(settings)
       if (result.success) {
-        this.statusMessage.textContent = `✅ ${result.message}`
+        this.statusMessage.textContent = result.message
         this.statusMessage.style.color = '#34d399'
       } else {
-        this.statusMessage.textContent = `❌ ${result.message}`
+        this.statusMessage.textContent = result.message
         this.statusMessage.style.color = '#fb7185'
       }
     } catch (err: any) {
-      this.statusMessage.textContent = `❌ Error: ${err.message}`
+      this.statusMessage.textContent = `Error: ${err.message}`
       this.statusMessage.style.color = '#fb7185'
     } finally {
       this.testBtn.disabled = false
-      this.testBtn.innerHTML = `<span>⚡</span> <span>Test Connection</span>`
+      this.testBtn.textContent = 'Test Connection'
     }
   }
 
@@ -224,7 +253,7 @@ export class SettingsModal {
     }
 
     this.options.onSave(settings)
-    this.statusMessage.textContent = '✅ Settings saved & active!'
+    this.statusMessage.textContent = 'Settings saved & active!'
     this.statusMessage.style.color = '#34d399'
 
     setTimeout(() => {
@@ -238,12 +267,14 @@ export class SettingsModal {
     const apiKey = this.apiKeyInput.value.trim()
     const model = this.modelInput.value.trim() || 'llama-3.3-70b-versatile'
     const baseURL = this.baseURLInput.value.trim() || undefined
+    const theme = (this.themeSelect?.value as DrDebugTheme) || 'dr-debug'
 
     return {
       provider,
       apiKey: apiKey || undefined,
       model,
       baseURL,
+      theme,
       enableUI: true
     }
   }
@@ -261,12 +292,36 @@ export class SettingsModal {
     }
 
     if (loaded) {
+      if (loaded.theme && this.themeSelect) {
+        this.themeSelect.value = loaded.theme
+        this.options.onThemeChange?.(loaded.theme)
+      } else {
+        try {
+          const savedTheme = localStorage.getItem('dr_debug_theme') as DrDebugTheme
+          if (savedTheme && this.themeSelect) {
+            this.themeSelect.value = savedTheme
+            this.options.onThemeChange?.(savedTheme)
+          }
+        } catch {
+          // ignore
+        }
+      }
       if (loaded.provider) this.providerSelect.value = loaded.provider
       if (loaded.apiKey) this.apiKeyInput.value = loaded.apiKey
       if (loaded.model) this.modelInput.value = loaded.model
       if (loaded.baseURL) this.baseURLInput.value = loaded.baseURL
       this.handleProviderChange()
       if (loaded.apiKey) this.apiKeyInput.value = loaded.apiKey
+    } else {
+      try {
+        const savedTheme = localStorage.getItem('dr_debug_theme') as DrDebugTheme
+        if (savedTheme && this.themeSelect) {
+          this.themeSelect.value = savedTheme
+          this.options.onThemeChange?.(savedTheme)
+        }
+      } catch {
+        // ignore
+      }
     }
   }
 }

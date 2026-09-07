@@ -1,6 +1,7 @@
 import type { DebugController } from '@dr-debug/controller'
 import { generateSessionDebugPrompt, LocalDiagnosticEngine } from '@dr-debug/core'
-import { CockpitPanel, type PrescriptionData, type StepItem } from './components/CockpitPanel.js'
+import { CockpitPanel, type CockpitTabKey, type PrescriptionData, type StepItem } from './components/CockpitPanel.js'
+import type { DrDebugTheme } from './components/SettingsModal.js'
 import type { CausalErrorGraph } from './components/CausalGraphView.js'
 import { FloatingPill } from './components/FloatingPill.js'
 import { shadowStyles } from './styles.js'
@@ -153,8 +154,36 @@ export class DrDebugUI {
     this.cockpit.updateDocker()
   }
 
-  public switchTab(tab: 'timeline' | 'errors' | 'triage' | 'graph' | 'prescription' | 'docker'): void {
+  public switchTab(tab: CockpitTabKey): void {
     this.cockpit.switchTab(tab)
+  }
+
+  public showTabInfo(tab: CockpitTabKey): void {
+    this.cockpit.showTabInfo(tab)
+  }
+
+  public hideTabInfo(): void {
+    this.cockpit.hideTabInfo()
+  }
+
+  public toggleTabInfo(tab: CockpitTabKey): void {
+    this.cockpit.toggleTabInfo(tab)
+  }
+
+  public isTabInfoVisible(): boolean {
+    return this.cockpit.isTabInfoVisible()
+  }
+
+  public getActiveTabInfo(): CockpitTabKey | null {
+    return this.cockpit.getActiveTabInfo()
+  }
+
+  public setTheme(theme: DrDebugTheme): void {
+    this.cockpit.setTheme(theme)
+  }
+
+  public getTheme(): DrDebugTheme {
+    return this.cockpit.getTheme()
   }
 
   public toggleCockpit(): void {

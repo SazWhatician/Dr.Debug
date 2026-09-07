@@ -20,6 +20,7 @@ export interface ErrorDashboardOptions {
   getController: () => DebugController
   onSelectError?: (id: string) => void
   onLaunchDiagnosis?: (goal: string) => void
+  onShowGuide?: () => void
 }
 
 interface ErrorItem {
@@ -28,10 +29,20 @@ interface ErrorItem {
   substrate: MatrixSubstrate
   severity: MatrixSeverity
   title: string
-  subtitle: string
+  message?: string
   timestamp: number
-  badge: string
-  raw: NetworkRecord | ConsoleEntry | DockerLogEntry | any
+  count?: number
+  badge?: string
+  subtitle?: string
+  raw?: any
+  stack?: string
+  url?: string
+  status?: number
+  method?: string
+  requestHeaders?: Record<string, string>
+  requestBody?: string
+  responseHeaders?: Record<string, string>
+  responseBody?: string
 }
 
 export class ErrorDashboardView {
@@ -62,6 +73,14 @@ export class ErrorDashboardView {
       <div class="dr-debug-err-title">
         <span class="dr-debug-status-dot dot-critical"></span>
         <span style="font-weight:700; letter-spacing:-0.2px;">Diagnostics & Error Matrix</span>
+        <button class="dr-debug-tab-guide-trigger" id="dr-debug-guide-btn-errors" title="What is Error Matrix? Click for guide" aria-label="Error Matrix Guide">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span>Guide</span>
+        </button>
       </div>
       <div id="dr-debug-err-stats" class="dr-debug-err-stats">
         <span class="dr-debug-stat-chip chip-5xx">0 5xx</span>
@@ -70,6 +89,11 @@ export class ErrorDashboardView {
         <span class="dr-debug-stat-chip chip-doc">0 Docker</span>
       </div>
     `
+
+    const guideBtn = header.querySelector('#dr-debug-guide-btn-errors')
+    guideBtn?.addEventListener('click', () => {
+      options.onShowGuide?.()
+    })
 
     // 2. Toolbar: View Mode Toggle, Live Search Bar & Action Buttons
     this.toolbarContainer = document.createElement('div')
@@ -508,8 +532,8 @@ export class ErrorDashboardView {
       // 3. Search query
       if (this.searchQuery.trim()) {
         const q = this.searchQuery.toLowerCase()
-        const matchTitle = item.title.toLowerCase().includes(q)
-        const matchSub = item.subtitle.toLowerCase().includes(q)
+        const matchTitle = (item.title || '').toLowerCase().includes(q)
+        const matchSub = (item.subtitle || item.message || '').toLowerCase().includes(q)
         if (!matchTitle && !matchSub) return false
       }
 
@@ -547,17 +571,19 @@ export class ErrorDashboardView {
 
       const timeAgo = this.formatTimeAgo(item.timestamp)
       const dotColorClass = item.severity === 'critical' ? 'dot-critical' : item.severity === 'high' ? 'dot-high' : 'dot-notice'
+      const badgeText = item.badge || item.type.toUpperCase()
+      const subtitleText = item.subtitle || item.message || ''
 
       card.innerHTML = `
         <div class="dr-debug-err-card-header">
           <div style="display:flex; align-items:center; gap:5px;">
             <span class="dr-debug-status-dot ${dotColorClass}"></span>
-            <span class="dr-debug-err-badge badge-${item.type}">${item.badge}</span>
+            <span class="dr-debug-err-badge badge-${item.type}">${this.escapeHtml(badgeText)}</span>
           </div>
           <span class="dr-debug-err-time">${timeAgo}</span>
         </div>
         <div class="dr-debug-err-card-title">${this.escapeHtml(item.title)}</div>
-        <div class="dr-debug-err-card-subtitle">${this.escapeHtml(item.subtitle)}</div>
+        <div class="dr-debug-err-card-subtitle">${this.escapeHtml(subtitleText)}</div>
       `
 
       card.addEventListener('click', () => {

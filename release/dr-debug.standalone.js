@@ -9121,13 +9121,15 @@ ${msg.content}<end_of_turn>
     renderEmpty() {
       this.element.innerHTML = `
       <div class="dr-debug-graph-empty">
-        <div style="font-size: 32px; margin-bottom: 8px;">\u{1F578}\uFE0F</div>
+        <div style="margin-bottom: 8px;">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#38bdf8" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </div>
         <div style="font-weight: 700; font-size: 14px; color: #38bdf8;">Autonomous Causal Topology Matrix</div>
         <div style="font-size: 12px; color: #94a3b8; max-width: 360px; margin: 6px auto 14px auto;">
           Cross-correlating Docker backend logs, network requests, and console runtime exceptions in real-time.
         </div>
         <div style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 9999px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; font-size: 12px; font-weight: 600;">
-          <span>\u{1F7E2}</span> <span>No Root Cause Anomalies Detected</span>
+          <span class="dr-debug-status-dot dot-ok"></span> <span>No Root Cause Anomalies Detected</span>
         </div>
       </div>
     `;
@@ -9202,7 +9204,7 @@ ${msg.content}<end_of_turn>
         const isRoot = node.id === rootCauseNodeId || node.isRootCause;
         const isSelected = node.id === this.selectedNodeId;
         const layerClass = `node-${node.layer}`;
-        const rootBadge = isRoot ? `<div class="dr-debug-node-root-badge">\u{1F3AF} ROOT CAUSE</div>` : "";
+        const rootBadge = isRoot ? `<div class="dr-debug-node-root-badge">ROOT CAUSE</div>` : "";
         nodesHtml += `
         <div class="dr-debug-graph-node ${layerClass} ${isRoot ? "is-root" : ""} ${isSelected ? "selected" : ""}"
              data-node-id="${node.id}"
@@ -9220,7 +9222,7 @@ ${msg.content}<end_of_turn>
       <div class="dr-debug-graph-toolbar">
         <div style="display: flex; align-items: center; gap: 10px;">
           <span style="font-weight: 700; font-size: 13px; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
-            <span>\u{1F578}\uFE0F</span> <span>Causal Dependency Graph</span>
+            <span>Causal Dependency Graph</span>
           </span>
           <span class="dr-debug-badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">
             ${nodes.length} Nodes / ${edges.length} Causal Links
@@ -9228,7 +9230,7 @@ ${msg.content}<end_of_turn>
         </div>
         <div style="display: flex; gap: 8px;">
           <button id="dr-debug-btn-copy-mermaid" class="dr-debug-btn-secondary" title="Copy Mermaid DAG markdown to clipboard">
-            <span>\u{1F4CB}</span> <span>Copy Mermaid</span>
+            <span>Copy Mermaid</span>
           </button>
         </div>
       </div>
@@ -9261,7 +9263,7 @@ ${msg.content}<end_of_turn>
         (_a = navigator.clipboard) == null ? void 0 : _a.writeText(mermaidDiagram);
         if (copyBtn) {
           const originalText = copyBtn.innerHTML;
-          copyBtn.innerHTML = "<span>\u2705</span> <span>Copied!</span>";
+          copyBtn.innerHTML = "<span>Copied!</span>";
           setTimeout(() => {
             copyBtn.innerHTML = originalText;
           }, 1500);
@@ -9297,7 +9299,7 @@ ${msg.content}<end_of_turn>
       const content = this.element.querySelector("#dr-debug-detail-content");
       if (box && title && content) {
         box.style.display = "block";
-        title.textContent = `[${node.layer.toUpperCase()}] ${node.label} ${node.isRootCause ? "\u{1F3AF} (ROOT CAUSE)" : ""}`;
+        title.textContent = `[${node.layer.toUpperCase()}] ${node.label} ${node.isRootCause ? "(ROOT CAUSE)" : ""}`;
         content.textContent = JSON.stringify(
           {
             id: node.id,
@@ -9324,6 +9326,7 @@ ${msg.content}<end_of_turn>
     element;
     getController;
     onLaunchDiagnosis;
+    onShowGuide;
     activeContainerFilter = "all";
     activeLevelFilter = "all";
     searchQuery = "";
@@ -9337,6 +9340,7 @@ ${msg.content}<end_of_turn>
     constructor(options) {
       this.getController = options.getController;
       this.onLaunchDiagnosis = options.onLaunchDiagnosis;
+      this.onShowGuide = options.onShowGuide;
       this.element = document.createElement("div");
       this.element.className = "dr-debug-docker-dashboard";
       this.render();
@@ -9345,6 +9349,7 @@ ${msg.content}<end_of_turn>
       return this.element;
     }
     render() {
+      var _a;
       this.element.innerHTML = "";
       this.statusBanner = document.createElement("div");
       this.statusBanner.className = "dr-debug-docker-header";
@@ -9355,11 +9360,25 @@ ${msg.content}<end_of_turn>
       const containerSection = document.createElement("div");
       containerSection.className = "dr-debug-docker-section";
       containerSection.innerHTML = `
-      <div class="dr-debug-docker-section-title">
-        <span>\u{1F4E6} Host Containers</span>
-        <span class="dr-debug-docker-hint">Click a container to isolate logs</span>
+      <div class="dr-debug-docker-section-title" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <span>Host Containers</span>
+          <span class="dr-debug-docker-hint">Click a container to isolate logs</span>
+        </div>
+        <button class="dr-debug-tab-guide-trigger" id="dr-debug-guide-btn-docker" title="What is Docker Tab? Click for guide" aria-label="Docker Guide">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span>Guide</span>
+        </button>
       </div>
     `;
+      (_a = containerSection.querySelector("#dr-debug-guide-btn-docker")) == null ? void 0 : _a.addEventListener("click", () => {
+        var _a2;
+        (_a2 = this.onShowGuide) == null ? void 0 : _a2.call(this);
+      });
       this.containerGrid = document.createElement("div");
       this.containerGrid.className = "dr-debug-docker-grid";
       containerSection.appendChild(this.containerGrid);
@@ -9381,8 +9400,8 @@ ${msg.content}<end_of_turn>
       this.filterBar.innerHTML = `
       <div class="dr-debug-docker-filters">
         <button class="dr-debug-dock-btn ${this.activeLevelFilter === "all" ? "active" : ""}" data-level="all">All Logs</button>
-        <button class="dr-debug-dock-btn ${this.activeLevelFilter === "error" ? "active" : ""}" data-level="error">\u{1F6A8} Panics & Errors</button>
-        <button class="dr-debug-dock-btn ${this.activeLevelFilter === "warn" ? "active" : ""}" data-level="warn">\u26A0\uFE0F Warnings</button>
+        <button class="dr-debug-dock-btn ${this.activeLevelFilter === "error" ? "active" : ""}" data-level="error">Panics & Errors</button>
+        <button class="dr-debug-dock-btn ${this.activeLevelFilter === "warn" ? "active" : ""}" data-level="warn">Warnings</button>
       </div>
       <div class="dr-debug-docker-search-box">
         <input type="text" class="dr-debug-dock-search" placeholder="grep container logs (regex supported)..." value="${this.escapeHtml(this.searchQuery)}" />
@@ -9390,8 +9409,8 @@ ${msg.content}<end_of_turn>
           <input type="checkbox" ${this.autoScroll ? "checked" : ""} />
           <span>Auto-scroll</span>
         </label>
-        <button class="dr-debug-dock-action-btn" id="dr-debug-dock-clear" title="Clear buffer">\u{1F9F9} Clear</button>
-        <button class="dr-debug-dock-action-btn primary" id="dr-debug-dock-copy-ai" title="Copy incident prompt">\u{1F4CB} Copy for AI</button>
+        <button class="dr-debug-dock-action-btn" id="dr-debug-dock-clear" title="Clear buffer">Clear</button>
+        <button class="dr-debug-dock-action-btn primary" id="dr-debug-dock-copy-ai" title="Copy incident prompt">Copy for AI</button>
       </div>
     `;
       this.filterBar.querySelectorAll(".dr-debug-dock-btn").forEach((btn) => {
@@ -9456,7 +9475,9 @@ ${msg.content}<end_of_turn>
         <div class="dr-debug-docker-stat-pill ${errorLogs.length > 0 ? "alert" : ""}">
           <strong>${errorLogs.length}</strong> <span>Panics / Errors</span>
         </div>
-        <button class="dr-debug-dock-btn-refresh" id="dr-debug-dock-refresh" title="Refresh containers">\u{1F504}</button>
+        <button class="dr-debug-dock-btn-refresh" id="dr-debug-dock-refresh" title="Refresh containers">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        </button>
       </div>
     `;
       (_b = this.statusBanner.querySelector("#dr-debug-dock-refresh")) == null ? void 0 : _b.addEventListener("click", () => {
@@ -9503,10 +9524,10 @@ ${msg.content}<end_of_turn>
         <div class="dr-debug-dock-instructions-card">
           <div class="dr-debug-dock-guide-top">
             <div style="display:flex; align-items:center; gap:8px;">
-              <span style="font-size:15px;">\u{1F433}</span>
+              <span class="dr-debug-status-dot dot-sys"></span>
               <span style="font-weight:700; color:#f8fafc; font-size:12px;">Connect Your Host Docker to Dr. Debug</span>
             </div>
-            <span class="dr-debug-dock-guide-badge">\u26A1 3-SECOND ZERO-CONFIG SETUP</span>
+            <span class="dr-debug-dock-guide-badge">ZERO-CONFIG SETUP</span>
           </div>
           <div class="dr-debug-dock-guide-desc">
             Browser sandboxes cannot access host Docker sockets directly. Run the zero-install host daemon to stream active containers and correlate backend database panics / 5xx errors directly with client crashes:
@@ -9545,7 +9566,7 @@ ${msg.content}<end_of_turn>
         </div>
       </div>
       <div class="dr-debug-dock-step-footer">
-        <span>\u2728 The moment the bridge starts, this tab automatically turns green and streams your live containers!</span>
+        <span>The moment the bridge starts, this tab automatically turns green and streams your live containers.</span>
       </div>
     `;
     }
@@ -9574,7 +9595,7 @@ ${msg.content}<end_of_turn>
       allCard.className = `dr-debug-docker-card ${this.activeContainerFilter === "all" ? "selected" : ""}`;
       allCard.innerHTML = `
       <div class="dr-debug-card-top">
-        <span class="dr-debug-card-name">\u{1F310} All Containers</span>
+        <span class="dr-debug-card-name">All Containers</span>
         ${allErrors > 0 ? `<span class="dr-debug-err-badge">${allErrors}</span>` : ""}
       </div>
       <div class="dr-debug-card-desc">Combined host log stream (${logs.length} logs)</div>
@@ -9589,7 +9610,7 @@ ${msg.content}<end_of_turn>
         const emptyNote = document.createElement("div");
         emptyNote.className = "dr-debug-dock-empty-containers";
         emptyNote.innerHTML = `
-        <span>\u{1F433} No active containers detected in local Docker buffer.</span>
+        <span>No active containers detected in local Docker buffer.</span>
         <button class="dr-debug-btn-inline" id="dr-debug-dock-connect-btn">Connect Daemon</button>
       `;
         (_a = emptyNote.querySelector("#dr-debug-dock-connect-btn")) == null ? void 0 : _a.addEventListener("click", () => {
@@ -9613,7 +9634,7 @@ ${msg.content}<end_of_turn>
         </div>
         <div class="dr-debug-card-image">${this.escapeHtml(container.image || "image")}</div>
         <div class="dr-debug-card-ports">${((_b = container.ports) == null ? void 0 : _b.join(", ")) || "no ports exposed"}</div>
-        ${containerErrors > 0 ? `<div class="dr-debug-card-errors">\u{1F6A8} ${containerErrors} panic/error events</div>` : ""}
+        ${containerErrors > 0 ? `<div class="dr-debug-card-errors"><span class="dr-debug-status-dot dot-critical"></span> ${containerErrors} panic/error events</div>` : ""}
       `;
         card.addEventListener("click", () => {
           this.activeContainerFilter = container.name;
@@ -9635,7 +9656,7 @@ ${msg.content}<end_of_turn>
       if (logs.length === 0) {
         this.terminalEl.innerHTML = `
         <div class="dr-debug-dock-term-empty">
-          <span>\u{1F4A4} No log output recorded for current filter criteria.</span>
+          <span>No log output recorded for current filter criteria.</span>
         </div>
       `;
         return;
@@ -9653,7 +9674,7 @@ ${msg.content}<end_of_turn>
         if (log.level === "error") {
           const diagBtn = document.createElement("button");
           diagBtn.className = "dr-debug-dock-inline-diag";
-          diagBtn.innerHTML = `<span>\u26A1</span> <span>Diagnose</span>`;
+          diagBtn.innerHTML = `<span>Diagnose</span>`;
           diagBtn.title = "Launch AI investigation for this container panic";
           diagBtn.addEventListener("click", (e) => {
             var _a;
@@ -9672,14 +9693,16 @@ ${msg.content}<end_of_turn>
     renderOfflineState() {
       this.element.innerHTML = `
       <div class="dr-debug-dock-offline-box">
-        <div style="font-size: 36px; margin-bottom: 8px;">\u{1F433}</div>
+        <div class="dr-debug-dock-offline-icon" style="margin-bottom: 8px;">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8v4h8V3z"/></svg>
+        </div>
         <h3 style="color: #f8fafc; font-size: 15px; margin-bottom: 6px;">Docker Substrate Daemon Offline</h3>
         <p style="color: #94a3b8; font-size: 12px; max-width: 440px; margin-bottom: 14px; line-height: 1.5;">
           Connect your local Docker engine to stream backend container panics, database connection exhausts, and correlate them with frontend network timeouts.
         </p>
         <div class="dr-debug-dock-cmd-box">
           <code>npx -y @dr-debug/mcp</code>
-          <button id="dr-debug-dock-copy-cmd">\u{1F4CB} Copy</button>
+          <button id="dr-debug-dock-copy-cmd">Copy</button>
         </div>
       </div>
     `;
@@ -9691,7 +9714,7 @@ ${msg.content}<end_of_turn>
       const logs = controller.getDockerLogs({ tail: 40 });
       const errors = logs.filter((l) => l.level === "error");
       const prompt = [
-        "# \u{1F433} Docker Container Substrate Telemetry Brief",
+        "# Docker Container Substrate Telemetry Brief",
         `Timestamp: ${(/* @__PURE__ */ new Date()).toISOString()}`,
         `Total Containers: ${containers.length} | Errors Recorded: ${errors.length}`,
         "",
@@ -9712,7 +9735,7 @@ ${msg.content}<end_of_turn>
       try {
         await navigator.clipboard.writeText(prompt);
         const orig = btn.innerHTML;
-        btn.innerHTML = "\u2705 Copied";
+        btn.innerHTML = "Copied";
         setTimeout(() => {
           btn.innerHTML = orig;
         }, 2e3);
@@ -9753,6 +9776,14 @@ ${msg.content}<end_of_turn>
       <div class="dr-debug-err-title">
         <span class="dr-debug-status-dot dot-critical"></span>
         <span style="font-weight:700; letter-spacing:-0.2px;">Diagnostics & Error Matrix</span>
+        <button class="dr-debug-tab-guide-trigger" id="dr-debug-guide-btn-errors" title="What is Error Matrix? Click for guide" aria-label="Error Matrix Guide">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span>Guide</span>
+        </button>
       </div>
       <div id="dr-debug-err-stats" class="dr-debug-err-stats">
         <span class="dr-debug-stat-chip chip-5xx">0 5xx</span>
@@ -9761,6 +9792,11 @@ ${msg.content}<end_of_turn>
         <span class="dr-debug-stat-chip chip-doc">0 Docker</span>
       </div>
     `;
+      const guideBtn = header.querySelector("#dr-debug-guide-btn-errors");
+      guideBtn == null ? void 0 : guideBtn.addEventListener("click", () => {
+        var _a;
+        (_a = options.onShowGuide) == null ? void 0 : _a.call(options);
+      });
       this.toolbarContainer = document.createElement("div");
       this.toolbarContainer.className = "dr-debug-matrix-toolbar";
       this.renderToolbar();
@@ -10148,8 +10184,8 @@ ${msg.content}<end_of_turn>
         }
         if (this.searchQuery.trim()) {
           const q = this.searchQuery.toLowerCase();
-          const matchTitle = item.title.toLowerCase().includes(q);
-          const matchSub = item.subtitle.toLowerCase().includes(q);
+          const matchTitle = (item.title || "").toLowerCase().includes(q);
+          const matchSub = (item.subtitle || item.message || "").toLowerCase().includes(q);
           if (!matchTitle && !matchSub) return false;
         }
         return true;
@@ -10179,16 +10215,18 @@ ${msg.content}<end_of_turn>
         card.setAttribute("data-id", item.id);
         const timeAgo = this.formatTimeAgo(item.timestamp);
         const dotColorClass = item.severity === "critical" ? "dot-critical" : item.severity === "high" ? "dot-high" : "dot-notice";
+        const badgeText = item.badge || item.type.toUpperCase();
+        const subtitleText = item.subtitle || item.message || "";
         card.innerHTML = `
         <div class="dr-debug-err-card-header">
           <div style="display:flex; align-items:center; gap:5px;">
             <span class="dr-debug-status-dot ${dotColorClass}"></span>
-            <span class="dr-debug-err-badge badge-${item.type}">${item.badge}</span>
+            <span class="dr-debug-err-badge badge-${item.type}">${this.escapeHtml(badgeText)}</span>
           </div>
           <span class="dr-debug-err-time">${timeAgo}</span>
         </div>
         <div class="dr-debug-err-card-title">${this.escapeHtml(item.title)}</div>
-        <div class="dr-debug-err-card-subtitle">${this.escapeHtml(item.subtitle)}</div>
+        <div class="dr-debug-err-card-subtitle">${this.escapeHtml(subtitleText)}</div>
       `;
         card.addEventListener("click", () => {
           this.selectedErrorId = item.id;
@@ -10495,6 +10533,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.loadInitialSettings(options.initialSettings);
     }
     element;
+    themeSelect;
     providerSelect;
     apiKeyInput;
     apiKeyGroup;
@@ -10519,24 +10558,42 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       if (this.isVisible) this.hide();
       else this.show();
     }
+    setTheme(theme) {
+      if (this.themeSelect && this.themeSelect.value !== theme) {
+        this.themeSelect.value = theme;
+      }
+    }
+    getTheme() {
+      var _a;
+      return ((_a = this.themeSelect) == null ? void 0 : _a.value) || "dr-debug";
+    }
     render() {
       this.element.innerHTML = `
       <div class="dr-debug-settings-modal">
         <div class="dr-debug-settings-header">
           <div class="dr-debug-settings-title">
-            <span>\u2699\uFE0F</span> <span>Dr. Debug \xB7 AI Engine Settings</span>
+            <span>Dr. Debug \xB7 AI Engine Settings</span>
           </div>
           <button class="dr-debug-close-btn" id="dr-debug-settings-close">\u2715</button>
         </div>
 
         <div class="dr-debug-settings-body">
           <div class="dr-debug-form-group">
+            <label class="dr-debug-form-label">Cockpit Theme</label>
+            <select class="dr-debug-form-select" id="dr-debug-theme">
+              <option value="dr-debug" selected>Dr.Debug (original)</option>
+              <option value="minimal-glass">Minimalistic glassmorphism (light theme)</option>
+              <option value="monotone-skeuomorphic">Monotone skeuomorphism (darker theme)</option>
+            </select>
+          </div>
+
+          <div class="dr-debug-form-group">
             <label class="dr-debug-form-label">Model Provider</label>
             <select class="dr-debug-form-select" id="dr-debug-provider">
-              <option value="groq" selected>\u26A1 Groq LPU (Ultra-Fast \xB7 openai/gpt-oss-120b)</option>
-              <option value="openai">\u{1F9E0} OpenAI (GPT-4o / GPT-4o-mini)</option>
-              <option value="gemini">\u2728 Gemini Flash (gemini-flash-latest)</option>
-              <option value="litert">\u{1F4BB} LiteRT / Local (On-Device)</option>
+              <option value="groq" selected>Groq LPU (Ultra-Fast \xB7 openai/gpt-oss-120b)</option>
+              <option value="openai">OpenAI (GPT-4o / GPT-4o-mini)</option>
+              <option value="gemini">Gemini Flash (gemini-flash-latest)</option>
+              <option value="litert">LiteRT / Local (On-Device)</option>
             </select>
           </div>
 
@@ -10562,10 +10619,10 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 
           <div class="dr-debug-settings-actions">
             <button id="dr-debug-btn-test-conn" class="dr-debug-btn-outline">
-              <span>\u26A1</span> <span>Test Connection</span>
+              <span>Test Connection</span>
             </button>
             <button id="dr-debug-btn-save-settings" class="dr-debug-btn">
-              <span>\u{1F4BE}</span> <span>Save Settings</span>
+              <span>Save Settings</span>
             </button>
           </div>
 
@@ -10575,7 +10632,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
               <span class="dr-debug-update-version">Dr. Debug v0.1.4</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
-              <span>\u{1F680} Check for Updates</span>
+              <span>Check for Updates</span>
               <span class="dr-debug-update-arrow">\u2197</span>
             </button>
           </div>
@@ -10586,6 +10643,12 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         </div>
       </div>
     `;
+      this.themeSelect = this.element.querySelector("#dr-debug-theme");
+      this.themeSelect.addEventListener("change", () => {
+        var _a, _b;
+        const theme = this.themeSelect.value || "dr-debug";
+        (_b = (_a = this.options).onThemeChange) == null ? void 0 : _b.call(_a, theme);
+      });
       this.providerSelect = this.element.querySelector("#dr-debug-provider");
       this.apiKeyInput = this.element.querySelector("#dr-debug-api-key");
       this.apiKeyGroup = this.element.querySelector("#dr-debug-api-key-group");
@@ -10641,25 +10704,25 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     }
     async handleTestConnection() {
       this.testBtn.disabled = true;
-      this.testBtn.innerHTML = `<span>\u23F3</span> <span>Testing...</span>`;
+      this.testBtn.textContent = "Testing...";
       this.statusMessage.textContent = "Testing connection with LLM endpoint...";
       this.statusMessage.style.color = "#38bdf8";
       const settings = this.getFormValues();
       try {
         const result = await this.options.onTestConnection(settings);
         if (result.success) {
-          this.statusMessage.textContent = `\u2705 ${result.message}`;
+          this.statusMessage.textContent = result.message;
           this.statusMessage.style.color = "#34d399";
         } else {
-          this.statusMessage.textContent = `\u274C ${result.message}`;
+          this.statusMessage.textContent = result.message;
           this.statusMessage.style.color = "#fb7185";
         }
       } catch (err) {
-        this.statusMessage.textContent = `\u274C Error: ${err.message}`;
+        this.statusMessage.textContent = `Error: ${err.message}`;
         this.statusMessage.style.color = "#fb7185";
       } finally {
         this.testBtn.disabled = false;
-        this.testBtn.innerHTML = `<span>\u26A1</span> <span>Test Connection</span>`;
+        this.testBtn.textContent = "Test Connection";
       }
     }
     handleSave() {
@@ -10673,7 +10736,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         chrome.storage.local.set(settings);
       }
       this.options.onSave(settings);
-      this.statusMessage.textContent = "\u2705 Settings saved & active!";
+      this.statusMessage.textContent = "Settings saved & active!";
       this.statusMessage.style.color = "#34d399";
       setTimeout(() => {
         this.hide();
@@ -10681,19 +10744,23 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       }, 1200);
     }
     getFormValues() {
+      var _a;
       const provider = this.providerSelect.value;
       const apiKey = this.apiKeyInput.value.trim();
       const model = this.modelInput.value.trim() || "llama-3.3-70b-versatile";
       const baseURL = this.baseURLInput.value.trim() || void 0;
+      const theme = ((_a = this.themeSelect) == null ? void 0 : _a.value) || "dr-debug";
       return {
         provider,
         apiKey: apiKey || void 0,
         model,
         baseURL,
+        theme,
         enableUI: true
       };
     }
     loadInitialSettings(settings) {
+      var _a, _b, _c, _d, _e, _f;
       let loaded = settings;
       if (!loaded) {
         try {
@@ -10703,17 +10770,120 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         }
       }
       if (loaded) {
+        if (loaded.theme && this.themeSelect) {
+          this.themeSelect.value = loaded.theme;
+          (_b = (_a = this.options).onThemeChange) == null ? void 0 : _b.call(_a, loaded.theme);
+        } else {
+          try {
+            const savedTheme = localStorage.getItem("dr_debug_theme");
+            if (savedTheme && this.themeSelect) {
+              this.themeSelect.value = savedTheme;
+              (_d = (_c = this.options).onThemeChange) == null ? void 0 : _d.call(_c, savedTheme);
+            }
+          } catch {
+          }
+        }
         if (loaded.provider) this.providerSelect.value = loaded.provider;
         if (loaded.apiKey) this.apiKeyInput.value = loaded.apiKey;
         if (loaded.model) this.modelInput.value = loaded.model;
         if (loaded.baseURL) this.baseURLInput.value = loaded.baseURL;
         this.handleProviderChange();
         if (loaded.apiKey) this.apiKeyInput.value = loaded.apiKey;
+      } else {
+        try {
+          const savedTheme = localStorage.getItem("dr_debug_theme");
+          if (savedTheme && this.themeSelect) {
+            this.themeSelect.value = savedTheme;
+            (_f = (_e = this.options).onThemeChange) == null ? void 0 : _f.call(_e, savedTheme);
+          }
+        } catch {
+        }
       }
     }
   };
 
   // packages/ui/src/components/CockpitPanel.ts
+  var TAB_GUIDES = {
+    errors: {
+      key: "errors",
+      title: "Error Matrix",
+      badge: "2D Anomaly Heatmap",
+      icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>',
+      description: "Aggregates, categorizes, and correlates every runtime anomaly detected in your app \u2014 across Console exceptions, HTTP network failures, DOM/React crashes, and Docker backend logs \u2014 into a unified 2D Substrate \xD7 Severity matrix and chronological timeline.",
+      tips: [
+        { bullet: "\u2022", text: "<strong>Grid & Timeline Switcher:</strong> Toggle between the 2D Substrate Heatmap to spot anomaly clusters and the Timeline Stream for real-time chronological order." },
+        { bullet: "\u2022", text: "<strong>Sub-Second Search:</strong> Type in the search box to filter anomalies by endpoint, error message, or HTTP status, or click substrate pills (Network, Console, React, Docker)." },
+        { bullet: "\u2022", text: "<strong>Drilldown Inspector:</strong> Click on any error row down the list to inspect demangled stack frames, HTTP request headers, RFC status code diagnosis, and 1-click terminal cURL commands." },
+        { bullet: "\u2022", text: '<strong>AI Prompt Generator:</strong> Click <strong>"Ask Dr. Debug AI"</strong> or <strong>"Diagnose"</strong> on any error down the list to automatically populate the investigation prompt and launch autonomous root-cause debugging.' }
+      ]
+    },
+    triage: {
+      key: "triage",
+      title: "Live Telemetry",
+      badge: "Real-Time Health & V8 Vitals",
+      icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+      description: "Continuously monitors and triages real-time telemetry from your application runtime \u2014 capturing live unhandled exceptions, network latency anomalies, and active V8 heap memory allocations.",
+      tips: [
+        { bullet: "\u2022", text: "<strong>Live Exception Feed:</strong> Watch unhandled runtime exceptions with demangled stack traces in real time as they occur." },
+        { bullet: "\u2022", text: "<strong>Network Anomaly Tracker:</strong> Automatically flags slow requests (>1000ms latency) and failed HTTP responses (4xx/5xx status codes)." },
+        { bullet: "\u2022", text: "<strong>V8 Memory Subsystem:</strong> Monitors active used vs allocated JavaScript heap memory in real time to catch memory leaks and runaway closures." },
+        { bullet: "\u2022", text: "<strong>Quick-Copy Diagnostics:</strong> Click the copy icon on any telemetry item to instantly copy the raw exception trace or endpoint payload." }
+      ]
+    },
+    graph: {
+      key: "graph",
+      title: "Causal Graph",
+      badge: "Multi-Layer Causal Topology (DAG)",
+      icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>',
+      description: "Constructs an interactive Directed Acyclic Graph (DAG) visualizing how upstream failures (such as backend database drops or Docker 500s) propagate through HTTP network layers and trigger downstream client JavaScript and UI errors.",
+      tips: [
+        { bullet: "\u2022", text: "<strong>Locate Root Cause:</strong> Look for the node marked with the pulsing <strong>ROOT CAUSE</strong> indicator to identify the exact origin of the breakdown." },
+        { bullet: "\u2022", text: "<strong>Animated Pulse Links:</strong> Follow animated pulse paths showing the directional propagation of failure from backend to client UI." },
+        { bullet: "\u2022", text: "<strong>Node Detail Inspector:</strong> Click on any node in the graph to view timestamp, substrate layer (Docker, Network, Console, UI), severity, and captured payload evidence." },
+        { bullet: "\u2022", text: '<strong>Mermaid Export:</strong> Click <strong>"Copy Graph"</strong> in the top action bar to export the full architecture topology as a Mermaid diagram for documentation or PRs.' }
+      ]
+    },
+    docker: {
+      key: "docker",
+      title: "Docker Containers",
+      badge: "Full-Stack Host Engine Bridge",
+      icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8v4h8V3z"/></svg>',
+      description: "Bridges your browser directly with your local Docker daemon (via the zero-install MCP bridge) to stream active container states, inspect terminal logs, and correlate backend server crashes with client-side bugs.",
+      tips: [
+        { bullet: "\u2022", text: "<strong>Start the Host Bridge:</strong> Run <code>npx @dr-debug/mcp</code> or double-click <code>start-docker-bridge.bat</code> (Windows) / <code>.sh</code> (Mac/Linux). The indicator turns green once connected." },
+        { bullet: "\u2022", text: "<strong>Container Telemetry:</strong> Monitor running container states, health status, exposed ports, and real-time CPU/memory consumption." },
+        { bullet: "\u2022", text: "<strong>Live Terminal Log Feed:</strong> Filter and search through real-time stdout/stderr streams from backend microservices (Node, Python, Go, Spring, Postgres, Redis)." },
+        { bullet: "\u2022", text: "<strong>Cross-Layer AI Diagnosis:</strong> When a backend container panics or logs a 500 error, Dr. Debug highlights it and enables 1-click AI diagnosis correlating server logs with browser errors." }
+      ]
+    },
+    timeline: {
+      key: "timeline",
+      title: "Investigation Timeline",
+      badge: "Autonomous Re-Act Trajectory",
+      icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+      description: "Displays the step-by-step diagnostic reasoning trajectory of Dr. Debug\u2019s autonomous AI agent as it investigates an incident \u2014 showing every hypothesis, tool execution, DOM inspection, and telemetry check.",
+      tips: [
+        { bullet: "\u2022", text: "<strong>Observe AI Reasoning:</strong> Watch the agent formulate hypotheses and explain its internal reasoning (<code>AI Reasoning</code>) at each diagnostic step." },
+        { bullet: "\u2022", text: "<strong>Inspect Dispatched Tools:</strong> Review each tool executed by the agent (DOM queries, network logs, console snapshots, Docker inspection)." },
+        { bullet: "\u2022", text: "<strong>Examine Tool Outputs:</strong> Expand individual step cards to review the exact diagnostic evidence gathered by the agent." },
+        { bullet: "\u2022", text: "<strong>Copy Step Evidence:</strong> Click the copy button on any step header to copy that specific finding and tool observation to your clipboard." }
+      ]
+    },
+    prescription: {
+      key: "prescription",
+      title: "Prescription & Fix",
+      badge: "Verified Root Cause & Patch",
+      icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>',
+      description: "Provides the definitive diagnostic prescription formulated by Dr. Debug \u2014 containing verified root cause explanations, affected source files, confidence rating, and verified code diff patches.",
+      tips: [
+        { bullet: "\u2022", text: "<strong>Diagnostic Finding & Root Cause:</strong> Read the plain-English explanation of why the failure occurred and its underlying causal mechanism." },
+        { bullet: "\u2022", text: "<strong>Target Files to Patch:</strong> See the exact source files identified by the agent that need code remediation." },
+        { bullet: "\u2022", text: "<strong>Unified Code Diff:</strong> Review the color-coded code patch (+ additions in green, - deletions in red) formulated to fix the bug." },
+        { bullet: "\u2022", text: '<strong>Copy Remediation Plan:</strong> Click <strong>"Copy remediation plan"</strong> to copy the unified diff patch to your clipboard.' },
+        { bullet: "\u2022", text: '<strong>Hand Off to Coding Agent:</strong> Click <strong>"Copy full brief for AI"</strong> to export a comprehensive Markdown brief formatted for Claude Code, Antigravity, or Cursor.' }
+      ]
+    }
+  };
   var CockpitPanel = class {
     constructor(onCloseOrOptions, legacyOnInvestigate) {
       this.onCloseOrOptions = onCloseOrOptions;
@@ -10782,36 +10952,26 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       header.appendChild(metricsWrapper);
       const tabs = document.createElement("div");
       tabs.className = "dr-debug-tabs";
-      this.tabErrors = document.createElement("button");
-      this.tabErrors.className = "dr-debug-tab active";
-      this.tabErrors.innerHTML = `<span>Error Matrix</span>`;
-      this.tabErrors.addEventListener("click", () => this.switchTab("errors"));
-      this.tabTriage = document.createElement("button");
-      this.tabTriage.className = "dr-debug-tab";
-      this.tabTriage.innerHTML = `<span>Telemetry</span>`;
-      this.tabTriage.addEventListener("click", () => this.switchTab("triage"));
-      this.tabGraph = document.createElement("button");
-      this.tabGraph.className = "dr-debug-tab";
-      this.tabGraph.innerHTML = `<span>Causal Graph</span>`;
-      this.tabGraph.addEventListener("click", () => this.switchTab("graph"));
-      this.tabDocker = document.createElement("button");
-      this.tabDocker.className = "dr-debug-tab";
-      this.tabDocker.innerHTML = `<span>\u{1F433} Docker</span>`;
-      this.tabDocker.addEventListener("click", () => this.switchTab("docker"));
-      this.tabTimeline = document.createElement("button");
-      this.tabTimeline.className = "dr-debug-tab";
-      this.tabTimeline.innerHTML = `<span>Timeline</span>`;
-      this.tabTimeline.addEventListener("click", () => this.switchTab("timeline"));
-      this.tabPrescription = document.createElement("button");
-      this.tabPrescription.className = "dr-debug-tab";
-      this.tabPrescription.innerHTML = `<span>Prescription</span>`;
-      this.tabPrescription.addEventListener("click", () => this.switchTab("prescription"));
+      this.tabErrors = this.createTabButton("errors", `<span>Error Matrix</span>`, true);
+      this.tabTriage = this.createTabButton("triage", `<span>Telemetry</span>`, false);
+      this.tabGraph = this.createTabButton("graph", `<span>Causal Graph</span>`, false);
+      this.tabDocker = this.createTabButton("docker", `<span>Docker</span>`, false);
+      this.tabTimeline = this.createTabButton("timeline", `<span>Timeline</span>`, false);
+      this.tabPrescription = this.createTabButton("prescription", `<span>Prescription</span>`, false);
       tabs.appendChild(this.tabErrors);
       tabs.appendChild(this.tabTriage);
       tabs.appendChild(this.tabGraph);
       tabs.appendChild(this.tabDocker);
       tabs.appendChild(this.tabTimeline);
       tabs.appendChild(this.tabPrescription);
+      this.tabInfoBackdrop = document.createElement("div");
+      this.tabInfoBackdrop.className = "dr-debug-tab-info-backdrop";
+      this.tabInfoBackdrop.style.display = "none";
+      this.tabInfoBackdrop.addEventListener("click", () => this.hideTabInfo());
+      this.tabInfoCard = document.createElement("div");
+      this.tabInfoCard.className = "dr-debug-tab-info-card";
+      this.tabInfoCard.id = "dr-debug-tab-info-card";
+      this.tabInfoCard.style.display = "none";
       const body = document.createElement("div");
       body.className = "dr-debug-body";
       this.bodyElement = body;
@@ -10827,7 +10987,8 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         onLaunchDiagnosis: (goal) => {
           this.queryInput.value = goal;
           this.triggerInvestigate();
-        }
+        },
+        onShowGuide: () => this.showTabInfo("errors")
       });
       this.errorsContainer = document.createElement("div");
       this.errorsContainer.style.display = "flex";
@@ -10838,10 +10999,12 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.triageContainer.style.display = "none";
       this.triageContainer.style.flexDirection = "column";
       this.triageContainer.style.gap = "10px";
+      this.triageContainer.appendChild(this.createInTabHeader("triage", "Telemetry & Health Substrate", "dot-sys"));
       this.graphContainer = document.createElement("div");
       this.graphContainer.style.display = "none";
       this.graphContainer.style.flexDirection = "column";
       this.graphContainer.style.gap = "10px";
+      this.graphContainer.appendChild(this.createInTabHeader("graph", "Causal Error & Anomaly Map", "dot-notice"));
       this.graphContainer.appendChild(this.causalGraphView.getElement());
       this.dockerDashboardView = new DockerDashboardView({
         getController: () => {
@@ -10851,7 +11014,8 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         onLaunchDiagnosis: (goal) => {
           this.queryInput.value = goal;
           this.triggerInvestigate();
-        }
+        },
+        onShowGuide: () => this.showTabInfo("docker")
       });
       this.dockerContainer = document.createElement("div");
       this.dockerContainer.style.display = "none";
@@ -10871,10 +11035,16 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.settingsModal = new SettingsModal({
         onSave: (settings) => {
           var _a, _b, _c;
+          if (settings.theme) {
+            this.setTheme(settings.theme);
+          }
           (_a = options.onSaveSettings) == null ? void 0 : _a.call(options, settings);
           if (typeof window !== "undefined" && window.__DR_DEBUG__) {
             (_c = (_b = window.__DR_DEBUG__).updateLLMConfig) == null ? void 0 : _c.call(_b, settings);
           }
+        },
+        onThemeChange: (theme) => {
+          this.setTheme(theme);
         },
         onTestConnection: async (settings) => {
           var _a;
@@ -10888,6 +11058,13 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         }
       });
       this.element.appendChild(this.settingsModal.getElement());
+      try {
+        const savedTheme = localStorage.getItem("dr_debug_theme");
+        if (savedTheme) {
+          this.setTheme(savedTheme);
+        }
+      } catch {
+      }
       const queryWrapper = document.createElement("div");
       queryWrapper.className = "dr-debug-query-wrapper";
       const queryBox = document.createElement("div");
@@ -10901,19 +11078,27 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.queryButton = document.createElement("button");
       this.queryButton.id = "dr-debug-query-submit";
       this.queryButton.className = "dr-debug-btn";
-      this.queryButton.innerHTML = `<span>\u26A1</span> <span>Diagnose</span>`;
+      this.queryButton.innerHTML = `<span>Diagnose</span>`;
       this.queryButton.addEventListener("click", () => this.triggerInvestigate());
       queryBox.appendChild(this.queryInput);
       queryBox.appendChild(this.queryButton);
       queryWrapper.appendChild(queryBox);
       this.element.appendChild(header);
       this.element.appendChild(tabs);
+      this.element.appendChild(this.tabInfoBackdrop);
+      this.element.appendChild(this.tabInfoCard);
       this.element.appendChild(body);
       this.element.appendChild(queryWrapper);
+      this.element.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && this.isTabInfoVisible()) {
+          e.stopPropagation();
+          this.hideTabInfo();
+        }
+      });
       const creditFooter = document.createElement("div");
       creditFooter.className = "dr-debug-cockpit-footer";
       creditFooter.innerHTML = `
-      <span>\u{1FA7A} Dr. Debug by <a href="https://github.com/SazWhatician" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;text-decoration:none;font-weight:700;">Saswat Mohanty (@SazWhatician)</a></span>
+      <span>Dr. Debug by <a href="https://github.com/SazWhatician" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;text-decoration:none;font-weight:700;">Saswat Mohanty (@SazWhatician)</a></span>
       <span style="color:#64748b;">\xB7</span>
       <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" rel="noopener noreferrer" style="color:#818cf8;text-decoration:none;">LinkedIn</a>
     `;
@@ -10944,6 +11129,10 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     tabGraph;
     tabDocker;
     tabPrescription;
+    tabInfoBackdrop;
+    tabInfoCard;
+    activeInfoTab = null;
+    currentTheme = "dr-debug";
     heapMetricBadge;
     uptimeMetricBadge;
     activeTab = "errors";
@@ -10976,10 +11165,13 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     setBusy(busy) {
       this.queryInput.disabled = busy;
       this.queryButton.disabled = busy;
-      this.queryButton.innerHTML = busy ? `<span>\u23F3</span> <span>Diagnosing...</span>` : `<span>\u26A1</span> <span>Diagnose</span>`;
+      this.queryButton.innerHTML = busy ? `<span>Diagnosing...</span>` : `<span>Diagnose</span>`;
     }
     switchTab(tab) {
       var _a, _b;
+      if (this.isTabInfoVisible()) {
+        this.hideTabInfo();
+      }
       this.activeTab = tab;
       this.tabTimeline.classList.toggle("active", tab === "timeline");
       this.tabErrors.classList.toggle("active", tab === "errors");
@@ -11017,7 +11209,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       const controller = typeof this.onCloseOrOptions === "object" && ((_b = (_a = this.onCloseOrOptions).getController) == null ? void 0 : _b.call(_a));
       if (controller) {
         const errorCount = (((_c = controller.getDockerLogs) == null ? void 0 : _c.call(controller)) || []).filter((l) => l.level === "error").length;
-        const newHtml = errorCount > 0 ? `<span>\u{1F433} Docker <span style="background:rgba(244,63,94,0.25);color:#fda4af;border:1px solid rgba(244,63,94,0.5);padding:1px 5px;border-radius:9999px;font-size:9px;font-weight:700">${errorCount}</span></span>` : `<span>\u{1F433} Docker</span>`;
+        const newHtml = errorCount > 0 ? `<span>Docker <span style="background:rgba(244,63,94,0.25);color:#fda4af;border:1px solid rgba(244,63,94,0.5);padding:1px 5px;border-radius:9999px;font-size:9px;font-weight:700">${errorCount}</span></span>` : `<span>Docker</span>`;
         if (this.tabDocker.innerHTML !== newHtml) {
           this.tabDocker.innerHTML = newHtml;
         }
@@ -11029,34 +11221,43 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.renderEmptyPrescription();
     }
     renderEmptyTimeline() {
-      this.timelineContainer.innerHTML = `
-      <div class="dr-debug-timeline-empty">
-        <div class="dr-debug-radar-ring">
-          <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo radar-logo" alt="Dr. Debug" />
-        </div>
-        <strong style="color: #f1f5f9; font-size: 13px;">Autonomous Diagnostic Observer Active</strong>
-        <p style="font-size: 12px; max-width: 320px; line-height: 1.5;">
-          Dr. Debug is continuously analyzing DOM mutations, network traffic, and console telemetry. Click <strong>Diagnose</strong> to launch autonomous RCA.
-        </p>
+      this.timelineContainer.innerHTML = "";
+      this.timelineContainer.appendChild(this.createInTabHeader("timeline", "Diagnostic RCA Timeline", "dot-warn"));
+      const emptyBox = document.createElement("div");
+      emptyBox.className = "dr-debug-timeline-empty";
+      emptyBox.innerHTML = `
+      <div class="dr-debug-radar-ring">
+        <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo radar-logo" alt="Dr. Debug" />
       </div>
+      <strong class="dr-debug-empty-title">Autonomous Diagnostic Observer Active</strong>
+      <p class="dr-debug-empty-desc">
+        Dr. Debug is continuously analyzing DOM mutations, network traffic, and console telemetry. Click <strong>Diagnose</strong> to launch autonomous RCA.
+      </p>
     `;
+      this.timelineContainer.appendChild(emptyBox);
     }
     renderEmptyPrescription() {
-      this.prescriptionContainer.innerHTML = `
-      <div class="dr-debug-timeline-empty">
-        <div class="dr-debug-radar-ring">
-          <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo radar-logo" alt="Dr. Debug" />
-        </div>
-        <strong style="color: #f1f5f9; font-size: 13px;">No Prescription Generated Yet</strong>
-        <p style="font-size: 12px; max-width: 320px; line-height: 1.5;">
-          Launch a diagnosis to formulate verified code fixes, root causes, and unified diff patches.
-        </p>
+      this.prescriptionContainer.innerHTML = "";
+      this.prescriptionContainer.appendChild(this.createInTabHeader("prescription", "Remediation & Root Cause Prescription", "dot-ok"));
+      const emptyBox = document.createElement("div");
+      emptyBox.className = "dr-debug-timeline-empty";
+      emptyBox.innerHTML = `
+      <div class="dr-debug-radar-ring">
+        <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo radar-logo" alt="Dr. Debug" />
       </div>
+      <strong class="dr-debug-empty-title">No Prescription Generated Yet</strong>
+      <p class="dr-debug-empty-desc">
+        Launch a diagnosis to formulate verified code fixes, root causes, and unified diff patches.
+      </p>
     `;
+      this.prescriptionContainer.appendChild(emptyBox);
     }
     addStep(step) {
       this.clearThinking();
-      if (this.steps.length === 0) this.timelineContainer.innerHTML = "";
+      if (this.steps.length === 0) {
+        this.timelineContainer.innerHTML = "";
+        this.timelineContainer.appendChild(this.createInTabHeader("timeline", "Diagnostic RCA Timeline", "dot-warn"));
+      }
       this.steps.push(step);
       const stepCard = document.createElement("div");
       stepCard.className = "dr-debug-step-card";
@@ -11080,7 +11281,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       stepCard.appendChild(header);
       const reasoningLabel = document.createElement("div");
       reasoningLabel.className = "dr-debug-step-reasoning-label";
-      reasoningLabel.textContent = "\u{1F9E0} AI Reasoning";
+      reasoningLabel.textContent = "AI Reasoning";
       const thought = document.createElement("div");
       thought.className = "dr-debug-step-thought";
       thought.textContent = step.hypothesis;
@@ -11108,6 +11309,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     showPrescription(prescription) {
       this.timelineContainer.appendChild(this.buildPrescriptionCard(prescription));
       this.prescriptionContainer.innerHTML = "";
+      this.prescriptionContainer.appendChild(this.createInTabHeader("prescription", "Remediation & Root Cause Prescription", "dot-ok"));
       this.prescriptionContainer.appendChild(this.buildPrescriptionCard(prescription));
       this.scrollTimelineToBottom();
       this.switchTab("prescription");
@@ -11138,7 +11340,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       sectionRCA.className = "dr-debug-presc-section";
       sectionRCA.innerHTML = `
       <div class="dr-debug-presc-label">Root Cause Mechanism</div>
-      <div class="dr-debug-presc-text" style="color: #cbd5e1;">${this.escapeHtml(prescription.rootCause)}</div>
+      <div class="dr-debug-presc-text">${this.escapeHtml(prescription.rootCause)}</div>
     `;
       card.appendChild(header);
       card.appendChild(sectionFinding);
@@ -11148,8 +11350,8 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         sectionFiles.className = "dr-debug-presc-section";
         sectionFiles.innerHTML = `
         <div class="dr-debug-presc-label">Target Files To Patch</div>
-        <div style="font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: #38bdf8;">
-          ${prescription.filesToModify.map((f) => `\u{1F4C4} ${this.escapeHtml(f)}`).join(" &nbsp;|&nbsp; ")}
+        <div class="dr-debug-presc-files">
+          ${prescription.filesToModify.map((f) => this.escapeHtml(f)).join(" &nbsp;|&nbsp; ")}
         </div>
       `;
         card.appendChild(sectionFiles);
@@ -11163,13 +11365,13 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         diffContainer.innerHTML = this.formatDiffHtml(prescription.fix);
         const copyBtn = document.createElement("button");
         copyBtn.className = "dr-debug-copy-btn";
-        const idle = `<span>\u{1F4CB}</span> <span>Copy remediation plan</span>`;
+        const idle = `<span>Copy remediation plan</span>`;
         copyBtn.innerHTML = idle;
         this.bindCopyFeedback(
           copyBtn,
           () => prescription.fix,
           idle,
-          `<span>\u2705</span> <span>Copied</span>`
+          `<span>Copied</span>`
         );
         sectionFix.appendChild(diffContainer);
         sectionFix.appendChild(copyBtn);
@@ -11188,7 +11390,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       handoff.appendChild(
         this.makeSessionPromptButton(
           "dr-debug-copy-btn primary",
-          "\u{1F4E4} Copy full brief for AI",
+          "Copy full brief for AI",
           "Copy the complete session brief as Markdown"
         )
       );
@@ -11197,8 +11399,9 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     }
     updateTriage(telemetry) {
       this.triageContainer.innerHTML = "";
+      this.triageContainer.appendChild(this.createInTabHeader("triage", "Telemetry & Health Substrate", "dot-sys"));
       if (telemetry.memory && telemetry.memory.usedMB) {
-        this.heapMetricBadge.innerHTML = `<span>\u{1F9E0}</span> <span>Heap: ${telemetry.memory.usedMB}MB</span>`;
+        this.heapMetricBadge.innerHTML = `<span class="dr-debug-status-dot dot-sys"></span> <span id="dr-debug-heap-val">Heap: ${telemetry.memory.usedMB}MB</span>`;
       }
       if (telemetry.errors.length > 0) {
         for (const err of telemetry.errors) {
@@ -11206,10 +11409,10 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
           item.className = "dr-debug-telemetry-item error";
           item.innerHTML = `
           <div class="dr-debug-telemetry-meta">
-            <span style="color: #fb7185; font-weight: 700;">\u{1F534} RUNTIME EXCEPTION</span>
-            <span>Just now</span>
+            <span class="dr-debug-telemetry-tag error"><span class="dr-debug-status-dot dot-critical"></span> RUNTIME EXCEPTION</span>
+            <span class="dr-debug-telemetry-time">Just now</span>
           </div>
-          <div style="font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: #f1f5f9;">
+          <div class="dr-debug-telemetry-payload">
             ${this.escapeHtml(err)}
           </div>
         `;
@@ -11224,12 +11427,13 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
           item.className = `dr-debug-telemetry-item ${isFail ? "net-fail" : "warn"}`;
           item.innerHTML = `
           <div class="dr-debug-telemetry-meta">
-            <span style="color: ${isFail ? "#fbbf24" : "#38bdf8"}; font-weight: 700;">
-              ${isFail ? "\u26A0\uFE0F HTTP NETWORK ANOMALY" : "\u23F3 LATENCY ANOMALY"}
+            <span class="dr-debug-telemetry-tag ${isFail ? "net-fail" : "warn"}">
+              <span class="dr-debug-status-dot ${isFail ? "dot-critical" : "dot-warn"}"></span>
+              ${isFail ? "HTTP NETWORK ANOMALY" : "LATENCY ANOMALY"}
             </span>
-            <span>Substrate trace</span>
+            <span class="dr-debug-telemetry-time">Substrate trace</span>
           </div>
-          <div style="font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: #f1f5f9;">
+          <div class="dr-debug-telemetry-payload">
             ${this.escapeHtml(req)}
           </div>
         `;
@@ -11242,23 +11446,24 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         item.className = "dr-debug-telemetry-item ok";
         item.innerHTML = `
         <div class="dr-debug-telemetry-meta">
-          <span style="color: #34d399; font-weight: 700;">\u{1F7E2} V8 MEMORY SUBSYSTEM</span>
-          <span>Live Snapshot</span>
+          <span class="dr-debug-telemetry-tag ok"><span class="dr-debug-status-dot dot-ok"></span> V8 MEMORY SUBSYSTEM</span>
+          <span class="dr-debug-telemetry-time">Live Snapshot</span>
         </div>
-        <div style="font-size: 12px; color: #cbd5e1;">
+        <div class="dr-debug-telemetry-text">
           Used Heap: <strong>${telemetry.memory.usedMB || 0} MB</strong> / Allocated: <strong>${telemetry.memory.totalMB || 0} MB</strong>
         </div>
       `;
         this.triageContainer.appendChild(item);
       }
-      if (this.triageContainer.children.length === 0) {
-        this.triageContainer.innerHTML = `
-        <div style="color: #34d399; text-align: center; padding: 40px 10px; font-size: 13px;">
-          <div style="font-size: 24px; margin-bottom: 6px;">\u2728</div>
-          <strong>Substrate is completely healthy.</strong>
-          <p style="color: #64748b; font-size: 12px; margin-top: 4px;">Zero unhandled exceptions, zero network timeouts recorded.</p>
-        </div>
+      if (this.triageContainer.children.length === 1) {
+        const emptyState = document.createElement("div");
+        emptyState.className = "dr-debug-triage-empty";
+        emptyState.innerHTML = `
+        <div class="dr-debug-status-dot dot-ok" style="width: 12px; height: 12px; margin-bottom: 8px;"></div>
+        <strong class="dr-debug-triage-empty-title">Substrate is completely healthy.</strong>
+        <p class="dr-debug-triage-empty-desc">Zero unhandled exceptions, zero network timeouts recorded.</p>
       `;
+        this.triageContainer.appendChild(emptyState);
       }
     }
     showThinking(message) {
@@ -11287,7 +11492,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       if (this.activeTab === "graph" && this.isVisible()) {
         this.causalGraphView.updateGraph(graph);
       }
-      const newHtml = graph.nodes.length > 0 ? `<span>\u{1F578}\uFE0F</span> <span>Causal Map <span style="background:rgba(251,146,60,0.2);color:#fb923c;border:1px solid rgba(251,146,60,0.4);padding:1px 5px;border-radius:9999px;font-size:9px;font-weight:700">${graph.nodes.length}</span></span>` : `<span>Causal Graph</span>`;
+      const newHtml = graph.nodes.length > 0 ? `<span>Causal Graph <span style="background:rgba(251,146,60,0.2);color:#fb923c;border:1px solid rgba(251,146,60,0.4);padding:1px 5px;border-radius:9999px;font-size:9px;font-weight:700">${graph.nodes.length}</span></span>` : `<span>Causal Graph</span>`;
       if (this.tabGraph.innerHTML !== newHtml) {
         this.tabGraph.innerHTML = newHtml;
       }
@@ -11376,8 +11581,10 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       const btn = document.createElement("button");
       btn.className = "dr-debug-copy-inline";
       btn.title = "Copy to clipboard";
-      btn.innerHTML = "\u{1F4CB}";
-      this.bindCopyFeedback(btn, () => text, "\u{1F4CB}", "\u2705", "\u26A0\uFE0F");
+      const idle = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>`;
+      const copied = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>`;
+      btn.innerHTML = idle;
+      this.bindCopyFeedback(btn, () => text, idle, copied, "!");
       return btn;
     }
     startUptimeTicker() {
@@ -11453,6 +11660,134 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         window.removeEventListener("mouseup", onMouseUp);
       };
       header.addEventListener("mousedown", onMouseDown);
+    }
+    createInTabHeader(tabKey, title, dotClass = "dot-sys") {
+      var _a;
+      const header = document.createElement("div");
+      header.className = "dr-debug-tab-view-header";
+      header.innerHTML = `
+      <div class="dr-debug-tab-view-title">
+        <span class="dr-debug-status-dot ${dotClass}"></span>
+        <span>${title}</span>
+      </div>
+      <button class="dr-debug-tab-guide-trigger" id="dr-debug-guide-btn-${tabKey}" title="What is ${title}? Click for guide" aria-label="${title} Guide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>Guide</span>
+      </button>
+    `;
+      (_a = header.querySelector(`#dr-debug-guide-btn-${tabKey}`)) == null ? void 0 : _a.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.toggleTabInfo(tabKey);
+      });
+      return header;
+    }
+    createTabButton(tabKey, labelHtml, isActive) {
+      const button = document.createElement("button");
+      button.className = `dr-debug-tab${isActive ? " active" : ""}`;
+      button.setAttribute("data-tab", tabKey);
+      button.innerHTML = labelHtml;
+      button.addEventListener("click", () => {
+        this.switchTab(tabKey);
+      });
+      return button;
+    }
+    renderTabInfoCard(tabKey) {
+      const guide = TAB_GUIDES[tabKey];
+      const isActive = this.activeTab === tabKey;
+      this.tabInfoCard.innerHTML = `
+      <div class="dr-debug-tab-info-header">
+        <div class="dr-debug-tab-info-title-box">
+          <span class="dr-debug-tab-info-icon">${guide.icon}</span>
+          <span class="dr-debug-tab-info-title">${guide.title}</span>
+          <span class="dr-debug-tab-info-badge">${guide.badge}</span>
+        </div>
+        <button class="dr-debug-close-btn" id="dr-debug-tab-info-close" title="Close Guide">\u2715</button>
+      </div>
+      <div class="dr-debug-tab-info-body">
+        <div class="dr-debug-tab-info-section">
+          <div class="dr-debug-tab-info-sec-title"><span>What This Tab Does</span></div>
+          <div class="dr-debug-tab-info-desc">${guide.description}</div>
+        </div>
+        <div class="dr-debug-tab-info-section">
+          <div class="dr-debug-tab-info-sec-title"><span>How To Use It</span></div>
+          <ul class="dr-debug-tab-info-tips">
+            ${guide.tips.map(
+        (tip) => `
+              <li class="dr-debug-tab-info-tip-item">
+                <span class="dr-debug-tab-info-tip-bullet">${tip.bullet}</span>
+                <span class="dr-debug-tab-info-tip-text">${tip.text}</span>
+              </li>
+            `
+      ).join("")}
+          </ul>
+        </div>
+      </div>
+      <div class="dr-debug-tab-info-footer">
+        <div class="dr-debug-tab-info-status ${isActive ? "active" : ""}">
+          <span>${isActive ? "\u25CF Active Tab" : "\u25CB Inactive Tab"}</span>
+        </div>
+        <div class="dr-debug-tab-info-actions">
+          ${!isActive ? `<button class="dr-debug-tab-info-btn-switch" id="dr-debug-tab-info-switch">
+                  <span>Switch to ${guide.title}</span>
+                </button>` : ""}
+          <button class="dr-debug-tab-info-btn-gotit" id="dr-debug-tab-info-gotit">Got it</button>
+        </div>
+      </div>
+    `;
+      const closeBtn = this.tabInfoCard.querySelector("#dr-debug-tab-info-close");
+      closeBtn == null ? void 0 : closeBtn.addEventListener("click", () => this.hideTabInfo());
+      const gotItBtn = this.tabInfoCard.querySelector("#dr-debug-tab-info-gotit");
+      gotItBtn == null ? void 0 : gotItBtn.addEventListener("click", () => this.hideTabInfo());
+      const switchBtn = this.tabInfoCard.querySelector("#dr-debug-tab-info-switch");
+      switchBtn == null ? void 0 : switchBtn.addEventListener("click", () => {
+        this.switchTab(tabKey);
+        this.hideTabInfo();
+      });
+    }
+    showTabInfo(tabKey) {
+      this.activeInfoTab = tabKey;
+      this.renderTabInfoCard(tabKey);
+      this.tabInfoBackdrop.style.display = "block";
+      this.tabInfoCard.style.display = "flex";
+    }
+    hideTabInfo() {
+      this.activeInfoTab = null;
+      this.tabInfoBackdrop.style.display = "none";
+      this.tabInfoCard.style.display = "none";
+    }
+    toggleTabInfo(tabKey) {
+      if (this.isTabInfoVisible() && this.activeInfoTab === tabKey) {
+        this.hideTabInfo();
+      } else {
+        this.showTabInfo(tabKey);
+      }
+    }
+    isTabInfoVisible() {
+      return this.tabInfoCard.style.display === "flex";
+    }
+    getActiveTabInfo() {
+      return this.activeInfoTab;
+    }
+    setTheme(theme) {
+      this.currentTheme = theme;
+      this.element.classList.remove("theme-minimal-glass", "theme-monotone-skeuomorphic");
+      if (theme === "minimal-glass") {
+        this.element.classList.add("theme-minimal-glass");
+      } else if (theme === "monotone-skeuomorphic") {
+        this.element.classList.add("theme-monotone-skeuomorphic");
+      }
+      try {
+        localStorage.setItem("dr_debug_theme", theme);
+      } catch {
+      }
+      this.settingsModal.setTheme(theme);
+    }
+    getTheme() {
+      return this.currentTheme;
     }
   };
 
@@ -11560,7 +11895,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 
   // packages/ui/src/styles.ts
   var shadowStyles = `
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
 
 :host {
   all: initial;
@@ -11930,6 +12265,301 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   background: rgba(56, 189, 248, 0.14);
   border-color: rgba(56, 189, 248, 0.35);
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+/* In-Tab Guide Trigger & Header */
+.dr-debug-tab-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  flex-shrink: 0;
+}
+
+.dr-debug-tab-view-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.dr-debug-tab-guide-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  color: #38bdf8;
+  border-radius: 9999px;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  line-height: 1;
+}
+
+.dr-debug-tab-guide-trigger:hover {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: rgba(56, 189, 248, 0.6);
+  color: #ffffff;
+  transform: scale(1.04);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+}
+
+.dr-debug-tab-guide-trigger svg {
+  width: 10px;
+  height: 10px;
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+/* Tab Guide Overlay Card */
+.dr-debug-tab-info-backdrop {
+  position: absolute;
+  top: 76px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(4, 7, 15, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 94;
+  animation: tab-info-fade-in 0.2s ease;
+}
+
+.dr-debug-tab-info-card {
+  position: absolute;
+  top: 80px;
+  left: 12px;
+  right: 12px;
+  max-height: calc(100% - 136px);
+  background: rgba(10, 15, 29, 0.96);
+  border: 1px solid rgba(56, 189, 248, 0.38);
+  border-radius: 12px;
+  box-shadow:
+    0 20px 50px -8px rgba(0, 0, 0, 0.88),
+    0 0 30px rgba(6, 182, 212, 0.22),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: tab-info-spring-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dr-debug-tab-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(6, 9, 16, 0.6);
+}
+
+.dr-debug-tab-info-title-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dr-debug-tab-info-icon {
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dr-debug-tab-info-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: -0.2px;
+}
+
+.dr-debug-tab-info-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background: rgba(56, 189, 248, 0.16);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.dr-debug-tab-info-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.3) rgba(10, 14, 23, 0.4);
+}
+
+.dr-debug-tab-info-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.dr-debug-tab-info-body::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.35);
+  border-radius: 9999px;
+}
+
+.dr-debug-tab-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dr-debug-tab-info-sec-title {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dr-debug-tab-info-desc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 9px 11px;
+}
+
+.dr-debug-tab-info-tips {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+
+.dr-debug-tab-info-tip-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #cbd5e1;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 7px 9px;
+}
+
+.dr-debug-tab-info-tip-bullet {
+  font-size: 12px;
+  line-height: 1;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.dr-debug-tab-info-tip-text strong {
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.dr-debug-tab-info-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(6, 9, 16, 0.6);
+  gap: 10px;
+}
+
+.dr-debug-tab-info-status {
+  font-size: 11px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dr-debug-tab-info-status.active {
+  color: #34d399;
+}
+
+.dr-debug-tab-info-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dr-debug-tab-info-btn-switch {
+  background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dr-debug-tab-info-btn-switch:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.5);
+}
+
+.dr-debug-tab-info-btn-gotit {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dr-debug-tab-info-btn-gotit:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+@keyframes tab-info-spring-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes tab-info-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 
@@ -12310,12 +12940,92 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   border-left: 3px solid #10b981;
 }
 
+.dr-debug-telemetry-item.warn {
+  border-left: 3px solid #38bdf8;
+  background: rgba(56, 189, 248, 0.06);
+}
+
 .dr-debug-telemetry-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 10px;
   color: #94a3b8;
+}
+
+.dr-debug-telemetry-tag.error {
+  color: #fb7185;
+  font-weight: 700;
+}
+
+.dr-debug-telemetry-tag.net-fail {
+  color: #fbbf24;
+  font-weight: 700;
+}
+
+.dr-debug-telemetry-tag.warn {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.dr-debug-telemetry-tag.ok {
+  color: #34d399;
+  font-weight: 700;
+}
+
+.dr-debug-telemetry-time {
+  color: #64748b;
+  font-size: 9.5px;
+}
+
+.dr-debug-telemetry-payload {
+  font-family: ui-monospace, 'JetBrains Mono', Menlo, monospace;
+  font-size: 11.5px;
+  color: #f1f5f9;
+  word-break: break-word;
+  line-height: 1.45;
+}
+
+.dr-debug-telemetry-text {
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.dr-debug-triage-empty {
+  color: #34d399;
+  text-align: center;
+  padding: 40px 10px;
+  font-size: 13px;
+}
+
+.dr-debug-triage-empty-title {
+  color: #34d399;
+  font-size: 13px;
+}
+
+.dr-debug-triage-empty-desc {
+  color: #64748b;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.dr-debug-empty-title {
+  color: #f1f5f9;
+  font-size: 13px;
+}
+
+.dr-debug-empty-desc {
+  font-size: 12px;
+  max-width: 320px;
+  line-height: 1.5;
+  color: #94a3b8;
+}
+
+.dr-debug-presc-files {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11.5px;
+  color: #38bdf8;
 }
 
 /* ==========================================================================
@@ -13991,7 +14701,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   color: #94a3b8;
 }
 
-/* \u2500\u2500 \u{1F433} Dedicated Docker Dashboard Page \u2500\u2500 */
+/* \u2500\u2500 Dedicated Docker Dashboard Page \u2500\u2500 */
 .dr-debug-docker-dashboard {
   display: flex;
   flex-direction: column;
@@ -14512,7 +15222,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   backdrop-filter: blur(8px);
 }
 
-/* \u2500\u2500 \u{1F433} Docker Instructions Panel \u2500\u2500 */
+/* \u2500\u2500 Docker Instructions Panel \u2500\u2500 */
 .dr-debug-docker-instructions-wrapper {
   display: flex;
   flex-direction: column;
@@ -14697,6 +15407,951 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   margin-top: 4px;
   font-style: italic;
 }
+
+/* ==========================================================================
+   THEME 1: Dr.Debug (Original Cyan Dark Glassmorphism)
+   ========================================================================== */
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) button,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) input,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) select,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-tab,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-btn {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) code,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) pre,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-telemetry-payload,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-step-output,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-docker-terminal,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-metric-badge {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+
+/* ==========================================================================
+   THEME 2: Minimalistic Glassmorphism (Light Theme)
+   ========================================================================== */
+.dr-debug-modal.theme-minimal-glass {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  letter-spacing: -0.012em;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow:
+    0 24px 60px -8px rgba(100, 116, 139, 0.25),
+    0 0 20px rgba(56, 189, 248, 0.12),
+    inset 0 1px 1px rgba(255, 255, 255, 0.9);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass button,
+.dr-debug-modal.theme-minimal-glass input,
+.dr-debug-modal.theme-minimal-glass select,
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab,
+.dr-debug-modal.theme-minimal-glass .dr-debug-btn,
+.dr-debug-modal.theme-minimal-glass .dr-debug-brand-bold,
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-title,
+.dr-debug-modal.theme-minimal-glass .dr-debug-presc-title,
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-reasoning-label,
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-title,
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-title,
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-view-title {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.dr-debug-modal.theme-minimal-glass code,
+.dr-debug-modal.theme-minimal-glass pre,
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-payload,
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-output,
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-terminal,
+.dr-debug-modal.theme-minimal-glass .dr-debug-metric-badge {
+  font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-header {
+  background: rgba(248, 250, 252, 0.92);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-brand-bold {
+  color: #0284c7;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-brand-sub {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-metric-badge {
+  background: rgba(241, 245, 249, 0.95);
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-close-btn {
+  background: rgba(241, 245, 249, 0.9);
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-close-btn:hover {
+  background: rgba(244, 63, 94, 0.15);
+  color: #e11d48;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tabs {
+  background: rgba(241, 245, 249, 0.9);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab:hover {
+  color: #000000;
+  background: rgba(226, 232, 240, 0.85);
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab.active {
+  color: #000000;
+  font-weight: 700;
+  background: rgba(2, 132, 199, 0.16);
+  border-color: rgba(2, 132, 199, 0.45);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7);
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-body {
+  background: rgba(248, 250, 252, 0.75);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-view-header {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-view-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-guide-trigger {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.18);
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-guide-trigger:hover {
+  background: rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.35);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-header,
+.dr-debug-modal.theme-minimal-glass .dr-debug-matrix-toolbar,
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-header,
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-section,
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-toolbar {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-stat-chip {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-mode-btn {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-mode-btn.active {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-filter-btn {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-filter-btn.active {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-2d-matrix {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-matrix-th {
+  color: #000000;
+  font-weight: 700;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-matrix-sub-label {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-matrix-cell {
+  background: rgba(248, 250, 252, 0.85);
+  border: 1px solid #cbd5e1;
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-search-input,
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-search,
+.dr-debug-modal.theme-minimal-glass .dr-debug-input,
+.dr-debug-modal.theme-minimal-glass .dr-debug-form-input,
+.dr-debug-modal.theme-minimal-glass .dr-debug-form-select {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+  font-weight: 500;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-search-input::placeholder,
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-search::placeholder,
+.dr-debug-modal.theme-minimal-glass .dr-debug-input::placeholder {
+  color: #475569;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-item,
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-card,
+.dr-debug-modal.theme-minimal-glass .dr-debug-prescription-card,
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-card-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-card-subtitle {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-time {
+  color: #111827;
+  font-weight: 500;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-insp-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-insp-sec-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-code-box {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-curl-preview {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-rfc-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-rfc-desc {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-rfc-rec {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-frame-fn {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-frame-loc {
+  color: #111827;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-empty {
+  color: #000000;
+}
+
+/* Light Mode: Telemetry Substrate High Contrast Black Styling */
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-left: 3.5px solid #ef4444;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.error .dr-debug-telemetry-payload {
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.error .dr-debug-telemetry-tag {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.net-fail {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-left: 3.5px solid #d97706;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.net-fail .dr-debug-telemetry-payload {
+  color: #92400e;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.net-fail .dr-debug-telemetry-tag {
+  color: #b45309;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.warn {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-left: 3.5px solid #0284c7;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.warn .dr-debug-telemetry-payload {
+  color: #0369a1;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.warn .dr-debug-telemetry-tag {
+  color: #0284c7;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.ok {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-left: 3.5px solid #16a34a;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.ok .dr-debug-telemetry-tag {
+  color: #15803d;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-payload {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-text {
+  color: #000000;
+  font-weight: 500;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-meta {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-time {
+  color: #111827;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-triage-empty-title {
+  color: #16a34a;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-triage-empty-desc {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-empty-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-empty-desc {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-presc-files {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-presc-label {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-presc-text {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-confidence-chip {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-prescription-diff {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-handoff {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-handoff-desc {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-pill {
+  background: #e2e8f0;
+  color: #000000;
+  font-weight: 700;
+  border: 1px solid #cbd5e1;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-tool {
+  background: #f1f5f9;
+  color: #000000;
+  font-weight: 600;
+  border: 1px solid #cbd5e1;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-thought {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-output {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-output-label {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-thinking-card {
+  background: rgba(243, 232, 255, 0.7);
+  border: 1px solid #d8b4fe;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-thinking-text {
+  color: #000000;
+}
+
+/* Causal Graph Light Styling */
+.dr-debug-modal.theme-minimal-glass .dr-debug-graph-toolbar {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-graph-node {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-node-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-node-summary {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-node-layer {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-detail-header {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-detail-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-detail-pre {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-graph-empty {
+  color: #000000;
+}
+
+/* Docker Light Styling */
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-terminal-wrapper {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-msg {
+  color: #000000;
+  font-weight: 500;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-time {
+  color: #111827;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-container-tag {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-stream-tag {
+  color: #111827;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-sub {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-hint {
+  color: #111827;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-stat-pill {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-btn {
+  color: #000000;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-btn.active {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-card-name {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-card-desc {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-card-image {
+  color: #111827;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-card-ports {
+  color: #111827;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-step-box {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-step-label {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-step-text {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-step-footer {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-guide-desc {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-term-empty {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-log-row.log-error {
+  background: rgba(239, 68, 68, 0.08);
+  border-left: 2px solid #ef4444;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-log-row.log-error .dr-debug-dock-msg {
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-log-row.log-warn {
+  background: rgba(245, 158, 11, 0.08);
+  border-left: 2px solid #d97706;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-log-row.log-warn .dr-debug-dock-msg {
+  color: #92400e;
+  font-weight: 600;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-name,
+.dr-debug-modal.theme-minimal-glass .dr-debug-presc-title,
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-reasoning-label {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-msg {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-query-wrapper {
+  background: rgba(248, 250, 252, 0.95);
+  border-top: 1px solid rgba(226, 232, 240, 0.95);
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-query-box {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-cockpit-footer {
+  background: rgba(241, 245, 249, 0.95);
+  border-top: 1px solid rgba(226, 232, 240, 0.95);
+  color: #000000;
+  font-weight: 500;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-cockpit-footer span {
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-overlay,
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-card {
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(203, 213, 225, 0.95);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-title,
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-form-label {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-header,
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-footer {
+  background: rgba(248, 250, 252, 0.96);
+  border-color: rgba(226, 232, 240, 0.95);
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-sec-title {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-desc {
+  background: rgba(241, 245, 249, 0.85);
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-tip-item {
+  background: rgba(248, 250, 252, 0.95);
+  border: 1px solid #cbd5e1;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-tip-bullet {
+  color: #000000;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-tip-text {
+  color: #000000;
+}
+
+/* ==========================================================================
+   THEME 3: Monotone Skeuomorphism (Darker Theme)
+   ========================================================================== */
+.dr-debug-modal.theme-monotone-skeuomorphic {
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: 0.015em;
+  background: #0d0f12;
+  border: 1px solid #23272f;
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.9);
+  color: #f1f5f9;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic button,
+.dr-debug-modal.theme-monotone-skeuomorphic input,
+.dr-debug-modal.theme-monotone-skeuomorphic select,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-tab,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-btn,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-brand-bold,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-err-title,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-presc-title,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-step-reasoning-label,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-settings-title,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-tab-info-title,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-tab-view-title {
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic code,
+.dr-debug-modal.theme-monotone-skeuomorphic pre,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-telemetry-payload,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-step-output,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-docker-terminal,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-metric-badge {
+  font-family: 'IBM Plex Mono', 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-header {
+  background: linear-gradient(180deg, #181c22 0%, #111419 100%);
+  border-bottom: 1px solid #000000;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-brand-bold {
+  color: #f8fafc;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-brand-sub {
+  color: #64748b;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-metric-badge {
+  background: #090a0d;
+  border: 1px solid #1e2229;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.85);
+  color: #cbd5e1;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-close-btn {
+  background: linear-gradient(180deg, #2a2e36 0%, #191c22 100%);
+  border: 1px solid #363c47;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-close-btn:hover {
+  background: linear-gradient(180deg, #373c47 0%, #20242b 100%);
+  color: #ffffff;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-tabs {
+  background: #090b0e;
+  border-bottom: 1px solid #1f232b;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.7);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-tab {
+  color: #64748b;
+  border-radius: 4px;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-tab:hover {
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-tab.active {
+  color: #ffffff;
+  background: linear-gradient(180deg, #2b303a 0%, #1c2026 100%);
+  border: 1px solid #3c4350;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-body {
+  background: #0b0d10;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-tab-view-header {
+  background: linear-gradient(180deg, #181c22 0%, #121419 100%);
+  border: 1px solid #232832;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-err-header,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-matrix-toolbar,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-docker-header,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-docker-section,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-docker-toolbar {
+  background: #111419;
+  border: 1px solid #1f242e;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-2d-matrix {
+  background: #0d0f13;
+  border: 1px solid #1e222a;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-matrix-cell {
+  background: #090a0d;
+  border: 1px solid #1c2028;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-search-input,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-dock-search,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-input,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-form-input,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-form-select {
+  background: #08090b;
+  border: 1px solid #222630;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.9);
+  color: #f1f5f9;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-err-item,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-step-card,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-prescription-card,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-docker-card {
+  background: linear-gradient(180deg, #15181f 0%, #101217 100%);
+  border: 1px solid #222732;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-telemetry-item {
+  background: linear-gradient(180deg, #161920 0%, #111318 100%);
+  border: 1px solid #242935;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-telemetry-payload {
+  color: #f1f5f9;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-telemetry-text {
+  color: #cbd5e1;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-telemetry-time {
+  color: #64748b;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-query-wrapper {
+  background: #111419;
+  border-top: 1px solid #202530;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-query-box {
+  background: #08090c;
+  border: 1px solid #232833;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.9);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-btn {
+  background: linear-gradient(180deg, #373e4b 0%, #242932 100%);
+  border: 1px solid #4a5464;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  color: #f8fafc;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-btn:hover {
+  background: linear-gradient(180deg, #424a59 0%, #2b313c 100%);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-cockpit-footer {
+  background: #0c0e12;
+  border-top: 1px solid #1e222a;
+  color: #64748b;
+}
+
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-settings-overlay,
+.dr-debug-modal.theme-monotone-skeuomorphic .dr-debug-tab-info-card {
+  background: #101217;
+  border: 1px solid #282d38;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
 `;
 
   // packages/ui/src/DrDebugUI.ts
@@ -14806,6 +16461,27 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     }
     switchTab(tab) {
       this.cockpit.switchTab(tab);
+    }
+    showTabInfo(tab) {
+      this.cockpit.showTabInfo(tab);
+    }
+    hideTabInfo() {
+      this.cockpit.hideTabInfo();
+    }
+    toggleTabInfo(tab) {
+      this.cockpit.toggleTabInfo(tab);
+    }
+    isTabInfoVisible() {
+      return this.cockpit.isTabInfoVisible();
+    }
+    getActiveTabInfo() {
+      return this.cockpit.getActiveTabInfo();
+    }
+    setTheme(theme) {
+      this.cockpit.setTheme(theme);
+    }
+    getTheme() {
+      return this.cockpit.getTheme();
     }
     toggleCockpit() {
       this.cockpit.toggle();

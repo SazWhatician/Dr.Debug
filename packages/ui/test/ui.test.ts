@@ -182,6 +182,143 @@ describe('DrDebugUI (Shadow DOM HUD & Cockpit)', () => {
 
     ui.destroy()
   })
+
+  it('keeps the tab bar clean and renders interactive (i) Guide triggers inside each tab view', () => {
+    const ui = new DrDebugUI()
+    const shadow = ui.getShadowRoot()
+
+    ui.openCockpit()
+
+    // Tab bar buttons are clean (no nested info buttons cluttering navigation)
+    const tabButtons = shadow.querySelectorAll('.dr-debug-tab')
+    expect(tabButtons.length).toBe(6)
+
+    const tabInfoButtonsOnBar = shadow.querySelectorAll('.dr-debug-tabs .dr-debug-tab-info-btn')
+    expect(tabInfoButtonsOnBar.length).toBe(0)
+
+    // In-tab guide trigger buttons exist inside tab views
+    const tabKeys = ['errors', 'triage', 'graph', 'docker', 'timeline', 'prescription']
+    tabKeys.forEach((key) => {
+      const btn = shadow.querySelector(`#dr-debug-guide-btn-${key}`)
+      expect(btn).toBeTruthy()
+    })
+
+    const infoCard = shadow.querySelector('#dr-debug-tab-info-card') as HTMLElement
+    expect(infoCard).toBeTruthy()
+    expect(ui.isTabInfoVisible()).toBe(false)
+
+    // Click on Error Matrix in-tab guide button
+    const errorsGuideBtn = shadow.querySelector('#dr-debug-guide-btn-errors') as HTMLElement
+    errorsGuideBtn.click()
+
+    expect(ui.isTabInfoVisible()).toBe(true)
+    expect(ui.getActiveTabInfo()).toBe('errors')
+    expect(infoCard.textContent).toContain('Error Matrix')
+    expect(infoCard.textContent).toContain('2D Substrate × Severity matrix and chronological timeline')
+    expect(infoCard.textContent).toContain('AI Prompt Generator')
+
+    // Close button
+    const closeBtn = infoCard.querySelector('#dr-debug-tab-info-close') as HTMLElement
+    expect(closeBtn).toBeTruthy()
+    closeBtn.click()
+    expect(ui.isTabInfoVisible()).toBe(false)
+
+    // Switch to docker tab and click in-tab docker guide button
+    ui.switchTab('docker')
+    const dockerGuideBtn = shadow.querySelector('#dr-debug-guide-btn-docker') as HTMLElement
+    dockerGuideBtn.click()
+    expect(ui.isTabInfoVisible()).toBe(true)
+    expect(ui.getActiveTabInfo()).toBe('docker')
+    expect(infoCard.textContent).toContain('Docker Containers')
+    expect(infoCard.textContent).toContain('Full-Stack Host Engine Bridge')
+
+    // Close guide
+    ui.hideTabInfo()
+    expect(ui.isTabInfoVisible()).toBe(false)
+
+    // Test programmatic API
+    ui.showTabInfo('graph')
+    expect(ui.isTabInfoVisible()).toBe(true)
+    expect(infoCard.textContent).toContain('Causal Graph')
+    expect(infoCard.textContent).toContain('ROOT CAUSE')
+
+    ui.toggleTabInfo('graph')
+    expect(ui.isTabInfoVisible()).toBe(false)
+
+    ui.destroy()
+  })
+
+  it('supports theme switching across Dr.Debug, Minimalistic glassmorphism, and Monotone skeuomorphism', () => {
+    const ui = new DrDebugUI()
+    const shadow = ui.getShadowRoot()
+    const modal = shadow.querySelector('.dr-debug-modal') as HTMLElement
+
+    // Default theme is Dr.Debug (original)
+    expect(ui.getTheme()).toBe('dr-debug')
+    expect(modal.classList.contains('theme-minimal-glass')).toBe(false)
+    expect(modal.classList.contains('theme-monotone-skeuomorphic')).toBe(false)
+
+    // Switch to Minimalistic glassmorphism (light theme)
+    ui.setTheme('minimal-glass')
+    expect(ui.getTheme()).toBe('minimal-glass')
+    expect(modal.classList.contains('theme-minimal-glass')).toBe(true)
+    expect(modal.classList.contains('theme-monotone-skeuomorphic')).toBe(false)
+
+    // Switch to Monotone skeuomorphism (darker theme)
+    ui.setTheme('monotone-skeuomorphic')
+    expect(ui.getTheme()).toBe('monotone-skeuomorphic')
+    expect(modal.classList.contains('theme-monotone-skeuomorphic')).toBe(true)
+    expect(modal.classList.contains('theme-minimal-glass')).toBe(false)
+
+    // Switch back to Dr.Debug (original)
+    ui.setTheme('dr-debug')
+    expect(ui.getTheme()).toBe('dr-debug')
+    expect(modal.classList.contains('theme-minimal-glass')).toBe(false)
+    expect(modal.classList.contains('theme-monotone-skeuomorphic')).toBe(false)
+
+    // Test theme select in SettingsModal
+    const themeSelect = shadow.querySelector('#dr-debug-theme') as HTMLSelectElement
+    expect(themeSelect).toBeTruthy()
+    themeSelect.value = 'minimal-glass'
+    themeSelect.dispatchEvent(new Event('change'))
+
+    expect(ui.getTheme()).toBe('minimal-glass')
+    expect(modal.classList.contains('theme-minimal-glass')).toBe(true)
+
+    ui.destroy()
+  })
+
+  it('renders telemetry stream with visible, themeable text classes in light mode without hardcoded white inline styles', () => {
+    const ui = new DrDebugUI()
+    const shadow = ui.getShadowRoot()
+
+    ui.openCockpit()
+    ui.setTheme('minimal-glass')
+    ui.switchTab('triage')
+
+    ui.updateTriage({
+      errors: ['TypeError: Cannot read properties of undefined'],
+      slowRequests: ['GET /api/checkout/pay (1450ms) [500]'],
+      memory: { usedMB: 54, totalMB: 128 }
+    })
+
+    const items = shadow.querySelectorAll('.dr-debug-telemetry-item')
+    expect(items.length).toBe(3)
+
+    const payloads = shadow.querySelectorAll('.dr-debug-telemetry-payload')
+    expect(payloads.length).toBe(2)
+    payloads.forEach((p) => {
+      // Must not contain hardcoded bright white inline style
+      expect((p as HTMLElement).style.color).not.toBe('rgb(241, 245, 249)')
+      expect((p as HTMLElement).style.color).not.toBe('#f1f5f9')
+    })
+
+    const textEl = shadow.querySelector('.dr-debug-telemetry-text')
+    expect(textEl).toBeTruthy()
+    expect((textEl as HTMLElement).style.color).not.toBe('#cbd5e1')
+
+    ui.destroy()
+  })
 })
 
 
