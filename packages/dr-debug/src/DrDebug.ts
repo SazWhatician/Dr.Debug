@@ -263,8 +263,8 @@ export class DrDebug {
 
     this.ui.updatePillStatus(errors.length, failedNet.length, slowNet.length, false)
     this.ui.updateTriage({
-      errors: errors.map((e) => e.message),
-      slowRequests: allProblemNet.map((r) => `${r.method} ${r.url} ${r.status ? `[${r.status}]` : ''} (${Math.round(r.duration || 0)}ms)`),
+      errors: errors,
+      slowRequests: allProblemNet,
       memory: memory
         ? {
             usedMB: Math.round((memory.usedJSHeapSize || 0) / (1024 * 1024)),

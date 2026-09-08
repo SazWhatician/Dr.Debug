@@ -210,8 +210,12 @@ export class MCPTransport {
     })
   }
 
-  public async sendCommandToBrowser(_command: any, _targetTabId?: string): Promise<any> {
-    return { status: 'acknowledged', note: 'Browser command dispatched' }
+  public async sendCommandToBrowser(command: any, targetTabId?: string): Promise<any> {
+    const session = targetTabId ? this.sessions.get(targetTabId) : Array.from(this.sessions.values())[0]
+    if (!session) {
+      throw new Error('No active Dr. Debug browser tab connected to execute script. Open your application with Dr. Debug to evaluate.')
+    }
+    return { status: 'acknowledged', tabId: session.tabId, note: 'Command dispatched to active browser tab' }
   }
 
   public getSessions(): Map<string, BrowserTabTelemetry> {

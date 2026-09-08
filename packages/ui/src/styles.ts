@@ -2311,6 +2311,25 @@ export const shadowStyles = `
   color: #38bdf8;
 }
 
+.dr-debug-copy-inline-btn.primary {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(129, 140, 248, 0.16));
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #7dd3fc;
+  font-weight: 700;
+}
+
+.dr-debug-copy-inline-btn.primary:hover {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.28), rgba(129, 140, 248, 0.28));
+  border-color: rgba(56, 189, 248, 0.7);
+  color: #e0f2fe;
+}
+
+.dr-debug-copy-inline-btn.copied {
+  background: rgba(16, 185, 129, 0.22) !important;
+  border-color: rgba(16, 185, 129, 0.6) !important;
+  color: #6ee7b7 !important;
+}
+
 /* RFC Status Explainer Box */
 .dr-debug-rfc-box {
   background: rgba(244, 63, 94, 0.08);

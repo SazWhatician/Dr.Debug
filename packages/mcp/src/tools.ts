@@ -31,6 +31,19 @@ export class MCPToolManager {
         }
       },
       {
+        name: 'drdebug_get_ai_brief',
+        description: 'Returns the full paste-ready incident brief for AI assistants (Claude Code, Cursor, Antigravity) with complete request/response headers, body payloads, cURL reproduction, and demangled stacks.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            targetId: {
+              type: 'string',
+              description: 'Optional specific error ID or request ID to focus on. If omitted, returns active session brief.'
+            }
+          }
+        }
+      },
+      {
         name: 'drdebug_inspect_error',
         description: 'Inspects a recorded runtime exception or console error, returning demangled stack frames and file locations.',
         inputSchema: {
@@ -91,13 +104,37 @@ export class MCPToolManager {
       return { content: [{ type: 'text', text: JSON.stringify(summary, null, 2) }] }
     }
 
+    if (name === 'drdebug_get_ai_brief') {
+      const prompt = state.sessionDebugPrompt || state.unifiedPrompt || state.serializedXml || JSON.stringify(state, null, 2)
+      return { content: [{ type: 'text', text: prompt }] }
+    }
+
     if (name === 'drdebug_inspect_request') {
       const records = state.network?.records || []
       const req = records.find((r: any) => r.id === args.requestId || r.url.includes(args.requestId))
       if (!req) {
         return { content: [{ type: 'text', text: `Request "${args.requestId}" not found in recorded telemetry.` }], isError: true }
       }
-      return { content: [{ type: 'text', text: JSON.stringify(req, null, 2) }] }
+      const inspectPayload = {
+        id: req.id,
+        method: req.method,
+        url: req.url,
+        status: req.status,
+        statusText: req.statusText,
+        durationMs: req.duration,
+        isFailed: req.isFailed,
+        isSlow: req.isSlow,
+        isCORS: req.isCORS,
+        isCrossOrigin: req.isCrossOrigin,
+        requestHeaders: req.requestHeaders || {},
+        requestPayload: req.requestBodyPreview || null,
+        responseHeaders: req.responseHeaders || {},
+        responsePayload: req.responseBodyPreview || null,
+        curl: req.curl || `curl -X ${req.method} "${req.url}"`,
+        error: req.error || null,
+        initiator: req.initiator || null
+      }
+      return { content: [{ type: 'text', text: JSON.stringify(inspectPayload, null, 2) }] }
     }
 
     if (name === 'drdebug_inspect_error') {

@@ -10701,7 +10701,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
           <div class="dr-debug-settings-update-banner">
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
-              <span class="dr-debug-update-version">Dr. Debug v0.1.4</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.5</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
@@ -11470,31 +11470,72 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       return card;
     }
     updateTriage(telemetry) {
+      var _a;
       this.triageContainer.innerHTML = "";
-      this.triageContainer.appendChild(this.createInTabHeader("triage", "Telemetry & Health Substrate", "dot-sys"));
+      const headerWrapper = document.createElement("div");
+      headerWrapper.style.display = "flex";
+      headerWrapper.style.justifyContent = "space-between";
+      headerWrapper.style.alignItems = "center";
+      headerWrapper.style.marginBottom = "4px";
+      const header = this.createInTabHeader("triage", "Telemetry & Health Substrate", "dot-sys");
+      headerWrapper.appendChild(header);
+      const copyAllBtn = this.makeSessionPromptButton(
+        "dr-debug-export-btn",
+        "Copy for AI",
+        "Copy complete telemetry state, failing transactions with headers/payloads, stacks, and timeline for AI"
+      );
+      copyAllBtn.style.marginRight = "4px";
+      headerWrapper.appendChild(copyAllBtn);
+      this.triageContainer.appendChild(headerWrapper);
       if (telemetry.memory && telemetry.memory.usedMB) {
         this.heapMetricBadge.innerHTML = `<span class="dr-debug-status-dot dot-sys"></span> <span id="dr-debug-heap-val">Heap: ${telemetry.memory.usedMB}MB</span>`;
       }
+      const ctrl = this.getControllerInstance();
+      const allRecords = ((_a = ctrl == null ? void 0 : ctrl.getNetworkRecords) == null ? void 0 : _a.call(ctrl)) || [];
       if (telemetry.errors.length > 0) {
-        for (const err of telemetry.errors) {
+        for (const errItem of telemetry.errors) {
+          const isObj = typeof errItem === "object" && errItem !== null;
+          const errMsg = isObj ? errItem.message || JSON.stringify(errItem) : String(errItem);
+          const errId = isObj ? errItem.id : void 0;
           const item = document.createElement("div");
           item.className = "dr-debug-telemetry-item error";
           item.innerHTML = `
           <div class="dr-debug-telemetry-meta">
             <span class="dr-debug-telemetry-tag error"><span class="dr-debug-status-dot dot-critical"></span> RUNTIME EXCEPTION</span>
             <span class="dr-debug-telemetry-time">Just now</span>
+            <div class="dr-debug-telemetry-actions" style="margin-left:auto; display:flex; gap:6px; align-items:center;"></div>
           </div>
           <div class="dr-debug-telemetry-payload">
-            ${this.escapeHtml(err)}
+            ${this.escapeHtml(errMsg)}
           </div>
         `;
-          item.querySelector(".dr-debug-telemetry-meta").appendChild(this.makeCopyBtn(err));
+          const actionsDiv = item.querySelector(".dr-debug-telemetry-actions");
+          actionsDiv.appendChild(this.makeAIPromptButton(errId, errMsg));
+          actionsDiv.appendChild(this.makeCopyBtn(errMsg));
           this.triageContainer.appendChild(item);
         }
       }
       if (telemetry.slowRequests.length > 0) {
-        for (const req of telemetry.slowRequests) {
-          const isFail = req.includes("[50") || req.includes("[40") || req.includes("[0]");
+        for (const reqItem of telemetry.slowRequests) {
+          const isObj = typeof reqItem === "object" && reqItem !== null;
+          let reqSummary = "";
+          let reqId;
+          let isFail = false;
+          let curlCmd;
+          if (isObj) {
+            reqId = reqItem.id;
+            isFail = !!reqItem.isFailed || reqItem.status && reqItem.status >= 400;
+            reqSummary = `${reqItem.method} ${reqItem.url} ${reqItem.status ? `[${reqItem.status}]` : ""} (${Math.round(reqItem.duration || 0)}ms)`;
+            curlCmd = reqItem.curl || (reqItem.method && reqItem.url ? `curl -X ${reqItem.method} "${reqItem.url}"` : void 0);
+          } else {
+            reqSummary = String(reqItem);
+            isFail = reqSummary.includes("[50") || reqSummary.includes("[40") || reqSummary.includes("[0]");
+            const matched = allRecords.find((r) => reqSummary.includes(r.url) || reqSummary.includes(r.id));
+            if (matched) {
+              reqId = matched.id;
+              curlCmd = matched.curl || `curl -X ${matched.method} "${matched.url}"`;
+            }
+          }
           const item = document.createElement("div");
           item.className = `dr-debug-telemetry-item ${isFail ? "net-fail" : "warn"}`;
           item.innerHTML = `
@@ -11504,12 +11545,18 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
               ${isFail ? "HTTP NETWORK ANOMALY" : "LATENCY ANOMALY"}
             </span>
             <span class="dr-debug-telemetry-time">Substrate trace</span>
+            <div class="dr-debug-telemetry-actions" style="margin-left:auto; display:flex; gap:6px; align-items:center;"></div>
           </div>
           <div class="dr-debug-telemetry-payload">
-            ${this.escapeHtml(req)}
+            ${this.escapeHtml(reqSummary)}
           </div>
         `;
-          item.querySelector(".dr-debug-telemetry-meta").appendChild(this.makeCopyBtn(req));
+          const actionsDiv = item.querySelector(".dr-debug-telemetry-actions");
+          actionsDiv.appendChild(this.makeAIPromptButton(reqId, reqSummary));
+          if (curlCmd) {
+            actionsDiv.appendChild(this.makeCurlButton(curlCmd));
+          }
+          actionsDiv.appendChild(this.makeCopyBtn(reqSummary));
           this.triageContainer.appendChild(item);
         }
       }
@@ -11537,6 +11584,52 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       `;
         this.triageContainer.appendChild(emptyState);
       }
+    }
+    getControllerInstance() {
+      if (typeof this.onCloseOrOptions === "object" && this.onCloseOrOptions.getController) {
+        const ctrl = this.onCloseOrOptions.getController();
+        if (ctrl) return ctrl;
+      }
+      if (typeof window !== "undefined" && window.__DR_DEBUG__) {
+        return window.__DR_DEBUG__.getController();
+      }
+      return void 0;
+    }
+    makeAIPromptButton(targetId, fallbackText) {
+      const btn = document.createElement("button");
+      btn.className = "dr-debug-copy-inline-btn primary";
+      btn.title = "Copy structured debug prompt with headers, payloads & cURL for AI coding agents";
+      btn.innerHTML = `<span>Copy for AI</span>`;
+      btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const ctrl = this.getControllerInstance();
+        let text = "";
+        if (ctrl) {
+          text = ctrl.getUnifiedAIDebugPrompt(targetId);
+        }
+        if (!text && this.getSessionPrompt) {
+          text = this.getSessionPrompt();
+        }
+        if (!text) {
+          text = fallbackText || "No detailed telemetry found.";
+        }
+        const ok = await this.copyToClipboard(text);
+        btn.innerHTML = ok ? `<span>Copied AI Prompt!</span>` : `<span>Copy failed</span>`;
+        btn.classList.toggle("copied", ok);
+        setTimeout(() => {
+          btn.innerHTML = `<span>Copy for AI</span>`;
+          btn.classList.remove("copied");
+        }, 2500);
+      });
+      return btn;
+    }
+    makeCurlButton(curlCmd) {
+      const btn = document.createElement("button");
+      btn.className = "dr-debug-copy-inline-btn";
+      btn.title = "Copy executable curl command for terminal reproduction";
+      btn.innerHTML = `<span>cURL</span>`;
+      this.bindCopyFeedback(btn, () => curlCmd, `<span>cURL</span>`, `<span>Copied cURL!</span>`);
+      return btn;
     }
     showThinking(message) {
       if (this.thinkingCard) this.thinkingCard.remove();
@@ -14279,6 +14372,25 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   color: #38bdf8;
 }
 
+.dr-debug-copy-inline-btn.primary {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(129, 140, 248, 0.16));
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #7dd3fc;
+  font-weight: 700;
+}
+
+.dr-debug-copy-inline-btn.primary:hover {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.28), rgba(129, 140, 248, 0.28));
+  border-color: rgba(56, 189, 248, 0.7);
+  color: #e0f2fe;
+}
+
+.dr-debug-copy-inline-btn.copied {
+  background: rgba(16, 185, 129, 0.22) !important;
+  border-color: rgba(16, 185, 129, 0.6) !important;
+  color: #6ee7b7 !important;
+}
+
 /* RFC Status Explainer Box */
 .dr-debug-rfc-box {
   background: rgba(244, 63, 94, 0.08);
@@ -16876,8 +16988,8 @@ Direction: ${finding.remediation}`
       const memory = this.controller.getMemorySnapshot();
       this.ui.updatePillStatus(errors.length, failedNet.length, slowNet.length, false);
       this.ui.updateTriage({
-        errors: errors.map((e) => e.message),
-        slowRequests: allProblemNet.map((r) => `${r.method} ${r.url} ${r.status ? `[${r.status}]` : ""} (${Math.round(r.duration || 0)}ms)`),
+        errors,
+        slowRequests: allProblemNet,
         memory: memory ? {
           usedMB: Math.round((memory.usedJSHeapSize || 0) / (1024 * 1024)),
           totalMB: Math.round((memory.totalJSHeapSize || 0) / (1024 * 1024))

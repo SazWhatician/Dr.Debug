@@ -126,8 +126,8 @@ export class DrDebugUI {
   }
 
   public updateTriage(telemetry: {
-    errors: string[]
-    slowRequests: string[]
+    errors: Array<string | any>
+    slowRequests: Array<string | any>
     vitals?: Record<string, any>
     memory?: { usedMB?: number; totalMB?: number }
   }): void {
