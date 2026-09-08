@@ -37,6 +37,28 @@ I built **Dr. Debug** to eliminate that entire manual feedback loop. Instead of 
 
 ---
 
+## 🥊 Dr. Debug vs. Chrome DevTools MCP
+
+Google's `chrome-devtools-mcp` is a **browser automation actuator** (CDP wrapper). **Dr. Debug** is an **autonomous full-stack runtime diagnostic engine**.
+
+| Capability | Google `chrome-devtools-mcp` | 🩺 Dr. Debug (`DebugCopilot`) |
+|:---|:---|:---|
+| **Primary Role** | Browser remote control (`click`, `fill`, `evaluate_script`) | In-situ runtime debugging, root-cause analysis, and patch generation |
+| **Backend Visibility** | ❌ None. Blind outside the browser tab. | ✅ **`DockerBridge`** correlates client errors with live container logs & DB panics |
+| **Crash Reproduction** | ❌ None. Only knows synthetic agent actions. | ✅ **30s Flight Recorder** captures human clicks, inputs, and scrolls before a crash |
+| **Interface** | ❌ Headless MCP for IDE agents only | ✅ **Shadow DOM HUD (`#dr-debug-root`)**, Chrome Extension, & DevTools panel |
+| **Token Usage** | ❌ **40k–80k tokens** (raw HTML, CDP events, asset dumps) | ✅ **<1,500 tokens** (RFC-9457 structured `<debug_state>` XML) |
+| **Privacy & Cost** | ❌ Streams full browser dumps to cloud LLM APIs | ✅ **100% offline & local WebGPU** via LiteRT & WebLLM (zero API cost) |
+
+### Core Differentiators
+
+- **Full-Stack Correlation (`DockerBridge`):** When an API fails with `500 Internal Server Error`, DevTools MCP only sees a red console line. Dr. Debug correlates the failed fetch with exact-millisecond backend Docker container logs (Python, Node, Go, SQL exceptions).
+- **Pre-Crash Flight Recorder:** Buffers the last 30 seconds of user interaction (clicks, keystrokes, route changes, DOM mutations). The AI gets the real human reproduction path instantly.
+- **40x Token Reduction:** Avoids 10+ CDP roundtrips and massive raw DOM dumps. Compresses demangled sourcemaps and network anomalies into a single `<debug_state>` payload (<1,500 tokens).
+- **In-Browser HUD + Local Inference:** Debug directly on the page without switching to an IDE. Supports 100% offline, private inference directly on local GPU via WebGPU (LiteRT & WebLLM).
+
+---
+
 ## System Architecture
 
 Dr. Debug is architected as a modular TypeScript monorepo:

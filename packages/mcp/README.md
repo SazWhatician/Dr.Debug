@@ -70,6 +70,18 @@ When connected, your AI coding agent has direct access to the following tools:
 
 ---
 
+## 🥊 Why `@dr-debug/mcp` over Google `chrome-devtools-mcp`?
+
+| Dimension | Google `chrome-devtools-mcp` | `@dr-debug/mcp` |
+|:---|:---|:---|
+| **Core Function** | Browser automation / synthetic clicks & CDP commands | Pre-correlated diagnostic triage & runtime RCA |
+| **Backend Integration** | ❌ None (stops at the browser boundary) | ✅ **Live Docker Bridge** correlates frontend 500s with host container crash logs |
+| **Human QA Replay** | ❌ None (only knows synthetic agent actions) | ✅ **30s Interaction Replay** (human clicks, inputs, scrolls before crash) |
+| **Token Cost** | ❌ 40k–80k tokens per bug (raw CDP dumps) | ✅ **<1,500 tokens** (structured RFC-9457 `<debug_state>` XML) |
+| **Developer Cockpit** | ❌ Invisible headless protocol only | ✅ **Shadow DOM HUD** + Chrome Extension + DevTools Panel |
+
+---
+
 ## 📄 License
 
 MIT © [Saswat Mohanty](https://github.com/SazWhatician)
