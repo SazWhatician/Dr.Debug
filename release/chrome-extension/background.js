@@ -141,8 +141,184 @@ var PROVIDERS = {
   groq: { baseURL: "https://api.groq.com/openai/v1", model: "llama-3.3-70b-versatile" },
   openai: { baseURL: "https://api.openai.com/v1", model: "gpt-4o" }
 };
+var DockerStreamManager = class {
+  active = false;
+  abortController = null;
+  retryTimer = null;
+  port = 9229;
+  containers = [];
+  recentLogs = [];
+  lastStatus = {
+    connected: false,
+    daemonRunning: false
+  };
+  start() {
+    if (this.active) return;
+    this.active = true;
+    this.connect();
+  }
+  stop() {
+    this.active = false;
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+  }
+  getState() {
+    return {
+      type: "INIT",
+      status: this.lastStatus,
+      containers: this.containers,
+      recentLogs: this.recentLogs
+    };
+  }
+  async proxyFetch(endpoint, params) {
+    try {
+      let url = `http://localhost:${this.port}${endpoint}`;
+      if (params && typeof params === "object") {
+        const sp = new URLSearchParams();
+        for (const [k, v] of Object.entries(params)) {
+          if (v !== void 0 && v !== null) sp.set(k, String(v));
+        }
+        const qs = sp.toString();
+        if (qs) url += `?${qs}`;
+      }
+      const res = await fetch(url);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      return { error: err?.message || "Proxy fetch failed" };
+    }
+    return null;
+  }
+  async connect() {
+    if (!this.active) return;
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+    this.abortController = new AbortController();
+    try {
+      const statusRes = await fetch(`http://localhost:${this.port}/docker/status`, {
+        signal: AbortSignal.timeout(3e3)
+      }).catch(() => null);
+      if (!statusRes || !statusRes.ok) {
+        this.lastStatus = {
+          connected: false,
+          daemonRunning: false,
+          error: "Docker bridge service offline on port " + this.port
+        };
+        this.broadcast({
+          type: "STATUS",
+          connected: false,
+          daemonRunning: false,
+          error: this.lastStatus.error
+        });
+        this.scheduleRetry(4e3);
+        return;
+      }
+      const statusData = await statusRes.json().catch(() => ({}));
+      this.lastStatus = {
+        connected: true,
+        daemonRunning: statusData.daemonRunning ?? true
+      };
+      const res = await fetch(`http://localhost:${this.port}/docker/stream`, {
+        headers: { Accept: "text/event-stream" },
+        signal: this.abortController.signal
+      });
+      if (!res.ok || !res.body) {
+        this.scheduleRetry(5e3);
+        return;
+      }
+      this.broadcast({
+        type: "STATUS",
+        connected: true,
+        daemonRunning: this.lastStatus.daemonRunning
+      });
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (this.active) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith("data:")) {
+            const jsonStr = trimmed.slice(5).trim();
+            try {
+              const data = JSON.parse(jsonStr);
+              if (data.type === "INIT") {
+                this.lastStatus = {
+                  connected: true,
+                  daemonRunning: data.status?.daemonRunning ?? true
+                };
+                this.containers = data.containers || [];
+                this.recentLogs = data.recentLogs || [];
+              } else if (data.type === "CONTAINERS") {
+                this.containers = data.containers || [];
+              } else if (data.type === "LOG" && data.entry) {
+                if (this.recentLogs.length >= 100) this.recentLogs.shift();
+                this.recentLogs.push(data.entry);
+              }
+              this.broadcast(data);
+            } catch {
+            }
+          }
+        }
+      }
+      this.scheduleRetry(3e3);
+    } catch (err) {
+      if (err?.name === "AbortError") return;
+      this.lastStatus = {
+        connected: false,
+        daemonRunning: false,
+        error: err?.message || "Disconnected from Docker daemon"
+      };
+      this.broadcast({
+        type: "STATUS",
+        connected: false,
+        daemonRunning: false,
+        error: this.lastStatus.error
+      });
+      this.scheduleRetry(5e3);
+    }
+  }
+  scheduleRetry(delayMs) {
+    if (!this.active || this.retryTimer) return;
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null;
+      this.connect();
+    }, delayMs);
+  }
+  broadcast(data) {
+    if (typeof chrome === "undefined" || !chrome.tabs?.query) return;
+    chrome.tabs.query({}, (tabs) => {
+      if (chrome.runtime.lastError || !tabs) return;
+      for (const tab of tabs) {
+        if (tab.id) {
+          chrome.tabs.sendMessage(tab.id, { type: "DR_DEBUG_DOCKER_EVENT", data }, () => {
+            void chrome.runtime.lastError;
+          });
+        }
+      }
+    });
+  }
+};
 var BackgroundWorker = class {
   tabPorts = /* @__PURE__ */ new Map();
+  dockerManager;
+  constructor() {
+    this.dockerManager = new DockerStreamManager();
+    this.dockerManager.start();
+  }
   readSettings() {
     return new Promise((resolve) => {
       if (typeof chrome === "undefined" || !chrome.storage?.local) return resolve({});
@@ -209,6 +385,14 @@ var BackgroundWorker = class {
           (err) => sendResponse({ result: { success: false, message: err?.message || "Failed" } })
         );
         return true;
+      case "DR_DEBUG_GET_DOCKER_STATE":
+        sendResponse(this.dockerManager.getState());
+        return false;
+      case "DR_DEBUG_DOCKER_FETCH": {
+        const { endpoint, params } = message.payload || {};
+        this.dockerManager.proxyFetch(endpoint || "/docker/status", params).then((result) => sendResponse({ result })).catch((err) => sendResponse({ error: err?.message || "Docker fetch failed" }));
+        return true;
+      }
       default:
         sendResponse({ status: "unhandled_type", type: message.type });
         break;
@@ -223,5 +407,6 @@ if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
   });
 }
 export {
-  BackgroundWorker
+  BackgroundWorker,
+  DockerStreamManager
 };

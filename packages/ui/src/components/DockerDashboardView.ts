@@ -166,6 +166,13 @@ export class DockerDashboardView {
     const isBridgeConnected = bridgeStatus?.connected ?? false
     const isDaemonRunning = bridgeStatus?.daemonRunning ?? (containers.length > 0)
 
+    const isHttps = typeof window !== 'undefined' && window.location?.protocol === 'https:'
+    const subText = isBridgeConnected
+      ? `Connected to local daemon via port 9229 · ${containers.length} containers discovered`
+      : isHttps
+        ? `Bridge offline. Run \`start-docker-bridge\` or reload the extension to stream.`
+        : `Bridge disconnected. Run \`start-docker-bridge\` or \`npx @dr-debug/mcp\` to stream host containers.`
+
     this.statusBanner.innerHTML = `
       <div class="dr-debug-docker-status-left">
         <span class="dr-debug-docker-status-dot ${isBridgeConnected ? 'online' : 'offline'}"></span>
@@ -177,9 +184,7 @@ export class DockerDashboardView {
             </span>
           </div>
           <div class="dr-debug-docker-sub">
-            ${isBridgeConnected
-              ? `Connected to local daemon via port 9229 · ${containers.length} containers discovered`
-              : `Bridge disconnected. Run \`start-docker-bridge\` or \`npx @dr-debug/mcp\` to stream host containers.`}
+            ${subText}
           </div>
         </div>
       </div>

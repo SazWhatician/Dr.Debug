@@ -8,6 +8,7 @@ export interface DockerBridgeClientOptions {
   onStatusChange?: (status: { connected: boolean; daemonRunning: boolean; error?: string }) => void
   onContainers?: (containers: DockerContainerInfo[]) => void
   onLog?: (entry: DockerLogEntry) => void
+  proxyFetch?: (endpoint: string, params?: any) => Promise<any>
 }
 
 export class DockerBridgeClient {
@@ -30,8 +31,56 @@ export class DockerBridgeClient {
     this.reconnectIntervalMs = options.reconnectIntervalMs || 5000
   }
 
+  public setProxyFetch(fn: (endpoint: string, params?: any) => Promise<any>): void {
+    this.options.proxyFetch = fn
+  }
+
+  public handleEvent(data: any): void {
+    if (!data || typeof data !== 'object') return
+
+    if (data.type === 'INIT') {
+      this.isConnected = true
+      this.daemonRunning = data.status?.daemonRunning ?? true
+      this.lastError = undefined
+      if (data.containers && this.options.onContainers) {
+        this.options.onContainers(data.containers)
+      }
+      if (data.recentLogs && Array.isArray(data.recentLogs) && this.options.onLog) {
+        data.recentLogs.forEach((l: DockerLogEntry) => this.options.onLog?.(l))
+      }
+      this.notifyStatus()
+    } else if (data.type === 'CONTAINERS') {
+      this.isConnected = true
+      if (this.options.onContainers) {
+        this.options.onContainers(data.containers)
+      }
+      this.notifyStatus()
+    } else if (data.type === 'LOG') {
+      this.isConnected = true
+      if (data.entry && this.options.onLog) {
+        this.options.onLog(data.entry)
+      }
+      this.notifyStatus()
+    } else if (data.type === 'STATUS') {
+      this.isConnected = data.connected ?? this.isConnected
+      this.daemonRunning = data.daemonRunning ?? this.daemonRunning
+      this.lastError = data.error
+      this.notifyStatus()
+    }
+  }
+
   public connect(): void {
-    if (typeof window === 'undefined' && typeof EventSource === 'undefined') {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    // On HTTPS pages, direct HTTP EventSource is blocked by browser Mixed Content rules.
+    // In those environments, the extension background proxy feeds events via handleEvent().
+    if (typeof window !== 'undefined' && window.location?.protocol === 'https:') {
+      return
+    }
+
+    if (typeof EventSource === 'undefined') {
       return
     }
 
@@ -53,26 +102,7 @@ export class DockerBridgeClient {
       this.eventSource.onmessage = (evt) => {
         try {
           const data = JSON.parse(evt.data)
-
-          if (data.type === 'INIT') {
-            this.isConnected = true
-            this.daemonRunning = data.status?.daemonRunning ?? true
-            if (data.containers && this.options.onContainers) {
-              this.options.onContainers(data.containers)
-            }
-            if (data.recentLogs && Array.isArray(data.recentLogs) && this.options.onLog) {
-              data.recentLogs.forEach((l: DockerLogEntry) => this.options.onLog?.(l))
-            }
-            this.notifyStatus()
-          } else if (data.type === 'CONTAINERS') {
-            if (this.options.onContainers) {
-              this.options.onContainers(data.containers)
-            }
-          } else if (data.type === 'LOG') {
-            if (data.entry && this.options.onLog) {
-              this.options.onLog(data.entry)
-            }
-          }
+          this.handleEvent(data)
         } catch {
           // Ignore json parse error on keepalive comments
         }
@@ -100,6 +130,27 @@ export class DockerBridgeClient {
   }
 
   public async fetchStatus(): Promise<{ connected: boolean; daemonRunning: boolean; error?: string }> {
+    if (this.options.proxyFetch) {
+      try {
+        const res = await this.options.proxyFetch('/docker/status')
+        if (res) {
+          this.daemonRunning = res.daemonRunning ?? true
+          this.isConnected = true
+          return {
+            connected: true,
+            daemonRunning: this.daemonRunning,
+            error: res.error
+          }
+        }
+      } catch (err: any) {
+        return {
+          connected: false,
+          daemonRunning: false,
+          error: err?.message || 'Proxy fetch failed'
+        }
+      }
+    }
+
     try {
       const res = await fetch(`http://${this.host}:${this.port}/docker/status`)
       if (res.ok) {
@@ -122,6 +173,18 @@ export class DockerBridgeClient {
   }
 
   public async fetchContainers(): Promise<DockerContainerInfo[]> {
+    if (this.options.proxyFetch) {
+      try {
+        const res = await this.options.proxyFetch('/docker/containers')
+        if (Array.isArray(res)) {
+          this.isConnected = true
+          return res
+        }
+      } catch {
+        return []
+      }
+    }
+
     try {
       const res = await fetch(`http://${this.host}:${this.port}/docker/containers`)
       if (res.ok) {
@@ -139,6 +202,17 @@ export class DockerBridgeClient {
     grep?: string
     tail?: number
   }): Promise<DockerLogEntry[]> {
+    if (this.options.proxyFetch) {
+      try {
+        const res = await this.options.proxyFetch('/docker/logs', options)
+        if (Array.isArray(res)) {
+          return res
+        }
+      } catch {
+        return []
+      }
+    }
+
     try {
       const params = new URLSearchParams()
       if (options?.container) params.set('container', options.container)

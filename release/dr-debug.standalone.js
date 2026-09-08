@@ -52,8 +52,54 @@ var DrDebugBundle = (() => {
       this.autoReconnect = options.autoReconnect !== false;
       this.reconnectIntervalMs = options.reconnectIntervalMs || 5e3;
     }
+    setProxyFetch(fn) {
+      this.options.proxyFetch = fn;
+    }
+    handleEvent(data) {
+      var _a;
+      if (!data || typeof data !== "object") return;
+      if (data.type === "INIT") {
+        this.isConnected = true;
+        this.daemonRunning = ((_a = data.status) == null ? void 0 : _a.daemonRunning) ?? true;
+        this.lastError = void 0;
+        if (data.containers && this.options.onContainers) {
+          this.options.onContainers(data.containers);
+        }
+        if (data.recentLogs && Array.isArray(data.recentLogs) && this.options.onLog) {
+          data.recentLogs.forEach((l) => {
+            var _a2, _b;
+            return (_b = (_a2 = this.options).onLog) == null ? void 0 : _b.call(_a2, l);
+          });
+        }
+        this.notifyStatus();
+      } else if (data.type === "CONTAINERS") {
+        this.isConnected = true;
+        if (this.options.onContainers) {
+          this.options.onContainers(data.containers);
+        }
+        this.notifyStatus();
+      } else if (data.type === "LOG") {
+        this.isConnected = true;
+        if (data.entry && this.options.onLog) {
+          this.options.onLog(data.entry);
+        }
+        this.notifyStatus();
+      } else if (data.type === "STATUS") {
+        this.isConnected = data.connected ?? this.isConnected;
+        this.daemonRunning = data.daemonRunning ?? this.daemonRunning;
+        this.lastError = data.error;
+        this.notifyStatus();
+      }
+    }
     connect() {
-      if (typeof window === "undefined" && typeof EventSource === "undefined") {
+      var _a;
+      if (typeof window === "undefined") {
+        return;
+      }
+      if (typeof window !== "undefined" && ((_a = window.location) == null ? void 0 : _a.protocol) === "https:") {
+        return;
+      }
+      if (typeof EventSource === "undefined") {
         return;
       }
       if (this.eventSource) {
@@ -68,40 +114,18 @@ var DrDebugBundle = (() => {
           this.notifyStatus();
         };
         this.eventSource.onmessage = (evt) => {
-          var _a;
           try {
             const data = JSON.parse(evt.data);
-            if (data.type === "INIT") {
-              this.isConnected = true;
-              this.daemonRunning = ((_a = data.status) == null ? void 0 : _a.daemonRunning) ?? true;
-              if (data.containers && this.options.onContainers) {
-                this.options.onContainers(data.containers);
-              }
-              if (data.recentLogs && Array.isArray(data.recentLogs) && this.options.onLog) {
-                data.recentLogs.forEach((l) => {
-                  var _a2, _b;
-                  return (_b = (_a2 = this.options).onLog) == null ? void 0 : _b.call(_a2, l);
-                });
-              }
-              this.notifyStatus();
-            } else if (data.type === "CONTAINERS") {
-              if (this.options.onContainers) {
-                this.options.onContainers(data.containers);
-              }
-            } else if (data.type === "LOG") {
-              if (data.entry && this.options.onLog) {
-                this.options.onLog(data.entry);
-              }
-            }
+            this.handleEvent(data);
           } catch {
           }
         };
         this.eventSource.onerror = () => {
-          var _a;
+          var _a2;
           this.isConnected = false;
           this.lastError = "Disconnected from Docker Bridge daemon";
           this.notifyStatus();
-          (_a = this.eventSource) == null ? void 0 : _a.close();
+          (_a2 = this.eventSource) == null ? void 0 : _a2.close();
           this.eventSource = null;
           if (this.autoReconnect && !this.reconnectTimer) {
             this.reconnectTimer = setTimeout(() => {
@@ -117,6 +141,26 @@ var DrDebugBundle = (() => {
       }
     }
     async fetchStatus() {
+      if (this.options.proxyFetch) {
+        try {
+          const res = await this.options.proxyFetch("/docker/status");
+          if (res) {
+            this.daemonRunning = res.daemonRunning ?? true;
+            this.isConnected = true;
+            return {
+              connected: true,
+              daemonRunning: this.daemonRunning,
+              error: res.error
+            };
+          }
+        } catch (err) {
+          return {
+            connected: false,
+            daemonRunning: false,
+            error: (err == null ? void 0 : err.message) || "Proxy fetch failed"
+          };
+        }
+      }
       try {
         const res = await fetch(`http://${this.host}:${this.port}/docker/status`);
         if (res.ok) {
@@ -137,6 +181,17 @@ var DrDebugBundle = (() => {
       };
     }
     async fetchContainers() {
+      if (this.options.proxyFetch) {
+        try {
+          const res = await this.options.proxyFetch("/docker/containers");
+          if (Array.isArray(res)) {
+            this.isConnected = true;
+            return res;
+          }
+        } catch {
+          return [];
+        }
+      }
       try {
         const res = await fetch(`http://${this.host}:${this.port}/docker/containers`);
         if (res.ok) {
@@ -147,6 +202,16 @@ var DrDebugBundle = (() => {
       return [];
     }
     async fetchLogs(options) {
+      if (this.options.proxyFetch) {
+        try {
+          const res = await this.options.proxyFetch("/docker/logs", options);
+          if (Array.isArray(res)) {
+            return res;
+          }
+        } catch {
+          return [];
+        }
+      }
       try {
         const params = new URLSearchParams();
         if (options == null ? void 0 : options.container) params.set("container", options.container);
@@ -2535,13 +2600,14 @@ ${targetNetwork.error}
     setDockerContainers(containers) {
       this.dockerInterceptor.setContainers(containers);
     }
-    connectDockerBridge(port = 9229, host = "localhost") {
+    connectDockerBridge(port = 9229, host = "localhost", proxyFetch) {
       if (this.dockerBridgeClient) {
         this.dockerBridgeClient.disconnect();
       }
       this.dockerBridgeClient = new DockerBridgeClient({
         port,
         host,
+        proxyFetch,
         onContainers: (containers) => {
           this.setDockerContainers(containers);
         },
@@ -2551,6 +2617,10 @@ ${targetNetwork.error}
       });
       this.dockerBridgeClient.connect();
       return this.dockerBridgeClient;
+    }
+    setDockerProxyFetch(fn) {
+      var _a;
+      (_a = this.dockerBridgeClient) == null ? void 0 : _a.setProxyFetch(fn);
     }
     getDockerBridgeClient() {
       return this.dockerBridgeClient;
@@ -9445,7 +9515,7 @@ ${msg.content}<end_of_turn>
       });
     }
     update() {
-      var _a, _b;
+      var _a, _b, _c;
       const controller = this.getController();
       const containers = (controller == null ? void 0 : controller.getDockerContainers()) || [];
       const logs = (controller == null ? void 0 : controller.getDockerLogs()) || [];
@@ -9453,6 +9523,8 @@ ${msg.content}<end_of_turn>
       const bridgeStatus = (_a = controller == null ? void 0 : controller.getDockerBridgeClient()) == null ? void 0 : _a.getStatus();
       const isBridgeConnected = (bridgeStatus == null ? void 0 : bridgeStatus.connected) ?? false;
       const isDaemonRunning = (bridgeStatus == null ? void 0 : bridgeStatus.daemonRunning) ?? containers.length > 0;
+      const isHttps = typeof window !== "undefined" && ((_b = window.location) == null ? void 0 : _b.protocol) === "https:";
+      const subText = isBridgeConnected ? `Connected to local daemon via port 9229 \xB7 ${containers.length} containers discovered` : isHttps ? `Bridge offline. Run \`start-docker-bridge\` or reload the extension to stream.` : `Bridge disconnected. Run \`start-docker-bridge\` or \`npx @dr-debug/mcp\` to stream host containers.`;
       this.statusBanner.innerHTML = `
       <div class="dr-debug-docker-status-left">
         <span class="dr-debug-docker-status-dot ${isBridgeConnected ? "online" : "offline"}"></span>
@@ -9464,7 +9536,7 @@ ${msg.content}<end_of_turn>
             </span>
           </div>
           <div class="dr-debug-docker-sub">
-            ${isBridgeConnected ? `Connected to local daemon via port 9229 \xB7 ${containers.length} containers discovered` : `Bridge disconnected. Run \`start-docker-bridge\` or \`npx @dr-debug/mcp\` to stream host containers.`}
+            ${subText}
           </div>
         </div>
       </div>
@@ -9480,7 +9552,7 @@ ${msg.content}<end_of_turn>
         </button>
       </div>
     `;
-      (_b = this.statusBanner.querySelector("#dr-debug-dock-refresh")) == null ? void 0 : _b.addEventListener("click", () => {
+      (_c = this.statusBanner.querySelector("#dr-debug-dock-refresh")) == null ? void 0 : _c.addEventListener("click", () => {
         if (controller) {
           const client = controller.getDockerBridgeClient();
           if (client) {

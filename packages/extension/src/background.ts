@@ -21,8 +21,209 @@ const PROVIDERS: Record<string, { baseURL: string; model: string }> = {
   openai: { baseURL: 'https://api.openai.com/v1', model: 'gpt-4o' }
 }
 
+export class DockerStreamManager {
+  private active = false
+  private abortController: AbortController | null = null
+  private retryTimer: any = null
+  private port = 9229
+  private containers: any[] = []
+  private recentLogs: any[] = []
+  private lastStatus: { connected: boolean; daemonRunning: boolean; error?: string } = {
+    connected: false,
+    daemonRunning: false
+  }
+
+  public start(): void {
+    if (this.active) return
+    this.active = true
+    this.connect()
+  }
+
+  public stop(): void {
+    this.active = false
+    if (this.abortController) {
+      this.abortController.abort()
+      this.abortController = null
+    }
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer)
+      this.retryTimer = null
+    }
+  }
+
+  public getState() {
+    return {
+      type: 'INIT',
+      status: this.lastStatus,
+      containers: this.containers,
+      recentLogs: this.recentLogs
+    }
+  }
+
+  public async proxyFetch(endpoint: string, params?: any): Promise<any> {
+    try {
+      let url = `http://localhost:${this.port}${endpoint}`
+      if (params && typeof params === 'object') {
+        const sp = new URLSearchParams()
+        for (const [k, v] of Object.entries(params)) {
+          if (v !== undefined && v !== null) sp.set(k, String(v))
+        }
+        const qs = sp.toString()
+        if (qs) url += `?${qs}`
+      }
+
+      const res = await fetch(url)
+      if (res.ok) {
+        return await res.json()
+      }
+    } catch (err: any) {
+      return { error: err?.message || 'Proxy fetch failed' }
+    }
+    return null
+  }
+
+  private async connect(): Promise<void> {
+    if (!this.active) return
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer)
+      this.retryTimer = null
+    }
+
+    this.abortController = new AbortController()
+
+    try {
+      // 1. Probe daemon status
+      const statusRes = await fetch(`http://localhost:${this.port}/docker/status`, {
+        signal: AbortSignal.timeout(3000)
+      }).catch(() => null)
+
+      if (!statusRes || !statusRes.ok) {
+        this.lastStatus = {
+          connected: false,
+          daemonRunning: false,
+          error: 'Docker bridge service offline on port ' + this.port
+        }
+        this.broadcast({
+          type: 'STATUS',
+          connected: false,
+          daemonRunning: false,
+          error: this.lastStatus.error
+        })
+        this.scheduleRetry(4000)
+        return
+      }
+
+      const statusData = await statusRes.json().catch(() => ({}))
+      this.lastStatus = {
+        connected: true,
+        daemonRunning: statusData.daemonRunning ?? true
+      }
+
+      // 2. Open SSE stream
+      const res = await fetch(`http://localhost:${this.port}/docker/stream`, {
+        headers: { Accept: 'text/event-stream' },
+        signal: this.abortController.signal
+      })
+
+      if (!res.ok || !res.body) {
+        this.scheduleRetry(5000)
+        return
+      }
+
+      this.broadcast({
+        type: 'STATUS',
+        connected: true,
+        daemonRunning: this.lastStatus.daemonRunning
+      })
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (this.active) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (trimmed.startsWith('data:')) {
+            const jsonStr = trimmed.slice(5).trim()
+            try {
+              const data = JSON.parse(jsonStr)
+              if (data.type === 'INIT') {
+                this.lastStatus = {
+                  connected: true,
+                  daemonRunning: data.status?.daemonRunning ?? true
+                }
+                this.containers = data.containers || []
+                this.recentLogs = data.recentLogs || []
+              } else if (data.type === 'CONTAINERS') {
+                this.containers = data.containers || []
+              } else if (data.type === 'LOG' && data.entry) {
+                if (this.recentLogs.length >= 100) this.recentLogs.shift()
+                this.recentLogs.push(data.entry)
+              }
+              this.broadcast(data)
+            } catch {
+              // keep-alive ping or parse ignore
+            }
+          }
+        }
+      }
+
+      this.scheduleRetry(3000)
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return
+      this.lastStatus = {
+        connected: false,
+        daemonRunning: false,
+        error: err?.message || 'Disconnected from Docker daemon'
+      }
+      this.broadcast({
+        type: 'STATUS',
+        connected: false,
+        daemonRunning: false,
+        error: this.lastStatus.error
+      })
+      this.scheduleRetry(5000)
+    }
+  }
+
+  private scheduleRetry(delayMs: number): void {
+    if (!this.active || this.retryTimer) return
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null
+      this.connect()
+    }, delayMs)
+  }
+
+  private broadcast(data: any): void {
+    if (typeof chrome === 'undefined' || !chrome.tabs?.query) return
+    chrome.tabs.query({}, (tabs: any[]) => {
+      if (chrome.runtime.lastError || !tabs) return
+      for (const tab of tabs) {
+        if (tab.id) {
+          chrome.tabs.sendMessage(tab.id, { type: 'DR_DEBUG_DOCKER_EVENT', data }, () => {
+            void chrome.runtime.lastError
+          })
+        }
+      }
+    })
+  }
+}
+
 export class BackgroundWorker {
   private tabPorts: Map<number, any> = new Map()
+  private dockerManager: DockerStreamManager
+
+  constructor() {
+    this.dockerManager = new DockerStreamManager()
+    this.dockerManager.start()
+  }
 
   private readSettings(): Promise<StoredSettings> {
     return new Promise((resolve) => {
@@ -108,6 +309,19 @@ export class BackgroundWorker {
             sendResponse({ result: { success: false, message: err?.message || 'Failed' } })
           )
         return true
+
+      case 'DR_DEBUG_GET_DOCKER_STATE':
+        sendResponse(this.dockerManager.getState())
+        return false
+
+      case 'DR_DEBUG_DOCKER_FETCH': {
+        const { endpoint, params } = message.payload || {}
+        this.dockerManager
+          .proxyFetch(endpoint || '/docker/status', params)
+          .then((result) => sendResponse({ result }))
+          .catch((err: any) => sendResponse({ error: err?.message || 'Docker fetch failed' }))
+        return true
+      }
 
       default:
         sendResponse({ status: 'unhandled_type', type: message.type })

@@ -25,8 +25,49 @@
       this.autoReconnect = options.autoReconnect !== false;
       this.reconnectIntervalMs = options.reconnectIntervalMs || 5e3;
     }
+    setProxyFetch(fn) {
+      this.options.proxyFetch = fn;
+    }
+    handleEvent(data) {
+      if (!data || typeof data !== "object") return;
+      if (data.type === "INIT") {
+        this.isConnected = true;
+        this.daemonRunning = data.status?.daemonRunning ?? true;
+        this.lastError = void 0;
+        if (data.containers && this.options.onContainers) {
+          this.options.onContainers(data.containers);
+        }
+        if (data.recentLogs && Array.isArray(data.recentLogs) && this.options.onLog) {
+          data.recentLogs.forEach((l) => this.options.onLog?.(l));
+        }
+        this.notifyStatus();
+      } else if (data.type === "CONTAINERS") {
+        this.isConnected = true;
+        if (this.options.onContainers) {
+          this.options.onContainers(data.containers);
+        }
+        this.notifyStatus();
+      } else if (data.type === "LOG") {
+        this.isConnected = true;
+        if (data.entry && this.options.onLog) {
+          this.options.onLog(data.entry);
+        }
+        this.notifyStatus();
+      } else if (data.type === "STATUS") {
+        this.isConnected = data.connected ?? this.isConnected;
+        this.daemonRunning = data.daemonRunning ?? this.daemonRunning;
+        this.lastError = data.error;
+        this.notifyStatus();
+      }
+    }
     connect() {
-      if (typeof window === "undefined" && typeof EventSource === "undefined") {
+      if (typeof window === "undefined") {
+        return;
+      }
+      if (typeof window !== "undefined" && window.location?.protocol === "https:") {
+        return;
+      }
+      if (typeof EventSource === "undefined") {
         return;
       }
       if (this.eventSource) {
@@ -43,25 +84,7 @@
         this.eventSource.onmessage = (evt) => {
           try {
             const data = JSON.parse(evt.data);
-            if (data.type === "INIT") {
-              this.isConnected = true;
-              this.daemonRunning = data.status?.daemonRunning ?? true;
-              if (data.containers && this.options.onContainers) {
-                this.options.onContainers(data.containers);
-              }
-              if (data.recentLogs && Array.isArray(data.recentLogs) && this.options.onLog) {
-                data.recentLogs.forEach((l) => this.options.onLog?.(l));
-              }
-              this.notifyStatus();
-            } else if (data.type === "CONTAINERS") {
-              if (this.options.onContainers) {
-                this.options.onContainers(data.containers);
-              }
-            } else if (data.type === "LOG") {
-              if (data.entry && this.options.onLog) {
-                this.options.onLog(data.entry);
-              }
-            }
+            this.handleEvent(data);
           } catch {
           }
         };
@@ -85,6 +108,26 @@
       }
     }
     async fetchStatus() {
+      if (this.options.proxyFetch) {
+        try {
+          const res = await this.options.proxyFetch("/docker/status");
+          if (res) {
+            this.daemonRunning = res.daemonRunning ?? true;
+            this.isConnected = true;
+            return {
+              connected: true,
+              daemonRunning: this.daemonRunning,
+              error: res.error
+            };
+          }
+        } catch (err) {
+          return {
+            connected: false,
+            daemonRunning: false,
+            error: err?.message || "Proxy fetch failed"
+          };
+        }
+      }
       try {
         const res = await fetch(`http://${this.host}:${this.port}/docker/status`);
         if (res.ok) {
@@ -105,6 +148,17 @@
       };
     }
     async fetchContainers() {
+      if (this.options.proxyFetch) {
+        try {
+          const res = await this.options.proxyFetch("/docker/containers");
+          if (Array.isArray(res)) {
+            this.isConnected = true;
+            return res;
+          }
+        } catch {
+          return [];
+        }
+      }
       try {
         const res = await fetch(`http://${this.host}:${this.port}/docker/containers`);
         if (res.ok) {
@@ -115,6 +169,16 @@
       return [];
     }
     async fetchLogs(options) {
+      if (this.options.proxyFetch) {
+        try {
+          const res = await this.options.proxyFetch("/docker/logs", options);
+          if (Array.isArray(res)) {
+            return res;
+          }
+        } catch {
+          return [];
+        }
+      }
       try {
         const params = new URLSearchParams();
         if (options?.container) params.set("container", options.container);
@@ -2484,13 +2548,14 @@ ${targetNetwork.error}
     setDockerContainers(containers) {
       this.dockerInterceptor.setContainers(containers);
     }
-    connectDockerBridge(port = 9229, host = "localhost") {
+    connectDockerBridge(port = 9229, host = "localhost", proxyFetch) {
       if (this.dockerBridgeClient) {
         this.dockerBridgeClient.disconnect();
       }
       this.dockerBridgeClient = new DockerBridgeClient({
         port,
         host,
+        proxyFetch,
         onContainers: (containers) => {
           this.setDockerContainers(containers);
         },
@@ -2500,6 +2565,9 @@ ${targetNetwork.error}
       });
       this.dockerBridgeClient.connect();
       return this.dockerBridgeClient;
+    }
+    setDockerProxyFetch(fn) {
+      this.dockerBridgeClient?.setProxyFetch(fn);
     }
     getDockerBridgeClient() {
       return this.dockerBridgeClient;
@@ -9374,6 +9442,8 @@ ${msg.content}<end_of_turn>
       const bridgeStatus = controller?.getDockerBridgeClient()?.getStatus();
       const isBridgeConnected = bridgeStatus?.connected ?? false;
       const isDaemonRunning = bridgeStatus?.daemonRunning ?? containers.length > 0;
+      const isHttps = typeof window !== "undefined" && window.location?.protocol === "https:";
+      const subText = isBridgeConnected ? `Connected to local daemon via port 9229 \xB7 ${containers.length} containers discovered` : isHttps ? `Bridge offline. Run \`start-docker-bridge\` or reload the extension to stream.` : `Bridge disconnected. Run \`start-docker-bridge\` or \`npx @dr-debug/mcp\` to stream host containers.`;
       this.statusBanner.innerHTML = `
       <div class="dr-debug-docker-status-left">
         <span class="dr-debug-docker-status-dot ${isBridgeConnected ? "online" : "offline"}"></span>
@@ -9385,7 +9455,7 @@ ${msg.content}<end_of_turn>
             </span>
           </div>
           <div class="dr-debug-docker-sub">
-            ${isBridgeConnected ? `Connected to local daemon via port 9229 \xB7 ${containers.length} containers discovered` : `Bridge disconnected. Run \`start-docker-bridge\` or \`npx @dr-debug/mcp\` to stream host containers.`}
+            ${subText}
           </div>
         </div>
       </div>
@@ -16849,6 +16919,7 @@ Direction: ${finding.remediation}`
       this.listenForPushes();
       this.bootInstance();
       void this.applySettings();
+      void this.syncDockerState();
     }
     async requestSettings() {
       return new Promise((resolve) => {
@@ -16868,6 +16939,82 @@ Direction: ${finding.remediation}`
         window.addEventListener("message", onMessage);
         window.postMessage({ source: REQ, id, op: "GET_SETTINGS" }, "*");
       });
+    }
+    async requestDockerState() {
+      return new Promise((resolve) => {
+        const id = newRequestId();
+        const timer = setTimeout(() => {
+          window.removeEventListener("message", onMessage);
+          resolve(null);
+        }, 1500);
+        const onMessage = (event) => {
+          if (event.source !== window) return;
+          const data = event.data;
+          if (!data || data.source !== RES || data.id !== id) return;
+          clearTimeout(timer);
+          window.removeEventListener("message", onMessage);
+          resolve(data.ok ? data.result : null);
+        };
+        window.addEventListener("message", onMessage);
+        window.postMessage({ source: REQ, id, op: "GET_DOCKER_STATE" }, "*");
+      });
+    }
+    async proxyDockerFetch(endpoint, params) {
+      return new Promise((resolve) => {
+        const id = newRequestId();
+        const timer = setTimeout(() => {
+          window.removeEventListener("message", onMessage);
+          resolve(null);
+        }, 3e3);
+        const onMessage = (event) => {
+          if (event.source !== window) return;
+          const data = event.data;
+          if (!data || data.source !== RES || data.id !== id) return;
+          clearTimeout(timer);
+          window.removeEventListener("message", onMessage);
+          resolve(data.ok ? data.result : null);
+        };
+        window.addEventListener("message", onMessage);
+        window.postMessage({ source: REQ, id, op: "DOCKER_FETCH", payload: { endpoint, params } }, "*");
+      });
+    }
+    async syncDockerState(attempt = 0) {
+      const state = await this.requestDockerState();
+      if (state) {
+        this.handleDockerEvent(state);
+        return;
+      }
+      if (attempt < 4) {
+        setTimeout(() => void this.syncDockerState(attempt + 1), 500 * (attempt + 1));
+      }
+    }
+    handleDockerEvent(data) {
+      if (!data) return;
+      const controller = this.instance?.getController();
+      if (!controller) return;
+      const dockerClient = controller.getDockerBridgeClient();
+      if (dockerClient) {
+        dockerClient.handleEvent(data);
+      }
+      if (data.type === "INIT") {
+        if (data.containers) controller.setDockerContainers(data.containers);
+        if (Array.isArray(data.recentLogs)) {
+          data.recentLogs.forEach((l) => {
+            controller.pushDockerLog(l.containerName, l.message, l.stream, l.timestamp, l.level);
+          });
+        }
+      } else if (data.type === "CONTAINERS") {
+        if (data.containers) controller.setDockerContainers(data.containers);
+      } else if (data.type === "LOG" && data.entry) {
+        controller.pushDockerLog(
+          data.entry.containerName,
+          data.entry.message,
+          data.entry.stream,
+          data.entry.timestamp,
+          data.entry.level
+        );
+      }
+      this.instance?.getUI()?.updateDocker();
     }
     /**
      * Decides whether to route through the worker-backed LLM or stay on the
@@ -16900,6 +17047,9 @@ Direction: ${finding.remediation}`
           case "SETTINGS_CHANGED":
             void this.applySettings();
             break;
+          case "DOCKER_EVENT":
+            this.handleDockerEvent(data.payload);
+            break;
         }
       });
     }
@@ -16907,6 +17057,8 @@ Direction: ${finding.remediation}`
       if (this.instance) return;
       this.instance = new DrDebug({ enableUI: true });
       window.__DR_DEBUG__ = this.instance;
+      const controller = this.instance.getController();
+      controller.setDockerProxyFetch((endpoint, params) => this.proxyDockerFetch(endpoint, params));
     }
     getInstance() {
       return this.instance;

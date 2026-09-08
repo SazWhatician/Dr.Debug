@@ -63,6 +63,19 @@ window.addEventListener('message', async (event: MessageEvent) => {
         break
       }
 
+      case 'GET_DOCKER_STATE': {
+        const res = await askWorker('DR_DEBUG_GET_DOCKER_STATE')
+        respond(msg.id, true, res)
+        break
+      }
+
+      case 'DOCKER_FETCH': {
+        const res = await askWorker('DR_DEBUG_DOCKER_FETCH', msg.payload)
+        if (res?.error) respond(msg.id, false, undefined, res.error)
+        else respond(msg.id, true, res?.result)
+        break
+      }
+
       default:
         respond(msg.id, false, undefined, `Unknown bridge op: ${msg.op}`)
     }
@@ -85,6 +98,10 @@ if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
         break
       case 'DR_DEBUG_UPDATE_SETTINGS':
         push('SETTINGS_CHANGED', message.settings)
+        sendResponse({ status: 'forwarded' })
+        break
+      case 'DR_DEBUG_DOCKER_EVENT':
+        push('DOCKER_EVENT', message.data)
         sendResponse({ status: 'forwarded' })
         break
       default:

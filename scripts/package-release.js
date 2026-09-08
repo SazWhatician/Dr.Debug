@@ -7,8 +7,11 @@ const root = process.cwd()
 const releaseDir = path.resolve(root, 'release')
 const extDistDir = path.resolve(root, 'packages/extension/dist')
 
+const rootPkg = JSON.parse(fs.readFileSync(path.resolve(root, 'package.json'), 'utf-8'))
+const currentVersion = rootPkg.version || '0.1.4'
+
 async function packageRelease() {
-  console.log('🚀 Packaging Dr. Debug for Distribution & Download...')
+  console.log(`🚀 Packaging Dr. Debug v${currentVersion} for Distribution & Download...`)
   console.log('👨‍💻 Author: Saswat Mohanty (@SazWhatician)')
   console.log('🔗 GitHub: https://github.com/SazWhatician')
   console.log('🔗 LinkedIn: https://www.linkedin.com/in/saswat-mohanty-0a4549331/\n')
@@ -197,7 +200,7 @@ All pre-built, ready-to-run release assets for **Dr. Debug** are compiled in thi
 | **[\`chrome-extension/\`](./chrome-extension/)** | Unpacked Chrome Extension Folder | Point Chrome directly to this folder via "Load unpacked" |
 | **[\`dr-debug.standalone.min.js\`](./dr-debug.standalone.min.js)** | Single-file zero-dependency in-browser bundle (minified) | Drop into any HTML with \`<script src="dr-debug.standalone.min.js"></script>\` |
 | **[\`dr-debug.standalone.js\`](./dr-debug.standalone.js)** | Development readable bundle with source maps & comments | For local debugging or embedding |
-| **\`dr-debug-*.tgz\`** | Standard NPM Package Tarball | Install with \`npm install ./dr-debug-0.1.4.tgz\` |
+| **\`dr-debug-*.tgz\`** | Standard NPM Package Tarball | Install with \`npm install ./dr-debug-${currentVersion}.tgz\` |
 
 ---
 

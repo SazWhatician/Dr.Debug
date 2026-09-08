@@ -183,13 +183,18 @@ export class DebugController {
     this.dockerInterceptor.setContainers(containers)
   }
 
-  public connectDockerBridge(port = 9229, host = 'localhost'): DockerBridgeClient {
+  public connectDockerBridge(
+    port = 9229,
+    host = 'localhost',
+    proxyFetch?: (endpoint: string, params?: any) => Promise<any>
+  ): DockerBridgeClient {
     if (this.dockerBridgeClient) {
       this.dockerBridgeClient.disconnect()
     }
     this.dockerBridgeClient = new DockerBridgeClient({
       port,
       host,
+      proxyFetch,
       onContainers: (containers) => {
         this.setDockerContainers(containers)
       },
@@ -199,6 +204,10 @@ export class DebugController {
     })
     this.dockerBridgeClient.connect()
     return this.dockerBridgeClient
+  }
+
+  public setDockerProxyFetch(fn: (endpoint: string, params?: any) => Promise<any>): void {
+    this.dockerBridgeClient?.setProxyFetch(fn)
   }
 
   public getDockerBridgeClient(): DockerBridgeClient | undefined {

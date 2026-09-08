@@ -44,6 +44,17 @@
           respond(msg.id, true, res?.result);
           break;
         }
+        case "GET_DOCKER_STATE": {
+          const res = await askWorker("DR_DEBUG_GET_DOCKER_STATE");
+          respond(msg.id, true, res);
+          break;
+        }
+        case "DOCKER_FETCH": {
+          const res = await askWorker("DR_DEBUG_DOCKER_FETCH", msg.payload);
+          if (res?.error) respond(msg.id, false, void 0, res.error);
+          else respond(msg.id, true, res?.result);
+          break;
+        }
         default:
           respond(msg.id, false, void 0, `Unknown bridge op: ${msg.op}`);
       }
@@ -64,6 +75,10 @@
           break;
         case "DR_DEBUG_UPDATE_SETTINGS":
           push("SETTINGS_CHANGED", message.settings);
+          sendResponse({ status: "forwarded" });
+          break;
+        case "DR_DEBUG_DOCKER_EVENT":
+          push("DOCKER_EVENT", message.data);
           sendResponse({ status: "forwarded" });
           break;
         default:

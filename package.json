@@ -22,6 +22,7 @@
     "test:coverage": "vitest run --coverage",
     "mcp": "node packages/mcp/dist/cli.js",
     "build": "tsc -b tsconfig.build.json && npm run build:extension",
+    "version:sync": "node scripts/sync-version.js",
     "typecheck": "tsc --noEmit",
     "clean": "tsc -b tsconfig.build.json --clean",
     "preview": "vite preview"

@@ -22,6 +22,7 @@ export class ContentScriptBridge {
     this.bootInstance()
 
     void this.applySettings()
+    void this.syncDockerState()
   }
 
   private async requestSettings(): Promise<Record<string, any>> {
@@ -44,6 +45,94 @@ export class ContentScriptBridge {
       window.addEventListener('message', onMessage)
       window.postMessage({ source: REQ, id, op: 'GET_SETTINGS' }, '*')
     })
+  }
+
+  private async requestDockerState(): Promise<any> {
+    return new Promise((resolve) => {
+      const id = newRequestId()
+      const timer = setTimeout(() => {
+        window.removeEventListener('message', onMessage)
+        resolve(null)
+      }, 1500)
+
+      const onMessage = (event: MessageEvent) => {
+        if (event.source !== window) return
+        const data = event.data
+        if (!data || data.source !== RES || data.id !== id) return
+        clearTimeout(timer)
+        window.removeEventListener('message', onMessage)
+        resolve(data.ok ? data.result : null)
+      }
+
+      window.addEventListener('message', onMessage)
+      window.postMessage({ source: REQ, id, op: 'GET_DOCKER_STATE' }, '*')
+    })
+  }
+
+  private async proxyDockerFetch(endpoint: string, params?: any): Promise<any> {
+    return new Promise((resolve) => {
+      const id = newRequestId()
+      const timer = setTimeout(() => {
+        window.removeEventListener('message', onMessage)
+        resolve(null)
+      }, 3000)
+
+      const onMessage = (event: MessageEvent) => {
+        if (event.source !== window) return
+        const data = event.data
+        if (!data || data.source !== RES || data.id !== id) return
+        clearTimeout(timer)
+        window.removeEventListener('message', onMessage)
+        resolve(data.ok ? data.result : null)
+      }
+
+      window.addEventListener('message', onMessage)
+      window.postMessage({ source: REQ, id, op: 'DOCKER_FETCH', payload: { endpoint, params } }, '*')
+    })
+  }
+
+  private async syncDockerState(attempt = 0): Promise<void> {
+    const state = await this.requestDockerState()
+    if (state) {
+      this.handleDockerEvent(state)
+      return
+    }
+
+    if (attempt < 4) {
+      setTimeout(() => void this.syncDockerState(attempt + 1), 500 * (attempt + 1))
+    }
+  }
+
+  private handleDockerEvent(data: any): void {
+    if (!data) return
+    const controller = this.instance?.getController()
+    if (!controller) return
+
+    const dockerClient = controller.getDockerBridgeClient()
+    if (dockerClient) {
+      dockerClient.handleEvent(data)
+    }
+
+    if (data.type === 'INIT') {
+      if (data.containers) controller.setDockerContainers(data.containers)
+      if (Array.isArray(data.recentLogs)) {
+        data.recentLogs.forEach((l: any) => {
+          controller.pushDockerLog(l.containerName, l.message, l.stream, l.timestamp, l.level)
+        })
+      }
+    } else if (data.type === 'CONTAINERS') {
+      if (data.containers) controller.setDockerContainers(data.containers)
+    } else if (data.type === 'LOG' && data.entry) {
+      controller.pushDockerLog(
+        data.entry.containerName,
+        data.entry.message,
+        data.entry.stream,
+        data.entry.timestamp,
+        data.entry.level
+      )
+    }
+
+    this.instance?.getUI()?.updateDocker()
   }
 
   /**
@@ -84,6 +173,9 @@ export class ContentScriptBridge {
         case 'SETTINGS_CHANGED':
           void this.applySettings()
           break
+        case 'DOCKER_EVENT':
+          this.handleDockerEvent(data.payload)
+          break
       }
     })
   }
@@ -95,6 +187,10 @@ export class ContentScriptBridge {
     // exists. Either way the key stays out of this world.
     this.instance = new DrDebug({ enableUI: true })
     ;(window as any).__DR_DEBUG__ = this.instance
+
+    // Connect controller's proxy fetch to the extension background bridge
+    const controller = this.instance.getController()
+    controller.setDockerProxyFetch((endpoint, params) => this.proxyDockerFetch(endpoint, params))
   }
 
   public getInstance(): DrDebug | undefined {

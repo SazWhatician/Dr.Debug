@@ -13,7 +13,12 @@ export const RES = 'DR_DEBUG_BRIDGE_RES'
 /** Bridge -> page, unprompted (settings changed in the popup). */
 export const PUSH = 'DR_DEBUG_BRIDGE_PUSH'
 
-export type BridgeOp = 'GET_SETTINGS' | 'LLM_CHAT' | 'TEST_CONNECTION'
+export type BridgeOp =
+  | 'GET_SETTINGS'
+  | 'LLM_CHAT'
+  | 'TEST_CONNECTION'
+  | 'GET_DOCKER_STATE'
+  | 'DOCKER_FETCH'
 
 export interface BridgeRequest {
   source: typeof REQ
@@ -32,7 +37,7 @@ export interface BridgeResponse {
 
 export interface BridgePush {
   source: typeof PUSH
-  event: 'SETTINGS_CHANGED' | 'TOGGLE_UI' | 'INVESTIGATE'
+  event: 'SETTINGS_CHANGED' | 'TOGGLE_UI' | 'INVESTIGATE' | 'DOCKER_EVENT'
   payload?: any
 }
 
