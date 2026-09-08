@@ -132,7 +132,7 @@ export class SettingsModal {
           <div class="dr-debug-settings-update-banner">
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
-              <span class="dr-debug-update-version">Dr. Debug v0.1.5</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.6</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
@@ -265,7 +265,10 @@ export class SettingsModal {
   public getFormValues(): SettingsData {
     const provider = this.providerSelect.value as any
     const apiKey = this.apiKeyInput.value.trim()
-    const model = this.modelInput.value.trim() || 'llama-3.3-70b-versatile'
+    let model = this.modelInput.value.trim()
+    if (!model || model === 'llama-3.3-70b-versatile') {
+      model = provider === 'groq' ? 'openai/gpt-oss-120b' : provider === 'gemini' ? 'gemini-flash-latest' : 'gpt-4o'
+    }
     const baseURL = this.baseURLInput.value.trim() || undefined
     const theme = (this.themeSelect?.value as DrDebugTheme) || 'dr-debug'
 
@@ -292,6 +295,9 @@ export class SettingsModal {
     }
 
     if (loaded) {
+      if (loaded.model === 'llama-3.3-70b-versatile') {
+        loaded.model = 'openai/gpt-oss-120b'
+      }
       if (loaded.theme && this.themeSelect) {
         this.themeSelect.value = loaded.theme
         this.options.onThemeChange?.(loaded.theme)
@@ -308,9 +314,9 @@ export class SettingsModal {
       }
       if (loaded.provider) this.providerSelect.value = loaded.provider
       if (loaded.apiKey) this.apiKeyInput.value = loaded.apiKey
-      if (loaded.model) this.modelInput.value = loaded.model
       if (loaded.baseURL) this.baseURLInput.value = loaded.baseURL
       this.handleProviderChange()
+      if (loaded.model) this.modelInput.value = loaded.model
       if (loaded.apiKey) this.apiKeyInput.value = loaded.apiKey
     } else {
       try {

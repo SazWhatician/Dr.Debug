@@ -15,6 +15,8 @@ import {
 import { DrDebugUI } from '@dr-debug/ui'
 
 export interface DrDebugOptions {
+  provider?: 'groq' | 'openai' | 'gemini' | 'litert' | string
+  modelProvider?: string
   model?: string
   apiKey?: string
   baseURL?: string
@@ -53,10 +55,11 @@ export class DrDebug {
     } else if (options.liteRT || (options.model && options.model.toLowerCase().includes('litert'))) {
       this.llmClient = new LiteRTClient(options.liteRT || { modelName: options.model })
     } else if (options.apiKey || options.baseURL || options.model) {
+      const isGroq = options.apiKey?.startsWith('gsk_') || options.baseURL?.includes('groq.com')
       this.llmClient = new OpenAIClient({
         apiKey: options.apiKey || '',
         baseURL: options.baseURL,
-        model: options.model || 'gpt-4o'
+        model: options.model || (isGroq ? 'openai/gpt-oss-120b' : 'gpt-4o')
       })
     } else {
       // No model configured: use the deterministic local engine rather than a
@@ -118,10 +121,15 @@ export class DrDebug {
     } else if (config.liteRT || (config.model && config.model.toLowerCase().includes('litert'))) {
       this.llmClient = new LiteRTClient(config.liteRT || { modelName: config.model })
     } else if (config.apiKey || config.baseURL || config.model) {
+      const isGroq = config.apiKey?.startsWith('gsk_') || config.baseURL?.includes('groq.com') || this.options.provider === 'groq'
+      let model = config.model
+      if (model === 'llama-3.3-70b-versatile' || (!model && isGroq)) {
+        model = 'openai/gpt-oss-120b'
+      }
       this.llmClient = new OpenAIClient({
         apiKey: config.apiKey || '',
         baseURL: config.baseURL,
-        model: config.model || 'llama-3.3-70b-versatile'
+        model: model || 'openai/gpt-oss-120b'
       })
     }
     this.core = new DrDebugCore(this.controller, this.llmClient)
@@ -134,10 +142,15 @@ export class DrDebug {
     if (targetConfig.liteRT || (targetConfig.model && targetConfig.model.toLowerCase().includes('litert'))) {
       client = new LiteRTClient(targetConfig.liteRT || { modelName: targetConfig.model })
     } else {
+      const isGroq = targetConfig.apiKey?.startsWith('gsk_') || targetConfig.baseURL?.includes('groq.com') || targetConfig.provider === 'groq'
+      let model = targetConfig.model
+      if (model === 'llama-3.3-70b-versatile' || (!model && isGroq)) {
+        model = 'openai/gpt-oss-120b'
+      }
       client = new OpenAIClient({
         apiKey: targetConfig.apiKey || '',
         baseURL: targetConfig.baseURL,
-        model: targetConfig.model || 'llama-3.3-70b-versatile'
+        model: model || 'openai/gpt-oss-120b'
       })
     }
 

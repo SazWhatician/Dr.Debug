@@ -39,7 +39,7 @@ import { DrDebug } from 'dr-debug'
 // Initialize the autonomous debugging copilot
 const doctor = new DrDebug({
   apiKey: process.env.GROQ_API_KEY || 'your-llm-api-key',
-  model: 'llama-3.3-70b-versatile', // or 'openai:gpt-4o', 'claude-3-5-sonnet', or local 'litert'
+  model: 'openai/gpt-oss-120b', // or 'openai:gpt-4o', 'claude-3-5-sonnet', or local 'litert'
   enableUI: true,      // Renders the sleek Shadow DOM HUD & floating widget
   enableDocker: true,  // Connects with local Docker bridge for backend logs
   enableMCP: true      // Enables IDE live synchronization
@@ -58,7 +58,7 @@ Add this script to your `index.html` or entry template:
   type="module" 
   src="https://unpkg.com/dr-debug/dist/standalone.js"
   data-api-key="your-api-key"
-  data-model="llama-3.3-70b-versatile">
+  data-model="openai/gpt-oss-120b">
 </script>
 ```
 
@@ -79,7 +79,7 @@ Add this script to your `index.html` or entry template:
 | Option | Type | Default | Description |
 |:---|:---|:---|:---|
 | `apiKey` | `string` | `undefined` | LLM API key (Groq, OpenAI, Anthropic, or Gemini) |
-| `model` | `string` | `'llama-3.3-70b-versatile'` | Target model name or provider format |
+| `model` | `string` | `'openai/gpt-oss-120b'` | Target model name or provider format |
 | `enableUI` | `boolean` | `true` | Show floating button and diagnostic modal |
 | `enableDocker` | `boolean` | `false` | Enable Docker container telemetry sync |
 | `enableMCP` | `boolean` | `false` | Enable Model Context Protocol websocket bridge |

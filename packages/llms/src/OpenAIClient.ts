@@ -10,8 +10,21 @@ export class OpenAIClient implements ILLMClient {
 
   constructor(config: LLMConfig) {
     this.apiKey = config.apiKey || ''
-    this.baseURL = (config.baseURL || 'https://api.openai.com/v1').replace(/\/+$/, '')
-    this.model = config.model || 'gpt-4o'
+    const isGroqKey = this.apiKey.startsWith('gsk_')
+    const resolvedBaseURL = config.baseURL || (isGroqKey ? 'https://api.groq.com/openai/v1' : 'https://api.openai.com/v1')
+    this.baseURL = resolvedBaseURL.replace(/\/+$/, '')
+
+    const isGroq = isGroqKey || this.baseURL.includes('groq.com')
+    let resolvedModel = config.model
+    if (isGroq) {
+      if (!resolvedModel || resolvedModel === 'gpt-4o' || resolvedModel === 'llama-3.3-70b-versatile') {
+        resolvedModel = 'openai/gpt-oss-120b'
+      }
+    } else if (resolvedModel === 'llama-3.3-70b-versatile') {
+      resolvedModel = 'openai/gpt-oss-120b'
+    }
+
+    this.model = resolvedModel || 'gpt-4o'
     this.temperature = config.temperature ?? 0.1
     this.maxTokens = config.maxTokens ?? 2048
     this.headers = config.headers || {}

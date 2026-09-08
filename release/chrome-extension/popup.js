@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load saved settings
   if (typeof chrome !== 'undefined' && chrome.storage?.local) {
     chrome.storage.local.get(['provider', 'apiKey', 'model', 'baseURL'], (data) => {
+      if (data.model === 'llama-3.3-70b-versatile') {
+        chrome.storage.local.set({ model: 'openai/gpt-oss-120b' })
+      }
       if (data.provider && providerSelect) {
         providerSelect.value = data.provider
       }
@@ -86,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnTestKey) btnTestKey.textContent = '⏳ Testing...'
 
     let testUrl = 'https://api.groq.com/openai/v1/chat/completions'
-    let testModel = 'llama-3.3-70b-versatile'
+    let testModel = 'openai/gpt-oss-120b'
     if (provider === 'openai') {
       testUrl = 'https://api.openai.com/v1/chat/completions'
       testModel = 'gpt-4o-mini'
@@ -129,11 +132,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const apiKey = apiKeyInput?.value?.trim() || ''
 
     let baseURL = undefined
-    let model = 'llama-3.3-70b-versatile'
+    let model = 'openai/gpt-oss-120b'
 
     if (provider === 'groq') {
       baseURL = 'https://api.groq.com/openai/v1'
-      model = 'llama-3.3-70b-versatile'
+      model = 'openai/gpt-oss-120b'
     } else if (provider === 'openai') {
       baseURL = undefined
       model = 'gpt-4o'

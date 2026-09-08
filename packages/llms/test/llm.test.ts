@@ -34,12 +34,27 @@ describe('LLM Adapters', () => {
     const client = new OpenAIClient({
       apiKey: '',
       baseURL: 'https://api.groq.com/openai/v1',
-      model: 'llama-3.3-70b-versatile'
+      model: 'openai/gpt-oss-120b'
     })
 
     const res = await client.testConnection()
     expect(res.success).toBe(false)
     expect(res.message).toContain('No API key provided')
+  })
+
+  it('OpenAIClient auto-detects Groq keys and normalizes legacy models', () => {
+    const groqClient = new OpenAIClient({
+      apiKey: 'gsk_test123456789'
+    })
+    expect((groqClient as any).baseURL).toBe('https://api.groq.com/openai/v1')
+    expect((groqClient as any).model).toBe('openai/gpt-oss-120b')
+
+    const legacyClient = new OpenAIClient({
+      apiKey: 'gsk_test123456789',
+      baseURL: 'https://api.groq.com/openai/v1',
+      model: 'llama-3.3-70b-versatile'
+    })
+    expect((legacyClient as any).model).toBe('openai/gpt-oss-120b')
   })
 })
 

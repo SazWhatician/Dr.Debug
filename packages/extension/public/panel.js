@@ -443,6 +443,9 @@ const dtStatusMsg = document.getElementById('dt-status-msg')
 
 if (typeof chrome !== 'undefined' && chrome.storage?.local) {
   chrome.storage.local.get(['provider', 'apiKey', 'model', 'baseURL'], (data) => {
+    if (data.model === 'llama-3.3-70b-versatile') {
+      chrome.storage.local.set({ model: 'openai/gpt-oss-120b' })
+    }
     if (data.provider && dtProvider) dtProvider.value = data.provider
     if (data.apiKey && dtApiKey) dtApiKey.value = data.apiKey
   })
@@ -453,11 +456,11 @@ btnDtSave?.addEventListener('click', () => {
   const apiKey = dtApiKey?.value?.trim() || ''
 
   let baseURL = undefined
-  let model = 'llama-3.3-70b-versatile'
+  let model = 'openai/gpt-oss-120b'
 
   if (provider === 'groq') {
     baseURL = 'https://api.groq.com/openai/v1'
-    model = 'llama-3.3-70b-versatile'
+    model = 'openai/gpt-oss-120b'
   } else if (provider === 'openai') {
     baseURL = undefined
     model = 'gpt-4o'
@@ -506,7 +509,7 @@ btnDtTest?.addEventListener('click', async () => {
   }
 
   let testUrl = 'https://api.groq.com/openai/v1/chat/completions'
-  let testModel = 'llama-3.3-70b-versatile'
+  let testModel = 'openai/gpt-oss-120b'
   if (provider === 'openai') {
     testUrl = 'https://api.openai.com/v1/chat/completions'
     testModel = 'gpt-4o-mini'

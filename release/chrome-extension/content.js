@@ -8967,8 +8967,19 @@ ${msg.content}<end_of_turn>
     headers;
     constructor(config) {
       this.apiKey = config.apiKey || "";
-      this.baseURL = (config.baseURL || "https://api.openai.com/v1").replace(/\/+$/, "");
-      this.model = config.model || "gpt-4o";
+      const isGroqKey = this.apiKey.startsWith("gsk_");
+      const resolvedBaseURL = config.baseURL || (isGroqKey ? "https://api.groq.com/openai/v1" : "https://api.openai.com/v1");
+      this.baseURL = resolvedBaseURL.replace(/\/+$/, "");
+      const isGroq = isGroqKey || this.baseURL.includes("groq.com");
+      let resolvedModel = config.model;
+      if (isGroq) {
+        if (!resolvedModel || resolvedModel === "gpt-4o" || resolvedModel === "llama-3.3-70b-versatile") {
+          resolvedModel = "openai/gpt-oss-120b";
+        }
+      } else if (resolvedModel === "llama-3.3-70b-versatile") {
+        resolvedModel = "openai/gpt-oss-120b";
+      }
+      this.model = resolvedModel || "gpt-4o";
       this.temperature = config.temperature ?? 0.1;
       this.maxTokens = config.maxTokens ?? 2048;
       this.headers = config.headers || {};
@@ -10605,7 +10616,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
           <div class="dr-debug-settings-update-banner">
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
-              <span class="dr-debug-update-version">Dr. Debug v0.1.5</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.6</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
@@ -10720,7 +10731,10 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     getFormValues() {
       const provider = this.providerSelect.value;
       const apiKey = this.apiKeyInput.value.trim();
-      const model = this.modelInput.value.trim() || "llama-3.3-70b-versatile";
+      let model = this.modelInput.value.trim();
+      if (!model || model === "llama-3.3-70b-versatile") {
+        model = provider === "groq" ? "openai/gpt-oss-120b" : provider === "gemini" ? "gemini-flash-latest" : "gpt-4o";
+      }
       const baseURL = this.baseURLInput.value.trim() || void 0;
       const theme = this.themeSelect?.value || "dr-debug";
       return {
@@ -10742,6 +10756,9 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         }
       }
       if (loaded) {
+        if (loaded.model === "llama-3.3-70b-versatile") {
+          loaded.model = "openai/gpt-oss-120b";
+        }
         if (loaded.theme && this.themeSelect) {
           this.themeSelect.value = loaded.theme;
           this.options.onThemeChange?.(loaded.theme);
@@ -10757,9 +10774,9 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         }
         if (loaded.provider) this.providerSelect.value = loaded.provider;
         if (loaded.apiKey) this.apiKeyInput.value = loaded.apiKey;
-        if (loaded.model) this.modelInput.value = loaded.model;
         if (loaded.baseURL) this.baseURLInput.value = loaded.baseURL;
         this.handleProviderChange();
+        if (loaded.model) this.modelInput.value = loaded.model;
         if (loaded.apiKey) this.apiKeyInput.value = loaded.apiKey;
       } else {
         try {
@@ -16692,10 +16709,11 @@ Direction: ${finding.remediation}`
       } else if (options.liteRT || options.model && options.model.toLowerCase().includes("litert")) {
         this.llmClient = new LiteRTClient(options.liteRT || { modelName: options.model });
       } else if (options.apiKey || options.baseURL || options.model) {
+        const isGroq = options.apiKey?.startsWith("gsk_") || options.baseURL?.includes("groq.com");
         this.llmClient = new OpenAIClient({
           apiKey: options.apiKey || "",
           baseURL: options.baseURL,
-          model: options.model || "gpt-4o"
+          model: options.model || (isGroq ? "openai/gpt-oss-120b" : "gpt-4o")
         });
       } else {
         this.llmClient = new HeuristicLLMClient(this.controller);
@@ -16741,10 +16759,15 @@ Direction: ${finding.remediation}`
       } else if (config.liteRT || config.model && config.model.toLowerCase().includes("litert")) {
         this.llmClient = new LiteRTClient(config.liteRT || { modelName: config.model });
       } else if (config.apiKey || config.baseURL || config.model) {
+        const isGroq = config.apiKey?.startsWith("gsk_") || config.baseURL?.includes("groq.com") || this.options.provider === "groq";
+        let model = config.model;
+        if (model === "llama-3.3-70b-versatile" || !model && isGroq) {
+          model = "openai/gpt-oss-120b";
+        }
         this.llmClient = new OpenAIClient({
           apiKey: config.apiKey || "",
           baseURL: config.baseURL,
-          model: config.model || "llama-3.3-70b-versatile"
+          model: model || "openai/gpt-oss-120b"
         });
       }
       this.core = new DrDebugCore(this.controller, this.llmClient);
@@ -16755,10 +16778,15 @@ Direction: ${finding.remediation}`
       if (targetConfig.liteRT || targetConfig.model && targetConfig.model.toLowerCase().includes("litert")) {
         client = new LiteRTClient(targetConfig.liteRT || { modelName: targetConfig.model });
       } else {
+        const isGroq = targetConfig.apiKey?.startsWith("gsk_") || targetConfig.baseURL?.includes("groq.com") || targetConfig.provider === "groq";
+        let model = targetConfig.model;
+        if (model === "llama-3.3-70b-versatile" || !model && isGroq) {
+          model = "openai/gpt-oss-120b";
+        }
         client = new OpenAIClient({
           apiKey: targetConfig.apiKey || "",
           baseURL: targetConfig.baseURL,
-          model: targetConfig.model || "llama-3.3-70b-versatile"
+          model: model || "openai/gpt-oss-120b"
         });
       }
       if (client instanceof OpenAIClient) {

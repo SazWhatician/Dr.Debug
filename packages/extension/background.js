@@ -8,8 +8,19 @@ var OpenAIClient = class {
   headers;
   constructor(config) {
     this.apiKey = config.apiKey || "";
-    this.baseURL = (config.baseURL || "https://api.openai.com/v1").replace(/\/+$/, "");
-    this.model = config.model || "gpt-4o";
+    const isGroqKey = this.apiKey.startsWith("gsk_");
+    const resolvedBaseURL = config.baseURL || (isGroqKey ? "https://api.groq.com/openai/v1" : "https://api.openai.com/v1");
+    this.baseURL = resolvedBaseURL.replace(/\/+$/, "");
+    const isGroq = isGroqKey || this.baseURL.includes("groq.com");
+    let resolvedModel = config.model;
+    if (isGroq) {
+      if (!resolvedModel || resolvedModel === "gpt-4o" || resolvedModel === "llama-3.3-70b-versatile") {
+        resolvedModel = "openai/gpt-oss-120b";
+      }
+    } else if (resolvedModel === "llama-3.3-70b-versatile") {
+      resolvedModel = "openai/gpt-oss-120b";
+    }
+    this.model = resolvedModel || "gpt-4o";
     this.temperature = config.temperature ?? 0.1;
     this.maxTokens = config.maxTokens ?? 2048;
     this.headers = config.headers || {};
@@ -138,7 +149,7 @@ var OpenAIClient = class {
 
 // packages/extension/src/background.ts
 var PROVIDERS = {
-  groq: { baseURL: "https://api.groq.com/openai/v1", model: "llama-3.3-70b-versatile" },
+  groq: { baseURL: "https://api.groq.com/openai/v1", model: "openai/gpt-oss-120b" },
   openai: { baseURL: "https://api.openai.com/v1", model: "gpt-4o" }
 };
 var DockerStreamManager = class {
@@ -334,14 +345,20 @@ var BackgroundWorker = class {
    */
   async resolveClient() {
     const settings = await this.readSettings();
-    const preset = PROVIDERS[settings.provider || "groq"] || PROVIDERS.groq;
+    const isGroqKey = Boolean(settings.apiKey?.startsWith("gsk_"));
+    const provider = isGroqKey && !settings.provider ? "groq" : settings.provider || "groq";
+    const preset = PROVIDERS[provider] || PROVIDERS.groq;
     if (!settings.apiKey) {
       throw new Error("No API key saved. Open the Dr. Debug popup, paste your key and press Save.");
+    }
+    let model = settings.model || preset.model;
+    if (model === "llama-3.3-70b-versatile") {
+      model = "openai/gpt-oss-120b";
     }
     return new OpenAIClient({
       apiKey: settings.apiKey,
       baseURL: settings.baseURL || preset.baseURL,
-      model: settings.model || preset.model
+      model
     });
   }
   handleMessage(message, sender, sendResponse) {

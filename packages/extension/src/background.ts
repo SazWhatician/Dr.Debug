@@ -17,7 +17,7 @@ interface StoredSettings {
 
 /** Base URL + default model per provider, so the popup only stores a choice. */
 const PROVIDERS: Record<string, { baseURL: string; model: string }> = {
-  groq: { baseURL: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile' },
+  groq: { baseURL: 'https://api.groq.com/openai/v1', model: 'openai/gpt-oss-120b' },
   openai: { baseURL: 'https://api.openai.com/v1', model: 'gpt-4o' }
 }
 
@@ -240,16 +240,23 @@ export class BackgroundWorker {
    */
   private async resolveClient(): Promise<OpenAIClient> {
     const settings = await this.readSettings()
-    const preset = PROVIDERS[settings.provider || 'groq'] || PROVIDERS.groq
+    const isGroqKey = Boolean(settings.apiKey?.startsWith('gsk_'))
+    const provider = isGroqKey && !settings.provider ? 'groq' : (settings.provider || 'groq')
+    const preset = PROVIDERS[provider] || PROVIDERS.groq
 
     if (!settings.apiKey) {
       throw new Error('No API key saved. Open the Dr. Debug popup, paste your key and press Save.')
     }
 
+    let model = settings.model || preset.model
+    if (model === 'llama-3.3-70b-versatile') {
+      model = 'openai/gpt-oss-120b'
+    }
+
     return new OpenAIClient({
       apiKey: settings.apiKey,
       baseURL: settings.baseURL || preset.baseURL,
-      model: settings.model || preset.model
+      model
     })
   }
 
