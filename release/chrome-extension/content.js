@@ -2426,9 +2426,14 @@ ${targetNetwork.error}
       promptLines.push("");
     }
     promptLines.push("#### \u{1F3AF} Task for AI Coding Assistant (Claude Code / Antigravity):");
-    promptLines.push("1. Analyze the exact failure mechanism across the request payload, headers, response, and runtime stack trace provided above.");
-    promptLines.push("2. Identify the root cause file, function, and line number in the codebase.");
-    promptLines.push("3. Provide the minimal, elegant, and verified code fix as a unified diff patch to resolve this issue.");
+    promptLines.push("The best code is the code you never wrote. Eliminate bloat, maximize token economy, and follow the Ponytail Minimality Ladder:");
+    promptLines.push("1. YAGNI: Fix ONLY the immediate root cause identified above; do not refactor surrounding code or add speculative features.");
+    promptLines.push("2. Reuse: Use existing utilities, helpers, and patterns already present in the codebase.");
+    promptLines.push("3. Stdlib First: Use native platform and standard language features (e.g. `?.`, `??`, native `fetch`) before custom abstractions.");
+    promptLines.push("4. Existing Dependencies: NEVER introduce new dependencies or npm packages.");
+    promptLines.push("5. Minimal Diff: Target a unified git diff of \u2264 5 lines whenever possible.");
+    promptLines.push("6. Non-negotiable: Never compromise on input validation, error handling, or security.");
+    promptLines.push("7. Output Format: Output strictly the unified git diff and a 1-sentence verification command. No conversational filler.");
     return promptLines.join("\n");
   }
 
@@ -3230,6 +3235,99 @@ ${causalChain.join("\n")}`);
       return fence(raw);
     }
   }
+  function generatePonytailDebugPrompt(state, options = {}) {
+    const analysis = new LocalDiagnosticEngine().analyze(state);
+    const lines = [];
+    lines.push("# \u{1F6A8} Dr. Debug Incident Brief (Ponytail Protocol)");
+    lines.push("");
+    lines.push(`- **Target:** \`${state.pageContext.url || "unknown"}\`${state.framework?.detectedFramework ? ` (${state.framework.detectedFramework})` : ""}`);
+    lines.push(`- **Issue:** ${analysis.headline}`);
+    lines.push(`- **Derived Confidence:** ${Math.round(analysis.confidence * 100)}%`);
+    lines.push("");
+    if (!analysis.hasEvidence && !options.investigation) {
+      lines.push("### Status");
+      lines.push("No active runtime errors or failing network requests observed. Nothing to act on.");
+      return lines.join("\n");
+    }
+    lines.push("### Diagnosis");
+    lines.push(analysis.diagnosis);
+    lines.push("");
+    if (analysis.causalChain.length > 0) {
+      lines.push("### Causal Chain");
+      analysis.causalChain.slice(0, 3).forEach((item) => lines.push(`- ${item}`));
+      lines.push("");
+    }
+    const errorEntries = state.console.entries.filter((e) => e.level === "error");
+    if (errorEntries.length > 0) {
+      const primary = errorEntries[0];
+      lines.push("### Culprit Runtime Error");
+      lines.push(`- **Message:** \`${primary.message.slice(0, 200)}\`${primary.count > 1 ? ` (repeated ${primary.count}\xD7)` : ""}`);
+      if (primary.parsedStack && primary.parsedStack.length > 0) {
+        const appFrames = primary.parsedStack.filter((frame) => {
+          const fn = frame.filename || "";
+          return !fn.includes("node_modules") && !fn.includes("chrome-extension://") && !fn.includes("webpack/runtime");
+        });
+        const framesToShow = appFrames.length > 0 ? appFrames.slice(0, 3) : primary.parsedStack.slice(0, 2);
+        lines.push("**Application Call Frame(s):**");
+        framesToShow.forEach((frame, i) => {
+          const file = frame.filename || "unknown";
+          lines.push(`${i + 1}. \`${frame.functionName || "<anonymous>"}\` at \`${file}:${frame.lineno ?? 0}:${frame.colno ?? 0}\``);
+        });
+      } else if (primary.stack) {
+        const cleanStack = primary.stack.split("\n").filter((l) => !l.includes("node_modules") && !l.includes("chrome-extension")).slice(0, 4).join("\n");
+        lines.push(...fence(cleanStack || primary.stack.slice(0, 300)));
+      }
+      lines.push("");
+    }
+    const failing = state.network.records.filter((r) => r.isFailed || (r.status ?? 0) >= 400);
+    if (failing.length > 0) {
+      const req = failing[0];
+      lines.push("### Failing Network Transaction");
+      lines.push(`- **Endpoint:** \`${req.method} ${req.url}\` \u2192 \`${req.status || "FAILED"}${req.statusText ? ` ${req.statusText}` : ""}\``);
+      if (req.isCORS) lines.push("- **CORS:** \u26A0\uFE0F Blocked by browser CORS policy");
+      if (req.error) lines.push(`- **Error:** \`${req.error}\``);
+      lines.push("");
+      lines.push("**Reproduction cURL:**");
+      lines.push(...fence(generateCurlCommand(req), "bash"));
+      lines.push("");
+      if (req.responseBodyPreview) {
+        lines.push(`- **Response Payload:** \`${req.responseBodyPreview.slice(0, 250)}\``);
+        lines.push("");
+      }
+    }
+    const dockerLogs = state.docker?.logs || [];
+    const dockerErrors = dockerLogs.filter((l) => l.level === "error");
+    if (dockerErrors.length > 0) {
+      const log = dockerErrors[0];
+      lines.push("### Backend Container Context");
+      lines.push(`- **Container:** \`[${log.containerName}]\` ${log.message.slice(0, 200)}`);
+      lines.push("");
+    }
+    if (options.investigation) {
+      lines.push("### Prior Agent Investigation");
+      lines.push(`- **Diagnosis:** ${options.investigation.diagnosis}`);
+      lines.push(`- **Root Cause:** ${options.investigation.rootCause.slice(0, 300)}`);
+      if (options.investigation.fix) {
+        lines.push(`- **Proposed Direction:** ${options.investigation.fix.slice(0, 250)}`);
+      }
+      lines.push("");
+    }
+    lines.push("---");
+    lines.push("");
+    lines.push("### \u2702\uFE0F Instructions for AI Coding Assistant (Ponytail Protocol)");
+    lines.push("The best code is the code you never wrote. Eliminate code bloat, minimize token consumption, and avoid maintenance burden.");
+    lines.push("Before proposing or applying any code changes, climb the **Minimality Ladder**:");
+    lines.push("1. **YAGNI (You Ain't Gonna Need It)**: Fix ONLY the immediate root cause identified above. Do not refactor surrounding code or add speculative features.");
+    lines.push("2. **Reuse Existing Code**: Check if existing utilities, helpers, or patterns in this codebase already solve the problem before creating new ones.");
+    lines.push("3. **Standard Library First**: Prefer native JavaScript/TypeScript and Web Platform features (e.g. `?.`, `??`, `Array` methods, `fetch`) over custom helper functions.");
+    lines.push("4. **Native Platform Features**: Prefer browser/runtime capabilities over new abstractions.");
+    lines.push("5. **Existing Dependencies**: NEVER introduce new npm dependencies. Use only existing packages in `package.json`.");
+    lines.push("6. **One-Liner / Concise Construct**: If the fix can be written cleanly in 1\u20133 lines, do that. Avoid multi-layer abstractions.");
+    lines.push("7. **Target Diff Size**: Target a unified git diff of \u2264 5 lines whenever possible.");
+    lines.push("8. **Non-Negotiables**: Never compromise on input validation, security, or error handling.");
+    lines.push("9. **Output Format**: Output strictly a unified git diff and a 1-sentence verification command. No conversational filler or decorative fluff.");
+    return lines.join("\n");
+  }
   function buildTimeline(state, limit) {
     const rows = [];
     state.network.records.forEach((r) => {
@@ -3284,6 +3382,9 @@ ${causalChain.join("\n")}`);
     lines.push("");
   }
   function generateSessionDebugPrompt(state, options = {}) {
+    if (options.mode === "ponytail") {
+      return generatePonytailDebugPrompt(state, options);
+    }
     const maxFindings = options.maxFindings ?? 6;
     const maxTimeline = options.maxTimelineEvents ?? 24;
     const analysis = new LocalDiagnosticEngine().analyze(state);
@@ -3546,11 +3647,21 @@ Your mission is to investigate runtime errors, failed network requests, and perf
    - The 'done' tool requires:
      * diagnosis: High-level plain English summary of the issue.
      * rootCause: Exact root cause with culprit URLs, endpoints, files, or services.
-     * fix: Actionable code diff or verified fix instructions.
+     * fix: Actionable code diff or verified fix instructions adhering to the Ponytail Minimality Ladder.
      * confidence: Number between 0.85 and 1.0 backed by discovered facts.
      * filesToModify: Array of affected filenames.
 
-3. ALWAYS CALL TOOLS:
+3. PONYTAIL MINIMALITY LADDER FOR FIXES:
+   The best code is the code you never wrote. When formulating the 'fix' in the 'done' tool:
+   - YAGNI: Fix only the exact root cause; never refactor surrounding code or add speculative features.
+   - Reuse: Use existing utilities, helpers, and patterns already in the codebase.
+   - Stdlib First: Use native language features (e.g. optional chaining '?.', nullish coalescing '??', native fetch) rather than custom helper abstractions.
+   - Native Platform Features: Prefer browser/runtime capabilities over new helper code.
+   - Zero New Dependencies: NEVER introduce new npm packages or dependencies.
+   - One-Liner / Minimal Diff: Target unified diffs of <= 5 lines whenever possible.
+   - Non-Negotiable: Never compromise on input validation, security, or error handling.
+
+4. ALWAYS CALL TOOLS:
    - Use function calling to invoke tools (e.g. inspect_request, inspect_error, inspect_docker_logs, graphify_errors, done).
 </diagnostic_rules>`;
   }
@@ -10274,7 +10385,7 @@ ${msg.content}<end_of_turn>
       const copyAIBtn = document.createElement("button");
       copyAIBtn.className = "dr-debug-btn-primary-glow";
       copyAIBtn.innerHTML = `<span>Copy for AI</span>`;
-      copyAIBtn.title = "Copy structured debug prompt ready to paste into Claude Code or Antigravity";
+      copyAIBtn.title = "Copy surgical debug prompt (Ponytail Protocol \u2014 80% Token Saver) ready to paste into Claude Code or Antigravity";
       copyAIBtn.addEventListener("click", () => {
         const prompt = controller.getUnifiedAIDebugPrompt(targetId);
         if (navigator.clipboard) {
@@ -10640,7 +10751,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
           <div class="dr-debug-settings-update-banner">
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
-              <span class="dr-debug-update-version">Dr. Debug v0.1.7</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.8</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
@@ -10943,7 +11054,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       const exportBtn = this.makeSessionPromptButton(
         "dr-debug-export-btn",
         "Copy for AI",
-        "Copy the whole session \u2014 findings, causal chain, stacks, HTTP detail, timeline \u2014 as a paste-ready brief for Claude Code or Antigravity"
+        "Copy surgical, minimal incident brief (Ponytail Protocol \u2014 80% Token Saver) for Claude Code, Antigravity & Cursor"
       );
       this.settingsBtn = document.createElement("button");
       this.settingsBtn.className = "dr-debug-close-btn";
@@ -11417,7 +11528,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       const copyAllBtn = this.makeSessionPromptButton(
         "dr-debug-export-btn",
         "Copy for AI",
-        "Copy complete telemetry state, failing transactions with headers/payloads, stacks, and timeline for AI"
+        "Copy surgical, minimal incident brief (Ponytail Protocol \u2014 80% Token Saver) for Claude Code, Antigravity & Cursor"
       );
       copyAllBtn.style.marginRight = "4px";
       headerWrapper.appendChild(copyAllBtn);
@@ -11533,7 +11644,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     makeAIPromptButton(targetId, fallbackText) {
       const btn = document.createElement("button");
       btn.className = "dr-debug-copy-inline-btn primary";
-      btn.title = "Copy structured debug prompt with headers, payloads & cURL for AI coding agents";
+      btn.title = "Copy surgical debug prompt with Ponytail Minimality Protocol for AI coding agents";
       btn.innerHTML = `<span>Copy for AI</span>`;
       btn.addEventListener("click", async (e) => {
         e.stopPropagation();
@@ -16617,7 +16728,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       if (!controller) {
         return "No debug controller is attached to this UI, so there is no telemetry to export.";
       }
-      return generateSessionDebugPrompt(controller.getSnapshot());
+      return generatePonytailDebugPrompt(controller.getSnapshot());
     }
     /**
      * Fallback path when no LLM-backed investigator is wired in: runs the local
@@ -16848,13 +16959,22 @@ Direction: ${finding.remediation}`
       return this.controller;
     }
     /**
-     * The full paste-ready incident brief for an external coding agent
-     * (Claude Code / Antigravity / Cursor). Composed from live telemetry, and
-     * folds in the last agent investigation when one has run.
+     * The incident brief for an external coding agent (Claude Code / Antigravity / Cursor).
+     * Supports options.mode ('ponytail' or 'standard').
      */
-    getSessionDebugPrompt() {
+    getSessionDebugPrompt(options) {
       return generateSessionDebugPrompt(this.controller.getSnapshot(), {
-        investigation: this.lastInvestigation
+        investigation: this.lastInvestigation,
+        ...options
+      });
+    }
+    /**
+     * Specifically generates the surgical Ponytail incident brief (80% token reduction).
+     */
+    getPonytailDebugPrompt(options) {
+      return generatePonytailDebugPrompt(this.controller.getSnapshot(), {
+        investigation: this.lastInvestigation,
+        ...options
       });
     }
     getLastInvestigation() {

@@ -655,7 +655,7 @@ export class ErrorDashboardView {
     const copyAIBtn = document.createElement('button')
     copyAIBtn.className = 'dr-debug-btn-primary-glow'
     copyAIBtn.innerHTML = `<span>Copy for AI</span>`
-    copyAIBtn.title = 'Copy structured debug prompt ready to paste into Claude Code or Antigravity'
+    copyAIBtn.title = 'Copy surgical debug prompt (Ponytail Protocol — 80% Token Saver) ready to paste into Claude Code or Antigravity'
     copyAIBtn.addEventListener('click', () => {
       const prompt = controller.getUnifiedAIDebugPrompt(targetId)
       if (navigator.clipboard) {

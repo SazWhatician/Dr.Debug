@@ -9,6 +9,8 @@ export interface SessionReportOptions {
   maxFindings?: number
   /** Cap on timeline rows. */
   maxTimelineEvents?: number
+  /** Prompt generation mode: 'ponytail' (default token-saver) or 'standard' (verbose telemetry brief). */
+  mode?: 'ponytail' | 'standard'
 }
 
 interface TimelineRow {
@@ -27,6 +29,132 @@ function prettyJson(raw: string): string[] {
   } catch {
     return fence(raw)
   }
+}
+
+/**
+ * Builds a minimalist, surgical incident brief adhering to the Ponytail philosophy.
+ * Eliminates telemetry bloat, demangles and isolates application stack frames,
+ * burst-compresses repeated errors, and injects the Ponytail Minimality Ladder
+ * to enforce a minimal diff (<= 5 lines) from the downstream AI coding assistant.
+ */
+export function generatePonytailDebugPrompt(
+  state: DebugState,
+  options: SessionReportOptions = {}
+): string {
+  const analysis = new LocalDiagnosticEngine().analyze(state)
+  const lines: string[] = []
+
+  // 1. Header
+  lines.push('# 🚨 Dr. Debug Incident Brief (Ponytail Protocol)')
+  lines.push('')
+  lines.push(`- **Target:** \`${state.pageContext.url || 'unknown'}\`${state.framework?.detectedFramework ? ` (${state.framework.detectedFramework})` : ''}`)
+  lines.push(`- **Issue:** ${analysis.headline}`)
+  lines.push(`- **Derived Confidence:** ${Math.round(analysis.confidence * 100)}%`)
+  lines.push('')
+
+  if (!analysis.hasEvidence && !options.investigation) {
+    lines.push('### Status')
+    lines.push('No active runtime errors or failing network requests observed. Nothing to act on.')
+    return lines.join('\n')
+  }
+
+  // 2. Diagnosis & Root Cause
+  lines.push('### Diagnosis')
+  lines.push(analysis.diagnosis)
+  lines.push('')
+
+  // 3. Compact Causal Chain
+  if (analysis.causalChain.length > 0) {
+    lines.push('### Causal Chain')
+    analysis.causalChain.slice(0, 3).forEach((item) => lines.push(`- ${item}`))
+    lines.push('')
+  }
+
+  // 4. Culprit Stack Trace (App frames ONLY, burst compressed)
+  const errorEntries = state.console.entries.filter((e) => e.level === 'error')
+  if (errorEntries.length > 0) {
+    const primary = errorEntries[0]
+    lines.push('### Culprit Runtime Error')
+    lines.push(`- **Message:** \`${primary.message.slice(0, 200)}\`${primary.count > 1 ? ` (repeated ${primary.count}×)` : ''}`)
+
+    if (primary.parsedStack && primary.parsedStack.length > 0) {
+      const appFrames = primary.parsedStack.filter((frame) => {
+        const fn = frame.filename || ''
+        return !fn.includes('node_modules') && !fn.includes('chrome-extension://') && !fn.includes('webpack/runtime')
+      })
+      const framesToShow = appFrames.length > 0 ? appFrames.slice(0, 3) : primary.parsedStack.slice(0, 2)
+      lines.push('**Application Call Frame(s):**')
+      framesToShow.forEach((frame, i) => {
+        const file = frame.filename || 'unknown'
+        lines.push(`${i + 1}. \`${frame.functionName || '<anonymous>'}\` at \`${file}:${frame.lineno ?? 0}:${frame.colno ?? 0}\``)
+      })
+    } else if (primary.stack) {
+      const cleanStack = primary.stack
+        .split('\n')
+        .filter((l) => !l.includes('node_modules') && !l.includes('chrome-extension'))
+        .slice(0, 4)
+        .join('\n')
+      lines.push(...fence(cleanStack || primary.stack.slice(0, 300)))
+    }
+    lines.push('')
+  }
+
+  // 5. Failing Network Request (Pruned headers, safe cURL)
+  const failing = state.network.records.filter((r) => r.isFailed || (r.status ?? 0) >= 400)
+  if (failing.length > 0) {
+    const req = failing[0]
+    lines.push('### Failing Network Transaction')
+    lines.push(`- **Endpoint:** \`${req.method} ${req.url}\` → \`${req.status || 'FAILED'}${req.statusText ? ` ${req.statusText}` : ''}\``)
+    if (req.isCORS) lines.push('- **CORS:** ⚠️ Blocked by browser CORS policy')
+    if (req.error) lines.push(`- **Error:** \`${req.error}\``)
+    lines.push('')
+    lines.push('**Reproduction cURL:**')
+    lines.push(...fence(generateCurlCommand(req), 'bash'))
+    lines.push('')
+    if (req.responseBodyPreview) {
+      lines.push(`- **Response Payload:** \`${req.responseBodyPreview.slice(0, 250)}\``)
+      lines.push('')
+    }
+  }
+
+  // 6. Backend Container Log (if any)
+  const dockerLogs = state.docker?.logs || []
+  const dockerErrors = dockerLogs.filter((l) => l.level === 'error')
+  if (dockerErrors.length > 0) {
+    const log = dockerErrors[0]
+    lines.push('### Backend Container Context')
+    lines.push(`- **Container:** \`[${log.containerName}]\` ${log.message.slice(0, 200)}`)
+    lines.push('')
+  }
+
+  // 7. Prior Agent Investigation (if present)
+  if (options.investigation) {
+    lines.push('### Prior Agent Investigation')
+    lines.push(`- **Diagnosis:** ${options.investigation.diagnosis}`)
+    lines.push(`- **Root Cause:** ${options.investigation.rootCause.slice(0, 300)}`)
+    if (options.investigation.fix) {
+      lines.push(`- **Proposed Direction:** ${options.investigation.fix.slice(0, 250)}`)
+    }
+    lines.push('')
+  }
+
+  // 8. The Ponytail Minimality Ladder & Directive
+  lines.push('---')
+  lines.push('')
+  lines.push('### ✂️ Instructions for AI Coding Assistant (Ponytail Protocol)')
+  lines.push('The best code is the code you never wrote. Eliminate code bloat, minimize token consumption, and avoid maintenance burden.')
+  lines.push('Before proposing or applying any code changes, climb the **Minimality Ladder**:')
+  lines.push('1. **YAGNI (You Ain\'t Gonna Need It)**: Fix ONLY the immediate root cause identified above. Do not refactor surrounding code or add speculative features.')
+  lines.push('2. **Reuse Existing Code**: Check if existing utilities, helpers, or patterns in this codebase already solve the problem before creating new ones.')
+  lines.push('3. **Standard Library First**: Prefer native JavaScript/TypeScript and Web Platform features (e.g. `?.`, `??`, `Array` methods, `fetch`) over custom helper functions.')
+  lines.push('4. **Native Platform Features**: Prefer browser/runtime capabilities over new abstractions.')
+  lines.push('5. **Existing Dependencies**: NEVER introduce new npm dependencies. Use only existing packages in `package.json`.')
+  lines.push('6. **One-Liner / Concise Construct**: If the fix can be written cleanly in 1–3 lines, do that. Avoid multi-layer abstractions.')
+  lines.push('7. **Target Diff Size**: Target a unified git diff of ≤ 5 lines whenever possible.')
+  lines.push('8. **Non-Negotiables**: Never compromise on input validation, security, or error handling.')
+  lines.push('9. **Output Format**: Output strictly a unified git diff and a 1-sentence verification command. No conversational filler or decorative fluff.')
+
+  return lines.join('\n')
 }
 
 function buildTimeline(state: DebugState, limit: number): TimelineRow[] {
@@ -98,6 +226,9 @@ export function generateSessionDebugPrompt(
   state: DebugState,
   options: SessionReportOptions = {}
 ): string {
+  if (options.mode === 'ponytail') {
+    return generatePonytailDebugPrompt(state, options)
+  }
   const maxFindings = options.maxFindings ?? 6
   const maxTimeline = options.maxTimelineEvents ?? 24
   const analysis = new LocalDiagnosticEngine().analyze(state)

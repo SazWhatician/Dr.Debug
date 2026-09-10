@@ -6,6 +6,7 @@ export {
   localDiagnosticEngine
 } from './analysis/LocalDiagnosticEngine.js'
 export {
+  generatePonytailDebugPrompt,
   generateSessionDebugPrompt,
   type SessionReportOptions
 } from './analysis/SessionReport.js'

@@ -154,6 +154,9 @@ describe('debugStateToString & computeCorrelations', () => {
     expect(prompt).toContain('POST https://api.acme.io/v2/metrics')
     expect(prompt).toContain('HTTP Network Transaction:')
     expect(prompt).toContain('Task for AI Coding Assistant (Claude Code / Antigravity):')
+    expect(prompt).toContain('Ponytail Minimality Ladder')
+    expect(prompt).toContain('YAGNI')
+    expect(prompt).toContain('Target a unified git diff of ≤ 5 lines')
   })
 
   it('computes error histogram buckets over time', () => {

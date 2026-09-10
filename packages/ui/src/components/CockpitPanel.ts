@@ -216,7 +216,7 @@ export class CockpitPanel {
     const exportBtn = this.makeSessionPromptButton(
       'dr-debug-export-btn',
       'Copy for AI',
-      'Copy the whole session — findings, causal chain, stacks, HTTP detail, timeline — as a paste-ready brief for Claude Code or Antigravity'
+      'Copy surgical, minimal incident brief (Ponytail Protocol — 80% Token Saver) for Claude Code, Antigravity & Cursor'
     )
 
     this.settingsBtn = document.createElement('button')
@@ -762,7 +762,7 @@ export class CockpitPanel {
     const copyAllBtn = this.makeSessionPromptButton(
       'dr-debug-export-btn',
       'Copy for AI',
-      'Copy complete telemetry state, failing transactions with headers/payloads, stacks, and timeline for AI'
+      'Copy surgical, minimal incident brief (Ponytail Protocol — 80% Token Saver) for Claude Code, Antigravity & Cursor'
     )
     copyAllBtn.style.marginRight = '4px'
     headerWrapper.appendChild(copyAllBtn)
@@ -892,7 +892,7 @@ export class CockpitPanel {
   private makeAIPromptButton(targetId?: string, fallbackText?: string): HTMLButtonElement {
     const btn = document.createElement('button')
     btn.className = 'dr-debug-copy-inline-btn primary'
-    btn.title = 'Copy structured debug prompt with headers, payloads & cURL for AI coding agents'
+    btn.title = 'Copy surgical debug prompt with Ponytail Minimality Protocol for AI coding agents'
     btn.innerHTML = `<span>Copy for AI</span>`
     btn.addEventListener('click', async (e) => {
       e.stopPropagation()

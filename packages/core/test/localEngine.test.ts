@@ -1,6 +1,6 @@
 import { DebugController } from '@dr-debug/controller'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { generateSessionDebugPrompt, HeuristicLLMClient, LocalDiagnosticEngine } from '../src/index.js'
+import { generatePonytailDebugPrompt, generateSessionDebugPrompt, HeuristicLLMClient, LocalDiagnosticEngine } from '../src/index.js'
 
 function makeState(controller: DebugController) {
   return controller.getSnapshot()
@@ -145,6 +145,78 @@ describe('generateSessionDebugPrompt', () => {
     expect(prompt).toContain('Prior agent investigation')
     expect(prompt).toContain('the widget exploded')
     expect(prompt).toMatch(/hypothesis to verify/i)
+  })
+})
+
+describe('generatePonytailDebugPrompt', () => {
+  let controller: DebugController
+
+  beforeEach(() => {
+    controller = new DebugController(50)
+    controller.init()
+  })
+
+  it('states plainly when buffers are empty with Ponytail header', () => {
+    const prompt = generatePonytailDebugPrompt(controller.getSnapshot())
+
+    expect(prompt).toContain('🚨 Dr. Debug Incident Brief (Ponytail Protocol)')
+    expect(prompt).toContain('No active runtime errors')
+    expect(prompt).not.toContain('Minimality Ladder')
+  })
+
+  it('generates a surgical, token-saving prompt with the Ponytail Minimality Ladder', () => {
+    console.error(new TypeError("Cannot read properties of undefined (reading 'profile')"))
+    controller.pushDockerLog('api-server', 'ERROR: OOMKiller activated. Container memory limit exceeded.', 'stderr')
+
+    const prompt = generatePonytailDebugPrompt(controller.getSnapshot())
+
+    // Must have Ponytail protocol headers and Minimality Ladder
+    expect(prompt).toContain('🚨 Dr. Debug Incident Brief (Ponytail Protocol)')
+    expect(prompt).toContain('### ✂️ Instructions for AI Coding Assistant (Ponytail Protocol)')
+    expect(prompt).toContain('Minimality Ladder')
+    expect(prompt).toContain('YAGNI (You Ain\'t Gonna Need It)')
+    expect(prompt).toContain('Standard Library First')
+    expect(prompt).toContain('Target a unified git diff of ≤ 5 lines')
+    expect(prompt).toContain('Output strictly a unified git diff and a 1-sentence verification command')
+
+    // Must be compact (token-efficient) compared to verbose prompt
+    const verbosePrompt = generateSessionDebugPrompt(controller.getSnapshot(), { mode: 'standard' })
+    expect(prompt.length).toBeLessThan(verbosePrompt.length)
+    expect(prompt.length).toBeLessThan(3500)
+  })
+
+  it('filters stack traces to application call frames only, omitting vendor frames', () => {
+    const snapshot = controller.getSnapshot()
+    snapshot.console.entries.push({
+      id: 'err_test',
+      timestamp: Date.now(),
+      firstSeen: Date.now(),
+      lastSeen: Date.now(),
+      level: 'error',
+      type: 'console_error',
+      message: 'Uncaught TypeError: Cannot read property avatar of null',
+      count: 5,
+      parsedStack: [
+        { filename: 'http://localhost:3000/node_modules/react-dom/index.js', functionName: 'dispatchAction', lineno: 450, colno: 12 },
+        { filename: 'http://localhost:3000/src/components/UserProfile.tsx', functionName: 'renderProfile', lineno: 42, colno: 8 }
+      ]
+    })
+
+    const prompt = generatePonytailDebugPrompt(snapshot)
+
+    expect(prompt).toContain('UserProfile.tsx:42:8')
+    expect(prompt).toContain('renderProfile')
+    expect(prompt).toContain('repeated 5×')
+    // Must not show vendor frame
+    expect(prompt).not.toContain('react-dom/index.js')
+  })
+
+  it('delegates to ponytail mode when options.mode is ponytail in generateSessionDebugPrompt', () => {
+    console.error(new Error('crash'))
+    const prompt = generateSessionDebugPrompt(controller.getSnapshot(), { mode: 'ponytail' })
+
+    expect(prompt).toContain('Ponytail Protocol')
+    expect(prompt).toContain('Minimality Ladder')
   })
 })
 

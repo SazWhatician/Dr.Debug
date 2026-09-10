@@ -1,10 +1,12 @@
 import { DebugController } from '@dr-debug/controller'
 import {
   DrDebugCore,
+  generatePonytailDebugPrompt,
   generateSessionDebugPrompt,
   HeuristicLLMClient,
   type InvestigationOptions,
-  type InvestigationResult
+  type InvestigationResult,
+  type SessionReportOptions
 } from '@dr-debug/core'
 import {
   type ILLMClient,
@@ -189,13 +191,23 @@ export class DrDebug {
   }
 
   /**
-   * The full paste-ready incident brief for an external coding agent
-   * (Claude Code / Antigravity / Cursor). Composed from live telemetry, and
-   * folds in the last agent investigation when one has run.
+   * The incident brief for an external coding agent (Claude Code / Antigravity / Cursor).
+   * Supports options.mode ('ponytail' or 'standard').
    */
-  public getSessionDebugPrompt(): string {
+  public getSessionDebugPrompt(options?: SessionReportOptions): string {
     return generateSessionDebugPrompt(this.controller.getSnapshot(), {
-      investigation: this.lastInvestigation
+      investigation: this.lastInvestigation,
+      ...options
+    })
+  }
+
+  /**
+   * Specifically generates the surgical Ponytail incident brief (80% token reduction).
+   */
+  public getPonytailDebugPrompt(options?: SessionReportOptions): string {
+    return generatePonytailDebugPrompt(this.controller.getSnapshot(), {
+      investigation: this.lastInvestigation,
+      ...options
     })
   }
 

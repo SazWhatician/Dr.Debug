@@ -1052,11 +1052,16 @@ export function generateUnifiedAIDebugPrompt(
     promptLines.push('')
   }
 
-  // Action instructions for LLM assistant
+  // Action instructions for LLM assistant (Ponytail Minimality Protocol)
   promptLines.push('#### 🎯 Task for AI Coding Assistant (Claude Code / Antigravity):')
-  promptLines.push('1. Analyze the exact failure mechanism across the request payload, headers, response, and runtime stack trace provided above.')
-  promptLines.push('2. Identify the root cause file, function, and line number in the codebase.')
-  promptLines.push('3. Provide the minimal, elegant, and verified code fix as a unified diff patch to resolve this issue.')
+  promptLines.push('The best code is the code you never wrote. Eliminate bloat, maximize token economy, and follow the Ponytail Minimality Ladder:')
+  promptLines.push('1. YAGNI: Fix ONLY the immediate root cause identified above; do not refactor surrounding code or add speculative features.')
+  promptLines.push('2. Reuse: Use existing utilities, helpers, and patterns already present in the codebase.')
+  promptLines.push('3. Stdlib First: Use native platform and standard language features (e.g. `?.`, `??`, native `fetch`) before custom abstractions.')
+  promptLines.push('4. Existing Dependencies: NEVER introduce new dependencies or npm packages.')
+  promptLines.push('5. Minimal Diff: Target a unified git diff of ≤ 5 lines whenever possible.')
+  promptLines.push('6. Non-negotiable: Never compromise on input validation, error handling, or security.')
+  promptLines.push('7. Output Format: Output strictly the unified git diff and a 1-sentence verification command. No conversational filler.')
 
   return promptLines.join('\n')
 }

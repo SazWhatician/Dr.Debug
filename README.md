@@ -197,7 +197,7 @@ Dr. Debug is ready to ship and download in three distinct formats:
 | **Chrome DevTools Extension (Folder)** | [`release/chrome-extension/`](release/chrome-extension/) | Direct "Load unpacked" folder in Google Chrome |
 | **In-Browser Standalone Bundle (Minified)** | [`release/dr-debug.standalone.min.js`](release/dr-debug.standalone.min.js) | Drop into any HTML via `<script src="dr-debug.standalone.min.js"></script>` |
 | **In-Browser Standalone Bundle (Full)** | [`release/dr-debug.standalone.js`](release/dr-debug.standalone.js) | Full source with developer comments & sourcemap |
-| **NPM Package Tarball** | [`release/dr-debug-0.1.7.tgz`](release/) | Install in your package: `npm install ./dr-debug-0.1.7.tgz` |
+| **NPM Package Tarball** | [`release/dr-debug-0.1.8.tgz`](release/) | Install in your package: `npm install ./dr-debug-0.1.8.tgz` |
 
 ### Building Downloadable Assets
 To compile and package fresh downloadable archives at any time:
@@ -218,7 +218,7 @@ npm test
 
 Current test status:
 - **30 test suites passing (100%)**
-- **118 total tests passing (100%)**
+- **125 total tests passing (100%)**
 - Tests cover host Docker CLI streamer, interceptor mutex re-entrancy, RFC-9457 classification, source map VLQ line mapping, XML serializer determinism, and Re-Act reflection parsing.
 
 ---

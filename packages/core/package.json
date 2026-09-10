@@ -1,6 +1,6 @@
 {
   "name": "@dr-debug/core",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Re-Act diagnostic engine, Zod reflection schema, and tool registry for Dr. Debug",
   "type": "module",
   "main": "./dist/index.js",

@@ -1,5 +1,5 @@
 import type { DebugController } from '@dr-debug/controller'
-import { generateSessionDebugPrompt, LocalDiagnosticEngine } from '@dr-debug/core'
+import { generatePonytailDebugPrompt, generateSessionDebugPrompt, LocalDiagnosticEngine } from '@dr-debug/core'
 import { CockpitPanel, type CockpitTabKey, type PrescriptionData, type StepItem } from './components/CockpitPanel.js'
 import type { DrDebugTheme } from './components/SettingsModal.js'
 import type { CausalErrorGraph } from './components/CausalGraphView.js'
@@ -207,7 +207,7 @@ export class DrDebugUI {
     if (!controller) {
       return 'No debug controller is attached to this UI, so there is no telemetry to export.'
     }
-    return generateSessionDebugPrompt(controller.getSnapshot())
+    return generatePonytailDebugPrompt(controller.getSnapshot())
   }
 
   /**
