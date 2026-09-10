@@ -30,7 +30,16 @@
         case "GET_SETTINGS": {
           const settings = await askWorker("DR_DEBUG_GET_SETTINGS");
           const { apiKey, ...safe } = settings || {};
-          respond(msg.id, true, { ...safe, hasApiKey: Boolean(apiKey) });
+          respond(msg.id, true, {
+            ...safe,
+            hasApiKey: Boolean(apiKey),
+            apiKeyMasked: apiKey ? "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" + apiKey.slice(-4) : void 0
+          });
+          break;
+        }
+        case "SAVE_SETTINGS": {
+          const res = await askWorker("DR_DEBUG_SAVE_SETTINGS", msg.payload);
+          respond(msg.id, true, res);
           break;
         }
         case "LLM_CHAT": {
@@ -40,7 +49,7 @@
           break;
         }
         case "TEST_CONNECTION": {
-          const res = await askWorker("DR_DEBUG_TEST_CONNECTION");
+          const res = await askWorker("DR_DEBUG_TEST_CONNECTION", msg.payload);
           respond(msg.id, true, res?.result);
           break;
         }

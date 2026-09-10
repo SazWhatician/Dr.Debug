@@ -78,4 +78,27 @@ describe('Extension Core & DevTools Integration', () => {
 
     bridge.destroy()
   })
+
+  it('BackgroundWorker handles settings save and test connection with Gemini configuration', async () => {
+    const worker = new BackgroundWorker()
+    let saveResponse: any = null
+
+    worker.handleMessage(
+      {
+        type: 'DR_DEBUG_SAVE_SETTINGS',
+        payload: {
+          provider: 'gemini',
+          apiKey: 'AQ.TestKeyMock12345',
+          model: 'gemini-flash-latest',
+          baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
+        }
+      },
+      {},
+      (res) => {
+        saveResponse = res
+      }
+    )
+
+    expect(saveResponse).toBeDefined()
+  })
 })

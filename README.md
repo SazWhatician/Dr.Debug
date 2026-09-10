@@ -9,7 +9,7 @@ Created, architected, and built entirely by **[Saswat Mohanty (@SazWhatician)](h
 
 [![Author: Saswat Mohanty](https://img.shields.io/badge/Author-Saswat%20Mohanty%20(@SazWhatician)-0284c7?style=flat-square&logo=github)](https://github.com/SazWhatician)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect%20on%20LinkedIn-0a66c2?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/saswat-mohanty-0a4549331/)
-[![Tests](https://img.shields.io/badge/Tests-115%2F115%20Passing-34d399?style=flat-square)](https://github.com/SazWhatician/DebugCopilot)
+[![Tests](https://img.shields.io/badge/Tests-121%2F121%20Passing-34d399?style=flat-square)](https://github.com/SazWhatician/DebugCopilot)
 [![License: MIT](https://img.shields.io/badge/License-MIT-38bdf8?style=flat-square)](LICENSE)
 
 ---
@@ -197,7 +197,7 @@ Dr. Debug is ready to ship and download in three distinct formats:
 | **Chrome DevTools Extension (Folder)** | [`release/chrome-extension/`](release/chrome-extension/) | Direct "Load unpacked" folder in Google Chrome |
 | **In-Browser Standalone Bundle (Minified)** | [`release/dr-debug.standalone.min.js`](release/dr-debug.standalone.min.js) | Drop into any HTML via `<script src="dr-debug.standalone.min.js"></script>` |
 | **In-Browser Standalone Bundle (Full)** | [`release/dr-debug.standalone.js`](release/dr-debug.standalone.js) | Full source with developer comments & sourcemap |
-| **NPM Package Tarball** | [`release/dr-debug-0.1.6.tgz`](release/) | Install in your package: `npm install ./dr-debug-0.1.6.tgz` |
+| **NPM Package Tarball** | [`release/dr-debug-0.1.7.tgz`](release/) | Install in your package: `npm install ./dr-debug-0.1.7.tgz` |
 
 ### Building Downloadable Assets
 To compile and package fresh downloadable archives at any time:

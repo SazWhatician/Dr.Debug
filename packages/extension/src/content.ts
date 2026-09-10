@@ -144,8 +144,11 @@ export class ContentScriptBridge {
     if (!this.instance) return
 
     if (settings.hasApiKey) {
-      this.instance.updateLLMConfig({ llmClient: this.llmClient })
+      this.instance.updateLLMConfig({ llmClient: this.llmClient, ...settings })
+      this.instance.getUI()?.updateSettings(settings)
       return
+    } else if (settings.provider || settings.theme) {
+      this.instance.getUI()?.updateSettings(settings)
     }
 
     // This script and the ISOLATED bridge both load at document_start with no
@@ -185,7 +188,12 @@ export class ContentScriptBridge {
     // No apiKey passed: with none saved, DrDebug falls back to its offline
     // engine, and applySettings() upgrades it to the bridge client if a key
     // exists. Either way the key stays out of this world.
-    this.instance = new DrDebug({ enableUI: true })
+    this.instance = new DrDebug({
+      enableUI: true,
+      onSaveSettings: (settings) => {
+        void this.llmClient.saveSettings(settings)
+      }
+    })
     ;(window as any).__DR_DEBUG__ = this.instance
 
     // Connect controller's proxy fetch to the extension background bridge

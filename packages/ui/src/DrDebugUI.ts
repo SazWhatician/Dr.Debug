@@ -198,6 +198,10 @@ export class DrDebugUI {
     this.cockpit.hide()
   }
 
+  public updateSettings(settings: any): void {
+    this.cockpit.updateSettings(settings)
+  }
+
   private buildSessionPrompt(): string {
     const controller = this.getController?.()
     if (!controller) {

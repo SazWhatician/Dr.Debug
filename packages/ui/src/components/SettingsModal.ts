@@ -5,6 +5,8 @@ export type DrDebugTheme = 'dr-debug' | 'minimal-glass' | 'monotone-skeuomorphic
 export interface SettingsData {
   provider: 'groq' | 'openai' | 'gemini' | 'litert'
   apiKey?: string
+  hasApiKey?: boolean
+  apiKeyMasked?: string
   baseURL?: string
   model?: string
   theme?: DrDebugTheme
@@ -31,6 +33,7 @@ export class SettingsModal {
   private testBtn!: HTMLButtonElement
   private saveBtn!: HTMLButtonElement
   private isVisible = false
+  private hasSavedApiKey = false
 
   constructor(private options: SettingsModalOptions) {
     this.element = document.createElement('div')
@@ -68,6 +71,30 @@ export class SettingsModal {
 
   public getTheme(): DrDebugTheme {
     return (this.themeSelect?.value as DrDebugTheme) || 'dr-debug'
+  }
+
+  public updateSettings(settings: Partial<SettingsData> & { hasApiKey?: boolean; apiKeyMasked?: string }): void {
+    if (!settings) return
+    if (settings.theme) this.setTheme(settings.theme)
+    if (settings.provider && this.providerSelect) {
+      this.providerSelect.value = settings.provider
+      this.handleProviderChange()
+    }
+    if (settings.hasApiKey !== undefined) {
+      this.hasSavedApiKey = Boolean(settings.hasApiKey)
+    }
+    if (settings.apiKey) {
+      this.apiKeyInput.value = settings.apiKey
+      this.hasSavedApiKey = true
+    } else if (this.hasSavedApiKey) {
+      this.apiKeyInput.placeholder = settings.apiKeyMasked || '•••••••• (Configured via Extension)'
+    }
+    if (settings.model && this.modelInput) {
+      this.modelInput.value = settings.model
+    }
+    if (settings.baseURL !== undefined && this.baseURLInput) {
+      this.baseURLInput.value = settings.baseURL
+    }
   }
 
   private render(): void {
@@ -132,7 +159,7 @@ export class SettingsModal {
           <div class="dr-debug-settings-update-banner">
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
-              <span class="dr-debug-update-version">Dr. Debug v0.1.6</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.7</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
@@ -219,6 +246,9 @@ export class SettingsModal {
     this.statusMessage.style.color = '#38bdf8'
 
     const settings = this.getFormValues()
+    if (!settings.apiKey && this.hasSavedApiKey) {
+      settings.hasApiKey = true
+    }
     try {
       const result = await this.options.onTestConnection(settings)
       if (result.success) {
@@ -275,6 +305,7 @@ export class SettingsModal {
     return {
       provider,
       apiKey: apiKey || undefined,
+      hasApiKey: this.hasSavedApiKey || Boolean(apiKey),
       model,
       baseURL,
       theme,
@@ -297,6 +328,10 @@ export class SettingsModal {
     if (loaded) {
       if (loaded.model === 'llama-3.3-70b-versatile') {
         loaded.model = 'openai/gpt-oss-120b'
+      }
+      if (loaded.hasApiKey) {
+        this.hasSavedApiKey = true
+        this.apiKeyInput.placeholder = loaded.apiKeyMasked || '•••••••• (Configured via Extension)'
       }
       if (loaded.theme && this.themeSelect) {
         this.themeSelect.value = loaded.theme

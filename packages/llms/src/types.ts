@@ -36,7 +36,7 @@ export interface ToolDefinition {
 export interface LLMConfig {
   apiKey?: string
   baseURL?: string
-  model: string
+  model?: string
   temperature?: number
   maxTokens?: number
   headers?: Record<string, string>

@@ -15,6 +15,7 @@ export const PUSH = 'DR_DEBUG_BRIDGE_PUSH'
 
 export type BridgeOp =
   | 'GET_SETTINGS'
+  | 'SAVE_SETTINGS'
   | 'LLM_CHAT'
   | 'TEST_CONNECTION'
   | 'GET_DOCKER_STATE'

@@ -43,10 +43,18 @@ window.addEventListener('message', async (event: MessageEvent) => {
     switch (msg.op) {
       case 'GET_SETTINGS': {
         const settings = await askWorker('DR_DEBUG_GET_SETTINGS')
-        // The key is deliberately withheld: MAIN world never needs it, since the
-        // worker performs the API call itself.
         const { apiKey, ...safe } = settings || {}
-        respond(msg.id, true, { ...safe, hasApiKey: Boolean(apiKey) })
+        respond(msg.id, true, {
+          ...safe,
+          hasApiKey: Boolean(apiKey),
+          apiKeyMasked: apiKey ? '••••••••' + apiKey.slice(-4) : undefined
+        })
+        break
+      }
+
+      case 'SAVE_SETTINGS': {
+        const res = await askWorker('DR_DEBUG_SAVE_SETTINGS', msg.payload)
+        respond(msg.id, true, res)
         break
       }
 
@@ -58,7 +66,7 @@ window.addEventListener('message', async (event: MessageEvent) => {
       }
 
       case 'TEST_CONNECTION': {
-        const res = await askWorker('DR_DEBUG_TEST_CONNECTION')
+        const res = await askWorker('DR_DEBUG_TEST_CONNECTION', msg.payload)
         respond(msg.id, true, res?.result)
         break
       }

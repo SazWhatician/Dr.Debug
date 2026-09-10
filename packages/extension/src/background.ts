@@ -18,7 +18,8 @@ interface StoredSettings {
 /** Base URL + default model per provider, so the popup only stores a choice. */
 const PROVIDERS: Record<string, { baseURL: string; model: string }> = {
   groq: { baseURL: 'https://api.groq.com/openai/v1', model: 'openai/gpt-oss-120b' },
-  openai: { baseURL: 'https://api.openai.com/v1', model: 'gpt-4o' }
+  openai: { baseURL: 'https://api.openai.com/v1', model: 'gpt-4o' },
+  gemini: { baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/', model: 'gemini-flash-latest' }
 }
 
 export class DockerStreamManager {
@@ -238,10 +239,17 @@ export class BackgroundWorker {
    * Builds the client here in the worker so the API key never crosses into page
    * context, and so the request is not subject to the page's CSP.
    */
-  private async resolveClient(): Promise<OpenAIClient> {
-    const settings = await this.readSettings()
+  private async resolveClient(override?: StoredSettings): Promise<OpenAIClient> {
+    const stored = await this.readSettings()
+    const settings = { ...stored, ...(override || {}) }
     const isGroqKey = Boolean(settings.apiKey?.startsWith('gsk_'))
-    const provider = isGroqKey && !settings.provider ? 'groq' : (settings.provider || 'groq')
+    const isGeminiKey = Boolean(settings.apiKey?.startsWith('AQ.') || settings.apiKey?.startsWith('AIza'))
+    let provider = settings.provider
+    if (!provider) {
+      if (isGroqKey) provider = 'groq'
+      else if (isGeminiKey) provider = 'gemini'
+      else provider = 'groq'
+    }
     const preset = PROVIDERS[provider] || PROVIDERS.groq
 
     if (!settings.apiKey) {
@@ -308,14 +316,16 @@ export class BackgroundWorker {
         return true
       }
 
-      case 'DR_DEBUG_TEST_CONNECTION':
-        this.resolveClient()
+      case 'DR_DEBUG_TEST_CONNECTION': {
+        const override = message.payload?.settings || message.payload
+        this.resolveClient(override && Object.keys(override).length > 0 ? override : undefined)
           .then((client) => client.testConnection())
           .then((result) => sendResponse({ result }))
           .catch((err: any) =>
             sendResponse({ result: { success: false, message: err?.message || 'Failed' } })
           )
         return true
+      }
 
       case 'DR_DEBUG_GET_DOCKER_STATE':
         sendResponse(this.dockerManager.getState())

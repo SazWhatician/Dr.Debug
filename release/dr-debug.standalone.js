@@ -10626,6 +10626,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     testBtn;
     saveBtn;
     isVisible = false;
+    hasSavedApiKey = false;
     getElement() {
       return this.element;
     }
@@ -10649,6 +10650,29 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     getTheme() {
       var _a;
       return ((_a = this.themeSelect) == null ? void 0 : _a.value) || "dr-debug";
+    }
+    updateSettings(settings) {
+      if (!settings) return;
+      if (settings.theme) this.setTheme(settings.theme);
+      if (settings.provider && this.providerSelect) {
+        this.providerSelect.value = settings.provider;
+        this.handleProviderChange();
+      }
+      if (settings.hasApiKey !== void 0) {
+        this.hasSavedApiKey = Boolean(settings.hasApiKey);
+      }
+      if (settings.apiKey) {
+        this.apiKeyInput.value = settings.apiKey;
+        this.hasSavedApiKey = true;
+      } else if (this.hasSavedApiKey) {
+        this.apiKeyInput.placeholder = settings.apiKeyMasked || "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022 (Configured via Extension)";
+      }
+      if (settings.model && this.modelInput) {
+        this.modelInput.value = settings.model;
+      }
+      if (settings.baseURL !== void 0 && this.baseURLInput) {
+        this.baseURLInput.value = settings.baseURL;
+      }
     }
     render() {
       this.element.innerHTML = `
@@ -10712,7 +10736,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
           <div class="dr-debug-settings-update-banner">
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
-              <span class="dr-debug-update-version">Dr. Debug v0.1.6</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.7</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
@@ -10791,6 +10815,9 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.statusMessage.textContent = "Testing connection with LLM endpoint...";
       this.statusMessage.style.color = "#38bdf8";
       const settings = this.getFormValues();
+      if (!settings.apiKey && this.hasSavedApiKey) {
+        settings.hasApiKey = true;
+      }
       try {
         const result = await this.options.onTestConnection(settings);
         if (result.success) {
@@ -10839,6 +10866,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       return {
         provider,
         apiKey: apiKey || void 0,
+        hasApiKey: this.hasSavedApiKey || Boolean(apiKey),
         model,
         baseURL,
         theme,
@@ -10858,6 +10886,10 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       if (loaded) {
         if (loaded.model === "llama-3.3-70b-versatile") {
           loaded.model = "openai/gpt-oss-120b";
+        }
+        if (loaded.hasApiKey) {
+          this.hasSavedApiKey = true;
+          this.apiKeyInput.placeholder = loaded.apiKeyMasked || "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022 (Configured via Extension)";
         }
         if (loaded.theme && this.themeSelect) {
           this.themeSelect.value = loaded.theme;
@@ -11970,6 +12002,9 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     }
     getTheme() {
       return this.currentTheme;
+    }
+    updateSettings(settings) {
+      this.settingsModal.updateSettings(settings);
     }
   };
 
@@ -16693,6 +16728,9 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     closeCockpit() {
       this.cockpit.hide();
     }
+    updateSettings(settings) {
+      this.cockpit.updateSettings(settings);
+    }
     buildSessionPrompt() {
       var _a;
       const controller = (_a = this.getController) == null ? void 0 : _a.call(this);
@@ -16850,7 +16888,9 @@ Direction: ${finding.remediation}`
           getController: () => this.controller,
           getSessionPrompt: () => this.getSessionDebugPrompt(),
           onSaveSettings: (settings) => {
+            var _a2;
             this.updateLLMConfig(settings);
+            (_a2 = options.onSaveSettings) == null ? void 0 : _a2.call(options, settings);
           },
           onTestConnection: async (settings) => {
             return await this.testLLMConnection(settings);
@@ -16875,41 +16915,52 @@ Direction: ${finding.remediation}`
       }
     }
     updateLLMConfig(config) {
-      var _a, _b;
+      var _a, _b, _c, _d, _e;
       this.options = { ...this.options, ...config };
       if (config.llmClient) {
         this.llmClient = config.llmClient;
       } else if (config.liteRT || config.model && config.model.toLowerCase().includes("litert")) {
         this.llmClient = new LiteRTClient(config.liteRT || { modelName: config.model });
-      } else if (config.apiKey || config.baseURL || config.model) {
+      } else if (config.apiKey || config.baseURL || config.model || config.provider) {
         const isGroq = ((_a = config.apiKey) == null ? void 0 : _a.startsWith("gsk_")) || ((_b = config.baseURL) == null ? void 0 : _b.includes("groq.com")) || this.options.provider === "groq";
+        const isGemini = config.provider === "gemini" || ((_c = config.apiKey) == null ? void 0 : _c.startsWith("AQ.")) || ((_d = config.apiKey) == null ? void 0 : _d.startsWith("AIza")) || ((_e = config.baseURL) == null ? void 0 : _e.includes("generativelanguage.googleapis.com"));
+        const defaultBaseURL = isGroq ? "https://api.groq.com/openai/v1" : isGemini ? "https://generativelanguage.googleapis.com/v1beta/openai/" : void 0;
         let model = config.model;
         if (model === "llama-3.3-70b-versatile" || !model && isGroq) {
           model = "openai/gpt-oss-120b";
+        } else if (!model && isGemini) {
+          model = "gemini-flash-latest";
         }
         this.llmClient = new OpenAIClient({
           apiKey: config.apiKey || "",
-          baseURL: config.baseURL,
+          baseURL: config.baseURL || defaultBaseURL,
           model: model || "openai/gpt-oss-120b"
         });
       }
       this.core = new DrDebugCore(this.controller, this.llmClient);
     }
     async testLLMConnection(config) {
-      var _a, _b;
+      var _a, _b, _c, _d, _e;
       const targetConfig = config ? { ...this.options, ...config } : this.options;
+      if (this.llmClient && typeof this.llmClient.testConnection === "function") {
+        return await this.llmClient.testConnection(targetConfig);
+      }
       let client;
       if (targetConfig.liteRT || targetConfig.model && targetConfig.model.toLowerCase().includes("litert")) {
         client = new LiteRTClient(targetConfig.liteRT || { modelName: targetConfig.model });
       } else {
         const isGroq = ((_a = targetConfig.apiKey) == null ? void 0 : _a.startsWith("gsk_")) || ((_b = targetConfig.baseURL) == null ? void 0 : _b.includes("groq.com")) || targetConfig.provider === "groq";
+        const isGemini = targetConfig.provider === "gemini" || ((_c = targetConfig.apiKey) == null ? void 0 : _c.startsWith("AQ.")) || ((_d = targetConfig.apiKey) == null ? void 0 : _d.startsWith("AIza")) || ((_e = targetConfig.baseURL) == null ? void 0 : _e.includes("generativelanguage.googleapis.com"));
+        const defaultBaseURL = isGroq ? "https://api.groq.com/openai/v1" : isGemini ? "https://generativelanguage.googleapis.com/v1beta/openai/" : void 0;
         let model = targetConfig.model;
         if (model === "llama-3.3-70b-versatile" || !model && isGroq) {
           model = "openai/gpt-oss-120b";
+        } else if (!model && isGemini) {
+          model = "gemini-flash-latest";
         }
         client = new OpenAIClient({
           apiKey: targetConfig.apiKey || "",
-          baseURL: targetConfig.baseURL,
+          baseURL: targetConfig.baseURL || defaultBaseURL,
           model: model || "openai/gpt-oss-120b"
         });
       }

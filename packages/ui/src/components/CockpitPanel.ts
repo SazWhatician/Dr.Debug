@@ -1309,6 +1309,10 @@ export class CockpitPanel {
   public getTheme(): DrDebugTheme {
     return this.currentTheme
   }
+
+  public updateSettings(settings: Partial<SettingsData> & { hasApiKey?: boolean; apiKeyMasked?: string }): void {
+    this.settingsModal.updateSettings(settings)
+  }
 }
 
 

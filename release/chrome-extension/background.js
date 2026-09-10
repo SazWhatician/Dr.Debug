@@ -150,7 +150,8 @@ var OpenAIClient = class {
 // packages/extension/src/background.ts
 var PROVIDERS = {
   groq: { baseURL: "https://api.groq.com/openai/v1", model: "openai/gpt-oss-120b" },
-  openai: { baseURL: "https://api.openai.com/v1", model: "gpt-4o" }
+  openai: { baseURL: "https://api.openai.com/v1", model: "gpt-4o" },
+  gemini: { baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/", model: "gemini-flash-latest" }
 };
 var DockerStreamManager = class {
   active = false;
@@ -343,10 +344,17 @@ var BackgroundWorker = class {
    * Builds the client here in the worker so the API key never crosses into page
    * context, and so the request is not subject to the page's CSP.
    */
-  async resolveClient() {
-    const settings = await this.readSettings();
+  async resolveClient(override) {
+    const stored = await this.readSettings();
+    const settings = { ...stored, ...override || {} };
     const isGroqKey = Boolean(settings.apiKey?.startsWith("gsk_"));
-    const provider = isGroqKey && !settings.provider ? "groq" : settings.provider || "groq";
+    const isGeminiKey = Boolean(settings.apiKey?.startsWith("AQ.") || settings.apiKey?.startsWith("AIza"));
+    let provider = settings.provider;
+    if (!provider) {
+      if (isGroqKey) provider = "groq";
+      else if (isGeminiKey) provider = "gemini";
+      else provider = "groq";
+    }
     const preset = PROVIDERS[provider] || PROVIDERS.groq;
     if (!settings.apiKey) {
       throw new Error("No API key saved. Open the Dr. Debug popup, paste your key and press Save.");
@@ -397,11 +405,13 @@ var BackgroundWorker = class {
         this.resolveClient().then((client) => client.chat(messages, tools)).then((result) => sendResponse({ result })).catch((err) => sendResponse({ error: err?.message || "LLM request failed" }));
         return true;
       }
-      case "DR_DEBUG_TEST_CONNECTION":
-        this.resolveClient().then((client) => client.testConnection()).then((result) => sendResponse({ result })).catch(
+      case "DR_DEBUG_TEST_CONNECTION": {
+        const override = message.payload?.settings || message.payload;
+        this.resolveClient(override && Object.keys(override).length > 0 ? override : void 0).then((client) => client.testConnection()).then((result) => sendResponse({ result })).catch(
           (err) => sendResponse({ result: { success: false, message: err?.message || "Failed" } })
         );
         return true;
+      }
       case "DR_DEBUG_GET_DOCKER_STATE":
         sendResponse(this.dockerManager.getState());
         return false;

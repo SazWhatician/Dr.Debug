@@ -92,6 +92,23 @@ export function syncAllVersions(targetVersion, options = {}) {
     }
   }
 
+  // 3b. Extension Popup HTML (both public and root copies)
+  const popupPaths = [
+    path.resolve(root, 'packages/extension/public/popup.html'),
+    path.resolve(root, 'packages/extension/popup.html')
+  ]
+  for (const pPath of popupPaths) {
+    if (fs.existsSync(pPath)) {
+      let pContent = fs.readFileSync(pPath, 'utf-8')
+      const updatedP = pContent.replace(/v[0-9.]+\s*·\s*Official Portal/g, `v${targetVersion} · Official Portal`)
+      if (updatedP !== pContent) {
+        fs.writeFileSync(pPath, updatedP, 'utf-8')
+        console.log(`  ✅ ${path.relative(root, pPath).replace(/\\/g, '/')} updated`)
+        updatedCount++
+      }
+    }
+  }
+
   // 4. Cockpit UI (SettingsModal.ts)
   const settingsModalPath = path.resolve(root, 'packages/ui/src/components/SettingsModal.ts')
   if (fs.existsSync(settingsModalPath)) {

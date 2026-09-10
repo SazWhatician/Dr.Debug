@@ -319,6 +319,32 @@ describe('DrDebugUI (Shadow DOM HUD & Cockpit)', () => {
 
     ui.destroy()
   })
+
+  it('synchronizes external extension settings into SettingsModal without exposing raw credentials', () => {
+    const ui = new DrDebugUI()
+    const shadow = ui.getShadowRoot()
+
+    ui.openCockpit()
+
+    // Push simulated extension settings update
+    ui.updateSettings({
+      provider: 'gemini',
+      model: 'gemini-flash-latest',
+      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+      hasApiKey: true,
+      apiKeyMasked: '••••••••2oDw'
+    })
+
+    const providerSelect = shadow.querySelector('#dr-debug-provider') as HTMLSelectElement
+    const modelInput = shadow.querySelector('#dr-debug-model') as HTMLInputElement
+    const apiKeyInput = shadow.querySelector('#dr-debug-api-key') as HTMLInputElement
+
+    expect(providerSelect.value).toBe('gemini')
+    expect(modelInput.value).toBe('gemini-flash-latest')
+    expect(apiKeyInput.placeholder).toBe('••••••••2oDw')
+
+    ui.destroy()
+  })
 })
 
 

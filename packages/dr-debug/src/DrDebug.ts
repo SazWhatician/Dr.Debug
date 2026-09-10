@@ -29,6 +29,7 @@ export interface DrDebugOptions {
   enableMCP?: boolean
   enableDocker?: boolean
   mcpPort?: number
+  onSaveSettings?: (settings: any) => void
 }
 
 export class DrDebug {
@@ -81,6 +82,7 @@ export class DrDebug {
         getSessionPrompt: () => this.getSessionDebugPrompt(),
         onSaveSettings: (settings) => {
           this.updateLLMConfig(settings)
+          options.onSaveSettings?.(settings)
         },
         onTestConnection: async (settings) => {
           return await this.testLLMConnection(settings)
@@ -120,15 +122,23 @@ export class DrDebug {
       this.llmClient = config.llmClient
     } else if (config.liteRT || (config.model && config.model.toLowerCase().includes('litert'))) {
       this.llmClient = new LiteRTClient(config.liteRT || { modelName: config.model })
-    } else if (config.apiKey || config.baseURL || config.model) {
+    } else if (config.apiKey || config.baseURL || config.model || config.provider) {
       const isGroq = config.apiKey?.startsWith('gsk_') || config.baseURL?.includes('groq.com') || this.options.provider === 'groq'
+      const isGemini = config.provider === 'gemini' || config.apiKey?.startsWith('AQ.') || config.apiKey?.startsWith('AIza') || config.baseURL?.includes('generativelanguage.googleapis.com')
+      const defaultBaseURL = isGroq
+        ? 'https://api.groq.com/openai/v1'
+        : isGemini
+        ? 'https://generativelanguage.googleapis.com/v1beta/openai/'
+        : undefined
       let model = config.model
       if (model === 'llama-3.3-70b-versatile' || (!model && isGroq)) {
         model = 'openai/gpt-oss-120b'
+      } else if (!model && isGemini) {
+        model = 'gemini-flash-latest'
       }
       this.llmClient = new OpenAIClient({
         apiKey: config.apiKey || '',
-        baseURL: config.baseURL,
+        baseURL: config.baseURL || defaultBaseURL,
         model: model || 'openai/gpt-oss-120b'
       })
     }
@@ -137,19 +147,32 @@ export class DrDebug {
 
   public async testLLMConnection(config?: Partial<DrDebugOptions>): Promise<{ success: boolean; message: string }> {
     const targetConfig = config ? { ...this.options, ...config } : this.options
+
+    if (this.llmClient && typeof (this.llmClient as any).testConnection === 'function') {
+      return await (this.llmClient as any).testConnection(targetConfig)
+    }
+
     let client: ILLMClient
 
     if (targetConfig.liteRT || (targetConfig.model && targetConfig.model.toLowerCase().includes('litert'))) {
       client = new LiteRTClient(targetConfig.liteRT || { modelName: targetConfig.model })
     } else {
       const isGroq = targetConfig.apiKey?.startsWith('gsk_') || targetConfig.baseURL?.includes('groq.com') || targetConfig.provider === 'groq'
+      const isGemini = targetConfig.provider === 'gemini' || targetConfig.apiKey?.startsWith('AQ.') || targetConfig.apiKey?.startsWith('AIza') || targetConfig.baseURL?.includes('generativelanguage.googleapis.com')
+      const defaultBaseURL = isGroq
+        ? 'https://api.groq.com/openai/v1'
+        : isGemini
+        ? 'https://generativelanguage.googleapis.com/v1beta/openai/'
+        : undefined
       let model = targetConfig.model
       if (model === 'llama-3.3-70b-versatile' || (!model && isGroq)) {
         model = 'openai/gpt-oss-120b'
+      } else if (!model && isGemini) {
+        model = 'gemini-flash-latest'
       }
       client = new OpenAIClient({
         apiKey: targetConfig.apiKey || '',
-        baseURL: targetConfig.baseURL,
+        baseURL: targetConfig.baseURL || defaultBaseURL,
         model: model || 'openai/gpt-oss-120b'
       })
     }

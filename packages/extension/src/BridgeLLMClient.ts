@@ -28,11 +28,19 @@ export class BridgeLLMClient implements ILLMClient {
     return await this.call('LLM_CHAT', { messages, tools }, signal)
   }
 
-  public async testConnection(): Promise<{ success: boolean; message: string }> {
+  public async testConnection(settings?: any): Promise<{ success: boolean; message: string }> {
     try {
-      return await this.call('TEST_CONNECTION', {})
+      return await this.call('TEST_CONNECTION', { settings })
     } catch (err: any) {
       return { success: false, message: err?.message || 'Bridge unreachable' }
+    }
+  }
+
+  public async saveSettings(settings: any): Promise<any> {
+    try {
+      return await this.call('SAVE_SETTINGS', settings)
+    } catch (err: any) {
+      return { success: false, message: err?.message || 'Failed to save settings' }
     }
   }
 
