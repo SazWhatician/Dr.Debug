@@ -138,11 +138,19 @@ export class MCPTransport {
 
             // D. Real-Time Docker Event & Log SSE Stream
             if (url === '/docker/stream') {
+              req.socket?.setKeepAlive(true, 10000)
+              req.socket?.setNoDelay(true)
+              req.socket?.setTimeout(0)
+
               res.writeHead(200, {
-                'Content-Type': 'text/event-stream',
-                'Cache-Control': 'no-cache',
-                Connection: 'keep-alive'
+                'Content-Type': 'text/event-stream; charset=utf-8',
+                'Cache-Control': 'no-cache, no-transform',
+                Connection: 'keep-alive',
+                'X-Accel-Buffering': 'no',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization'
               })
+              res.flushHeaders?.()
 
               // Send initial state immediately
               const initPayload = {
@@ -164,10 +172,10 @@ export class MCPTransport {
               this.dockerBridge.on('log', onLog)
               this.dockerBridge.on('containers', onContainers)
 
-              // Heartbeat keep-alive every 15s
+              // Heartbeat keep-alive every 10s
               const heartbeat = setInterval(() => {
                 res.write(`: ping\n\n`)
-              }, 15000)
+              }, 10000)
 
               req.on('close', () => {
                 clearInterval(heartbeat)

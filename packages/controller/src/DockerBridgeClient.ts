@@ -21,6 +21,7 @@ export class DockerBridgeClient {
   private daemonRunning = false
   private lastError?: string
   private reconnectTimer?: any
+  private disconnectGraceTimer?: any
   private options: DockerBridgeClientOptions
 
   constructor(options: DockerBridgeClientOptions = {}) {
@@ -62,6 +63,10 @@ export class DockerBridgeClient {
       }
       this.notifyStatus()
     } else if (data.type === 'STATUS') {
+      // If direct EventSource is actively OPEN and streaming, ignore secondary external disconnect signals
+      if (this.eventSource && this.eventSource.readyState === 1 /* OPEN */ && data.connected === false) {
+        return
+      }
       this.isConnected = data.connected ?? this.isConnected
       this.daemonRunning = data.daemonRunning ?? this.daemonRunning
       this.lastError = data.error
@@ -94,6 +99,10 @@ export class DockerBridgeClient {
       this.eventSource = new EventSource(streamUrl)
 
       this.eventSource.onopen = () => {
+        if (this.disconnectGraceTimer) {
+          clearTimeout(this.disconnectGraceTimer)
+          this.disconnectGraceTimer = null
+        }
         this.isConnected = true
         this.lastError = undefined
         this.notifyStatus()
@@ -109,6 +118,27 @@ export class DockerBridgeClient {
       }
 
       this.eventSource.onerror = () => {
+        // If the browser is automatically reconnecting (readyState === 0 CONNECTING),
+        // do not abruptly tear down the connection or oscillate status.
+        if (this.eventSource && this.eventSource.readyState === 0 /* CONNECTING */) {
+          if (!this.disconnectGraceTimer) {
+            this.disconnectGraceTimer = setTimeout(() => {
+              this.disconnectGraceTimer = null
+              if (this.eventSource && this.eventSource.readyState === 0) {
+                this.isConnected = false
+                this.lastError = 'Reconnecting to Docker Bridge daemon...'
+                this.notifyStatus()
+              }
+            }, 4000)
+          }
+          return
+        }
+
+        if (this.disconnectGraceTimer) {
+          clearTimeout(this.disconnectGraceTimer)
+          this.disconnectGraceTimer = null
+        }
+
         this.isConnected = false
         this.lastError = 'Disconnected from Docker Bridge daemon'
         this.notifyStatus()
@@ -249,6 +279,10 @@ export class DockerBridgeClient {
   }
 
   public disconnect(): void {
+    if (this.disconnectGraceTimer) {
+      clearTimeout(this.disconnectGraceTimer)
+      this.disconnectGraceTimer = null
+    }
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer)
       this.reconnectTimer = null

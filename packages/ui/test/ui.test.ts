@@ -345,6 +345,71 @@ describe('DrDebugUI (Shadow DOM HUD & Cockpit)', () => {
 
     ui.destroy()
   })
+
+  describe('Clipboard Resilience Utility', () => {
+    it('copies text via navigator.clipboard.writeText when available', async () => {
+      const { copyToClipboard } = await import('../src/index.js')
+      const writeTextSpy = vi.fn().mockResolvedValue(undefined)
+      vi.stubGlobal('navigator', {
+        clipboard: {
+          writeText: writeTextSpy
+        }
+      })
+
+      const success = await copyToClipboard('test clipboard content')
+      expect(success).toBe(true)
+      expect(writeTextSpy).toHaveBeenCalledWith('test clipboard content')
+      vi.unstubAllGlobals()
+    })
+
+    it('falls back to execCommand copy when navigator.clipboard.writeText rejects', async () => {
+      const { copyToClipboard } = await import('../src/index.js')
+      vi.stubGlobal('navigator', {
+        clipboard: {
+          writeText: vi.fn().mockRejectedValue(new Error('NotAllowedError: Document not focused'))
+        }
+      })
+      const execCommandSpy = vi.fn().mockReturnValue(true)
+      document.execCommand = execCommandSpy
+
+      const success = await copyToClipboard('fallback content')
+      expect(success).toBe(true)
+      expect(execCommandSpy).toHaveBeenCalledWith('copy')
+      vi.unstubAllGlobals()
+    })
+
+    it('binds copy button with visual feedback and debouncing', async () => {
+      const { bindCopyButton } = await import('../src/index.js')
+      const writeTextSpy = vi.fn().mockResolvedValue(undefined)
+      vi.stubGlobal('navigator', {
+        clipboard: {
+          writeText: writeTextSpy
+        }
+      })
+
+      const btn = document.createElement('button')
+      btn.innerHTML = '<span>Original</span>'
+      document.body.appendChild(btn)
+
+      bindCopyButton(btn, () => 'my-text', { successText: 'Copied!', durationMs: 100 })
+
+      btn.click()
+      // Wait for async copy resolution
+      await new Promise((r) => setTimeout(r, 20))
+
+      expect(writeTextSpy).toHaveBeenCalledWith('my-text')
+      expect(btn.innerHTML).toBe('<span>Copied!</span>')
+      expect(btn.classList.contains('copied')).toBe(true)
+
+      // After duration, original text is restored
+      await new Promise((r) => setTimeout(r, 120))
+      expect(btn.innerHTML).toBe('<span>Original</span>')
+      expect(btn.classList.contains('copied')).toBe(false)
+
+      btn.remove()
+      vi.unstubAllGlobals()
+    })
+  })
 })
 
 

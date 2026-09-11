@@ -44,6 +44,7 @@ var DrDebugBundle = (() => {
     daemonRunning = false;
     lastError;
     reconnectTimer;
+    disconnectGraceTimer;
     options;
     constructor(options = {}) {
       this.options = options;
@@ -85,6 +86,9 @@ var DrDebugBundle = (() => {
         }
         this.notifyStatus();
       } else if (data.type === "STATUS") {
+        if (this.eventSource && this.eventSource.readyState === 1 && data.connected === false) {
+          return;
+        }
         this.isConnected = data.connected ?? this.isConnected;
         this.daemonRunning = data.daemonRunning ?? this.daemonRunning;
         this.lastError = data.error;
@@ -109,6 +113,10 @@ var DrDebugBundle = (() => {
       try {
         this.eventSource = new EventSource(streamUrl);
         this.eventSource.onopen = () => {
+          if (this.disconnectGraceTimer) {
+            clearTimeout(this.disconnectGraceTimer);
+            this.disconnectGraceTimer = null;
+          }
           this.isConnected = true;
           this.lastError = void 0;
           this.notifyStatus();
@@ -122,6 +130,23 @@ var DrDebugBundle = (() => {
         };
         this.eventSource.onerror = () => {
           var _a2;
+          if (this.eventSource && this.eventSource.readyState === 0) {
+            if (!this.disconnectGraceTimer) {
+              this.disconnectGraceTimer = setTimeout(() => {
+                this.disconnectGraceTimer = null;
+                if (this.eventSource && this.eventSource.readyState === 0) {
+                  this.isConnected = false;
+                  this.lastError = "Reconnecting to Docker Bridge daemon...";
+                  this.notifyStatus();
+                }
+              }, 4e3);
+            }
+            return;
+          }
+          if (this.disconnectGraceTimer) {
+            clearTimeout(this.disconnectGraceTimer);
+            this.disconnectGraceTimer = null;
+          }
           this.isConnected = false;
           this.lastError = "Disconnected from Docker Bridge daemon";
           this.notifyStatus();
@@ -243,6 +268,10 @@ var DrDebugBundle = (() => {
       };
     }
     disconnect() {
+      if (this.disconnectGraceTimer) {
+        clearTimeout(this.disconnectGraceTimer);
+        this.disconnectGraceTimer = null;
+      }
       if (this.reconnectTimer) {
         clearTimeout(this.reconnectTimer);
         this.reconnectTimer = null;
@@ -9294,6 +9323,83 @@ ${msg.content}<end_of_turn>
     }
   };
 
+  // packages/ui/src/components/clipboard.ts
+  async function copyToClipboard(text) {
+    var _a;
+    if (typeof text !== "string") return false;
+    if (typeof navigator !== "undefined" && ((_a = navigator.clipboard) == null ? void 0 : _a.writeText)) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+      }
+    }
+    if (typeof document !== "undefined") {
+      try {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        textarea.style.top = "-9999px";
+        textarea.style.opacity = "0";
+        textarea.style.pointerEvents = "none";
+        textarea.setAttribute("aria-hidden", "true");
+        textarea.setAttribute("tabindex", "-1");
+        const host = document.body || document.documentElement;
+        host.appendChild(textarea);
+        textarea.focus({ preventScroll: true });
+        textarea.select();
+        textarea.setSelectionRange(0, text.length);
+        const success = document.execCommand("copy");
+        host.removeChild(textarea);
+        if (success) return true;
+      } catch {
+      }
+    }
+    return false;
+  }
+  function bindCopyButton(button, getText, options = {}) {
+    const duration = options.durationMs ?? 2e3;
+    let isBusy = false;
+    const handler = async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (isBusy) return;
+      isBusy = true;
+      try {
+        const text = await Promise.resolve(getText());
+        const ok = await copyToClipboard(text);
+        if (ok) {
+          const originalText = button.textContent || "";
+          const originalHtml = button.innerHTML;
+          const successLabel = options.successText || "Copied!";
+          button.classList.add("copied");
+          if (button.querySelector("span")) {
+            const span = button.querySelector("span");
+            span.textContent = successLabel;
+          } else {
+            button.textContent = successLabel;
+          }
+          setTimeout(() => {
+            button.classList.remove("copied");
+            button.innerHTML = originalHtml;
+            if (!button.querySelector("span") && originalText) {
+              button.textContent = originalText;
+            }
+            isBusy = false;
+          }, duration);
+        } else {
+          isBusy = false;
+        }
+      } catch {
+        isBusy = false;
+      }
+    };
+    button.addEventListener("click", handler);
+    return () => button.removeEventListener("click", handler);
+  }
+
   // packages/ui/src/components/CausalGraphView.ts
   var CausalGraphView = class {
     element;
@@ -9451,17 +9557,12 @@ ${msg.content}<end_of_turn>
       </div>
     `;
       const copyBtn = this.element.querySelector("#dr-debug-btn-copy-mermaid");
-      copyBtn == null ? void 0 : copyBtn.addEventListener("click", () => {
-        var _a;
-        (_a = navigator.clipboard) == null ? void 0 : _a.writeText(mermaidDiagram);
-        if (copyBtn) {
-          const originalText = copyBtn.innerHTML;
-          copyBtn.innerHTML = "<span>Copied!</span>";
-          setTimeout(() => {
-            copyBtn.innerHTML = originalText;
-          }, 1500);
-        }
-      });
+      if (copyBtn) {
+        bindCopyButton(copyBtn, () => mermaidDiagram, {
+          successText: "Copied!",
+          durationMs: 2e3
+        });
+      }
       const nodeEls = this.element.querySelectorAll(".dr-debug-graph-node");
       nodeEls.forEach((el) => {
         el.addEventListener("click", () => {
@@ -9530,6 +9631,11 @@ ${msg.content}<end_of_turn>
     terminalEl;
     filterBar;
     searchInput;
+    // State caching to prevent aggressive DOM recreation and layout jitter
+    lastContainerSignature = "";
+    lastRenderedLogsCount = -1;
+    lastFilterSignature = "";
+    lastInstructionsMode = null;
     constructor(options) {
       this.getController = options.getController;
       this.onLaunchDiagnosis = options.onLaunchDiagnosis;
@@ -9542,10 +9648,47 @@ ${msg.content}<end_of_turn>
       return this.element;
     }
     render() {
-      var _a;
+      var _a, _b;
       this.element.innerHTML = "";
       this.statusBanner = document.createElement("div");
       this.statusBanner.className = "dr-debug-docker-header";
+      this.statusBanner.innerHTML = `
+      <div class="dr-debug-docker-status-left">
+        <span class="dr-debug-docker-status-dot offline"></span>
+        <div class="dr-debug-docker-status-info">
+          <div class="dr-debug-docker-title">
+            <span>Docker Engine Bridge</span>
+            <span class="dr-debug-docker-badge badge-stopped">BRIDGE OFFLINE</span>
+          </div>
+          <div class="dr-debug-docker-sub">
+            Checking local daemon connection...
+          </div>
+        </div>
+      </div>
+      <div class="dr-debug-docker-status-right">
+        <div class="dr-debug-docker-stat-pill pill-containers">
+          <strong>0</strong> <span>Containers</span>
+        </div>
+        <div class="dr-debug-docker-stat-pill pill-errors">
+          <strong>0</strong> <span>Panics / Errors</span>
+        </div>
+        <button class="dr-debug-dock-btn-refresh" id="dr-debug-dock-refresh" title="Refresh containers">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        </button>
+      </div>
+    `;
+      (_a = this.statusBanner.querySelector("#dr-debug-dock-refresh")) == null ? void 0 : _a.addEventListener("click", () => {
+        const controller = this.getController();
+        if (controller) {
+          const client = controller.getDockerBridgeClient();
+          if (client) {
+            client.fetchContainers().then((c) => controller.setDockerContainers(c));
+          } else {
+            controller.connectDockerBridge();
+          }
+        }
+        this.update();
+      });
       this.element.appendChild(this.statusBanner);
       this.instructionsCard = document.createElement("div");
       this.instructionsCard.className = "dr-debug-docker-instructions-wrapper";
@@ -9568,7 +9711,7 @@ ${msg.content}<end_of_turn>
         </button>
       </div>
     `;
-      (_a = containerSection.querySelector("#dr-debug-guide-btn-docker")) == null ? void 0 : _a.addEventListener("click", () => {
+      (_b = containerSection.querySelector("#dr-debug-guide-btn-docker")) == null ? void 0 : _b.addEventListener("click", () => {
         var _a2;
         (_a2 = this.onShowGuide) == null ? void 0 : _a2.call(this);
       });
@@ -9589,7 +9732,7 @@ ${msg.content}<end_of_turn>
       this.update();
     }
     renderToolbar() {
-      var _a, _b;
+      var _a;
       this.filterBar.innerHTML = `
       <div class="dr-debug-docker-filters">
         <button class="dr-debug-dock-btn ${this.activeLevelFilter === "all" ? "active" : ""}" data-level="all">All Logs</button>
@@ -9611,6 +9754,8 @@ ${msg.content}<end_of_turn>
           const target = e.currentTarget;
           const level = target.dataset.level || "all";
           this.activeLevelFilter = level;
+          this.lastFilterSignature = "";
+          this.lastRenderedLogsCount = -1;
           this.renderToolbar();
           this.renderTerminalLogs();
         });
@@ -9618,6 +9763,8 @@ ${msg.content}<end_of_turn>
       this.searchInput = this.filterBar.querySelector(".dr-debug-dock-search");
       this.searchInput.addEventListener("input", () => {
         this.searchQuery = this.searchInput.value;
+        this.lastFilterSignature = "";
+        this.lastRenderedLogsCount = -1;
         this.renderTerminalLogs();
       });
       const autoscrollCb = this.filterBar.querySelector(".dr-debug-dock-autoscroll input");
@@ -9630,69 +9777,71 @@ ${msg.content}<end_of_turn>
           const entries = controller.getDockerLogs();
           while (entries.length > 0) entries.pop();
         }
+        this.lastRenderedLogsCount = -1;
+        this.lastFilterSignature = "";
         this.update();
       });
-      (_b = this.filterBar.querySelector("#dr-debug-dock-copy-ai")) == null ? void 0 : _b.addEventListener("click", (e) => {
-        const btn = e.currentTarget;
-        this.copyDockerPrompt(btn);
-      });
+      const copyAIBtn = this.filterBar.querySelector("#dr-debug-dock-copy-ai");
+      if (copyAIBtn) {
+        copyAIBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.copyDockerPrompt(copyAIBtn);
+        });
+      }
     }
     update() {
-      var _a, _b, _c;
+      var _a;
       const controller = this.getController();
       const containers = (controller == null ? void 0 : controller.getDockerContainers()) || [];
       const logs = (controller == null ? void 0 : controller.getDockerLogs()) || [];
       const errorLogs = logs.filter((l) => l.level === "error");
       const bridgeStatus = (_a = controller == null ? void 0 : controller.getDockerBridgeClient()) == null ? void 0 : _a.getStatus();
-      const isBridgeConnected = (bridgeStatus == null ? void 0 : bridgeStatus.connected) ?? false;
-      const isDaemonRunning = (bridgeStatus == null ? void 0 : bridgeStatus.daemonRunning) ?? containers.length > 0;
-      const isHttps = typeof window !== "undefined" && ((_b = window.location) == null ? void 0 : _b.protocol) === "https:";
-      const subText = isBridgeConnected ? `Connected to local daemon via port 9229 \xB7 ${containers.length} containers discovered` : isHttps ? `Bridge offline. Run \`start-docker-bridge\` or reload the extension to stream.` : `Bridge disconnected. Run \`start-docker-bridge\` or \`npx @dr-debug/mcp\` to stream host containers.`;
-      this.statusBanner.innerHTML = `
-      <div class="dr-debug-docker-status-left">
-        <span class="dr-debug-docker-status-dot ${isBridgeConnected ? "online" : "offline"}"></span>
-        <div class="dr-debug-docker-status-info">
-          <div class="dr-debug-docker-title">
-            <span>Docker Engine Bridge</span>
-            <span class="dr-debug-docker-badge ${isDaemonRunning ? "badge-running" : "badge-stopped"}">
-              ${isBridgeConnected ? isDaemonRunning ? "DAEMON ACTIVE" : "DAEMON STOPPED" : "BRIDGE OFFLINE"}
-            </span>
-          </div>
-          <div class="dr-debug-docker-sub">
-            ${subText}
-          </div>
-        </div>
-      </div>
-      <div class="dr-debug-docker-status-right">
-        <div class="dr-debug-docker-stat-pill">
-          <strong>${containers.length}</strong> <span>Containers</span>
-        </div>
-        <div class="dr-debug-docker-stat-pill ${errorLogs.length > 0 ? "alert" : ""}">
-          <strong>${errorLogs.length}</strong> <span>Panics / Errors</span>
-        </div>
-        <button class="dr-debug-dock-btn-refresh" id="dr-debug-dock-refresh" title="Refresh containers">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-        </button>
-      </div>
-    `;
-      (_c = this.statusBanner.querySelector("#dr-debug-dock-refresh")) == null ? void 0 : _c.addEventListener("click", () => {
-        if (controller) {
-          const client = controller.getDockerBridgeClient();
-          if (client) {
-            client.fetchContainers().then((c) => controller.setDockerContainers(c));
-          } else {
-            controller.connectDockerBridge();
-          }
-        }
-        this.update();
-      });
+      const isBridgeConnected = Boolean((bridgeStatus == null ? void 0 : bridgeStatus.connected) || containers.length > 0);
+      const isDaemonRunning = Boolean((bridgeStatus == null ? void 0 : bridgeStatus.daemonRunning) ?? containers.length > 0);
+      this.renderStatusBanner(isBridgeConnected, isDaemonRunning, containers.length, errorLogs.length);
       this.renderInstructions(isBridgeConnected, containers.length);
       this.renderContainerGrid(containers, logs);
       this.renderTerminalLogs();
     }
+    renderStatusBanner(isBridgeConnected, isDaemonRunning, containerCount, errorCount) {
+      var _a, _b;
+      const isHttps = typeof window !== "undefined" && ((_a = window.location) == null ? void 0 : _a.protocol) === "https:";
+      const subText = isBridgeConnected ? `Connected to local daemon via port 9229 \xB7 ${containerCount} containers discovered` : isHttps ? `Bridge offline. Run \`start-docker-bridge\` or reload the extension to stream.` : `Bridge disconnected. Run \`start-docker-bridge\` or \`npx @dr-debug/mcp\` to stream host containers.`;
+      const dot = this.statusBanner.querySelector(".dr-debug-docker-status-dot");
+      if (dot) {
+        dot.className = `dr-debug-docker-status-dot ${isBridgeConnected ? "online" : "offline"}`;
+      }
+      const badge = this.statusBanner.querySelector(".dr-debug-docker-badge");
+      if (badge) {
+        badge.className = `dr-debug-docker-badge ${isDaemonRunning ? "badge-running" : "badge-stopped"}`;
+        badge.textContent = isBridgeConnected ? isDaemonRunning ? "DAEMON ACTIVE" : "DAEMON STOPPED" : "BRIDGE OFFLINE";
+      }
+      const sub = this.statusBanner.querySelector(".dr-debug-docker-sub");
+      if (sub && ((_b = sub.textContent) == null ? void 0 : _b.trim()) !== subText) {
+        sub.textContent = subText;
+      }
+      const containerStrong = this.statusBanner.querySelector(".pill-containers strong");
+      if (containerStrong && containerStrong.textContent !== String(containerCount)) {
+        containerStrong.textContent = String(containerCount);
+      }
+      const errPill = this.statusBanner.querySelector(".pill-errors");
+      if (errPill) {
+        errPill.classList.toggle("alert", errorCount > 0);
+        const errStrong = errPill.querySelector("strong");
+        if (errStrong && errStrong.textContent !== String(errorCount)) {
+          errStrong.textContent = String(errorCount);
+        }
+      }
+    }
     renderInstructions(isBridgeConnected, containerCount) {
       var _a;
-      if (isBridgeConnected && containerCount > 0) {
+      const mode = isBridgeConnected && containerCount > 0 ? "connected" : "guide";
+      if (this.lastInstructionsMode === mode && this.instructionsCard.innerHTML) {
+        return;
+      }
+      this.lastInstructionsMode = mode;
+      if (mode === "connected") {
         this.instructionsCard.innerHTML = `
         <div class="dr-debug-dock-connected-bar">
           <div style="display:flex; align-items:center; gap:8px;">
@@ -9768,24 +9917,22 @@ ${msg.content}<end_of_turn>
     bindCopyCmd() {
       const btn = this.instructionsCard.querySelector("#btn-copy-dock-cmd");
       if (btn) {
-        btn.addEventListener("click", () => {
-          var _a;
-          (_a = navigator.clipboard) == null ? void 0 : _a.writeText("npx @dr-debug/mcp").then(() => {
-            const oldText = btn.textContent;
-            btn.textContent = "Copied!";
-            btn.classList.add("copied");
-            setTimeout(() => {
-              btn.textContent = oldText;
-              btn.classList.remove("copied");
-            }, 2e3);
-          });
-        });
+        bindCopyButton(btn, () => "npx @dr-debug/mcp");
       }
     }
     renderContainerGrid(containers, logs) {
       var _a, _b;
+      const errCounts = logs.filter((l) => l.level === "error");
+      const sig = `${this.activeContainerFilter}:${containers.length}:${containers.map((c) => {
+        var _a2;
+        return `${c.name}:${c.state}:${(_a2 = c.ports) == null ? void 0 : _a2.join(",")}`;
+      }).join("|")}:${errCounts.length}`;
+      if (this.lastContainerSignature === sig && this.containerGrid.innerHTML) {
+        return;
+      }
+      this.lastContainerSignature = sig;
       this.containerGrid.innerHTML = "";
-      const allErrors = logs.filter((l) => l.level === "error").length;
+      const allErrors = errCounts.length;
       const allCard = document.createElement("div");
       allCard.className = `dr-debug-docker-card ${this.activeContainerFilter === "all" ? "selected" : ""}`;
       allCard.innerHTML = `
@@ -9797,6 +9944,9 @@ ${msg.content}<end_of_turn>
     `;
       allCard.addEventListener("click", () => {
         this.activeContainerFilter = "all";
+        this.lastContainerSignature = "";
+        this.lastFilterSignature = "";
+        this.lastRenderedLogsCount = -1;
         this.renderContainerGrid(containers, logs);
         this.renderTerminalLogs();
       });
@@ -9833,6 +9983,9 @@ ${msg.content}<end_of_turn>
       `;
         card.addEventListener("click", () => {
           this.activeContainerFilter = container.name;
+          this.lastContainerSignature = "";
+          this.lastFilterSignature = "";
+          this.lastRenderedLogsCount = -1;
           this.renderContainerGrid(containers, logs);
           this.renderTerminalLogs();
         });
@@ -9842,48 +9995,66 @@ ${msg.content}<end_of_turn>
     renderTerminalLogs() {
       const controller = this.getController();
       if (!controller) return;
+      const filterSig = `${this.activeContainerFilter}:${this.activeLevelFilter}:${this.searchQuery}`;
+      const filterChanged = this.lastFilterSignature !== filterSig;
+      this.lastFilterSignature = filterSig;
       const logs = controller.getDockerLogs({
         container: this.activeContainerFilter !== "all" ? this.activeContainerFilter : void 0,
         level: this.activeLevelFilter !== "all" ? this.activeLevelFilter : void 0,
         grep: this.searchQuery || void 0
       });
-      this.terminalEl.innerHTML = "";
-      if (logs.length === 0) {
-        this.terminalEl.innerHTML = `
-        <div class="dr-debug-dock-term-empty">
-          <span>No log output recorded for current filter criteria.</span>
-        </div>
-      `;
+      if (!filterChanged && logs.length === this.lastRenderedLogsCount && this.terminalEl.innerHTML) {
         return;
       }
-      for (const log of logs) {
-        const row = document.createElement("div");
-        row.className = `dr-debug-dock-log-row log-${log.level} stream-${log.stream}`;
-        const timeStr = new Date(log.timestamp).toLocaleTimeString();
-        row.innerHTML = `
-        <span class="dr-debug-dock-time">${timeStr}</span>
-        <span class="dr-debug-dock-container-tag">${this.escapeHtml(log.containerName)}</span>
-        <span class="dr-debug-dock-stream-tag">[${log.stream}]</span>
-        <span class="dr-debug-dock-msg">${this.highlightErrors(this.escapeHtml(log.message))}</span>
-      `;
-        if (log.level === "error") {
-          const diagBtn = document.createElement("button");
-          diagBtn.className = "dr-debug-dock-inline-diag";
-          diagBtn.innerHTML = `<span>Diagnose</span>`;
-          diagBtn.title = "Launch AI investigation for this container panic";
-          diagBtn.addEventListener("click", (e) => {
-            var _a;
-            e.stopPropagation();
-            const goal = `Diagnose container ${log.containerName} error and trace downstream frontend effects: "${log.message.slice(0, 140)}"`;
-            (_a = this.onLaunchDiagnosis) == null ? void 0 : _a.call(this, goal);
-          });
-          row.appendChild(diagBtn);
+      if (filterChanged || logs.length < this.lastRenderedLogsCount || this.lastRenderedLogsCount < 0) {
+        this.terminalEl.innerHTML = "";
+        if (logs.length === 0) {
+          this.terminalEl.innerHTML = `
+          <div class="dr-debug-dock-term-empty">
+            <span>No log output recorded for current filter criteria.</span>
+          </div>
+        `;
+          this.lastRenderedLogsCount = 0;
+          return;
         }
-        this.terminalEl.appendChild(row);
+        for (const log of logs) {
+          this.appendLogRow(log);
+        }
+      } else {
+        const newLogs = logs.slice(this.lastRenderedLogsCount);
+        for (const log of newLogs) {
+          this.appendLogRow(log);
+        }
       }
+      this.lastRenderedLogsCount = logs.length;
       if (this.autoScroll) {
         this.terminalEl.scrollTop = this.terminalEl.scrollHeight;
       }
+    }
+    appendLogRow(log) {
+      const row = document.createElement("div");
+      row.className = `dr-debug-dock-log-row log-${log.level} stream-${log.stream}`;
+      const timeStr = new Date(log.timestamp).toLocaleTimeString();
+      row.innerHTML = `
+      <span class="dr-debug-dock-time">${timeStr}</span>
+      <span class="dr-debug-dock-container-tag">${this.escapeHtml(log.containerName)}</span>
+      <span class="dr-debug-dock-stream-tag">[${log.stream}]</span>
+      <span class="dr-debug-dock-msg">${this.highlightErrors(this.escapeHtml(log.message))}</span>
+    `;
+      if (log.level === "error") {
+        const diagBtn = document.createElement("button");
+        diagBtn.className = "dr-debug-dock-inline-diag";
+        diagBtn.innerHTML = `<span>Diagnose</span>`;
+        diagBtn.title = "Launch AI investigation for this container panic";
+        diagBtn.addEventListener("click", (e) => {
+          var _a;
+          e.stopPropagation();
+          const goal = `Diagnose container ${log.containerName} error and trace downstream frontend effects: "${log.message.slice(0, 140)}"`;
+          (_a = this.onLaunchDiagnosis) == null ? void 0 : _a.call(this, goal);
+        });
+        row.appendChild(diagBtn);
+      }
+      this.terminalEl.appendChild(row);
     }
     renderOfflineState() {
       this.element.innerHTML = `
@@ -9901,6 +10072,10 @@ ${msg.content}<end_of_turn>
         </div>
       </div>
     `;
+      const btn = this.element.querySelector("#dr-debug-dock-copy-cmd");
+      if (btn) {
+        bindCopyButton(btn, () => "npx -y @dr-debug/mcp");
+      }
     }
     async copyDockerPrompt(btn) {
       const controller = this.getController();
@@ -9927,15 +10102,15 @@ ${msg.content}<end_of_turn>
         logs.map((l) => `[${new Date(l.timestamp).toLocaleTimeString()}] [${l.containerName}] ${l.message}`).join("\n"),
         "```"
       ].join("\n");
-      try {
-        await navigator.clipboard.writeText(prompt);
+      const ok = await copyToClipboard(prompt);
+      if (ok) {
         const orig = btn.innerHTML;
-        btn.innerHTML = "Copied";
+        btn.innerHTML = "<span>Copied!</span>";
+        btn.classList.add("copied");
         setTimeout(() => {
           btn.innerHTML = orig;
+          btn.classList.remove("copied");
         }, 2e3);
-      } catch {
-        console.log(prompt);
       }
     }
     highlightErrors(text) {
@@ -9960,6 +10135,7 @@ ${msg.content}<end_of_turn>
     activeMatrixCellKey = null;
     searchQuery = "";
     selectedErrorId = null;
+    lastRenderedInspectorId = null;
     getController;
     constructor(options) {
       this.getController = options.getController;
@@ -10142,8 +10318,13 @@ ${msg.content}<end_of_turn>
       this.renderHistogram(histogram);
       this.renderErrorList(state);
       if (this.selectedErrorId) {
-        this.renderInspector(this.selectedErrorId, state);
+        if (this.lastRenderedInspectorId !== this.selectedErrorId || !this.inspectorContainer.innerHTML) {
+          this.renderInspector(this.selectedErrorId, state);
+          this.lastRenderedInspectorId = this.selectedErrorId;
+        }
+        this.inspectorContainer.style.display = "flex";
       } else {
+        this.lastRenderedInspectorId = null;
         this.inspectorContainer.style.display = "none";
       }
     }
@@ -10480,15 +10661,9 @@ ${msg.content}<end_of_turn>
       copyAIBtn.className = "dr-debug-btn-primary-glow";
       copyAIBtn.innerHTML = `<span>Copy for AI</span>`;
       copyAIBtn.title = "Copy surgical debug prompt (Ponytail Protocol \u2014 80% Token Saver) ready to paste into Claude Code or Antigravity";
-      copyAIBtn.addEventListener("click", () => {
-        const prompt = controller.getUnifiedAIDebugPrompt(targetId);
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(prompt);
-          copyAIBtn.innerHTML = `<span>Copied AI Prompt!</span>`;
-          setTimeout(() => {
-            copyAIBtn.innerHTML = `<span>Copy for AI</span>`;
-          }, 2500);
-        }
+      bindCopyButton(copyAIBtn, () => controller.getUnifiedAIDebugPrompt(targetId), {
+        successText: "Copied AI Prompt!",
+        durationMs: 2500
       });
       actionToolbar.appendChild(copyAIBtn);
       if (networkReq) {
@@ -10529,15 +10704,9 @@ ${msg.content}<end_of_turn>
         curlBtn.className = "dr-debug-btn-curl";
         curlBtn.innerHTML = `<span>Copy cURL</span>`;
         curlBtn.title = "Copy exact executable curl command for terminal reproduction";
-        curlBtn.addEventListener("click", () => {
-          const curlCmd = generateCurlCommand(networkReq);
-          if (navigator.clipboard) {
-            navigator.clipboard.writeText(curlCmd);
-            curlBtn.innerHTML = `<span>Copied cURL!</span>`;
-            setTimeout(() => {
-              curlBtn.innerHTML = `<span>Copy cURL</span>`;
-            }, 2e3);
-          }
+        bindCopyButton(curlBtn, () => generateCurlCommand(networkReq), {
+          successText: "Copied cURL!",
+          durationMs: 2e3
         });
         actionToolbar.appendChild(curlBtn);
       }
@@ -10545,7 +10714,7 @@ ${msg.content}<end_of_turn>
       synthBtn.className = "dr-debug-btn-synth";
       synthBtn.innerHTML = `<span>Synthesize Test</span>`;
       synthBtn.title = "Generate Playwright reproduction test script";
-      synthBtn.addEventListener("click", () => {
+      bindCopyButton(synthBtn, () => {
         var _a2;
         const mockResult = {
           goal: "Incident Reproduction",
@@ -10557,32 +10726,25 @@ ${msg.content}<end_of_turn>
           durationMs: 0,
           finalMemory: ""
         };
-        const testCode = TestSynthesizer.synthesizePlaywright(
+        return TestSynthesizer.synthesizePlaywright(
           mockResult,
           ((_a2 = controller.getInteractionReplay) == null ? void 0 : _a2.call(controller)) || [],
           networkReq
         );
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(testCode);
-          synthBtn.innerHTML = `<span>Copied Playwright Test!</span>`;
-          setTimeout(() => {
-            synthBtn.innerHTML = `<span>Synthesize Test</span>`;
-          }, 2500);
-        }
+      }, {
+        successText: "Copied Playwright Test!",
+        durationMs: 2500
       });
       actionToolbar.appendChild(synthBtn);
       const copyJsonBtn = document.createElement("button");
       copyJsonBtn.className = "dr-debug-copy-inline-btn";
       copyJsonBtn.innerHTML = `<span>JSON</span>`;
-      copyJsonBtn.addEventListener("click", () => {
+      bindCopyButton(copyJsonBtn, () => {
         const payload = networkReq || consoleErr || dockerLog || state.memory;
-        if (navigator.clipboard && payload) {
-          navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
-          copyJsonBtn.innerHTML = `<span>Copied!</span>`;
-          setTimeout(() => {
-            copyJsonBtn.innerHTML = `<span>JSON</span>`;
-          }, 2e3);
-        }
+        return payload ? JSON.stringify(payload, null, 2) : "";
+      }, {
+        successText: "Copied!",
+        durationMs: 2e3
       });
       actionToolbar.appendChild(copyJsonBtn);
       const body = document.createElement("div");
@@ -10848,7 +11010,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
           <div class="dr-debug-settings-update-banner">
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
-              <span class="dr-debug-update-version">Dr. Debug v0.1.8</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.9</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
@@ -11836,34 +11998,10 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       }
     }
     /**
-     * Clipboard write that reports whether it actually succeeded. The async API
-     * needs a secure context and a focused document, neither of which is
-     * guaranteed here, so fall back to a detached textarea + execCommand.
+     * Clipboard write that reports whether it actually succeeded.
      */
     async copyToClipboard(text) {
-      var _a;
-      try {
-        if ((_a = navigator.clipboard) == null ? void 0 : _a.writeText) {
-          await navigator.clipboard.writeText(text);
-          return true;
-        }
-      } catch {
-      }
-      try {
-        const scratch = document.createElement("textarea");
-        scratch.value = text;
-        scratch.setAttribute("readonly", "");
-        scratch.style.position = "fixed";
-        scratch.style.top = "-1000px";
-        scratch.style.opacity = "0";
-        document.body.appendChild(scratch);
-        scratch.select();
-        const ok = document.execCommand("copy");
-        document.body.removeChild(scratch);
-        return ok;
-      } catch {
-        return false;
-      }
+      return await copyToClipboard(text);
     }
     /** Wires a button to a copy action with honest success/failure feedback. */
     bindCopyFeedback(btn, getText, idleHtml, okHtml, failHtml = "<span>Copy failed</span>") {

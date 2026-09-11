@@ -80,3 +80,88 @@ describe('DockerInterceptor', () => {
     expect(status.errorCount).toBe(1)
   })
 })
+
+describe('DockerBridgeClient Connection Resilience', () => {
+  it('handles INIT events and sets connection status', async () => {
+    const { DockerBridgeClient } = await import('../src/DockerBridgeClient.js')
+    let statusState: any = null
+    const client = new DockerBridgeClient({
+      onStatusChange: (s) => {
+        statusState = s
+      }
+    })
+
+    client.handleEvent({
+      type: 'INIT',
+      status: { connected: true, daemonRunning: true },
+      containers: [{ id: 'c1', name: 'app', state: 'running' }],
+      recentLogs: []
+    })
+
+    expect(statusState?.connected).toBe(true)
+    expect(statusState?.daemonRunning).toBe(true)
+  })
+
+  it('ignores secondary external STATUS disconnect when direct EventSource is OPEN', async () => {
+    const { DockerBridgeClient } = await import('../src/DockerBridgeClient.js')
+    let statusChanges: any[] = []
+    const client = new DockerBridgeClient({
+      onStatusChange: (s) => {
+        statusChanges.push(s)
+      }
+    })
+
+    // Simulate direct EventSource is open and active
+    ;(client as any).eventSource = { readyState: 1 /* OPEN */ }
+    ;(client as any).isConnected = true
+
+    // Background worker fails a health-probe and broadcasts disconnect
+    client.handleEvent({
+      type: 'STATUS',
+      connected: false,
+      daemonRunning: false
+    })
+
+    // Direct EventSource takes precedence; status is NOT dropped
+    expect((client as any).isConnected).toBe(true)
+    expect(statusChanges.length).toBe(0)
+  })
+
+  it('does not immediately tear down connection or flap status during transient SSE reconnecting state', async () => {
+    const { DockerBridgeClient } = await import('../src/DockerBridgeClient.js')
+    let statusChanges: any[] = []
+    const client = new DockerBridgeClient({
+      onStatusChange: (s) => {
+        statusChanges.push(s)
+      }
+    })
+
+    ;(client as any).isConnected = true
+
+    let mockES: any = {
+      readyState: 0, // CONNECTING
+      close: () => {}
+    }
+
+    // Call connect() with a mock EventSource constructor
+    const originalEventSource = globalThis.EventSource
+    globalThis.EventSource = function () {
+      return mockES
+    } as any
+
+    client.connect()
+
+    // Trigger onerror while in CONNECTING (readyState === 0)
+    mockES.onerror()
+
+    // Status should still be true (grace period started, no immediate drop to offline)
+    expect((client as any).isConnected).toBe(true)
+    expect(statusChanges.length).toBe(0)
+    expect((client as any).disconnectGraceTimer).toBeDefined()
+
+    // Clean up
+    client.disconnect()
+    expect((client as any).disconnectGraceTimer).toBeNull()
+    globalThis.EventSource = originalEventSource
+  })
+})

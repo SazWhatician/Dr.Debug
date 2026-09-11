@@ -4,6 +4,7 @@ import type {
   DockerLogEntry,
   LogLevel
 } from '@dr-debug/controller'
+import { copyToClipboard, bindCopyButton } from './clipboard.js'
 
 export interface DockerDashboardOptions {
   getController: () => DebugController | undefined
@@ -27,6 +28,12 @@ export class DockerDashboardView {
   private filterBar!: HTMLElement
   private searchInput!: HTMLInputElement
 
+  // State caching to prevent aggressive DOM recreation and layout jitter
+  private lastContainerSignature: string = ''
+  private lastRenderedLogsCount: number = -1
+  private lastFilterSignature: string = ''
+  private lastInstructionsMode: 'connected' | 'guide' | null = null
+
   constructor(options: DockerDashboardOptions) {
     this.getController = options.getController
     this.onLaunchDiagnosis = options.onLaunchDiagnosis
@@ -45,9 +52,46 @@ export class DockerDashboardView {
   private render(): void {
     this.element.innerHTML = ''
 
-    // 1. Daemon Status Header
+    // 1. Daemon Status Header (skeleton created once, updated dynamically)
     this.statusBanner = document.createElement('div')
     this.statusBanner.className = 'dr-debug-docker-header'
+    this.statusBanner.innerHTML = `
+      <div class="dr-debug-docker-status-left">
+        <span class="dr-debug-docker-status-dot offline"></span>
+        <div class="dr-debug-docker-status-info">
+          <div class="dr-debug-docker-title">
+            <span>Docker Engine Bridge</span>
+            <span class="dr-debug-docker-badge badge-stopped">BRIDGE OFFLINE</span>
+          </div>
+          <div class="dr-debug-docker-sub">
+            Checking local daemon connection...
+          </div>
+        </div>
+      </div>
+      <div class="dr-debug-docker-status-right">
+        <div class="dr-debug-docker-stat-pill pill-containers">
+          <strong>0</strong> <span>Containers</span>
+        </div>
+        <div class="dr-debug-docker-stat-pill pill-errors">
+          <strong>0</strong> <span>Panics / Errors</span>
+        </div>
+        <button class="dr-debug-dock-btn-refresh" id="dr-debug-dock-refresh" title="Refresh containers">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        </button>
+      </div>
+    `
+    this.statusBanner.querySelector('#dr-debug-dock-refresh')?.addEventListener('click', () => {
+      const controller = this.getController()
+      if (controller) {
+        const client = controller.getDockerBridgeClient()
+        if (client) {
+          client.fetchContainers().then((c) => controller.setDockerContainers(c))
+        } else {
+          controller.connectDockerBridge()
+        }
+      }
+      this.update()
+    })
     this.element.appendChild(this.statusBanner)
 
     // 1b. Instructions Guide Panel
@@ -123,6 +167,8 @@ export class DockerDashboardView {
         const target = e.currentTarget as HTMLElement
         const level = (target.dataset.level as any) || 'all'
         this.activeLevelFilter = level
+        this.lastFilterSignature = ''
+        this.lastRenderedLogsCount = -1
         this.renderToolbar()
         this.renderTerminalLogs()
       })
@@ -131,6 +177,8 @@ export class DockerDashboardView {
     this.searchInput = this.filterBar.querySelector('.dr-debug-dock-search')!
     this.searchInput.addEventListener('input', () => {
       this.searchQuery = this.searchInput.value
+      this.lastFilterSignature = ''
+      this.lastRenderedLogsCount = -1
       this.renderTerminalLogs()
     })
 
@@ -142,17 +190,22 @@ export class DockerDashboardView {
     this.filterBar.querySelector('#dr-debug-dock-clear')?.addEventListener('click', () => {
       const controller = this.getController()
       if (controller) {
-        // Clear docker logs
         const entries = controller.getDockerLogs()
         while (entries.length > 0) entries.pop()
       }
+      this.lastRenderedLogsCount = -1
+      this.lastFilterSignature = ''
       this.update()
     })
 
-    this.filterBar.querySelector('#dr-debug-dock-copy-ai')?.addEventListener('click', (e) => {
-      const btn = e.currentTarget as HTMLButtonElement
-      this.copyDockerPrompt(btn)
-    })
+    const copyAIBtn = this.filterBar.querySelector('#dr-debug-dock-copy-ai') as HTMLButtonElement
+    if (copyAIBtn) {
+      copyAIBtn.addEventListener('click', (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        this.copyDockerPrompt(copyAIBtn)
+      })
+    }
   }
 
   public update(): void {
@@ -162,69 +215,70 @@ export class DockerDashboardView {
     const errorLogs = logs.filter((l) => l.level === 'error')
     const bridgeStatus = controller?.getDockerBridgeClient()?.getStatus()
 
-    // 1. Status Banner
-    const isBridgeConnected = bridgeStatus?.connected ?? false
-    const isDaemonRunning = bridgeStatus?.daemonRunning ?? (containers.length > 0)
+    // Consider connected if client is actively connected OR if containers are present in substrate
+    const isBridgeConnected = Boolean(bridgeStatus?.connected || containers.length > 0)
+    const isDaemonRunning = Boolean(bridgeStatus?.daemonRunning ?? (containers.length > 0))
 
+    this.renderStatusBanner(isBridgeConnected, isDaemonRunning, containers.length, errorLogs.length)
+    this.renderInstructions(isBridgeConnected, containers.length)
+    this.renderContainerGrid(containers, logs)
+    this.renderTerminalLogs()
+  }
+
+  private renderStatusBanner(
+    isBridgeConnected: boolean,
+    isDaemonRunning: boolean,
+    containerCount: number,
+    errorCount: number
+  ): void {
     const isHttps = typeof window !== 'undefined' && window.location?.protocol === 'https:'
     const subText = isBridgeConnected
-      ? `Connected to local daemon via port 9229 · ${containers.length} containers discovered`
+      ? `Connected to local daemon via port 9229 · ${containerCount} containers discovered`
       : isHttps
         ? `Bridge offline. Run \`start-docker-bridge\` or reload the extension to stream.`
         : `Bridge disconnected. Run \`start-docker-bridge\` or \`npx @dr-debug/mcp\` to stream host containers.`
 
-    this.statusBanner.innerHTML = `
-      <div class="dr-debug-docker-status-left">
-        <span class="dr-debug-docker-status-dot ${isBridgeConnected ? 'online' : 'offline'}"></span>
-        <div class="dr-debug-docker-status-info">
-          <div class="dr-debug-docker-title">
-            <span>Docker Engine Bridge</span>
-            <span class="dr-debug-docker-badge ${isDaemonRunning ? 'badge-running' : 'badge-stopped'}">
-              ${isBridgeConnected ? (isDaemonRunning ? 'DAEMON ACTIVE' : 'DAEMON STOPPED') : 'BRIDGE OFFLINE'}
-            </span>
-          </div>
-          <div class="dr-debug-docker-sub">
-            ${subText}
-          </div>
-        </div>
-      </div>
-      <div class="dr-debug-docker-status-right">
-        <div class="dr-debug-docker-stat-pill">
-          <strong>${containers.length}</strong> <span>Containers</span>
-        </div>
-        <div class="dr-debug-docker-stat-pill ${errorLogs.length > 0 ? 'alert' : ''}">
-          <strong>${errorLogs.length}</strong> <span>Panics / Errors</span>
-        </div>
-        <button class="dr-debug-dock-btn-refresh" id="dr-debug-dock-refresh" title="Refresh containers">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-        </button>
-      </div>
-    `
+    const dot = this.statusBanner.querySelector('.dr-debug-docker-status-dot')
+    if (dot) {
+      dot.className = `dr-debug-docker-status-dot ${isBridgeConnected ? 'online' : 'offline'}`
+    }
 
-    this.statusBanner.querySelector('#dr-debug-dock-refresh')?.addEventListener('click', () => {
-      if (controller) {
-        const client = controller.getDockerBridgeClient()
-        if (client) {
-          client.fetchContainers().then((c) => controller.setDockerContainers(c))
-        } else {
-          controller.connectDockerBridge()
-        }
+    const badge = this.statusBanner.querySelector('.dr-debug-docker-badge')
+    if (badge) {
+      badge.className = `dr-debug-docker-badge ${isDaemonRunning ? 'badge-running' : 'badge-stopped'}`
+      badge.textContent = isBridgeConnected
+        ? (isDaemonRunning ? 'DAEMON ACTIVE' : 'DAEMON STOPPED')
+        : 'BRIDGE OFFLINE'
+    }
+
+    const sub = this.statusBanner.querySelector('.dr-debug-docker-sub')
+    if (sub && sub.textContent?.trim() !== subText) {
+      sub.textContent = subText
+    }
+
+    const containerStrong = this.statusBanner.querySelector('.pill-containers strong')
+    if (containerStrong && containerStrong.textContent !== String(containerCount)) {
+      containerStrong.textContent = String(containerCount)
+    }
+
+    const errPill = this.statusBanner.querySelector('.pill-errors')
+    if (errPill) {
+      errPill.classList.toggle('alert', errorCount > 0)
+      const errStrong = errPill.querySelector('strong')
+      if (errStrong && errStrong.textContent !== String(errorCount)) {
+        errStrong.textContent = String(errorCount)
       }
-      this.update()
-    })
-
-    // 2. Instructions Guide
-    this.renderInstructions(isBridgeConnected, containers.length)
-
-    // 3. Container Grid
-    this.renderContainerGrid(containers, logs)
-
-    // 4. Terminal
-    this.renderTerminalLogs()
+    }
   }
 
   private renderInstructions(isBridgeConnected: boolean, containerCount: number): void {
-    if (isBridgeConnected && containerCount > 0) {
+    const mode = isBridgeConnected && containerCount > 0 ? 'connected' : 'guide'
+    if (this.lastInstructionsMode === mode && this.instructionsCard.innerHTML) {
+      return
+    }
+    this.lastInstructionsMode = mode
+
+    if (mode === 'connected') {
       this.instructionsCard.innerHTML = `
         <div class="dr-debug-dock-connected-bar">
           <div style="display:flex; align-items:center; gap:8px;">
@@ -303,25 +357,22 @@ export class DockerDashboardView {
   private bindCopyCmd(): void {
     const btn = this.instructionsCard.querySelector('#btn-copy-dock-cmd') as HTMLButtonElement
     if (btn) {
-      btn.addEventListener('click', () => {
-        navigator.clipboard?.writeText('npx @dr-debug/mcp').then(() => {
-          const oldText = btn.textContent
-          btn.textContent = 'Copied!'
-          btn.classList.add('copied')
-          setTimeout(() => {
-            btn.textContent = oldText
-            btn.classList.remove('copied')
-          }, 2000)
-        })
-      })
+      bindCopyButton(btn, () => 'npx @dr-debug/mcp')
     }
   }
 
   private renderContainerGrid(containers: DockerContainerInfo[], logs: DockerLogEntry[]): void {
+    const errCounts = logs.filter((l) => l.level === 'error')
+    const sig = `${this.activeContainerFilter}:${containers.length}:${containers.map((c) => `${c.name}:${c.state}:${c.ports?.join(',')}`).join('|')}:${errCounts.length}`
+    if (this.lastContainerSignature === sig && this.containerGrid.innerHTML) {
+      return
+    }
+    this.lastContainerSignature = sig
+
     this.containerGrid.innerHTML = ''
 
     // "All Containers" Card
-    const allErrors = logs.filter((l) => l.level === 'error').length
+    const allErrors = errCounts.length
     const allCard = document.createElement('div')
     allCard.className = `dr-debug-docker-card ${this.activeContainerFilter === 'all' ? 'selected' : ''}`
     allCard.innerHTML = `
@@ -333,6 +384,9 @@ export class DockerDashboardView {
     `
     allCard.addEventListener('click', () => {
       this.activeContainerFilter = 'all'
+      this.lastContainerSignature = ''
+      this.lastFilterSignature = ''
+      this.lastRenderedLogsCount = -1
       this.renderContainerGrid(containers, logs)
       this.renderTerminalLogs()
     })
@@ -371,6 +425,9 @@ export class DockerDashboardView {
       `
       card.addEventListener('click', () => {
         this.activeContainerFilter = container.name
+        this.lastContainerSignature = ''
+        this.lastFilterSignature = ''
+        this.lastRenderedLogsCount = -1
         this.renderContainerGrid(containers, logs)
         this.renderTerminalLogs()
       })
@@ -382,56 +439,77 @@ export class DockerDashboardView {
     const controller = this.getController()
     if (!controller) return
 
+    const filterSig = `${this.activeContainerFilter}:${this.activeLevelFilter}:${this.searchQuery}`
+    const filterChanged = this.lastFilterSignature !== filterSig
+    this.lastFilterSignature = filterSig
+
     const logs = controller.getDockerLogs({
       container: this.activeContainerFilter !== 'all' ? this.activeContainerFilter : undefined,
       level: this.activeLevelFilter !== 'all' ? this.activeLevelFilter : undefined,
       grep: this.searchQuery || undefined
     })
 
-    this.terminalEl.innerHTML = ''
-
-    if (logs.length === 0) {
-      this.terminalEl.innerHTML = `
-        <div class="dr-debug-dock-term-empty">
-          <span>No log output recorded for current filter criteria.</span>
-        </div>
-      `
+    if (!filterChanged && logs.length === this.lastRenderedLogsCount && this.terminalEl.innerHTML) {
       return
     }
 
-    for (const log of logs) {
-      const row = document.createElement('div')
-      row.className = `dr-debug-dock-log-row log-${log.level} stream-${log.stream}`
+    if (filterChanged || logs.length < this.lastRenderedLogsCount || this.lastRenderedLogsCount < 0) {
+      this.terminalEl.innerHTML = ''
 
-      const timeStr = new Date(log.timestamp).toLocaleTimeString()
-
-      row.innerHTML = `
-        <span class="dr-debug-dock-time">${timeStr}</span>
-        <span class="dr-debug-dock-container-tag">${this.escapeHtml(log.containerName)}</span>
-        <span class="dr-debug-dock-stream-tag">[${log.stream}]</span>
-        <span class="dr-debug-dock-msg">${this.highlightErrors(this.escapeHtml(log.message))}</span>
-      `
-
-      // If it's an error/panic line, attach an inline "Diagnose" action
-      if (log.level === 'error') {
-        const diagBtn = document.createElement('button')
-        diagBtn.className = 'dr-debug-dock-inline-diag'
-        diagBtn.innerHTML = `<span>Diagnose</span>`
-        diagBtn.title = 'Launch AI investigation for this container panic'
-        diagBtn.addEventListener('click', (e) => {
-          e.stopPropagation()
-          const goal = `Diagnose container ${log.containerName} error and trace downstream frontend effects: "${log.message.slice(0, 140)}"`
-          this.onLaunchDiagnosis?.(goal)
-        })
-        row.appendChild(diagBtn)
+      if (logs.length === 0) {
+        this.terminalEl.innerHTML = `
+          <div class="dr-debug-dock-term-empty">
+            <span>No log output recorded for current filter criteria.</span>
+          </div>
+        `
+        this.lastRenderedLogsCount = 0
+        return
       }
 
-      this.terminalEl.appendChild(row)
+      for (const log of logs) {
+        this.appendLogRow(log)
+      }
+    } else {
+      const newLogs = logs.slice(this.lastRenderedLogsCount)
+      for (const log of newLogs) {
+        this.appendLogRow(log)
+      }
     }
+
+    this.lastRenderedLogsCount = logs.length
 
     if (this.autoScroll) {
       this.terminalEl.scrollTop = this.terminalEl.scrollHeight
     }
+  }
+
+  private appendLogRow(log: DockerLogEntry): void {
+    const row = document.createElement('div')
+    row.className = `dr-debug-dock-log-row log-${log.level} stream-${log.stream}`
+
+    const timeStr = new Date(log.timestamp).toLocaleTimeString()
+
+    row.innerHTML = `
+      <span class="dr-debug-dock-time">${timeStr}</span>
+      <span class="dr-debug-dock-container-tag">${this.escapeHtml(log.containerName)}</span>
+      <span class="dr-debug-dock-stream-tag">[${log.stream}]</span>
+      <span class="dr-debug-dock-msg">${this.highlightErrors(this.escapeHtml(log.message))}</span>
+    `
+
+    if (log.level === 'error') {
+      const diagBtn = document.createElement('button')
+      diagBtn.className = 'dr-debug-dock-inline-diag'
+      diagBtn.innerHTML = `<span>Diagnose</span>`
+      diagBtn.title = 'Launch AI investigation for this container panic'
+      diagBtn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const goal = `Diagnose container ${log.containerName} error and trace downstream frontend effects: "${log.message.slice(0, 140)}"`
+        this.onLaunchDiagnosis?.(goal)
+      })
+      row.appendChild(diagBtn)
+    }
+
+    this.terminalEl.appendChild(row)
   }
 
   private renderOfflineState(): void {
@@ -450,6 +528,10 @@ export class DockerDashboardView {
         </div>
       </div>
     `
+    const btn = this.element.querySelector('#dr-debug-dock-copy-cmd') as HTMLButtonElement
+    if (btn) {
+      bindCopyButton(btn, () => 'npx -y @dr-debug/mcp')
+    }
   }
 
   private async copyDockerPrompt(btn: HTMLButtonElement): Promise<void> {
@@ -481,15 +563,15 @@ export class DockerDashboardView {
       '```'
     ].join('\n')
 
-    try {
-      await navigator.clipboard.writeText(prompt)
+    const ok = await copyToClipboard(prompt)
+    if (ok) {
       const orig = btn.innerHTML
-      btn.innerHTML = 'Copied'
+      btn.innerHTML = '<span>Copied!</span>'
+      btn.classList.add('copied')
       setTimeout(() => {
         btn.innerHTML = orig
+        btn.classList.remove('copied')
       }, 2000)
-    } catch {
-      console.log(prompt)
     }
   }
 

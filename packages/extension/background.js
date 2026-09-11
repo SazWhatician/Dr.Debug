@@ -160,6 +160,7 @@ var DockerStreamManager = class {
   port = 9229;
   containers = [];
   recentLogs = [];
+  failCount = 0;
   lastStatus = {
     connected: false,
     daemonRunning: false
@@ -220,21 +221,27 @@ var DockerStreamManager = class {
         signal: AbortSignal.timeout(3e3)
       }).catch(() => null);
       if (!statusRes || !statusRes.ok) {
-        this.lastStatus = {
-          connected: false,
-          daemonRunning: false,
-          error: "Docker bridge service offline on port " + this.port
-        };
-        this.broadcast({
-          type: "STATUS",
-          connected: false,
-          daemonRunning: false,
-          error: this.lastStatus.error
-        });
-        this.scheduleRetry(4e3);
+        this.failCount++;
+        if (this.failCount >= 2 || !this.lastStatus.connected) {
+          this.lastStatus = {
+            connected: false,
+            daemonRunning: false,
+            error: "Docker bridge service offline on port " + this.port
+          };
+          this.broadcast({
+            type: "STATUS",
+            connected: false,
+            daemonRunning: false,
+            error: this.lastStatus.error
+          });
+          this.scheduleRetry(4e3);
+        } else {
+          this.scheduleRetry(1500);
+        }
         return;
       }
       const statusData = await statusRes.json().catch(() => ({}));
+      this.failCount = 0;
       this.lastStatus = {
         connected: true,
         daemonRunning: statusData.daemonRunning ?? true
@@ -244,7 +251,7 @@ var DockerStreamManager = class {
         signal: this.abortController.signal
       });
       if (!res.ok || !res.body) {
-        this.scheduleRetry(5e3);
+        this.scheduleRetry(3e3);
         return;
       }
       this.broadcast({
@@ -267,6 +274,7 @@ var DockerStreamManager = class {
             const jsonStr = trimmed.slice(5).trim();
             try {
               const data = JSON.parse(jsonStr);
+              this.failCount = 0;
               if (data.type === "INIT") {
                 this.lastStatus = {
                   connected: true,
@@ -286,21 +294,26 @@ var DockerStreamManager = class {
           }
         }
       }
-      this.scheduleRetry(3e3);
+      this.scheduleRetry(1500);
     } catch (err) {
       if (err?.name === "AbortError") return;
-      this.lastStatus = {
-        connected: false,
-        daemonRunning: false,
-        error: err?.message || "Disconnected from Docker daemon"
-      };
-      this.broadcast({
-        type: "STATUS",
-        connected: false,
-        daemonRunning: false,
-        error: this.lastStatus.error
-      });
-      this.scheduleRetry(5e3);
+      this.failCount++;
+      if (this.failCount >= 2 || !this.lastStatus.connected) {
+        this.lastStatus = {
+          connected: false,
+          daemonRunning: false,
+          error: err?.message || "Disconnected from Docker daemon"
+        };
+        this.broadcast({
+          type: "STATUS",
+          connected: false,
+          daemonRunning: false,
+          error: this.lastStatus.error
+        });
+        this.scheduleRetry(4e3);
+      } else {
+        this.scheduleRetry(1500);
+      }
     }
   }
   scheduleRetry(delayMs) {

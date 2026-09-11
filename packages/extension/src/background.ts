@@ -29,6 +29,7 @@ export class DockerStreamManager {
   private port = 9229
   private containers: any[] = []
   private recentLogs: any[] = []
+  private failCount = 0
   private lastStatus: { connected: boolean; daemonRunning: boolean; error?: string } = {
     connected: false,
     daemonRunning: false
@@ -99,22 +100,29 @@ export class DockerStreamManager {
       }).catch(() => null)
 
       if (!statusRes || !statusRes.ok) {
-        this.lastStatus = {
-          connected: false,
-          daemonRunning: false,
-          error: 'Docker bridge service offline on port ' + this.port
+        this.failCount++
+        if (this.failCount >= 2 || !this.lastStatus.connected) {
+          this.lastStatus = {
+            connected: false,
+            daemonRunning: false,
+            error: 'Docker bridge service offline on port ' + this.port
+          }
+          this.broadcast({
+            type: 'STATUS',
+            connected: false,
+            daemonRunning: false,
+            error: this.lastStatus.error
+          })
+          this.scheduleRetry(4000)
+        } else {
+          // Grace period: retry quickly before declaring offline
+          this.scheduleRetry(1500)
         }
-        this.broadcast({
-          type: 'STATUS',
-          connected: false,
-          daemonRunning: false,
-          error: this.lastStatus.error
-        })
-        this.scheduleRetry(4000)
         return
       }
 
       const statusData = await statusRes.json().catch(() => ({}))
+      this.failCount = 0
       this.lastStatus = {
         connected: true,
         daemonRunning: statusData.daemonRunning ?? true
@@ -127,7 +135,7 @@ export class DockerStreamManager {
       })
 
       if (!res.ok || !res.body) {
-        this.scheduleRetry(5000)
+        this.scheduleRetry(3000)
         return
       }
 
@@ -155,6 +163,7 @@ export class DockerStreamManager {
             const jsonStr = trimmed.slice(5).trim()
             try {
               const data = JSON.parse(jsonStr)
+              this.failCount = 0
               if (data.type === 'INIT') {
                 this.lastStatus = {
                   connected: true,
@@ -176,21 +185,27 @@ export class DockerStreamManager {
         }
       }
 
-      this.scheduleRetry(3000)
+      // Clean stream disconnect: reconnect gracefully without instant error flash
+      this.scheduleRetry(1500)
     } catch (err: any) {
       if (err?.name === 'AbortError') return
-      this.lastStatus = {
-        connected: false,
-        daemonRunning: false,
-        error: err?.message || 'Disconnected from Docker daemon'
+      this.failCount++
+      if (this.failCount >= 2 || !this.lastStatus.connected) {
+        this.lastStatus = {
+          connected: false,
+          daemonRunning: false,
+          error: err?.message || 'Disconnected from Docker daemon'
+        }
+        this.broadcast({
+          type: 'STATUS',
+          connected: false,
+          daemonRunning: false,
+          error: this.lastStatus.error
+        })
+        this.scheduleRetry(4000)
+      } else {
+        this.scheduleRetry(1500)
       }
-      this.broadcast({
-        type: 'STATUS',
-        connected: false,
-        daemonRunning: false,
-        error: this.lastStatus.error
-      })
-      this.scheduleRetry(5000)
     }
   }
 

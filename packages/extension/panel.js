@@ -236,21 +236,23 @@ function renderErrorMatrix(snapshot) {
 
     // Attach cURL copy handler
     const curlBtn = card.querySelector('.btn-copy-curl')
-    curlBtn?.addEventListener('click', () => {
-      if (err.raw && navigator.clipboard) {
+    curlBtn?.addEventListener('click', async () => {
+      if (err.raw) {
         const cmd = generateExtensionCurl(err.raw)
-        navigator.clipboard.writeText(cmd)
-        curlBtn.textContent = 'Copied cURL!'
-        setTimeout(() => { curlBtn.textContent = 'Copy cURL' }, 2000)
+        const ok = await copyToClipboard(cmd)
+        if (ok) {
+          curlBtn.textContent = 'Copied cURL!'
+          setTimeout(() => { curlBtn.textContent = 'Copy cURL' }, 2000)
+        }
       }
     })
 
     // Attach AI Prompt Copy handler
     const copyBtn = card.querySelector('.btn-copy-ai-prompt')
-    copyBtn?.addEventListener('click', () => {
+    copyBtn?.addEventListener('click', async () => {
       const prompt = formatAIDebugPrompt(err, snapshot)
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(prompt)
+      const ok = await copyToClipboard(prompt)
+      if (ok) {
         copyBtn.textContent = 'Copied Report!'
         setTimeout(() => { copyBtn.textContent = 'Copy AI Report' }, 2000)
       }
@@ -258,6 +260,30 @@ function renderErrorMatrix(snapshot) {
 
     container.appendChild(card)
   })
+}
+
+async function copyToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text)
+      return true
+    } catch {}
+  }
+  try {
+    const scratch = document.createElement('textarea')
+    scratch.value = text
+    scratch.setAttribute('readonly', '')
+    scratch.style.position = 'fixed'
+    scratch.style.left = '-9999px'
+    scratch.style.opacity = '0'
+    document.body.appendChild(scratch)
+    scratch.select()
+    const ok = document.execCommand('copy')
+    document.body.removeChild(scratch)
+    return ok
+  } catch {
+    return false
+  }
 }
 
 function formatAIDebugPrompt(err, snapshot) {
@@ -340,14 +366,14 @@ function escapeHtml(str) {
 document.getElementById('btn-refresh')?.addEventListener('click', updateStreams)
 setInterval(updateStreams, 1500)
 
-document.getElementById('btn-copy-mermaid')?.addEventListener('click', () => {
+document.getElementById('btn-copy-mermaid')?.addEventListener('click', async () => {
   if (!lastGraph || !lastGraph.mermaidDiagram) {
     alert('No causal graph diagram generated yet.')
     return
   }
-  navigator.clipboard?.writeText(lastGraph.mermaidDiagram)
+  const ok = await copyToClipboard(lastGraph.mermaidDiagram)
   const btn = document.getElementById('btn-copy-mermaid')
-  if (btn) {
+  if (btn && ok) {
     const orig = btn.innerHTML
     btn.innerHTML = '<span>✅</span> <span>Copied Mermaid!</span>'
     setTimeout(() => { btn.innerHTML = orig }, 1500)

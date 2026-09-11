@@ -15,6 +15,7 @@ import {
   getHttpStatusExplainer
 } from '@dr-debug/controller'
 import { TestSynthesizer } from '@dr-debug/core'
+import { bindCopyButton } from './clipboard.js'
 
 export interface ErrorDashboardOptions {
   getController: () => DebugController
@@ -58,6 +59,7 @@ export class ErrorDashboardView {
   private activeMatrixCellKey: string | null = null
   private searchQuery = ''
   private selectedErrorId: string | null = null
+  private lastRenderedInspectorId: string | null = null
   private getController: () => DebugController
 
   constructor(options: ErrorDashboardOptions) {
@@ -259,8 +261,13 @@ export class ErrorDashboardView {
 
     // 5. Update Inspector if item selected
     if (this.selectedErrorId) {
-      this.renderInspector(this.selectedErrorId, state)
+      if (this.lastRenderedInspectorId !== this.selectedErrorId || !this.inspectorContainer.innerHTML) {
+        this.renderInspector(this.selectedErrorId, state)
+        this.lastRenderedInspectorId = this.selectedErrorId
+      }
+      this.inspectorContainer.style.display = 'flex'
     } else {
+      this.lastRenderedInspectorId = null
       this.inspectorContainer.style.display = 'none'
     }
   }
@@ -656,15 +663,9 @@ export class ErrorDashboardView {
     copyAIBtn.className = 'dr-debug-btn-primary-glow'
     copyAIBtn.innerHTML = `<span>Copy for AI</span>`
     copyAIBtn.title = 'Copy surgical debug prompt (Ponytail Protocol — 80% Token Saver) ready to paste into Claude Code or Antigravity'
-    copyAIBtn.addEventListener('click', () => {
-      const prompt = controller.getUnifiedAIDebugPrompt(targetId)
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(prompt)
-        copyAIBtn.innerHTML = `<span>Copied AI Prompt!</span>`
-        setTimeout(() => {
-          copyAIBtn.innerHTML = `<span>Copy for AI</span>`
-        }, 2500)
-      }
+    bindCopyButton(copyAIBtn, () => controller.getUnifiedAIDebugPrompt(targetId), {
+      successText: 'Copied AI Prompt!',
+      durationMs: 2500
     })
     actionToolbar.appendChild(copyAIBtn)
 
@@ -711,15 +712,9 @@ export class ErrorDashboardView {
       curlBtn.className = 'dr-debug-btn-curl'
       curlBtn.innerHTML = `<span>Copy cURL</span>`
       curlBtn.title = 'Copy exact executable curl command for terminal reproduction'
-      curlBtn.addEventListener('click', () => {
-        const curlCmd = generateCurlCommand(networkReq)
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(curlCmd)
-          curlBtn.innerHTML = `<span>Copied cURL!</span>`
-          setTimeout(() => {
-            curlBtn.innerHTML = `<span>Copy cURL</span>`
-          }, 2000)
-        }
+      bindCopyButton(curlBtn, () => generateCurlCommand(networkReq), {
+        successText: 'Copied cURL!',
+        durationMs: 2000
       })
       actionToolbar.appendChild(curlBtn)
     }
@@ -729,7 +724,7 @@ export class ErrorDashboardView {
     synthBtn.className = 'dr-debug-btn-synth'
     synthBtn.innerHTML = `<span>Synthesize Test</span>`
     synthBtn.title = 'Generate Playwright reproduction test script'
-    synthBtn.addEventListener('click', () => {
+    bindCopyButton(synthBtn, () => {
       const mockResult = {
         goal: 'Incident Reproduction',
         status: 'resolved' as const,
@@ -740,18 +735,14 @@ export class ErrorDashboardView {
         durationMs: 0,
         finalMemory: ''
       }
-      const testCode = TestSynthesizer.synthesizePlaywright(
+      return TestSynthesizer.synthesizePlaywright(
         mockResult,
         controller.getInteractionReplay?.() || [],
         networkReq
       )
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(testCode)
-        synthBtn.innerHTML = `<span>Copied Playwright Test!</span>`
-        setTimeout(() => {
-          synthBtn.innerHTML = `<span>Synthesize Test</span>`
-        }, 2500)
-      }
+    }, {
+      successText: 'Copied Playwright Test!',
+      durationMs: 2500
     })
     actionToolbar.appendChild(synthBtn)
 
@@ -759,15 +750,12 @@ export class ErrorDashboardView {
     const copyJsonBtn = document.createElement('button')
     copyJsonBtn.className = 'dr-debug-copy-inline-btn'
     copyJsonBtn.innerHTML = `<span>JSON</span>`
-    copyJsonBtn.addEventListener('click', () => {
+    bindCopyButton(copyJsonBtn, () => {
       const payload = networkReq || consoleErr || dockerLog || state.memory
-      if (navigator.clipboard && payload) {
-        navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
-        copyJsonBtn.innerHTML = `<span>Copied!</span>`
-        setTimeout(() => {
-          copyJsonBtn.innerHTML = `<span>JSON</span>`
-        }, 2000)
-      }
+      return payload ? JSON.stringify(payload, null, 2) : ''
+    }, {
+      successText: 'Copied!',
+      durationMs: 2000
     })
     actionToolbar.appendChild(copyJsonBtn)
 

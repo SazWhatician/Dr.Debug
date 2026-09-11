@@ -14,4 +14,5 @@ export { VoiceDebugger, type VoiceDebuggerOptions } from './components/VoiceDebu
 export { DrDebugUI, type DrDebugUIOptions } from './DrDebugUI.js'
 export { SettingsModal, type DrDebugTheme, type SettingsData, type SettingsModalOptions } from './components/SettingsModal.js'
 export { shadowStyles } from './styles.js'
+export { copyToClipboard, bindCopyButton, type BindCopyOptions } from './components/clipboard.js'
 

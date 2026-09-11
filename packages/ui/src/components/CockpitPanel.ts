@@ -3,6 +3,7 @@ import { CausalGraphView, type CausalErrorGraph } from './CausalGraphView.js'
 import { DockerDashboardView } from './DockerDashboardView.js'
 import { ErrorDashboardView } from './ErrorDashboardView.js'
 import { SettingsModal, type SettingsData, type DrDebugTheme } from './SettingsModal.js'
+import { copyToClipboard } from './clipboard.js'
 
 export interface StepItem {
   stepNumber: number
@@ -978,35 +979,10 @@ export class CockpitPanel {
   }
 
   /**
-   * Clipboard write that reports whether it actually succeeded. The async API
-   * needs a secure context and a focused document, neither of which is
-   * guaranteed here, so fall back to a detached textarea + execCommand.
+   * Clipboard write that reports whether it actually succeeded.
    */
   private async copyToClipboard(text: string): Promise<boolean> {
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text)
-        return true
-      }
-    } catch {
-      // fall through to the legacy path
-    }
-
-    try {
-      const scratch = document.createElement('textarea')
-      scratch.value = text
-      scratch.setAttribute('readonly', '')
-      scratch.style.position = 'fixed'
-      scratch.style.top = '-1000px'
-      scratch.style.opacity = '0'
-      document.body.appendChild(scratch)
-      scratch.select()
-      const ok = document.execCommand('copy')
-      document.body.removeChild(scratch)
-      return ok
-    } catch {
-      return false
-    }
+    return await copyToClipboard(text)
   }
 
   /** Wires a button to a copy action with honest success/failure feedback. */

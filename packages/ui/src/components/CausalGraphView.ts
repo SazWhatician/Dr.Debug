@@ -1,3 +1,5 @@
+import { bindCopyButton } from './clipboard.js'
+
 export interface ErrorGraphNode {
   id: string
   label: string
@@ -207,17 +209,13 @@ export class CausalGraphView {
     `
 
     // Bind event listeners
-    const copyBtn = this.element.querySelector('#dr-debug-btn-copy-mermaid')
-    copyBtn?.addEventListener('click', () => {
-      navigator.clipboard?.writeText(mermaidDiagram)
-      if (copyBtn) {
-        const originalText = copyBtn.innerHTML
-        copyBtn.innerHTML = '<span>Copied!</span>'
-        setTimeout(() => {
-          copyBtn.innerHTML = originalText
-        }, 1500)
-      }
-    })
+    const copyBtn = this.element.querySelector('#dr-debug-btn-copy-mermaid') as HTMLElement
+    if (copyBtn) {
+      bindCopyButton(copyBtn, () => mermaidDiagram, {
+        successText: 'Copied!',
+        durationMs: 2000
+      })
+    }
 
     const nodeEls = this.element.querySelectorAll('.dr-debug-graph-node')
     nodeEls.forEach((el) => {
