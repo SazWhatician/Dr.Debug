@@ -1,6 +1,6 @@
 {
   "name": "dr-debug",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "Autonomous In-Browser AI Debugging & Observability Agent",
   "type": "module",
   "main": "./dist/index.js",

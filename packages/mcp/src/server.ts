@@ -28,7 +28,7 @@ export class DrDebugMCPServer {
     this.mcpServer = new McpServer(
       {
         name: 'Dr. Debug Autonomous Observability',
-        version: '0.1.12'
+        version: '0.1.13'
       },
       {
         capabilities: {
@@ -338,7 +338,7 @@ export class DrDebugMCPServer {
                   `URL: ${state.pageContext?.url || 'No active URL'}\n` +
                   `Active Errors: ${errorCount} | Failed Requests: ${failedCount}\n\n` +
                   `${brief}\n\n` +
-                  `Please diagnose the root cause, locate the culprit source file in the workspace, and directly apply the minimal fix using your file editing tools.`
+                  `Please explain the root cause and context in 1–2 clear sentences so the developer understands, locate the culprit source file in the workspace, and directly apply the minimal fix using your file editing tools.`
               }
             }
           ]
@@ -371,7 +371,7 @@ export class DrDebugMCPServer {
                   `\`\`\`json\n${JSON.stringify(req || { error: 'Request not found in recorded telemetry', requestId }, null, 2)}\n\`\`\`\n\n` +
                   `Recent Host Docker Container Logs Around Event:\n` +
                   `\`\`\`json\n${JSON.stringify(dockerLogs, null, 2)}\n\`\`\`\n\n` +
-                  `Please analyze both sides of the contract, identify the backend exception or schema mismatch causing this 500 error, and provide the fix.`
+                  `Please analyze both sides of the contract, identify the backend exception or schema mismatch causing this 500 error, explain the root cause and context in 1–2 clear sentences so the developer understands, and apply or provide the minimal fix.`
               }
             }
           ]
@@ -424,7 +424,7 @@ export class DrDebugMCPServer {
             },
             serverInfo: {
               name: 'Dr. Debug Autonomous Observability MCP Server',
-              version: '0.1.12'
+              version: '0.1.13'
             }
           }
         }
@@ -535,7 +535,7 @@ export class DrDebugMCPServer {
                       `URL: ${state.pageContext?.url || 'No active URL'}\n` +
                       `Active Errors: ${errorCount} | Failed Requests: ${failedCount}\n\n` +
                       `${brief}\n\n` +
-                      `Please diagnose the root cause, locate the culprit source file in the workspace, and directly apply the minimal fix using your file editing tools.`
+                      `Please explain the root cause and context in 1–2 clear sentences so the developer understands, locate the culprit source file in the workspace, and directly apply the minimal fix using your file editing tools.`
                   }
                 }
               ]
@@ -563,7 +563,7 @@ export class DrDebugMCPServer {
                       `\`\`\`json\n${JSON.stringify(req || { error: 'Request not found in recorded telemetry', requestId: promptArgs.requestId }, null, 2)}\n\`\`\`\n\n` +
                       `Recent Host Docker Container Logs Around Event:\n` +
                       `\`\`\`json\n${JSON.stringify(dockerLogs, null, 2)}\n\`\`\`\n\n` +
-                      `Please analyze both sides of the contract, identify the backend exception or schema mismatch causing this 500 error, and provide the fix.`
+                      `Please analyze both sides of the contract, identify the backend exception or schema mismatch causing this 500 error, explain the root cause and context in 1–2 clear sentences so the developer understands, and apply or provide the minimal fix.`
                   }
                 }
               ]

@@ -197,7 +197,7 @@ Dr. Debug is ready to ship and download in three distinct formats:
 | **Chrome DevTools Extension (Folder)** | [`release/chrome-extension/`](release/chrome-extension/) | Direct "Load unpacked" folder in Google Chrome |
 | **In-Browser Standalone Bundle (Minified)** | [`release/dr-debug.standalone.min.js`](release/dr-debug.standalone.min.js) | Drop into any HTML via `<script src="dr-debug.standalone.min.js"></script>` |
 | **In-Browser Standalone Bundle (Full)** | [`release/dr-debug.standalone.js`](release/dr-debug.standalone.js) | Full source with developer comments & sourcemap |
-| **NPM Package Tarball** | [`release/dr-debug-0.1.12.tgz`](release/) | Install in your package: `npm install ./dr-debug-0.1.12.tgz` |
+| **NPM Package Tarball** | [`release/dr-debug-0.1.13.tgz`](release/) | Install in your package: `npm install ./dr-debug-0.1.13.tgz` |
 
 ### Building Downloadable Assets
 To compile and package fresh downloadable archives at any time:

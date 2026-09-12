@@ -1,6 +1,6 @@
 {
   "name": "@dr-debug/controller",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "Deep substrate sensory interceptors and <debug_state> serializer for Dr. Debug",
   "type": "module",
   "main": "./dist/index.js",

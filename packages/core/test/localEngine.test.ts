@@ -176,9 +176,9 @@ describe('generatePonytailDebugPrompt', () => {
     expect(prompt).toContain('Minimality Ladder')
     expect(prompt).toContain('YAGNI (You Ain\'t Gonna Need It)')
     expect(prompt).toContain('Standard Library First')
-    expect(prompt).toContain('Target a unified git diff of ≤ 5 lines')
-    expect(prompt).toContain('Output strictly a unified git diff and a 1-sentence verification command')
-    expect(prompt).toContain('directly apply the minimal surgical fix using your file editing tools')
+    expect(prompt).toContain('Context & Root Cause Explanation')
+    expect(prompt).toContain('Apply Surgical Code Edit')
+    expect(prompt).toContain('directly apply the minimal fix (≤ 5 lines)')
 
     // Must be compact (token-efficient) compared to verbose prompt
     const verbosePrompt = generateSessionDebugPrompt(controller.getSnapshot(), { mode: 'standard' })

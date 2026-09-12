@@ -152,7 +152,13 @@ export function generatePonytailDebugPrompt(
   lines.push('6. **One-Liner / Concise Construct**: If the fix can be written cleanly in 1–3 lines, do that. Avoid multi-layer abstractions.')
   lines.push('7. **Target Diff Size**: Target a unified git diff of ≤ 5 lines whenever possible.')
   lines.push('8. **Non-Negotiables**: Never compromise on input validation, security, or error handling.')
-  lines.push('9. **Action Required**: If running in an agentic IDE with file tools (Google Antigravity, Cursor, Claude Code), locate the culprit source file in the workspace, inspect the line, and directly apply the minimal surgical fix using your file editing tools (`replace_file_content` / `write_to_file`). If direct tool execution is unavailable: Output strictly a unified git diff and a 1-sentence verification command. No conversational filler or decorative fluff.')
+  lines.push('')
+  lines.push('### 📋 Response & Action Requirements')
+  lines.push('Structure your response to give the developer immediate clarity, context, and a surgical solution:')
+  lines.push('1. **Context & Root Cause Explanation**: In 1–2 clear, concise sentences, explain what broke, why it occurred, and the exact culprit file and line so the developer fully understands the issue.')
+  lines.push('2. **Apply Surgical Code Edit**: If running in an agentic IDE with file editing tools (Google Antigravity, Cursor, Claude Code), inspect the target file and directly apply the minimal fix (≤ 5 lines) using `replace_file_content` / `write_to_file`.')
+  lines.push('3. **Unified Diff**: Include the concise unified git diff showing the exact before/after lines changed.')
+  lines.push('4. **Verification Step**: Provide a clear 1-sentence command or instruction to verify the fix in the running application.')
 
   return lines.join('\n')
 }
@@ -497,7 +503,10 @@ export function generateSessionDebugPrompt(
   lines.push(`1. Open the source locations named above and find the code that produced ${analysis.headline}.`)
   lines.push('2. Confirm or refute the suggested root cause against the actual code. The evidence here is real; the attribution is a heuristic and may be wrong.')
   lines.push('3. Fix the root cause rather than the symptom — the causal chain shows which failures are downstream.')
-  lines.push('4. If you have file editing tools (in Google Antigravity, Cursor, or Claude Code), directly apply the minimal surgical fix (≤ 5 lines) to the target file using your tools and tell me how to verify it. Otherwise, output strictly a unified git diff and a 1-sentence verification command.')
+  lines.push('4. Response & Action Requirements:')
+  lines.push('   a. Explain the diagnosis and rationale in 1–2 clear sentences so the developer fully understands what failed and why.')
+  lines.push('   b. If you have file editing tools (in Google Antigravity, Cursor, or Claude Code), directly apply the minimal surgical fix (≤ 5 lines) to the target file using your tools.')
+  lines.push('   c. Show the minimal unified diff and provide a 1-sentence verification command.')
   lines.push('')
   lines.push('If the evidence is insufficient to locate the cause, say what additional telemetry you need instead of guessing.')
 

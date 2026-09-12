@@ -2467,7 +2467,10 @@ ${targetNetwork.error}
     promptLines.push("4. Existing Dependencies: NEVER introduce new dependencies or npm packages.");
     promptLines.push("5. Minimal Diff: Target a unified git diff of \u2264 5 lines whenever possible.");
     promptLines.push("6. Non-negotiable: Never compromise on input validation, error handling, or security.");
-    promptLines.push("7. Action Required: If running in an agentic IDE with tools (Google Antigravity, Cursor, Claude Code), directly inspect the target file and apply the minimal surgical fix (\u2264 5 lines) using file editing tools (`replace_file_content` / `write_to_file`), then state a 1-sentence verification command. If tool execution is unavailable, output strictly the unified git diff and a 1-sentence verification command. No conversational filler.");
+    promptLines.push("7. Action & Response Requirements:");
+    promptLines.push("   - First, explain the root cause and context in 1\u20132 clear sentences so the developer fully understands the failure and resolution.");
+    promptLines.push("   - If running in an agentic IDE with file tools (Google Antigravity, Cursor, Claude Code), directly inspect the target file and apply the minimal surgical fix (\u2264 5 lines) using file editing tools (`replace_file_content` / `write_to_file`).");
+    promptLines.push("   - Show the concise unified git diff and provide a 1-sentence verification command.");
     return promptLines.join("\n");
   }
 
@@ -3368,7 +3371,13 @@ ${causalChain.join("\n")}`);
     lines.push("6. **One-Liner / Concise Construct**: If the fix can be written cleanly in 1\u20133 lines, do that. Avoid multi-layer abstractions.");
     lines.push("7. **Target Diff Size**: Target a unified git diff of \u2264 5 lines whenever possible.");
     lines.push("8. **Non-Negotiables**: Never compromise on input validation, security, or error handling.");
-    lines.push("9. **Action Required**: If running in an agentic IDE with file tools (Google Antigravity, Cursor, Claude Code), locate the culprit source file in the workspace, inspect the line, and directly apply the minimal surgical fix using your file editing tools (`replace_file_content` / `write_to_file`). If direct tool execution is unavailable: Output strictly a unified git diff and a 1-sentence verification command. No conversational filler or decorative fluff.");
+    lines.push("");
+    lines.push("### \u{1F4CB} Response & Action Requirements");
+    lines.push("Structure your response to give the developer immediate clarity, context, and a surgical solution:");
+    lines.push("1. **Context & Root Cause Explanation**: In 1\u20132 clear, concise sentences, explain what broke, why it occurred, and the exact culprit file and line so the developer fully understands the issue.");
+    lines.push("2. **Apply Surgical Code Edit**: If running in an agentic IDE with file editing tools (Google Antigravity, Cursor, Claude Code), inspect the target file and directly apply the minimal fix (\u2264 5 lines) using `replace_file_content` / `write_to_file`.");
+    lines.push("3. **Unified Diff**: Include the concise unified git diff showing the exact before/after lines changed.");
+    lines.push("4. **Verification Step**: Provide a clear 1-sentence command or instruction to verify the fix in the running application.");
     return lines.join("\n");
   }
   function buildTimeline(state, limit) {
@@ -3666,7 +3675,10 @@ ${causalChain.join("\n")}`);
     lines.push(`1. Open the source locations named above and find the code that produced ${analysis.headline}.`);
     lines.push("2. Confirm or refute the suggested root cause against the actual code. The evidence here is real; the attribution is a heuristic and may be wrong.");
     lines.push("3. Fix the root cause rather than the symptom \u2014 the causal chain shows which failures are downstream.");
-    lines.push("4. If you have file editing tools (in Google Antigravity, Cursor, or Claude Code), directly apply the minimal surgical fix (\u2264 5 lines) to the target file using your tools and tell me how to verify it. Otherwise, output strictly a unified git diff and a 1-sentence verification command.");
+    lines.push("4. Response & Action Requirements:");
+    lines.push("   a. Explain the diagnosis and rationale in 1\u20132 clear sentences so the developer fully understands what failed and why.");
+    lines.push("   b. If you have file editing tools (in Google Antigravity, Cursor, or Claude Code), directly apply the minimal surgical fix (\u2264 5 lines) to the target file using your tools.");
+    lines.push("   c. Show the minimal unified diff and provide a 1-sentence verification command.");
     lines.push("");
     lines.push("If the evidence is insufficient to locate the cause, say what additional telemetry you need instead of guessing.");
     return lines.join("\n");
@@ -10930,7 +10942,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
           <div class="dr-debug-settings-update-banner">
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
-              <span class="dr-debug-update-version">Dr. Debug v0.1.12</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.13</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
@@ -11108,7 +11120,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     }
     async handleCheckUpdate(btn) {
       const originalText = btn.innerHTML;
-      const currentVersion = "0.1.12";
+      const currentVersion = "0.1.13";
       btn.disabled = true;
       btn.innerHTML = `<span>Checking...</span>`;
       btn.style.opacity = "0.85";

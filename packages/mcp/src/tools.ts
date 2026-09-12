@@ -162,9 +162,10 @@ export class MCPToolManager {
             `No active browser tab telemetry connected, but host backend container errors were detected:\n\n` +
             dockerErrors.map((l: any) => `- [${l.containerName} / ${l.stream}] ${l.message}`).join('\n') +
             `\n\n### ✂️ Instructions for AI Coding Assistant (Ponytail Protocol)\n` +
-            `1. Locate the backend source file causing the container error.\n` +
-            `2. Directly apply the minimal surgical fix (≤ 5 lines) using file editing tools.\n` +
-            `3. Provide a 1-sentence verification command.`
+            `1. Explain the root cause and context in 1–2 clear sentences so the developer understands.\n` +
+            `2. Locate the backend source file causing the container error.\n` +
+            `3. Directly apply the minimal surgical fix (≤ 5 lines) using file editing tools.\n` +
+            `4. Show the unified diff and provide a 1-sentence verification command.`
         }
       }
 
