@@ -154,11 +154,10 @@ export function generatePonytailDebugPrompt(
   lines.push('8. **Non-Negotiables**: Never compromise on input validation, security, or error handling.')
   lines.push('')
   lines.push('### 📋 Response & Action Requirements')
-  lines.push('Structure your response to give the developer immediate clarity, context, and a surgical solution:')
-  lines.push('1. **Context & Root Cause Explanation**: In 1–2 clear, concise sentences, explain what broke, why it occurred, and the exact culprit file and line so the developer fully understands the issue.')
-  lines.push('2. **Apply Surgical Code Edit**: If running in an agentic IDE with file editing tools (Google Antigravity, Cursor, Claude Code), inspect the target file and directly apply the minimal fix (≤ 5 lines) using `replace_file_content` / `write_to_file`.')
-  lines.push('3. **Unified Diff**: Include the concise unified git diff showing the exact before/after lines changed.')
-  lines.push('4. **Verification Step**: Provide a clear 1-sentence command or instruction to verify the fix in the running application.')
+  lines.push('Provide a regular, helpful developer response:')
+  lines.push('1. **Explain the Root Cause**: Clearly explain what broke, why it occurred, and the culprit file or component so the developer fully understands.')
+  lines.push('2. **Apply Surgical Code Edit**: If running in an agentic IDE with file tools (Google Antigravity, Cursor, Claude Code), locate the target file and directly apply the minimal fix (≤ 5 lines) using `replace_file_content` / `write_to_file`.')
+  lines.push('3. **Show Fix & Verification**: Clearly explain what you changed, show the code changes in a clean markdown code block, and provide instructions on how to verify the fix in the running application.')
 
   return lines.join('\n')
 }
@@ -504,9 +503,9 @@ export function generateSessionDebugPrompt(
   lines.push('2. Confirm or refute the suggested root cause against the actual code. The evidence here is real; the attribution is a heuristic and may be wrong.')
   lines.push('3. Fix the root cause rather than the symptom — the causal chain shows which failures are downstream.')
   lines.push('4. Response & Action Requirements:')
-  lines.push('   a. Explain the diagnosis and rationale in 1–2 clear sentences so the developer fully understands what failed and why.')
+  lines.push('   a. Explain what broke, why it happened, and which file or component is affected.')
   lines.push('   b. If you have file editing tools (in Google Antigravity, Cursor, or Claude Code), directly apply the minimal surgical fix (≤ 5 lines) to the target file using your tools.')
-  lines.push('   c. Show the minimal unified diff and provide a 1-sentence verification command.')
+  lines.push('   c. Clearly explain what you fixed, display the code changes in a clean markdown code block, and provide instructions on how to verify the fix.')
   lines.push('')
   lines.push('If the evidence is insufficient to locate the cause, say what additional telemetry you need instead of guessing.')
 

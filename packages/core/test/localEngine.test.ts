@@ -176,7 +176,7 @@ describe('generatePonytailDebugPrompt', () => {
     expect(prompt).toContain('Minimality Ladder')
     expect(prompt).toContain('YAGNI (You Ain\'t Gonna Need It)')
     expect(prompt).toContain('Standard Library First')
-    expect(prompt).toContain('Context & Root Cause Explanation')
+    expect(prompt).toContain('Explain the Root Cause')
     expect(prompt).toContain('Apply Surgical Code Edit')
     expect(prompt).toContain('directly apply the minimal fix (≤ 5 lines)')
 

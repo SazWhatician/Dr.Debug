@@ -1,6 +1,6 @@
 {
   "name": "@dr-debug/llms",
-  "version": "0.1.13",
+  "version": "0.1.15",
   "description": "Model-agnostic LLM client adapter for Dr. Debug",
   "type": "module",
   "main": "./dist/index.js",

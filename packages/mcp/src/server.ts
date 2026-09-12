@@ -28,7 +28,7 @@ export class DrDebugMCPServer {
     this.mcpServer = new McpServer(
       {
         name: 'Dr. Debug Autonomous Observability',
-        version: '0.1.13'
+        version: '0.1.15'
       },
       {
         capabilities: {
@@ -338,7 +338,7 @@ export class DrDebugMCPServer {
                   `URL: ${state.pageContext?.url || 'No active URL'}\n` +
                   `Active Errors: ${errorCount} | Failed Requests: ${failedCount}\n\n` +
                   `${brief}\n\n` +
-                  `Please explain the root cause and context in 1–2 clear sentences so the developer understands, locate the culprit source file in the workspace, and directly apply the minimal fix using your file editing tools.`
+                  `Please provide a regular, helpful developer response explaining what broke, why it happened, locate the culprit source file in the workspace, directly apply the minimal fix using your file editing tools, and explain what you changed and how to verify it.`
               }
             }
           ]
@@ -424,7 +424,7 @@ export class DrDebugMCPServer {
             },
             serverInfo: {
               name: 'Dr. Debug Autonomous Observability MCP Server',
-              version: '0.1.13'
+              version: '0.1.15'
             }
           }
         }
@@ -535,7 +535,7 @@ export class DrDebugMCPServer {
                       `URL: ${state.pageContext?.url || 'No active URL'}\n` +
                       `Active Errors: ${errorCount} | Failed Requests: ${failedCount}\n\n` +
                       `${brief}\n\n` +
-                      `Please explain the root cause and context in 1–2 clear sentences so the developer understands, locate the culprit source file in the workspace, and directly apply the minimal fix using your file editing tools.`
+                      `Please provide a regular, helpful developer response explaining what broke, why it happened, locate the culprit source file in the workspace, directly apply the minimal fix using your file editing tools, and explain what you changed and how to verify it.`
                   }
                 }
               ]

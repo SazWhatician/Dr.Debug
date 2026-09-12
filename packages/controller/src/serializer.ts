@@ -1067,9 +1067,9 @@ export function generateUnifiedAIDebugPrompt(
   promptLines.push('5. Minimal Diff: Target a unified git diff of ≤ 5 lines whenever possible.')
   promptLines.push('6. Non-negotiable: Never compromise on input validation, error handling, or security.')
   promptLines.push('7. Action & Response Requirements:')
-  promptLines.push('   - First, explain the root cause and context in 1–2 clear sentences so the developer fully understands the failure and resolution.')
+  promptLines.push('   - Provide a regular, helpful developer response explaining what broke, why it happened, and which component or file is affected.')
   promptLines.push('   - If running in an agentic IDE with file tools (Google Antigravity, Cursor, Claude Code), directly inspect the target file and apply the minimal surgical fix (≤ 5 lines) using file editing tools (`replace_file_content` / `write_to_file`).')
-  promptLines.push('   - Show the concise unified git diff and provide a 1-sentence verification command.')
+  promptLines.push('   - Clearly explain what you fixed, show the code changes in a clean markdown block, and explain how to verify the fix in the running application.')
 
   return promptLines.join('\n')
 }
