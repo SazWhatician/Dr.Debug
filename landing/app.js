@@ -555,6 +555,112 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // ========================================================
+  // 10. Interactive MCP Setup Tabs & Config Copy Handlers
+  // ========================================================
+  const mcpConfigs = {
+    antigravity: `{
+  "mcpServers": {
+    "dr-debug": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@dr-debug/mcp"
+      ]
+    }
+  }
+}`,
+    claude: `{
+  "mcpServers": {
+    "dr-debug": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@dr-debug/mcp"
+      ]
+    }
+  }
+}`,
+    cursor: `{
+  "mcpServers": {
+    "dr-debug": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@dr-debug/mcp"
+      ]
+    }
+  }
+}`
+  }
+
+  const mcpTabBtns = document.querySelectorAll('.mcp-tab-btn')
+  const mcpPanels = document.querySelectorAll('.mcp-panel')
+
+  mcpTabBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const target = btn.getAttribute('data-target')
+      if (!target) return
+
+      mcpTabBtns.forEach((b) => {
+        b.classList.remove('is-active')
+        b.setAttribute('aria-selected', 'false')
+      })
+      btn.classList.add('is-active')
+      btn.setAttribute('aria-selected', 'true')
+
+      mcpPanels.forEach((panel) => {
+        panel.classList.remove('is-active')
+      })
+
+      const targetPanel = document.getElementById(`mcp-panel-${target}`)
+      if (targetPanel) {
+        targetPanel.classList.add('is-active')
+      }
+
+      if (typeof ScrollTrigger !== 'undefined') {
+        setTimeout(() => ScrollTrigger.refresh(), 60)
+      }
+    })
+  })
+
+  // Copy buttons for MCP code snippets
+  const mcpCopyBtns = document.querySelectorAll('.mcp-copy-btn')
+  mcpCopyBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const target = btn.getAttribute('data-copy-target')
+      const snippet = mcpConfigs[target] || mcpConfigs.antigravity
+      navigator.clipboard.writeText(snippet).then(() => {
+        const label = btn.querySelector('.btn-copy-label')
+        const origText = label ? label.textContent : btn.textContent
+        if (label) label.textContent = 'Copied!'
+        btn.classList.add('copied')
+        showToast(`📋 Copied Dr. Debug MCP config for ${target ? target.charAt(0).toUpperCase() + target.slice(1) : 'IDE'}!`)
+        setTimeout(() => {
+          if (label) label.textContent = origText
+          btn.classList.remove('copied')
+        }, 2000)
+      })
+    })
+  })
+
+  // Mini copy buttons (e.g. Claude Code CLI command)
+  const miniCopyBtns = document.querySelectorAll('.mcp-mini-copy-btn')
+  miniCopyBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const textToCopy = btn.getAttribute('data-copy-text')
+      if (!textToCopy) return
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        const origText = btn.textContent
+        btn.textContent = 'Copied!'
+        showToast(`📋 Copied \`${textToCopy}\` to clipboard!`)
+        setTimeout(() => {
+          btn.textContent = origText
+        }, 2000)
+      })
+    })
+  })
+
   // ============================================================
   // 📬 NEWSLETTER & RELEASE UPDATE NOTIFICATION CONFIGURATION
   // Paste your Google Apps Script Web App URL from scripts/google-sheets-newsletter.js here:

@@ -294,9 +294,10 @@
       <!-- Center: Intentionally Empty Negative Space -->
       <div class="nav-center-spacer"></div>
 
-      <!-- Right: Home | Download (Shining & Distinct) | FAQ -->
+      <!-- Right: Home | MCP Setup | Download (Shining & Distinct) | FAQ -->
       <nav class="nav-right-actions">
         <a href="#hero" class="nav-item-link" id="nav-link-home">Home</a>
+        <a href="#mcp-setup" class="nav-item-link" id="nav-link-mcp">MCP Setup</a>
         <a href="#cinematic-download-target" class="nav-btn-download-shimmer" id="nav-btn-download">
           <span class="shimmer-glare"></span>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -495,7 +496,7 @@
         <!-- Subtle Stop & Scroll Hint -->
         <div class="dl-scroll-hint" id="dl-scroll-hint">
           <span class="hint-dot"></span>
-          <span>Scroll down for CRT Terminal &amp; FAQs</span>
+          <span>Scroll down for CRT Terminal, MCP Setup &amp; FAQs</span>
           <span class="hint-arrow">↓</span>
         </div>
       </div>
@@ -512,6 +513,316 @@
       <div id="crt-terminal-host" class="threeui-background crt crt-terminal" style="background: #03100a; opacity: 1; filter: hue-rotate(0deg) saturate(1) brightness(1);">
         <canvas id="crt-terminal-canvas"></canvas>
       </div>
+    </div>
+  </section>
+
+  <!-- ========================================================
+       INTERACTIVE MODEL CONTEXT PROTOCOL (MCP) SETUP SECTION
+       Switch between Google Antigravity, Claude Code/Desktop, and Cursor IDE
+       ======================================================== -->
+  <section class="mcp-setup-section" id="mcp-setup">
+    <div class="mcp-container">
+      
+      <!-- Section Header -->
+      <div class="mcp-hero-header">
+        <div class="mcp-badge-row">
+          <span class="mcp-status-dot"></span>
+          <span class="mcp-badge-text">OFFICIAL MODEL CONTEXT PROTOCOL (MCP) SERVER</span>
+        </div>
+        <h2 class="mcp-brand-title">CONNECT TO YOUR <span class="mcp-title-accent">AI AGENT</span></h2>
+        <p class="mcp-brand-subtitle">
+          Stream live browser diagnostics, unminified stack traces, and local Docker container logs directly to your coding assistant over certified MCP STDIO.
+        </p>
+      </div>
+
+      <!-- Main Interactive Tabs Card -->
+      <div class="mcp-card liquid-glass-card">
+        
+        <!-- Tab Navigation Switcher Bar -->
+        <div class="mcp-tabs-nav" role="tablist" aria-label="MCP IDE Setup Tabs">
+          <button class="mcp-tab-btn is-active" id="mcp-tab-antigravity" role="tab" aria-selected="true" aria-controls="mcp-panel-antigravity" data-target="antigravity">
+            <img src="assets/antigravity-icon__full-color.png" alt="Google Antigravity" class="mcp-tab-icon" width="22" height="22" />
+            <span class="mcp-tab-name">Google Antigravity</span>
+            <span class="mcp-tab-pill">Native</span>
+          </button>
+          
+          <button class="mcp-tab-btn" id="mcp-tab-claude" role="tab" aria-selected="false" aria-controls="mcp-panel-claude" data-target="claude">
+            <img src="assets/Claude_AI_symbol.svg.webp" alt="Claude Code" class="mcp-tab-icon" width="22" height="22" />
+            <span class="mcp-tab-name">Claude (Desktop &amp; CLI)</span>
+          </button>
+
+          <button class="mcp-tab-btn" id="mcp-tab-cursor" role="tab" aria-selected="false" aria-controls="mcp-panel-cursor" data-target="cursor">
+            <svg class="mcp-tab-icon cursor-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" fill="url(#mcpCursorGrad1)"/>
+              <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="url(#mcpCursorGrad2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <defs>
+                <linearGradient id="mcpCursorGrad1" x1="2" y1="2" x2="22" y2="12" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#38bdf8"/>
+                  <stop offset="100%" stop-color="#00f0ff"/>
+                </linearGradient>
+                <linearGradient id="mcpCursorGrad2" x1="2" y1="12" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#38bdf8"/>
+                  <stop offset="100%" stop-color="#10b981"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <span class="mcp-tab-name">Cursor IDE</span>
+          </button>
+        </div>
+
+        <!-- Tab Panels Container -->
+        <div class="mcp-tab-panels">
+
+          <!-- 1. Google Antigravity Panel -->
+          <div class="mcp-panel is-active" id="mcp-panel-antigravity" role="tabpanel" aria-labelledby="mcp-tab-antigravity">
+            <div class="mcp-panel-header">
+              <div class="mcp-panel-meta">
+                <span class="mcp-meta-pill">Global Configuration</span>
+                <code class="mcp-file-path">~/.gemini/config/mcp_config.json</code>
+              </div>
+              <button class="mcp-copy-btn" id="btn-copy-mcp-antigravity" data-copy-target="antigravity" title="Copy Configuration">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span class="btn-copy-label">Copy Config</span>
+              </button>
+            </div>
+
+            <!-- Code snippet -->
+            <div class="mcp-code-wrapper">
+              <div class="mcp-code-bar">
+                <div class="code-dots">
+                  <span class="dot dot-r"></span>
+                  <span class="dot dot-y"></span>
+                  <span class="dot dot-g"></span>
+                </div>
+                <span class="code-lang-label">JSON · mcp_config.json</span>
+              </div>
+              <pre class="mcp-code-pre"><code class="language-json">{
+  "mcpServers": {
+    "dr-debug": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@dr-debug/mcp"
+      ]
+    }
+  }
+}</code></pre>
+            </div>
+
+            <!-- Step by Step Instructions -->
+            <div class="mcp-steps-grid">
+              <div class="mcp-step-card">
+                <div class="mcp-step-header">
+                  <span class="mcp-step-num">01</span>
+                  <h4>Locate Global Config</h4>
+                </div>
+                <p>Open or create <code class="inline-code">mcp_config.json</code> in your user config folder: <code class="inline-code">%USERPROFILE%\.gemini\config\mcp_config.json</code> (Windows) or <code class="inline-code">~/.gemini/config/mcp_config.json</code> (macOS/Linux).</p>
+              </div>
+
+              <div class="mcp-step-card">
+                <div class="mcp-step-header">
+                  <span class="mcp-step-num">02</span>
+                  <h4>Paste Server Block</h4>
+                </div>
+                <p>Add the <code class="inline-code">"dr-debug"</code> entry inside your <code class="inline-code">"mcpServers"</code> configuration object and save the file.</p>
+              </div>
+
+              <div class="mcp-step-card">
+                <div class="mcp-step-header">
+                  <span class="mcp-step-num">03</span>
+                  <h4>Verify in Antigravity</h4>
+                </div>
+                <p>Open Antigravity and navigate to <strong>Additional Options (`...`) &gt; MCP Servers</strong>. Confirm <code class="inline-code">dr-debug</code> is registered with active green status.</p>
+              </div>
+
+              <div class="mcp-step-card">
+                <div class="mcp-step-header">
+                  <span class="mcp-step-num">04</span>
+                  <h4>Prompt the Agent</h4>
+                </div>
+                <p>Prompt Antigravity: <em>"Use tool <code class="inline-code">drdebug_get_diagnostics</code> to check my web app"</em> or <em>"List running Docker containers with Dr. Debug"</em>.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Claude Panel -->
+          <div class="mcp-panel" id="mcp-panel-claude" role="tabpanel" aria-labelledby="mcp-tab-claude">
+            <div class="mcp-panel-header">
+              <div class="mcp-panel-meta">
+                <span class="mcp-meta-pill">Claude Desktop Config</span>
+                <code class="mcp-file-path">claude_desktop_config.json</code>
+              </div>
+              <button class="mcp-copy-btn" id="btn-copy-mcp-claude" data-copy-target="claude" title="Copy Configuration">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span class="btn-copy-label">Copy Config</span>
+              </button>
+            </div>
+
+            <!-- Code snippet -->
+            <div class="mcp-code-wrapper">
+              <div class="mcp-code-bar">
+                <div class="code-dots">
+                  <span class="dot dot-r"></span>
+                  <span class="dot dot-y"></span>
+                  <span class="dot dot-g"></span>
+                </div>
+                <span class="code-lang-label">JSON · claude_desktop_config.json</span>
+              </div>
+              <pre class="mcp-code-pre"><code class="language-json">{
+  "mcpServers": {
+    "dr-debug": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@dr-debug/mcp"
+      ]
+    }
+  }
+}</code></pre>
+            </div>
+
+            <!-- Claude Code CLI alternative quickstrip -->
+            <div class="mcp-cli-alt-strip">
+              <div class="cli-alt-label">
+                <span class="cli-alt-badge">Claude Code CLI</span>
+                <span>Or register in one command via terminal:</span>
+              </div>
+              <div class="cli-alt-box">
+                <code>claude mcp add dr-debug npx -y @dr-debug/mcp</code>
+                <button class="mcp-mini-copy-btn" data-copy-text="claude mcp add dr-debug npx -y @dr-debug/mcp" title="Copy Command">Copy</button>
+              </div>
+            </div>
+
+            <!-- Step by Step Instructions -->
+            <div class="mcp-steps-grid">
+              <div class="mcp-step-card">
+                <div class="mcp-step-header">
+                  <span class="mcp-step-num">01</span>
+                  <h4>Open Claude Settings</h4>
+                </div>
+                <p>In Claude Desktop, click <strong>Settings &gt; Developer &gt; Edit Config</strong> to open <code class="inline-code">claude_desktop_config.json</code> in your editor.</p>
+              </div>
+
+              <div class="mcp-step-card">
+                <div class="mcp-step-header">
+                  <span class="mcp-step-num">02</span>
+                  <h4>Paste Configuration</h4>
+                </div>
+                <p>Paste the <code class="inline-code">"dr-debug"</code> snippet under <code class="inline-code">"mcpServers"</code>. If the file is newly created, wrap it inside curly braces.</p>
+              </div>
+
+              <div class="mcp-step-card">
+                <div class="mcp-step-header">
+                  <span class="mcp-step-num">03</span>
+                  <h4>Restart Claude</h4>
+                </div>
+                <p>Fully quit and restart Claude Desktop. When restarted, the 🔌 hammer icon in chat will display Dr. Debug's 8 diagnostic tools.</p>
+              </div>
+
+              <div class="mcp-step-card">
+                <div class="mcp-step-header">
+                  <span class="mcp-step-num">04</span>
+                  <h4>Trigger 1-Click Triage</h4>
+                </div>
+                <p>Prompt Claude: <em>"Run prompt <code class="inline-code">drdebug_triage_incident</code>"</em> or <em>"Inspect failing network requests using Dr. Debug"</em>.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Cursor Panel -->
+          <div class="mcp-panel" id="mcp-panel-cursor" role="tabpanel" aria-labelledby="mcp-tab-cursor">
+            <div class="mcp-panel-header">
+              <div class="mcp-panel-meta">
+                <span class="mcp-meta-pill">Cursor Project / Global Config</span>
+                <code class="mcp-file-path">.cursor/mcp.json</code>
+              </div>
+              <button class="mcp-copy-btn" id="btn-copy-mcp-cursor" data-copy-target="cursor" title="Copy Configuration">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span class="btn-copy-label">Copy Config</span>
+              </button>
+            </div>
+
+            <!-- Code snippet -->
+            <div class="mcp-code-wrapper">
+              <div class="mcp-code-bar">
+                <div class="code-dots">
+                  <span class="dot dot-r"></span>
+                  <span class="dot dot-y"></span>
+                  <span class="dot dot-g"></span>
+                </div>
+                <span class="code-lang-label">JSON · .cursor/mcp.json</span>
+              </div>
+              <pre class="mcp-code-pre"><code class="language-json">{
+  "mcpServers": {
+    "dr-debug": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@dr-debug/mcp"
+      ]
+    }
+  }
+}</code></pre>
+            </div>
+
+            <!-- Step by Step Instructions -->
+            <div class="mcp-steps-grid">
+              <div class="mcp-step-card">
+                <div class="mcp-step-header">
+                  <span class="mcp-step-num">01</span>
+                  <h4>Open Cursor MCP Settings</h4>
+                </div>
+                <p>In Cursor, navigate to <strong>Settings &gt; Features &gt; MCP</strong>, or create a <code class="inline-code">.cursor/mcp.json</code> file in your project root.</p>
+              </div>
+
+              <div class="mcp-step-card">
+                <div class="mcp-step-header">
+                  <span class="mcp-step-num">02</span>
+                  <h4>Add New Server</h4>
+                </div>
+                <p>Click <strong>"Add New MCP Server"</strong> (Type: <code class="inline-code">command</code>, Name: <code class="inline-code">dr-debug</code>, Command: <code class="inline-code">npx -y @dr-debug/mcp</code>), or save the JSON file.</p>
+              </div>
+
+              <div class="mcp-step-card">
+                <div class="mcp-step-header">
+                  <span class="mcp-step-num">03</span>
+                  <h4>Verify Status Indicator</h4>
+                </div>
+                <p>Check that the indicator next to <code class="inline-code">dr-debug</code> turns green in Cursor's MCP panel, showing all 8 tools discovered.</p>
+              </div>
+
+              <div class="mcp-step-card">
+                <div class="mcp-step-header">
+                  <span class="mcp-step-num">04</span>
+                  <h4>Prompt in Composer / Chat</h4>
+                </div>
+                <p>In Cursor Composer (<kbd>Ctrl+I</kbd> / <kbd>Cmd+I</kbd>) or Chat, prompt: <em>"Check my web app with drdebug_get_diagnostics and fix any active errors."</em></p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Feature Badges Strip (What MCP Unlocks) -->
+      <div class="mcp-tools-strip">
+        <div class="mcp-tools-strip-label">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          <span>Tools Automatically Exposed to Your AI Agent:</span>
+        </div>
+        <div class="mcp-chips-list">
+          <span class="mcp-chip"><code class="inline-code">drdebug_get_diagnostics</code></span>
+          <span class="mcp-chip"><code class="inline-code">drdebug_inspect_request</code></span>
+          <span class="mcp-chip"><code class="inline-code">drdebug_get_ai_brief</code></span>
+          <span class="mcp-chip"><code class="inline-code">drdebug_inspect_error</code></span>
+          <span class="mcp-chip"><code class="inline-code">drdebug_get_interaction_replay</code></span>
+          <span class="mcp-chip"><code class="inline-code">drdebug_execute_script</code></span>
+          <span class="mcp-chip"><code class="inline-code">drdebug_list_docker_containers</code></span>
+          <span class="mcp-chip"><code class="inline-code">drdebug_get_docker_logs</code></span>
+        </div>
+      </div>
+
     </div>
   </section>
 
@@ -923,6 +1234,7 @@
             <div class="footer-sub-col">
               <h3>Navigation</h3>
               <a href="#hero" id="footer-link-home">Home</a>
+              <a href="#mcp-setup" id="footer-link-mcp">MCP Setup</a>
               <a href="#crt-terminal" id="footer-link-terminal">Terminal</a>
               <a href="#faq" id="footer-link-faq">FAQ</a>
             </div>
