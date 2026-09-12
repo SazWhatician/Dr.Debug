@@ -1,6 +1,6 @@
 {
   "name": "@dr-debug/mcp",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "publishConfig": {
     "access": "public"
   },
@@ -21,7 +21,10 @@
     "build": "tsc -b tsconfig.json",
     "start": "node dist/cli.js"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^3.25.76"
+  },
   "devDependencies": {
     "@types/node": "^22.10.0",
     "typescript": "^5.7.2"

@@ -1,4 +1,7 @@
+import { execSync } from 'node:child_process'
+import * as fs from 'node:fs'
 import * as http from 'node:http'
+import * as path from 'node:path'
 import type { BrowserTabTelemetry, MCPRequest, MCPResponse } from './types.js'
 import type { DockerBridge } from './DockerBridge.js'
 
@@ -64,6 +67,19 @@ export class MCPTransport {
                 res.end(JSON.stringify({ error: err.message }))
               }
             })
+            return
+          }
+
+          // 1b. In-Place Extension Auto-Updater (POST /update-extension)
+          if (req.method === 'POST' && url.startsWith('/update-extension')) {
+            try {
+              const result = await this.handleLocalExtensionUpdate()
+              res.writeHead(200, { 'Content-Type': 'application/json' })
+              res.end(JSON.stringify(result))
+            } catch (err: any) {
+              res.writeHead(500, { 'Content-Type': 'application/json' })
+              res.end(JSON.stringify({ status: 'error', message: err?.message || 'Update failed' }))
+            }
             return
           }
 
@@ -224,6 +240,44 @@ export class MCPTransport {
       throw new Error('No active Dr. Debug browser tab connected to execute script. Open your application with Dr. Debug to evaluate.')
     }
     return { status: 'acknowledged', tabId: session.tabId, note: 'Command dispatched to active browser tab' }
+  }
+
+  public async handleLocalExtensionUpdate(): Promise<{ status: string; message: string }> {
+    const url = 'https://dr-debug.vercel.app/dr-debug-extension.zip'
+    let targetDir = process.cwd()
+    if (fs.existsSync(path.resolve(targetDir, 'release/chrome-extension'))) {
+      targetDir = path.resolve(targetDir, 'release/chrome-extension')
+    } else if (fs.existsSync(path.resolve(targetDir, 'packages/extension/dist'))) {
+      targetDir = path.resolve(targetDir, 'packages/extension/dist')
+    }
+    const tempZip = path.resolve(targetDir, `dr-debug-update-${Date.now()}.zip`)
+
+    const res = await fetch(url)
+    if (!res.ok) {
+      throw new Error(`Failed to download update package: HTTP ${res.status}`)
+    }
+    const arrayBuffer = await res.arrayBuffer()
+    await fs.promises.writeFile(tempZip, Buffer.from(arrayBuffer))
+
+    try {
+      if (process.platform === 'win32') {
+        execSync(`powershell -Command "Expand-Archive -Path '${tempZip}' -DestinationPath '${targetDir}' -Force"`, {
+          stdio: 'ignore'
+        })
+      } else {
+        execSync(`unzip -o -q "${tempZip}" -d "${targetDir}"`, { stdio: 'ignore' })
+      }
+    } finally {
+      if (fs.existsSync(tempZip)) {
+        try {
+          fs.unlinkSync(tempZip)
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    return { status: 'ok', message: 'Dr. Debug Extension updated successfully to latest release.' }
   }
 
   public getSessions(): Map<string, BrowserTabTelemetry> {

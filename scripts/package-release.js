@@ -101,6 +101,43 @@ npx -y @dr-debug/mcp
   fs.writeFileSync(path.resolve(releaseExtDir, 'start-docker-bridge.bat'), batContent, 'utf-8')
   fs.writeFileSync(path.resolve(releaseExtDir, 'start-docker-bridge.sh'), shContent, 'utf-8')
 
+  // 3c. Create 1-click update scripts for offline unpacked extension updates
+  const updateBatContent = `@echo off
+echo ===================================================
+echo 🩺 Updating Dr. Debug Extension to Latest Release...
+echo 👨‍💻 Created by Saswat Mohanty (@SazWhatician)
+echo 🔗 https://github.com/SazWhatician
+echo ===================================================
+echo.
+echo ⬇️ Downloading latest extension package...
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://dr-debug.vercel.app/dr-debug-extension.zip' -OutFile 'dr-debug-update.zip'; Expand-Archive -Path 'dr-debug-update.zip' -DestinationPath '.' -Force; Remove-Item 'dr-debug-update.zip'"
+echo.
+echo ✅ Successfully updated Dr. Debug to the latest version!
+echo 💡 In Chrome, navigate to chrome://extensions and click the 🔄 reload icon on Dr. Debug.
+echo.
+pause
+`
+  const updateShContent = `#!/usr/bin/env bash
+echo "==================================================="
+echo "🩺 Updating Dr. Debug Extension to Latest Release..."
+echo "👨‍💻 Created by Saswat Mohanty (@SazWhatician)"
+echo "🔗 https://github.com/SazWhatician"
+echo "==================================================="
+echo ""
+echo "⬇️ Downloading latest extension package..."
+curl -sL https://dr-debug.vercel.app/dr-debug-extension.zip -o dr-debug-update.zip
+unzip -o -q dr-debug-update.zip
+rm dr-debug-update.zip
+echo ""
+echo "✅ Successfully updated Dr. Debug to the latest version!"
+echo "💡 In Chrome, navigate to chrome://extensions and click the 🔄 reload icon on Dr. Debug."
+echo ""
+`
+  fs.writeFileSync(path.resolve(releaseDir, 'update.bat'), updateBatContent, 'utf-8')
+  fs.writeFileSync(path.resolve(releaseDir, 'update.sh'), updateShContent, 'utf-8')
+  fs.writeFileSync(path.resolve(releaseExtDir, 'update.bat'), updateBatContent, 'utf-8')
+  fs.writeFileSync(path.resolve(releaseExtDir, 'update.sh'), updateShContent, 'utf-8')
+
   // 4. Create ZIP archive of Chrome Extension
   console.log('\n🗜️ Step 3/5: Compressing Chrome Extension into downloadable ZIP...')
   const zipPath = path.resolve(releaseDir, 'dr-debug-extension.zip')

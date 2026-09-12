@@ -612,6 +612,63 @@
           </div>
         </div>
 
+        <!-- HOW TO UPDATE DR. DEBUG (1-CLICK & SCRIPT) -->
+        <div class="faq-item faq-item--guide">
+          <button class="faq-trigger" aria-expanded="false">
+            <span class="faq-step-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            </span>
+            <span class="faq-question">How do I update Dr. Debug to the latest version? (No re-downloading!)</span>
+            <span class="faq-chevron">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner faq-install-guide">
+
+              <div class="install-step" data-step="1">
+                <div class="step-icon-wrap">
+                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <rect x="6" y="6" width="20" height="20" rx="4" stroke="#00f0ff" stroke-width="1.5" fill="rgba(0,240,255,0.06)"/>
+                    <path d="M12 16h8M16 12v8" stroke="#00f0ff" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <div class="step-content">
+                  <h4 class="step-label"><span class="step-num">01</span> Method 1: 1-Click Update inside Dr. Debug</h4>
+                  <p>Inside your webpage or DevTools, open Dr. Debug <strong>Settings (⚙️)</strong> and click <strong>"Check for Updates"</strong>. If already on the latest release, it confirms <code class="inline-code">✅ Up to Date</code> without downloading anything. If a new release is available, click <code class="inline-code">⚡ 1-Click Update</code> to update in-place via the host daemon.</p>
+                </div>
+              </div>
+
+              <div class="install-step" data-step="2">
+                <div class="step-icon-wrap">
+                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <path d="M8 8l8 8-8 8" stroke="#10b981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M18 24h8" stroke="#10b981" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <div class="step-content">
+                  <h4 class="step-label"><span class="step-num">02</span> Method 2: Double-click update.bat (Desktop / Offline)</h4>
+                  <p>In your extracted Dr. Debug folder, double-click <code class="inline-code">update.bat</code> (Windows) or run <code class="inline-code">./update.sh</code> (Mac/Linux). The script pulls the newest package and extracts it over your existing files automatically.</p>
+                </div>
+              </div>
+
+              <div class="install-step" data-step="3">
+                <div class="step-icon-wrap">
+                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <circle cx="16" cy="16" r="12" stroke="#10b981" stroke-width="1.5" fill="rgba(16,185,129,0.08)"/>
+                    <path d="M12 16l3 3 5-6" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="step-content">
+                  <h4 class="step-label"><span class="step-num">03</span> Reload in Chrome Extensions</h4>
+                  <p>Navigate to <code class="inline-code">chrome://extensions</code> in Chrome and click the 🔄 reload icon on Dr. Debug. Your extension is immediately refreshed with zero manual zip downloads.</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
         <!-- DOCKER BRIDGE SETUP -->
         <div class="faq-item faq-item--guide">
           <button class="faq-trigger" aria-expanded="false">
@@ -684,7 +741,7 @@
           </button>
           <div class="faq-answer">
             <div class="faq-answer-inner">
-              <p>Dr. Debug captures live browser telemetry — errors, network failures, console logs, stack traces, and memory snapshots — and serializes it into a structured Markdown incident report. You copy this report with a single click and paste it into Antigravity's chat. This gives the AI agent rich, deterministic runtime context instead of vague descriptions or screenshots, so it can locate and fix the exact lines in your codebase. <strong>It's a clipboard export bridge, not a direct API integration.</strong></p>
+              <p>Dr. Debug connects with Google Antigravity in two ways: <strong>1. Direct Model Context Protocol (MCP)</strong> via <code class="inline-code">npx -y @dr-debug/mcp</code>, allowing Antigravity's agent to query live diagnostics, DOM errors, and container logs directly over stdio; and <strong>2. 1-Click Clipboard Export</strong>, where Dr. Debug formats a structured Markdown incident report you paste into chat for instant root-cause analysis.</p>
             </div>
           </div>
         </div>
@@ -699,7 +756,7 @@
           </button>
           <div class="faq-answer">
             <div class="faq-answer-inner">
-              <p>Same approach as Antigravity: Dr. Debug's one-click <strong>"Copy AI Brief"</strong> button generates a structured <code class="inline-code">🚨 Incident Report for AI Assistants (Claude Code / Antigravity)</code> containing causal chains, HTTP payloads, stack traces, and timeline data. Paste it into Claude Code's terminal and it has all the context to debug your issue without guessing. <strong>There is no live API connection</strong> — it's a formatted export optimized for AI coding assistants to parse.</p>
+              <p>Claude Code integrates directly via the official Model Context Protocol. Simply register Dr. Debug with <code class="inline-code">"args": ["-y", "@dr-debug/mcp"]</code> in your MCP config, or use Dr. Debug's one-click <strong>"Copy AI Brief"</strong> button to generate an instant incident brief containing causal chains, HTTP payloads, stack traces, and timeline data paste-ready for your terminal.</p>
             </div>
           </div>
         </div>

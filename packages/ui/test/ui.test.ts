@@ -410,6 +410,38 @@ describe('DrDebugUI (Shadow DOM HUD & Cockpit)', () => {
       vi.unstubAllGlobals()
     })
   })
+
+  describe('SettingsModal Smart 1-Click Update', () => {
+    it('shows Up to Date without opening any window when already on the latest release', async () => {
+      const ui = new DrDebugUI()
+      const shadow = ui.getShadowRoot()
+      ui.openCockpit()
+
+      // Mock fetch to simulate GitHub latest release returning 0.1.9
+      const originalFetch = global.fetch
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ tag_name: 'v0.1.9', name: 'Dr. Debug v0.1.9' })
+      }) as any
+
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+
+      const updateBtn = shadow.querySelector('#dr-debug-btn-check-update') as HTMLButtonElement
+      expect(updateBtn).toBeDefined()
+
+      updateBtn.click()
+
+      // Allow async fetch and DOM updates
+      await new Promise((r) => setTimeout(r, 50))
+
+      expect(updateBtn.innerHTML).toContain('Up to Date')
+      expect(openSpy).not.toHaveBeenCalled()
+
+      global.fetch = originalFetch
+      openSpy.mockRestore()
+      ui.destroy()
+    })
+  })
 })
 
 

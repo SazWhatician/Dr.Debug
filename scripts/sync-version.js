@@ -113,13 +113,32 @@ export function syncAllVersions(targetVersion, options = {}) {
   const settingsModalPath = path.resolve(root, 'packages/ui/src/components/SettingsModal.ts')
   if (fs.existsSync(settingsModalPath)) {
     let content = fs.readFileSync(settingsModalPath, 'utf-8')
-    const updated = content.replace(
+    let updated = content.replace(
       /<span class="dr-debug-update-version">Dr\. Debug v[0-9.]+<\/span>/g,
       `<span class="dr-debug-update-version">Dr. Debug v${targetVersion}</span>`
+    )
+    updated = updated.replace(
+      /const currentVersion = '[0-9.]+'/g,
+      `const currentVersion = '${targetVersion}'`
     )
     if (updated !== content) {
       fs.writeFileSync(settingsModalPath, updated, 'utf-8')
       console.log(`  ✅ Cockpit SettingsModal.ts updated (Dr. Debug v${targetVersion})`)
+      updatedCount++
+    }
+  }
+
+  // 4b. MCP Server (packages/mcp/src/server.ts)
+  const mcpServerPath = path.resolve(root, 'packages/mcp/src/server.ts')
+  if (fs.existsSync(mcpServerPath)) {
+    let content = fs.readFileSync(mcpServerPath, 'utf-8')
+    const updated = content.replace(
+      /version: '[0-9.]+'/g,
+      `version: '${targetVersion}'`
+    )
+    if (updated !== content) {
+      fs.writeFileSync(mcpServerPath, updated, 'utf-8')
+      console.log(`  ✅ MCP server.ts updated (v${targetVersion})`)
       updatedCount++
     }
   }

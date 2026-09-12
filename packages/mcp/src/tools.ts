@@ -1,3 +1,4 @@
+import type { DockerBridge } from './DockerBridge.js'
 import type { BrowserTabTelemetry, MCPToolDefinition } from './types.js'
 
 export class MCPToolManager {
@@ -74,9 +75,47 @@ export class MCPToolManager {
             expression: {
               type: 'string',
               description: 'JavaScript code expression to evaluate.'
+            },
+            tabId: {
+              type: 'string',
+              description: 'Optional target tab ID.'
             }
           },
           required: ['expression']
+        }
+      },
+      {
+        name: 'drdebug_list_docker_containers',
+        description: 'Lists local Docker containers, their running states, images, forwarded ports, and health statuses.',
+        inputSchema: {
+          type: 'object',
+          properties: {}
+        }
+      },
+      {
+        name: 'drdebug_get_docker_logs',
+        description: 'Queries and streams Docker container standard output and standard error logs with filtering by container, log level, regex grep, and line tail.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            container: {
+              type: 'string',
+              description: 'Optional container name or ID to filter logs.'
+            },
+            level: {
+              type: 'string',
+              enum: ['error', 'warn', 'info', 'log'],
+              description: 'Optional log level filter.'
+            },
+            grep: {
+              type: 'string',
+              description: 'Optional regex or substring to grep in log messages.'
+            },
+            tail: {
+              type: 'number',
+              description: 'Number of recent log lines to retrieve (default 50).'
+            }
+          }
         }
       }
     ]
@@ -86,12 +125,13 @@ export class MCPToolManager {
     name: string,
     args: any,
     sessions: Map<string, BrowserTabTelemetry>,
-    sendCommand: (command: any) => Promise<any>
-  ): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {
-    const defaultSession = Array.from(sessions.values())[0]
-    const state = defaultSession?.stateSnapshot || {}
+    sendCommand: (command: any, targetTabId?: string) => Promise<any>,
+    dockerBridge?: DockerBridge
+  ): Promise<{ content: Array<{ type: 'text'; text: string }>; isError?: boolean }> {
+    const targetSession = args?.tabId ? sessions.get(args.tabId) : Array.from(sessions.values())[0]
+    const state = targetSession?.stateSnapshot || {}
 
-    if (name === 'drdebug_get_diagnostics') {
+    if (name === 'drdebug_get_diagnostics' || name === 'get_browser_state') {
       const summary = {
         url: state.pageContext?.url || 'No active page connected',
         title: state.pageContext?.title,
@@ -109,9 +149,12 @@ export class MCPToolManager {
       return { content: [{ type: 'text', text: prompt }] }
     }
 
-    if (name === 'drdebug_inspect_request') {
+    if (name === 'drdebug_inspect_request' || name === 'get_network_log') {
       const records = state.network?.records || []
-      const req = records.find((r: any) => r.id === args.requestId || r.url.includes(args.requestId))
+      if (!args?.requestId && name === 'get_network_log') {
+        return { content: [{ type: 'text', text: JSON.stringify(records, null, 2) }] }
+      }
+      const req = records.find((r: any) => r.id === args.requestId || (r.url && r.url.includes(args.requestId)))
       if (!req) {
         return { content: [{ type: 'text', text: `Request "${args.requestId}" not found in recorded telemetry.` }], isError: true }
       }
@@ -137,9 +180,13 @@ export class MCPToolManager {
       return { content: [{ type: 'text', text: JSON.stringify(inspectPayload, null, 2) }] }
     }
 
-    if (name === 'drdebug_inspect_error') {
+    if (name === 'drdebug_inspect_error' || name === 'get_recent_errors') {
       const entries = state.console?.entries || []
-      const err = entries.find((e: any) => e.id === args.errorId || e.message.includes(args.errorId))
+      if (!args?.errorId && name === 'get_recent_errors') {
+        const errors = entries.filter((e: any) => e.level === 'error')
+        return { content: [{ type: 'text', text: JSON.stringify(errors, null, 2) }] }
+      }
+      const err = entries.find((e: any) => e.id === args.errorId || (e.message && e.message.includes(args.errorId)))
       if (!err) {
         return { content: [{ type: 'text', text: `Error "${args.errorId}" not found in recorded telemetry.` }], isError: true }
       }
@@ -153,11 +200,33 @@ export class MCPToolManager {
 
     if (name === 'drdebug_execute_script') {
       try {
-        const res = await sendCommand({ type: 'EVAL_SCRIPT', expression: args.expression })
+        const res = await sendCommand({ type: 'EVAL_SCRIPT', expression: args.expression }, args.tabId)
         return { content: [{ type: 'text', text: JSON.stringify(res, null, 2) }] }
       } catch (err: any) {
         return { content: [{ type: 'text', text: `Failed to evaluate in browser: ${err.message}` }], isError: true }
       }
+    }
+
+    if (name === 'drdebug_list_docker_containers' || name === 'list_docker_containers') {
+      if (!dockerBridge) {
+        return { content: [{ type: 'text', text: 'Docker bridge is not available or initialized.' }], isError: true }
+      }
+      await dockerBridge.refreshContainers()
+      const containers = dockerBridge.getContainers()
+      return { content: [{ type: 'text', text: JSON.stringify(containers, null, 2) }] }
+    }
+
+    if (name === 'drdebug_get_docker_logs' || name === 'get_docker_logs') {
+      if (!dockerBridge) {
+        return { content: [{ type: 'text', text: 'Docker bridge is not available or initialized.' }], isError: true }
+      }
+      const logs = dockerBridge.getLogs({
+        container: args?.container,
+        level: args?.level,
+        grep: args?.grep,
+        tail: typeof args?.tail === 'number' ? args.tail : 50
+      })
+      return { content: [{ type: 'text', text: JSON.stringify(logs, null, 2) }] }
     }
 
     return { content: [{ type: 'text', text: `Unknown tool: ${name}` }], isError: true }

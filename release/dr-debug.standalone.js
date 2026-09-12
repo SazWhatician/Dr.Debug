@@ -11010,7 +11010,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
           <div class="dr-debug-settings-update-banner">
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
-              <span class="dr-debug-update-version">Dr. Debug v0.1.9</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.10</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
@@ -11055,12 +11055,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.saveBtn.addEventListener("click", () => this.handleSave());
       const checkUpdateBtn = this.element.querySelector("#dr-debug-btn-check-update");
       checkUpdateBtn == null ? void 0 : checkUpdateBtn.addEventListener("click", () => {
-        const url = "https://dr-debug.vercel.app/";
-        if (typeof chrome !== "undefined" && chrome.tabs && chrome.tabs.create) {
-          chrome.tabs.create({ url });
-        } else {
-          window.open(url, "_blank", "noopener,noreferrer");
-        }
+        if (checkUpdateBtn) this.handleCheckUpdate(checkUpdateBtn);
       });
     }
     handleProviderChange() {
@@ -11194,6 +11189,120 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         } catch {
         }
       }
+    }
+    async handleCheckUpdate(btn) {
+      var _a, _b;
+      const originalText = btn.innerHTML;
+      const currentVersion = "0.1.10";
+      btn.disabled = true;
+      btn.innerHTML = `<span>Checking...</span>`;
+      btn.style.opacity = "0.85";
+      const bannerMeta = this.element.querySelector(".dr-debug-update-meta");
+      try {
+        let latestVersion = currentVersion;
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 4e3);
+          const res = await fetch("https://api.github.com/repos/SazWhatician/DebugCopilot/releases/latest", {
+            signal: controller.signal
+          });
+          clearTimeout(timeout);
+          if (res.ok) {
+            const data = await res.json();
+            latestVersion = (data.tag_name || "").replace(/^v/, "").trim() || currentVersion;
+          }
+        } catch {
+          try {
+            const daemonRes = await fetch("http://127.0.0.1:9229/");
+            if (daemonRes.ok) {
+              const daemonData = await daemonRes.json();
+              if (daemonData.version) latestVersion = daemonData.version;
+            }
+          } catch {
+          }
+        }
+        const isUpToDate = this.isVersionGreaterOrEqual(currentVersion, latestVersion);
+        if (isUpToDate) {
+          btn.innerHTML = `<span>\u2705 Up to Date</span>`;
+          btn.style.background = "linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%)";
+          btn.style.borderColor = "rgba(16, 185, 129, 0.6)";
+          btn.style.color = "#34d399";
+          if (bannerMeta) {
+            (_a = this.element.querySelector("#dr-debug-update-status-msg")) == null ? void 0 : _a.remove();
+            const statusSpan = document.createElement("span");
+            statusSpan.id = "dr-debug-update-status-msg";
+            statusSpan.style.cssText = "font-size:10px; color:#34d399; font-weight:600; margin-top:2px;";
+            statusSpan.textContent = `You're on the latest release (v${currentVersion})`;
+            bannerMeta.appendChild(statusSpan);
+          }
+          setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            btn.style.background = "";
+            btn.style.borderColor = "";
+            btn.style.color = "";
+            btn.style.opacity = "1";
+          }, 5e3);
+          return;
+        }
+        btn.disabled = false;
+        btn.style.opacity = "1";
+        btn.style.background = "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)";
+        btn.style.borderColor = "#60a5fa";
+        btn.style.color = "#ffffff";
+        btn.innerHTML = `<span>\u26A1 1-Click Update</span>`;
+        if (bannerMeta) {
+          (_b = this.element.querySelector("#dr-debug-update-status-msg")) == null ? void 0 : _b.remove();
+          const statusSpan = document.createElement("span");
+          statusSpan.id = "dr-debug-update-status-msg";
+          statusSpan.style.cssText = "font-size:10px; color:#60a5fa; font-weight:700; margin-top:2px;";
+          statusSpan.textContent = `v${latestVersion} available! Click to update.`;
+          bannerMeta.appendChild(statusSpan);
+        }
+        btn.onclick = async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          btn.disabled = true;
+          btn.innerHTML = `<span>Updating...</span>`;
+          try {
+            const updateReq = await fetch("http://127.0.0.1:9229/update-extension", { method: "POST" });
+            if (updateReq.ok) {
+              btn.innerHTML = `<span>\u2705 Updated! Reloading...</span>`;
+              setTimeout(() => {
+                if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.reload) {
+                  chrome.runtime.reload();
+                } else {
+                  window.location.reload();
+                }
+              }, 1200);
+              return;
+            }
+          } catch {
+          }
+          btn.innerHTML = `<span>Get v${latestVersion} \u2197</span>`;
+          const url = "https://dr-debug.vercel.app/";
+          if (typeof chrome !== "undefined" && chrome.tabs && chrome.tabs.create) {
+            chrome.tabs.create({ url });
+          } else {
+            window.open(url, "_blank", "noopener,noreferrer");
+          }
+        };
+      } catch {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        btn.style.opacity = "1";
+      }
+    }
+    isVersionGreaterOrEqual(v1, v2) {
+      const parts1 = v1.split(".").map(Number);
+      const parts2 = v2.split(".").map(Number);
+      for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+        const p1 = parts1[i] || 0;
+        const p2 = parts2[i] || 0;
+        if (p1 > p2) return true;
+        if (p1 < p2) return false;
+      }
+      return true;
     }
   };
 

@@ -159,7 +159,7 @@ export class SettingsModal {
           <div class="dr-debug-settings-update-banner">
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
-              <span class="dr-debug-update-version">Dr. Debug v0.1.9</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.10</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
@@ -207,14 +207,9 @@ export class SettingsModal {
     this.testBtn.addEventListener('click', () => this.handleTestConnection())
     this.saveBtn.addEventListener('click', () => this.handleSave())
 
-    const checkUpdateBtn = this.element.querySelector('#dr-debug-btn-check-update')
+    const checkUpdateBtn = this.element.querySelector('#dr-debug-btn-check-update') as HTMLButtonElement | null
     checkUpdateBtn?.addEventListener('click', () => {
-      const url = 'https://dr-debug.vercel.app/'
-      if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
-        chrome.tabs.create({ url })
-      } else {
-        window.open(url, '_blank', 'noopener,noreferrer')
-      }
+      if (checkUpdateBtn) this.handleCheckUpdate(checkUpdateBtn)
     })
   }
 
@@ -364,5 +359,138 @@ export class SettingsModal {
         // ignore
       }
     }
+  }
+
+  private async handleCheckUpdate(btn: HTMLButtonElement): Promise<void> {
+    const originalText = btn.innerHTML
+    const currentVersion = '0.1.10'
+
+    btn.disabled = true
+    btn.innerHTML = `<span>Checking...</span>`
+    btn.style.opacity = '0.85'
+
+    const bannerMeta = this.element.querySelector('.dr-debug-update-meta') as HTMLElement | null
+
+    try {
+      let latestVersion = currentVersion
+      try {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 4000)
+        const res = await fetch('https://api.github.com/repos/SazWhatician/DebugCopilot/releases/latest', {
+          signal: controller.signal
+        })
+        clearTimeout(timeout)
+        if (res.ok) {
+          const data = await res.json()
+          latestVersion = (data.tag_name || '').replace(/^v/, '').trim() || currentVersion
+        }
+      } catch {
+        // Offline / rate limit fallback: check local daemon
+        try {
+          const daemonRes = await fetch('http://127.0.0.1:9229/')
+          if (daemonRes.ok) {
+            const daemonData = await daemonRes.json()
+            if (daemonData.version) latestVersion = daemonData.version
+          }
+        } catch {
+          // Keep currentVersion
+        }
+      }
+
+      const isUpToDate = this.isVersionGreaterOrEqual(currentVersion, latestVersion)
+
+      if (isUpToDate) {
+        btn.innerHTML = `<span>✅ Up to Date</span>`
+        btn.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%)'
+        btn.style.borderColor = 'rgba(16, 185, 129, 0.6)'
+        btn.style.color = '#34d399'
+
+        if (bannerMeta) {
+          this.element.querySelector('#dr-debug-update-status-msg')?.remove()
+          const statusSpan = document.createElement('span')
+          statusSpan.id = 'dr-debug-update-status-msg'
+          statusSpan.style.cssText = 'font-size:10px; color:#34d399; font-weight:600; margin-top:2px;'
+          statusSpan.textContent = `You're on the latest release (v${currentVersion})`
+          bannerMeta.appendChild(statusSpan)
+        }
+
+        setTimeout(() => {
+          btn.disabled = false
+          btn.innerHTML = originalText
+          btn.style.background = ''
+          btn.style.borderColor = ''
+          btn.style.color = ''
+          btn.style.opacity = '1'
+        }, 5000)
+        return
+      }
+
+      // Newer version available! Transform button to 1-Click Update
+      btn.disabled = false
+      btn.style.opacity = '1'
+      btn.style.background = 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'
+      btn.style.borderColor = '#60a5fa'
+      btn.style.color = '#ffffff'
+      btn.innerHTML = `<span>⚡ 1-Click Update</span>`
+
+      if (bannerMeta) {
+        this.element.querySelector('#dr-debug-update-status-msg')?.remove()
+        const statusSpan = document.createElement('span')
+        statusSpan.id = 'dr-debug-update-status-msg'
+        statusSpan.style.cssText = 'font-size:10px; color:#60a5fa; font-weight:700; margin-top:2px;'
+        statusSpan.textContent = `v${latestVersion} available! Click to update.`
+        bannerMeta.appendChild(statusSpan)
+      }
+
+      btn.onclick = async (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        btn.disabled = true
+        btn.innerHTML = `<span>Updating...</span>`
+
+        // Check if local daemon bridge is active
+        try {
+          const updateReq = await fetch('http://127.0.0.1:9229/update-extension', { method: 'POST' })
+          if (updateReq.ok) {
+            btn.innerHTML = `<span>✅ Updated! Reloading...</span>`
+            setTimeout(() => {
+              if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.reload) {
+                chrome.runtime.reload()
+              } else {
+                window.location.reload()
+              }
+            }, 1200)
+            return
+          }
+        } catch {
+          // Daemon is offline
+        }
+
+        // Fallback: If daemon is offline, open download URL
+        btn.innerHTML = `<span>Get v${latestVersion} ↗</span>`
+        const url = 'https://dr-debug.vercel.app/'
+        if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
+          chrome.tabs.create({ url })
+        } else {
+          window.open(url, '_blank', 'noopener,noreferrer')
+        }
+      }
+    } catch {
+      btn.disabled = false
+      btn.innerHTML = originalText
+      btn.style.opacity = '1'
+    }
+  }
+
+  private isVersionGreaterOrEqual(v1: string, v2: string): boolean {
+    const parts1 = v1.split('.').map(Number)
+    const parts2 = v2.split('.').map(Number)
+    for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+      const p1 = parts1[i] || 0
+      const p2 = parts2[i] || 0
+      if (p1 > p2) return true
+      if (p1 < p2) return false
+    }
+    return true
   }
 }

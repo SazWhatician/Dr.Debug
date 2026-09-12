@@ -1,7 +1,11 @@
+import type { DockerBridge } from './DockerBridge.js'
 import type { BrowserTabTelemetry, MCPResource, MCPResourceContent } from './types.js'
 
 export class MCPResourceManager {
-  public static listResources(sessions: Map<string, BrowserTabTelemetry>): MCPResource[] {
+  public static listResources(
+    sessions: Map<string, BrowserTabTelemetry>,
+    dockerBridge?: DockerBridge
+  ): MCPResource[] {
     const resources: MCPResource[] = [
       {
         uri: 'drdebug://state/live',
@@ -45,10 +49,27 @@ export class MCPResourceManager {
       })
     }
 
+    // Docker container resources
+    if (dockerBridge) {
+      const containers = dockerBridge.getContainers()
+      for (const c of containers) {
+        resources.push({
+          uri: `drdebug://container/${c.name || c.id}/logs`,
+          name: `Docker Logs [${c.name}] (${c.image})`,
+          mimeType: 'application/json',
+          description: `Container ${c.id}: ${c.status}`
+        })
+      }
+    }
+
     return resources
   }
 
-  public static readResource(uri: string, sessions: Map<string, BrowserTabTelemetry>): MCPResourceContent {
+  public static readResource(
+    uri: string,
+    sessions: Map<string, BrowserTabTelemetry>,
+    dockerBridge?: DockerBridge
+  ): MCPResourceContent {
     const defaultSession = Array.from(sessions.values())[0]
     const state = defaultSession?.stateSnapshot || {}
 
@@ -92,6 +113,32 @@ export class MCPResourceManager {
         uri,
         mimeType: 'application/json',
         text: JSON.stringify(state.diagnosticMatrix || {}, null, 2)
+      }
+    }
+
+    // Tab-specific state: drdebug://tab/{tabId}/state
+    const tabMatch = uri.match(/^drdebug:\/\/tab\/([^/]+)\/state$/)
+    if (tabMatch) {
+      const tabId = tabMatch[1]
+      const tab = sessions.get(tabId)
+      if (tab) {
+        return {
+          uri,
+          mimeType: 'application/json',
+          text: JSON.stringify(tab.stateSnapshot || {}, null, 2)
+        }
+      }
+    }
+
+    // Container logs: drdebug://container/{containerId}/logs
+    const containerMatch = uri.match(/^drdebug:\/\/container\/([^/]+)\/logs$/)
+    if (containerMatch && dockerBridge) {
+      const containerId = containerMatch[1]
+      const logs = dockerBridge.getLogs({ container: containerId, tail: 100 })
+      return {
+        uri,
+        mimeType: 'application/json',
+        text: JSON.stringify(logs, null, 2)
       }
     }
 

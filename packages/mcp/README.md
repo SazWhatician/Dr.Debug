@@ -1,7 +1,7 @@
 # 🔌 @dr-debug/mcp
 
-> **Model Context Protocol (MCP) Server & Docker Telemetry Bridge for Dr. Debug**  
-> Connects running browser tabs, frontend substrate errors, and backend Docker container logs directly to AI IDEs (Cursor, Claude Code, Antigravity, Windsurf, and VS Code).
+> **Certified Model Context Protocol (MCP) Server & Docker Telemetry Bridge for Dr. Debug**  
+> Built with Anthropic's official `@modelcontextprotocol/sdk`. Connects running browser tabs, frontend substrate anomalies, and backend Docker container logs directly to AI IDEs (Cursor, Claude Code, Antigravity, Windsurf, and VS Code).
 
 [![npm version](https://img.shields.io/npm/v/@dr-debug/mcp.svg?color=blue)](https://www.npmjs.com/package/@dr-debug/mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -13,7 +13,7 @@ Created by **Saswat Mohanty** ([@SazWhatician](https://github.com/SazWhatician))
 
 ---
 
-## ⚡ Instant Run (Zero Installation)
+## ⚡ Instant Run
 
 Run directly with `npx`:
 
@@ -22,8 +22,8 @@ npx -y @dr-debug/mcp
 ```
 
 This boots the dual-mode bridge:
-1. **MCP STDIO Server**: Ready for Cursor, Claude Code, Antigravity, or VS Code.
-2. **Local HTTP/WebSocket Gateway** (`http://127.0.0.1:9999`): Streams real-time Docker container states and browser telemetry.
+1. **Official MCP STDIO Server**: Speaks Model Context Protocol over standard I/O for Cursor, Claude Desktop, Antigravity, or VS Code.
+2. **Local HTTP/WebSocket Gateway** (`http://127.0.0.1:9229`): Ingests telemetry from browser tabs and streams real-time Docker events (SSE) into the in-browser HUD.
 
 ---
 
@@ -55,18 +55,58 @@ This boots the dual-mode bridge:
 }
 ```
 
+### 3. Antigravity IDE (`mcp_config.json`)
+
+```json
+{
+  "mcpServers": {
+    "dr-debug": {
+      "command": "npx",
+      "args": ["-y", "@dr-debug/mcp"]
+    }
+  }
+}
+```
+
 ---
 
 ## 🔬 MCP Tools Exposed
 
-When connected, your AI coding agent has direct access to the following tools:
+When connected, your AI coding agent has direct access to the following 8 tools:
 
-- `list_browser_tabs`: Discover active tabs with Dr. Debug instrumented.
-- `get_browser_state`: Fetch the full `<debug_state>` snapshot (DOM anomalies, console errors, network failures).
-- `get_recent_errors`: Query high-priority substrate and runtime exceptions.
-- `get_network_log`: Inspect recent HTTP requests, status codes, and request/response payloads.
-- `list_docker_containers`: Inspect local Docker containers, images, ports, and health statuses.
-- `get_docker_logs`: Stream container standard output and standard error logs to correlate with browser errors.
+| Tool Name | Description |
+|:---|:---|
+| `drdebug_get_diagnostics` | Aggregated multi-substrate health status, active anomalies, error counts, and memory usage. |
+| `drdebug_inspect_request` | Full HTTP request/response payloads, headers, timings, status, and cURL reproduction command. |
+| `drdebug_get_ai_brief` | Paste-ready incident brief with demangled stack traces and XML `<debug_state>` snapshot. |
+| `drdebug_inspect_error` | Deep error inspection with demangled stack frames, source file locations, and error details. |
+| `drdebug_get_interaction_replay` | Chronological sequence of user clicks, inputs, and scrolls in the 30 seconds before errors. |
+| `drdebug_execute_script` | Evaluates a JavaScript expression in the live browser tab and returns the serialized result. |
+| `drdebug_list_docker_containers` | Lists local Docker containers, running states, images, forwarded ports, and health statuses. |
+| `drdebug_get_docker_logs` | Queries Docker container stdout/stderr logs with container, level, grep, and tail filtering. |
+
+---
+
+## 📄 MCP Resources Exposed
+
+AI agents can read live telemetry without executing tools:
+
+* `drdebug://state/live`: Real-time `<debug_state>` XML token snapshot across substrates.
+* `drdebug://console/errors`: Active uncaught runtime errors, unhandled rejections, and demangled stacks.
+* `drdebug://network/failures`: Failed HTTP requests, status codes, request/response headers, and payloads.
+* `drdebug://interactions/replay`: Chronological user interaction replay sequence.
+* `drdebug://matrix/diagnostics`: 2D Substrate Diagnostics Matrix.
+* `drdebug://tab/{tabId}/state`: Dynamic snapshot for a specific browser tab.
+* `drdebug://container/{containerId}/logs`: Dynamic log stream for a specific Docker container.
+
+---
+
+## 💬 MCP Prompts Exposed
+
+Dr. Debug registers one-click prompt workflows in Claude Desktop and Cursor:
+
+1. **`drdebug_triage_incident`**: Injects current live browser telemetry, errors, and reproduction steps into the prompt, asking the AI to diagnose root cause and provide the code fix.
+2. **`drdebug_correlate_500`**: Takes a failed `requestId`, automatically pulls the failed HTTP transaction and matches it with backend host Docker container logs for full-stack RCA.
 
 ---
 
@@ -79,6 +119,7 @@ When connected, your AI coding agent has direct access to the following tools:
 | **Human QA Replay** | ❌ None (only knows synthetic agent actions) | ✅ **30s Interaction Replay** (human clicks, inputs, scrolls before crash) |
 | **Token Cost** | ❌ 40k–80k tokens per bug (raw CDP dumps) | ✅ **<1,500 tokens** (structured RFC-9457 `<debug_state>` XML) |
 | **Developer Cockpit** | ❌ Invisible headless protocol only | ✅ **Shadow DOM HUD** + Chrome Extension + DevTools Panel |
+| **API Keys Needed** | None | **Zero API Keys Required** (AI IDE provides reasoning) |
 
 ---
 
