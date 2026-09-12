@@ -165,7 +165,7 @@ export class SettingsModal {
           <div class="dr-debug-settings-update-banner">
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
-              <span class="dr-debug-update-version">Dr. Debug v0.1.11</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.12</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
@@ -369,7 +369,7 @@ export class SettingsModal {
 
   private async handleCheckUpdate(btn: HTMLButtonElement): Promise<void> {
     const originalText = btn.innerHTML
-    const currentVersion = '0.1.11'
+    const currentVersion = '0.1.12'
 
     btn.disabled = true
     btn.innerHTML = `<span>Checking...</span>`

@@ -1,3 +1,4 @@
+import { generatePonytailDebugPrompt } from '@dr-debug/core'
 import type { DockerBridge } from './DockerBridge.js'
 import type { BrowserTabTelemetry, MCPToolDefinition } from './types.js'
 
@@ -145,7 +146,37 @@ export class MCPToolManager {
     }
 
     if (name === 'drdebug_get_ai_brief') {
-      const prompt = state.sessionDebugPrompt || state.unifiedPrompt || state.serializedXml || JSON.stringify(state, null, 2)
+      let prompt = state.sessionDebugPrompt || state.unifiedPrompt
+      if (!prompt && targetSession?.stateSnapshot) {
+        try {
+          prompt = generatePonytailDebugPrompt(targetSession.stateSnapshot)
+        } catch {
+          // fallback
+        }
+      }
+
+      if (!prompt && dockerBridge) {
+        const dockerErrors = dockerBridge.getLogs({ level: 'error', tail: 20 })
+        if (dockerErrors.length > 0) {
+          prompt = `# 🐳 Dr. Debug Incident Brief (Backend Docker Logs)\n\n` +
+            `No active browser tab telemetry connected, but host backend container errors were detected:\n\n` +
+            dockerErrors.map((l: any) => `- [${l.containerName} / ${l.stream}] ${l.message}`).join('\n') +
+            `\n\n### ✂️ Instructions for AI Coding Assistant (Ponytail Protocol)\n` +
+            `1. Locate the backend source file causing the container error.\n` +
+            `2. Directly apply the minimal surgical fix (≤ 5 lines) using file editing tools.\n` +
+            `3. Provide a 1-sentence verification command.`
+        }
+      }
+
+      if (!prompt) {
+        prompt = `# 🩺 Dr. Debug Incident Brief\n\n` +
+          `No active browser tab telemetry captured yet.\n\n` +
+          `To stream live browser telemetry:\n` +
+          `1. Ensure your web application is running (e.g. at http://localhost:3000 or http://localhost:5173).\n` +
+          `2. Open the page in Chrome with the Dr. Debug extension active, or load the Dr. Debug script.\n` +
+          `3. Trigger the runtime error or user flow in the browser; telemetry will stream automatically into this MCP session.`
+      }
+
       return { content: [{ type: 'text', text: prompt }] }
     }
 

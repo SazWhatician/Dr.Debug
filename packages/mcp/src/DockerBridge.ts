@@ -222,6 +222,16 @@ export class DockerBridge extends EventEmitter {
 
   public classifyLogLevel(msg: string, stream: 'stdout' | 'stderr'): LogLevel {
     const upper = msg.toUpperCase()
+    // Explicit structured log level markers take precedence over stderr stream
+    if (upper.includes('"LEVEL":"INFO"') || upper.includes('"LEVEL": "INFO"') || upper.includes('[INFO]') || upper.startsWith('INFO:')) {
+      return 'info'
+    }
+    if (upper.includes('"LEVEL":"DEBUG"') || upper.includes('"LEVEL": "DEBUG"') || upper.includes('[DEBUG]') || upper.startsWith('DEBUG:')) {
+      return 'log'
+    }
+    if (upper.includes('"LEVEL":"WARN"') || upper.includes('"LEVEL": "WARN"') || upper.includes('[WARN]') || upper.startsWith('WARN:') || upper.includes('WARNING:')) {
+      return 'warn'
+    }
     if (
       stream === 'stderr' ||
       upper.includes('FATAL') ||

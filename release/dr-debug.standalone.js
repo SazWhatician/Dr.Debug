@@ -2411,10 +2411,15 @@ ${targetNetwork.error}
           promptLines.push("");
           promptLines.push("**Demangled Call Frames:**");
           entry.parsedStack.slice(0, 5).forEach((frame, i) => {
-            const fn = frame.filename || "unknown";
-            const isUserCode = !fn.includes("node_modules") && !fn.includes("chrome-extension");
+            const rawFn = frame.filename || "unknown";
+            const isUserCode = !rawFn.includes("node_modules") && !rawFn.includes("chrome-extension");
             const tag = isUserCode ? "\u{1F4CC} [App Code]" : "\u2699\uFE0F [Vendor]";
-            promptLines.push(`${i + 1}. ${tag} \`${frame.functionName || "<anonymous>"}\` at \`${fn}:${frame.lineno || 0}:${frame.colno || 0}\``);
+            let cleanFn = rawFn.trim();
+            cleanFn = cleanFn.replace(/^https?:\/\/[^/]+\//, "");
+            cleanFn = cleanFn.replace(/^(?:webpack:\/{2,3}|\(webpack\):\/{1,3})/, "");
+            cleanFn = cleanFn.replace(/[?#].*$/, "");
+            cleanFn = cleanFn.replace(/^\/+/, "");
+            promptLines.push(`${i + 1}. ${tag} \`${frame.functionName || "<anonymous>"}\` at \`${cleanFn || rawFn}:${frame.lineno || 0}:${frame.colno || 0}\``);
           });
         } else if (entry.stack) {
           promptLines.push("");
@@ -2513,7 +2518,7 @@ ${targetNetwork.error}
     promptLines.push("4. Existing Dependencies: NEVER introduce new dependencies or npm packages.");
     promptLines.push("5. Minimal Diff: Target a unified git diff of \u2264 5 lines whenever possible.");
     promptLines.push("6. Non-negotiable: Never compromise on input validation, error handling, or security.");
-    promptLines.push("7. Output Format: Output strictly the unified git diff and a 1-sentence verification command. No conversational filler.");
+    promptLines.push("7. Action Required: If running in an agentic IDE with tools (Google Antigravity, Cursor, Claude Code), directly inspect the target file and apply the minimal surgical fix (\u2264 5 lines) using file editing tools (`replace_file_content` / `write_to_file`), then state a 1-sentence verification command. If tool execution is unavailable, output strictly the unified git diff and a 1-sentence verification command. No conversational filler.");
     return promptLines.join("\n");
   }
 
@@ -2744,8 +2749,17 @@ ${targetNetwork.error}
     if (!file) return false;
     return !file.includes("node_modules") && !file.startsWith("chrome-extension://") && !file.includes("/.vite/") && !/^https?:\/\/[^/]+\/?$/.test(file);
   }
+  function normalizeSourceFile(file) {
+    if (!file) return "unknown";
+    let clean = file.trim();
+    clean = clean.replace(/^https?:\/\/[^/]+\//, "");
+    clean = clean.replace(/^(?:webpack:\/{2,3}|\(webpack\):\/{1,3})/, "");
+    clean = clean.replace(/[?#].*$/, "");
+    clean = clean.replace(/^\/+/, "");
+    return clean || file;
+  }
   function frameLabel(frame) {
-    const file = frame.filename || "unknown";
+    const file = normalizeSourceFile(frame.filename || "unknown");
     const line = frame.lineno ?? 0;
     const col = frame.colno ?? 0;
     const fn = frame.functionName || "<anonymous>";
@@ -2931,7 +2945,7 @@ ${targetNetwork.error}
     if (shown.length === 0 && entry.stack) {
       evidence.push(entry.stack.split("\n").slice(0, 4).join("\n"));
     }
-    const files = appFrames.map((f) => f.filename && f.lineno ? `${f.filename}:${f.lineno}` : f.filename || "").filter(Boolean);
+    const files = appFrames.map((f) => f.filename && f.lineno ? `${normalizeSourceFile(f.filename)}:${f.lineno}` : normalizeSourceFile(f.filename || "")).filter(Boolean);
     const origin = appFrames[0] ? ` at ${frameLabel(appFrames[0])}` : "";
     return {
       id: entry.id,
@@ -3359,7 +3373,7 @@ ${causalChain.join("\n")}`);
         const framesToShow = appFrames.length > 0 ? appFrames.slice(0, 3) : primary.parsedStack.slice(0, 2);
         lines.push("**Application Call Frame(s):**");
         framesToShow.forEach((frame, i) => {
-          const file = frame.filename || "unknown";
+          const file = normalizeSourceFile(frame.filename || "unknown");
           lines.push(`${i + 1}. \`${frame.functionName || "<anonymous>"}\` at \`${file}:${frame.lineno ?? 0}:${frame.colno ?? 0}\``);
         });
       } else if (primary.stack) {
@@ -3414,7 +3428,7 @@ ${causalChain.join("\n")}`);
     lines.push("6. **One-Liner / Concise Construct**: If the fix can be written cleanly in 1\u20133 lines, do that. Avoid multi-layer abstractions.");
     lines.push("7. **Target Diff Size**: Target a unified git diff of \u2264 5 lines whenever possible.");
     lines.push("8. **Non-Negotiables**: Never compromise on input validation, security, or error handling.");
-    lines.push("9. **Output Format**: Output strictly a unified git diff and a 1-sentence verification command. No conversational filler or decorative fluff.");
+    lines.push("9. **Action Required**: If running in an agentic IDE with file tools (Google Antigravity, Cursor, Claude Code), locate the culprit source file in the workspace, inspect the line, and directly apply the minimal surgical fix using your file editing tools (`replace_file_content` / `write_to_file`). If direct tool execution is unavailable: Output strictly a unified git diff and a 1-sentence verification command. No conversational filler or decorative fluff.");
     return lines.join("\n");
   }
   function buildTimeline(state, limit) {
@@ -3606,7 +3620,7 @@ ${causalChain.join("\n")}`);
         lines.push("");
         if (entry.parsedStack && entry.parsedStack.length > 0) {
           entry.parsedStack.slice(0, 8).forEach((frame, i) => {
-            const file = frame.filename || "unknown";
+            const file = normalizeSourceFile(frame.filename || "unknown");
             const vendor = file.includes("node_modules") || file.startsWith("chrome-extension://");
             lines.push(
               `${i + 1}. ${vendor ? "[vendor]" : "[app]"} \`${frame.functionName || "<anonymous>"}\` \u2014 \`${file}:${frame.lineno ?? 0}:${frame.colno ?? 0}\``
@@ -3708,7 +3722,7 @@ ${causalChain.join("\n")}`);
     if (analysis.filesToModify.length > 0) {
       lines.push("## Source locations named by the stacks");
       lines.push("");
-      analysis.filesToModify.forEach((file) => lines.push(`- \`${file}\``));
+      analysis.filesToModify.forEach((file) => lines.push(`- \`${normalizeSourceFile(file)}\``));
       lines.push("");
     }
     lines.push("---");
@@ -3718,7 +3732,7 @@ ${causalChain.join("\n")}`);
     lines.push(`1. Open the source locations named above and find the code that produced ${analysis.headline}.`);
     lines.push("2. Confirm or refute the suggested root cause against the actual code. The evidence here is real; the attribution is a heuristic and may be wrong.");
     lines.push("3. Fix the root cause rather than the symptom \u2014 the causal chain shows which failures are downstream.");
-    lines.push("4. Give me the minimal diff, and tell me how to verify it against the reproduction command above.");
+    lines.push("4. If you have file editing tools (in Google Antigravity, Cursor, or Claude Code), directly apply the minimal surgical fix (\u2264 5 lines) to the target file using your tools and tell me how to verify it. Otherwise, output strictly a unified git diff and a 1-sentence verification command.");
     lines.push("");
     lines.push("If the evidence is insufficient to locate the cause, say what additional telemetry you need instead of guessing.");
     return lines.join("\n");
@@ -11016,7 +11030,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
           <div class="dr-debug-settings-update-banner">
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
-              <span class="dr-debug-update-version">Dr. Debug v0.1.11</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.12</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
@@ -11199,7 +11213,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     async handleCheckUpdate(btn) {
       var _a, _b;
       const originalText = btn.innerHTML;
-      const currentVersion = "0.1.11";
+      const currentVersion = "0.1.12";
       btn.disabled = true;
       btn.innerHTML = `<span>Checking...</span>`;
       btn.style.opacity = "0.85";
@@ -18200,6 +18214,8 @@ Direction: ${finding.remediation}`
     options;
     isAutoInvestigating = false;
     mcpSocket;
+    mcpTabId;
+    mcpSyncInterval;
     syncInterval;
     lastInvestigation = null;
     constructor(options = {}) {
@@ -18250,7 +18266,7 @@ Direction: ${finding.remediation}`
         window.addEventListener("error", () => this.handleAutoTrigger());
         window.addEventListener("unhandledrejection", () => this.handleAutoTrigger());
       }
-      if (options.enableMCP && typeof window !== "undefined" && typeof WebSocket !== "undefined") {
+      if (options.enableMCP !== false && typeof window !== "undefined") {
         this.connectToMCPBridge(options.mcpPort || 9229);
       }
       if (options.enableDocker !== false && typeof window !== "undefined") {
@@ -18444,40 +18460,48 @@ Direction: ${finding.remediation}`
       }
     }
     connectToMCPBridge(port = 9229) {
-      try {
-        const tabId = `tab_${Date.now()}`;
-        const ws = new WebSocket(`ws://localhost:${port}/browser?tabId=${tabId}`);
-        this.mcpSocket = ws;
-        ws.onopen = () => {
+      if (typeof window === "undefined") return;
+      const tabId = this.mcpTabId || `tab_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      this.mcpTabId = tabId;
+      const syncTelemetry = async () => {
+        try {
           const state = this.controller.getSnapshot();
-          ws.send(
-            JSON.stringify({
-              type: "TELEMETRY_SYNC",
-              state: {
-                ...state,
-                serializedXml: this.controller.serialize(),
-                diagnosticMatrix: this.controller.getDiagnosticMatrix(),
-                interactionsHuman: this.controller.getInteractionReplayHuman()
-              }
-            })
-          );
-        };
-        ws.onmessage = async (evt) => {
-          try {
-            const msg = JSON.parse(evt.data);
-            if (msg.type === "EVAL_SCRIPT") {
-              try {
-                const res = window.eval(msg.expression);
-                ws.send(JSON.stringify({ type: "COMMAND_RESPONSE", commandId: msg.commandId, result: res }));
-              } catch (err) {
-                ws.send(JSON.stringify({ type: "COMMAND_RESPONSE", commandId: msg.commandId, error: err.message }));
-              }
+          const sessionDebugPrompt = this.getSessionDebugPrompt();
+          const payload = {
+            tabId,
+            type: "TELEMETRY_SYNC",
+            state: {
+              ...state,
+              sessionDebugPrompt,
+              unifiedPrompt: sessionDebugPrompt,
+              serializedXml: this.controller.serialize(),
+              diagnosticMatrix: this.controller.getDiagnosticMatrix(),
+              interactionsHuman: this.controller.getInteractionReplayHuman()
             }
-          } catch {
-          }
-        };
-        ws.onerror = () => {
-        };
+          };
+          await fetch(`http://localhost:${port}/telemetry`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            signal: typeof AbortSignal !== "undefined" && AbortSignal.timeout ? AbortSignal.timeout(2e3) : void 0
+          }).catch(() => {
+          });
+        } catch {
+        }
+      };
+      void syncTelemetry();
+      if (!this.mcpSyncInterval) {
+        this.mcpSyncInterval = setInterval(() => {
+          void syncTelemetry();
+        }, 3e3);
+      }
+      try {
+        window.addEventListener("error", () => {
+          setTimeout(() => void syncTelemetry(), 100);
+        });
+        window.addEventListener("unhandledrejection", () => {
+          setTimeout(() => void syncTelemetry(), 100);
+        });
       } catch {
       }
     }
@@ -18486,6 +18510,10 @@ Direction: ${finding.remediation}`
       if (this.syncInterval) {
         clearInterval(this.syncInterval);
         this.syncInterval = void 0;
+      }
+      if (this.mcpSyncInterval) {
+        clearInterval(this.mcpSyncInterval);
+        this.mcpSyncInterval = void 0;
       }
       if (this.mcpSocket) {
         this.mcpSocket.close();

@@ -190,6 +190,7 @@ export class ContentScriptBridge {
     // exists. Either way the key stays out of this world.
     this.instance = new DrDebug({
       enableUI: true,
+      enableMCP: true,
       onSaveSettings: (settings) => {
         void this.llmClient.saveSettings(settings)
       }

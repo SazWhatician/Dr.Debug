@@ -1379,6 +1379,11 @@ a#btn-dl-extension:hover,
   height: 22px;
   border-radius: 5px;
   flex-shrink: 0;
+  object-fit: contain;
+}
+
+.cursor-tab-icon {
+  filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.35));
 }
 
 .cursor-icon-svg {
@@ -1396,6 +1401,212 @@ a#btn-dl-extension:hover,
   padding: 2px 8px;
   border-radius: 99px;
   margin-left: 4px;
+}
+
+.mcp-tab-pill.token-pill {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+.mcp-token-badge {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 4px 10px;
+  border-radius: 99px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Exclusive Token & Credit Economy Branding Card */
+.mcp-token-branding-card {
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(10, 25, 41, 0.95) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 14px;
+  padding: 22px 24px;
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.mcp-token-branding-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #10b981, #00f0ff, #38bdf8);
+}
+
+.token-branding-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.token-branding-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  padding: 4px 12px;
+  border-radius: 99px;
+  text-transform: uppercase;
+}
+
+.token-badge-model-tag {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.token-branding-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 768px) {
+  .token-branding-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.token-stat-item {
+  background: rgba(2, 6, 23, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 16px 18px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.token-stat-item:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.token-stat-val {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+
+.token-stat-val.stat-green {
+  color: #10b981;
+  text-shadow: 0 0 16px rgba(16, 185, 129, 0.4);
+}
+
+.token-stat-val.stat-cyan {
+  color: #00f0ff;
+  text-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
+}
+
+.token-stat-val.stat-gold {
+  color: #fbbf24;
+  text-shadow: 0 0 16px rgba(251, 191, 36, 0.4);
+}
+
+.token-stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.token-stat-desc {
+  font-size: 0.80rem;
+  color: #94a3b8;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.token-stat-desc strong {
+  color: #f1f5f9;
+}
+
+.token-branding-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.token-callout-icon {
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  object-fit: contain;
+  margin-top: 2px;
+  border-radius: 4px;
+}
+
+.token-callout-content {
+  flex: 1;
+}
+
+.token-callout-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #38bdf8;
+  margin-bottom: 4px;
+}
+
+.token-callout-text {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.token-callout-text strong {
+  color: #f8fafc;
+}
+
+.faq-list {
+  margin: 12px 0 0 18px;
+  padding: 0;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.faq-list li {
+  margin-bottom: 8px;
+}
+
+.faq-list strong {
+  color: #f1f5f9;
 }
 
 /* Panel Container */

@@ -42,6 +42,8 @@ export class DrDebug {
   private options: DrDebugOptions
   private isAutoInvestigating = false
   private mcpSocket?: WebSocket
+  private mcpTabId?: string
+  private mcpSyncInterval?: any
   private syncInterval?: any
   private lastInvestigation: InvestigationResult | null = null
 
@@ -106,8 +108,8 @@ export class DrDebug {
       window.addEventListener('unhandledrejection', () => this.handleAutoTrigger())
     }
 
-    // 6. Connect to local Dr. Debug MCP Daemon if enabled
-    if (options.enableMCP && typeof window !== 'undefined' && typeof WebSocket !== 'undefined') {
+    // 6. Connect to local Dr. Debug MCP Daemon if enabled (enabled by default)
+    if (options.enableMCP !== false && typeof window !== 'undefined') {
       this.connectToMCPBridge(options.mcpPort || 9229)
     }
 
@@ -344,47 +346,60 @@ export class DrDebug {
   }
 
   private connectToMCPBridge(port = 9229): void {
-    try {
-      const tabId = `tab_${Date.now()}`
-      const ws = new WebSocket(`ws://localhost:${port}/browser?tabId=${tabId}`)
-      this.mcpSocket = ws
+    if (typeof window === 'undefined') return
+    const tabId = this.mcpTabId || `tab_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+    this.mcpTabId = tabId
 
-      ws.onopen = () => {
+    const syncTelemetry = async () => {
+      try {
         const state = this.controller.getSnapshot()
-        ws.send(
-          JSON.stringify({
-            type: 'TELEMETRY_SYNC',
-            state: {
-              ...state,
-              serializedXml: this.controller.serialize(),
-              diagnosticMatrix: this.controller.getDiagnosticMatrix(),
-              interactionsHuman: this.controller.getInteractionReplayHuman()
-            }
-          })
-        )
-      }
-
-      ws.onmessage = async (evt) => {
-        try {
-          const msg = JSON.parse(evt.data)
-          if (msg.type === 'EVAL_SCRIPT') {
-            try {
-              const res = window.eval(msg.expression)
-              ws.send(JSON.stringify({ type: 'COMMAND_RESPONSE', commandId: msg.commandId, result: res }))
-            } catch (err: any) {
-              ws.send(JSON.stringify({ type: 'COMMAND_RESPONSE', commandId: msg.commandId, error: err.message }))
-            }
+        const sessionDebugPrompt = this.getSessionDebugPrompt()
+        const payload = {
+          tabId,
+          type: 'TELEMETRY_SYNC',
+          state: {
+            ...state,
+            sessionDebugPrompt,
+            unifiedPrompt: sessionDebugPrompt,
+            serializedXml: this.controller.serialize(),
+            diagnosticMatrix: this.controller.getDiagnosticMatrix(),
+            interactionsHuman: this.controller.getInteractionReplayHuman()
           }
-        } catch {
-          // Ignore parse errors
         }
-      }
 
-      ws.onerror = () => {
-        // Silently handle offline local daemon
+        await fetch(`http://localhost:${port}/telemetry`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: typeof AbortSignal !== 'undefined' && (AbortSignal as any).timeout ? (AbortSignal as any).timeout(2000) : undefined
+        }).catch(() => {
+          // MCP daemon may be offline; silently ignore
+        })
+      } catch {
+        // MCP bridge is optional
       }
+    }
+
+    // 1. Initial push
+    void syncTelemetry()
+
+    // 2. Throttled periodic telemetry sync (every 3 seconds)
+    if (!this.mcpSyncInterval) {
+      this.mcpSyncInterval = setInterval(() => {
+        void syncTelemetry()
+      }, 3000)
+    }
+
+    // 3. Immediate sync on runtime errors or unhandled rejections
+    try {
+      window.addEventListener('error', () => {
+        setTimeout(() => void syncTelemetry(), 100)
+      })
+      window.addEventListener('unhandledrejection', () => {
+        setTimeout(() => void syncTelemetry(), 100)
+      })
     } catch {
-      // MCP bridge is optional
+      // Ignore in non-browser environments
     }
   }
 
@@ -392,6 +407,10 @@ export class DrDebug {
     if (this.syncInterval) {
       clearInterval(this.syncInterval)
       this.syncInterval = undefined
+    }
+    if (this.mcpSyncInterval) {
+      clearInterval(this.mcpSyncInterval)
+      this.mcpSyncInterval = undefined
     }
     if (this.mcpSocket) {
       this.mcpSocket.close()

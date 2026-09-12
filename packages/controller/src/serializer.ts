@@ -942,10 +942,15 @@ export function generateUnifiedAIDebugPrompt(
         promptLines.push('')
         promptLines.push('**Demangled Call Frames:**')
         entry.parsedStack.slice(0, 5).forEach((frame, i) => {
-          const fn = frame.filename || 'unknown'
-          const isUserCode = !fn.includes('node_modules') && !fn.includes('chrome-extension')
+          const rawFn = frame.filename || 'unknown'
+          const isUserCode = !rawFn.includes('node_modules') && !rawFn.includes('chrome-extension')
           const tag = isUserCode ? '📌 [App Code]' : '⚙️ [Vendor]'
-          promptLines.push(`${i + 1}. ${tag} \`${frame.functionName || '<anonymous>'}\` at \`${fn}:${frame.lineno || 0}:${frame.colno || 0}\``)
+          let cleanFn = rawFn.trim()
+          cleanFn = cleanFn.replace(/^https?:\/\/[^/]+\//, '')
+          cleanFn = cleanFn.replace(/^(?:webpack:\/{2,3}|\(webpack\):\/{1,3})/, '')
+          cleanFn = cleanFn.replace(/[?#].*$/, '')
+          cleanFn = cleanFn.replace(/^\/+/, '')
+          promptLines.push(`${i + 1}. ${tag} \`${frame.functionName || '<anonymous>'}\` at \`${cleanFn || rawFn}:${frame.lineno || 0}:${frame.colno || 0}\``)
         })
       } else if (entry.stack) {
         promptLines.push('')
@@ -1061,7 +1066,7 @@ export function generateUnifiedAIDebugPrompt(
   promptLines.push('4. Existing Dependencies: NEVER introduce new dependencies or npm packages.')
   promptLines.push('5. Minimal Diff: Target a unified git diff of ≤ 5 lines whenever possible.')
   promptLines.push('6. Non-negotiable: Never compromise on input validation, error handling, or security.')
-  promptLines.push('7. Output Format: Output strictly the unified git diff and a 1-sentence verification command. No conversational filler.')
+  promptLines.push('7. Action Required: If running in an agentic IDE with tools (Google Antigravity, Cursor, Claude Code), directly inspect the target file and apply the minimal surgical fix (≤ 5 lines) using file editing tools (`replace_file_content` / `write_to_file`), then state a 1-sentence verification command. If tool execution is unavailable, output strictly the unified git diff and a 1-sentence verification command. No conversational filler.')
 
   return promptLines.join('\n')
 }

@@ -178,6 +178,7 @@ describe('generatePonytailDebugPrompt', () => {
     expect(prompt).toContain('Standard Library First')
     expect(prompt).toContain('Target a unified git diff of ≤ 5 lines')
     expect(prompt).toContain('Output strictly a unified git diff and a 1-sentence verification command')
+    expect(prompt).toContain('directly apply the minimal surgical fix using your file editing tools')
 
     // Must be compact (token-efficient) compared to verbose prompt
     const verbosePrompt = generateSessionDebugPrompt(controller.getSnapshot(), { mode: 'standard' })
@@ -185,7 +186,7 @@ describe('generatePonytailDebugPrompt', () => {
     expect(prompt.length).toBeLessThan(3500)
   })
 
-  it('filters stack traces to application call frames only, omitting vendor frames', () => {
+  it('filters stack traces to application call frames only, omitting vendor frames and normalizing URLs', () => {
     const snapshot = controller.getSnapshot()
     snapshot.console.entries.push({
       id: 'err_test',
@@ -198,17 +199,19 @@ describe('generatePonytailDebugPrompt', () => {
       count: 5,
       parsedStack: [
         { filename: 'http://localhost:3000/node_modules/react-dom/index.js', functionName: 'dispatchAction', lineno: 450, colno: 12 },
-        { filename: 'http://localhost:3000/src/components/UserProfile.tsx', functionName: 'renderProfile', lineno: 42, colno: 8 }
+        { filename: 'http://localhost:3000/src/components/UserProfile.tsx?t=17892345', functionName: 'renderProfile', lineno: 42, colno: 8 }
       ]
     })
 
     const prompt = generatePonytailDebugPrompt(snapshot)
 
-    expect(prompt).toContain('UserProfile.tsx:42:8')
+    expect(prompt).toContain('src/components/UserProfile.tsx:42:8')
     expect(prompt).toContain('renderProfile')
     expect(prompt).toContain('repeated 5×')
-    // Must not show vendor frame
+    // Must not show vendor frame or dev-server URL parameters
     expect(prompt).not.toContain('react-dom/index.js')
+    expect(prompt).not.toContain('http://localhost:3000/src')
+    expect(prompt).not.toContain('?t=17892345')
   })
 
   it('delegates to ponytail mode when options.mode is ponytail in generateSessionDebugPrompt', () => {

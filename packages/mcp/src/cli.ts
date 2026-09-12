@@ -18,16 +18,24 @@ const banner = `
 process.stderr.write(banner + '\n')
 
 async function main(): Promise<void> {
-  // 1. Start background HTTP telemetry ingestion & Docker bridge
-  await server.start()
+  // 1. Start background HTTP telemetry ingestion & Docker bridge (non-fatal if port is already shared)
+  try {
+    await server.start()
+    process.stderr.write(`✅ Dr. Debug Daemon is active on port ${port}\n`)
+    process.stderr.write(`🐳 Host Docker Stream: http://localhost:${port}/docker/stream (SSE)\n`)
+    process.stderr.write(`🔌 Model Context Protocol: stdio & http://localhost:${port}/mcp\n`)
+  } catch (err: any) {
+    if (err?.code === 'EADDRINUSE') {
+      process.stderr.write(`ℹ️ Port ${port} is already active. Operating in dedicated MCP STDIO mode connected to existing session.\n`)
+    } else {
+      process.stderr.write(`⚠️ Notice starting HTTP bridge: ${err?.message || err}. Continuing with MCP STDIO.\n`)
+    }
+  }
 
   // 2. Connect official Model Context Protocol STDIO transport
   const transport = new StdioServerTransport()
   await server.connect(transport)
 
-  process.stderr.write(`✅ Dr. Debug Daemon is active on port ${port}\n`)
-  process.stderr.write(`🐳 Host Docker Stream: http://localhost:${port}/docker/stream (SSE)\n`)
-  process.stderr.write(`🔌 Model Context Protocol: stdio & http://localhost:${port}/mcp\n`)
   process.stderr.write(`💡 Open your web app and click the "🐳 Docker" tab in Dr. Debug to view live container logs!\n`)
 }
 

@@ -2,6 +2,7 @@ import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mc
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
 import { z } from 'zod'
+import { generatePonytailDebugPrompt } from '@dr-debug/core'
 import { DockerBridge } from './DockerBridge.js'
 import { MCPResourceManager } from './resources.js'
 import { MCPToolManager } from './tools.js'
@@ -27,7 +28,7 @@ export class DrDebugMCPServer {
     this.mcpServer = new McpServer(
       {
         name: 'Dr. Debug Autonomous Observability',
-        version: '0.1.11'
+        version: '0.1.12'
       },
       {
         capabilities: {
@@ -313,10 +314,17 @@ export class DrDebugMCPServer {
         const sessions = this.transport.getSessions()
         const session = tabId ? sessions.get(tabId) : Array.from(sessions.values())[0]
         const state = session?.stateSnapshot || {}
-        const xml =
-          state.serializedXml ||
-          state.sessionDebugPrompt ||
-          '<debug_state><note>No active browser session connected.</note></debug_state>'
+        let brief = state.sessionDebugPrompt || state.unifiedPrompt
+        if (!brief && session?.stateSnapshot) {
+          try {
+            brief = generatePonytailDebugPrompt(session.stateSnapshot)
+          } catch {
+            // fallback
+          }
+        }
+        if (!brief) {
+          brief = state.serializedXml || '<debug_state><note>No active browser session connected.</note></debug_state>'
+        }
         const errorCount = (state.console?.entries || []).filter((e: any) => e.level === 'error').length
         const failedCount = (state.network?.records || []).filter((r: any) => r.isFailed).length
 
@@ -329,9 +337,8 @@ export class DrDebugMCPServer {
                 text: `🩺 **Dr. Debug Incident Triage**\n` +
                   `URL: ${state.pageContext?.url || 'No active URL'}\n` +
                   `Active Errors: ${errorCount} | Failed Requests: ${failedCount}\n\n` +
-                  `Current Live Telemetry Snapshot:\n` +
-                  `\`\`\`xml\n${xml}\n\`\`\`\n\n` +
-                  `Please diagnose the root cause, determine if this is a frontend, network, or backend defect, and suggest the exact fix.`
+                  `${brief}\n\n` +
+                  `Please diagnose the root cause, locate the culprit source file in the workspace, and directly apply the minimal fix using your file editing tools.`
               }
             }
           ]
@@ -417,7 +424,7 @@ export class DrDebugMCPServer {
             },
             serverInfo: {
               name: 'Dr. Debug Autonomous Observability MCP Server',
-              version: '0.1.11'
+              version: '0.1.12'
             }
           }
         }
@@ -489,6 +496,85 @@ export class DrDebugMCPServer {
               }
             ]
           }
+        }
+      }
+
+      // 7b. Prompt execution (prompts/get)
+      if (method === 'prompts/get') {
+        const promptName = params?.name
+        const promptArgs = params?.arguments || {}
+
+        if (promptName === 'drdebug_triage_incident') {
+          const session = promptArgs.tabId ? sessions.get(promptArgs.tabId) : Array.from(sessions.values())[0]
+          const state = session?.stateSnapshot || {}
+          let brief = state.sessionDebugPrompt || state.unifiedPrompt
+          if (!brief && session?.stateSnapshot) {
+            try {
+              brief = generatePonytailDebugPrompt(session.stateSnapshot)
+            } catch {
+              // fallback
+            }
+          }
+          if (!brief) {
+            brief = state.serializedXml || '<debug_state><note>No active browser session connected.</note></debug_state>'
+          }
+          const errorCount = (state.console?.entries || []).filter((e: any) => e.level === 'error').length
+          const failedCount = (state.network?.records || []).filter((r: any) => r.isFailed).length
+
+          return {
+            jsonrpc: '2.0',
+            id,
+            result: {
+              description: 'Auto-formatted instant incident triage prompt',
+              messages: [
+                {
+                  role: 'user',
+                  content: {
+                    type: 'text',
+                    text: `🩺 **Dr. Debug Incident Triage**\n` +
+                      `URL: ${state.pageContext?.url || 'No active URL'}\n` +
+                      `Active Errors: ${errorCount} | Failed Requests: ${failedCount}\n\n` +
+                      `${brief}\n\n` +
+                      `Please diagnose the root cause, locate the culprit source file in the workspace, and directly apply the minimal fix using your file editing tools.`
+                  }
+                }
+              ]
+            }
+          }
+        }
+
+        if (promptName === 'drdebug_correlate_500') {
+          const session = Array.from(sessions.values())[0]
+          const records = session?.stateSnapshot?.network?.records || []
+          const req = records.find((r: any) => r.id === promptArgs.requestId || (r.url && r.url.includes(promptArgs.requestId)))
+          const dockerLogs = this.dockerBridge.getLogs({ tail: 40 })
+
+          return {
+            jsonrpc: '2.0',
+            id,
+            result: {
+              messages: [
+                {
+                  role: 'user',
+                  content: {
+                    type: 'text',
+                    text: `🩺 **Dr. Debug End-to-End RCA (Frontend ↔ Docker Correlation)**\n\n` +
+                      `Failed Frontend Request:\n` +
+                      `\`\`\`json\n${JSON.stringify(req || { error: 'Request not found in recorded telemetry', requestId: promptArgs.requestId }, null, 2)}\n\`\`\`\n\n` +
+                      `Recent Host Docker Container Logs Around Event:\n` +
+                      `\`\`\`json\n${JSON.stringify(dockerLogs, null, 2)}\n\`\`\`\n\n` +
+                      `Please analyze both sides of the contract, identify the backend exception or schema mismatch causing this 500 error, and provide the fix.`
+                  }
+                }
+              ]
+            }
+          }
+        }
+
+        return {
+          jsonrpc: '2.0',
+          id,
+          error: { code: -32602, message: `Prompt not found: ${promptName}` }
         }
       }
 

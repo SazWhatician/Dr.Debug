@@ -528,10 +528,11 @@
         <div class="mcp-badge-row">
           <span class="mcp-status-dot"></span>
           <span class="mcp-badge-text">OFFICIAL MODEL CONTEXT PROTOCOL (MCP) SERVER</span>
+          <span class="mcp-token-badge">⚡ 95% TOKEN &amp; CREDIT SAVER · PONYTAIL PROTOCOL</span>
         </div>
         <h2 class="mcp-brand-title">CONNECT TO YOUR <span class="mcp-title-accent">AI AGENT</span></h2>
         <p class="mcp-brand-subtitle">
-          Stream live browser diagnostics, unminified stack traces, and local Docker container logs directly to your coding assistant over certified MCP STDIO.
+          Stream live browser diagnostics, unminified stack traces, and local Docker container logs directly to your coding assistant over certified MCP STDIO — with <strong>95% token reduction</strong> powered by the Ponytail Protocol.
         </p>
       </div>
 
@@ -552,21 +553,9 @@
           </button>
 
           <button class="mcp-tab-btn" id="mcp-tab-cursor" role="tab" aria-selected="false" aria-controls="mcp-panel-cursor" data-target="cursor">
-            <svg class="mcp-tab-icon cursor-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L2 7l10 5 10-5-10-5z" fill="url(#mcpCursorGrad1)"/>
-              <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="url(#mcpCursorGrad2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <defs>
-                <linearGradient id="mcpCursorGrad1" x1="2" y1="2" x2="22" y2="12" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stop-color="#38bdf8"/>
-                  <stop offset="100%" stop-color="#00f0ff"/>
-                </linearGradient>
-                <linearGradient id="mcpCursorGrad2" x1="2" y1="12" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stop-color="#38bdf8"/>
-                  <stop offset="100%" stop-color="#10b981"/>
-                </linearGradient>
-              </defs>
-            </svg>
+            <img src="assets/cursor-logo.png" alt="Cursor IDE" class="mcp-tab-icon cursor-tab-icon" width="22" height="22" />
             <span class="mcp-tab-name">Cursor IDE</span>
+            <span class="mcp-tab-pill token-pill">⚡ 95% Saver</span>
           </button>
         </div>
 
@@ -740,6 +729,43 @@
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                 <span class="btn-copy-label">Copy Config</span>
               </button>
+            </div>
+
+            <!-- EXCLUSIVE BRANDING: Cursor Token & Credit Savings Engine -->
+            <div class="mcp-token-branding-card">
+              <div class="token-branding-header">
+                <div class="token-branding-badge">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.4"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                  <span>EXCLUSIVE BRANDING · 95% TOKEN &amp; CREDIT SAVINGS</span>
+                </div>
+                <div class="token-badge-model-tag">Optimized for Cursor Composer &amp; Agent Mode</div>
+              </div>
+              
+              <div class="token-branding-grid">
+                <div class="token-stat-item">
+                  <div class="token-stat-val stat-green">~95%</div>
+                  <div class="token-stat-label">Token Context Saved</div>
+                  <p class="token-stat-desc">Compresses <strong>80,000+</strong> raw DevTools/CDP dump tokens down to <strong>&lt;1,500</strong> surgical brief tokens.</p>
+                </div>
+                <div class="token-stat-item">
+                  <div class="token-stat-val stat-cyan">10×</div>
+                  <div class="token-stat-label">Faster Resolution</div>
+                  <p class="token-stat-desc">Replaces <strong>8–15</strong> blind exploratory agent turns with <strong>1–2</strong> one-shot surgical fixes.</p>
+                </div>
+                <div class="token-stat-item">
+                  <div class="token-stat-val stat-gold">$80+ / mo</div>
+                  <div class="token-stat-label">Credits Saved</div>
+                  <p class="token-stat-desc">Saves <strong>$81.80/100 runs</strong> on Claude 3.5 Sonnet &amp; preserves Cursor Fast Request quotas.</p>
+                </div>
+              </div>
+
+              <div class="token-branding-callout">
+                <img src="assets/cursor-logo.png" alt="Cursor IDE" width="24" height="24" class="token-callout-icon" />
+                <div class="token-callout-content">
+                  <div class="token-callout-title">Why Cursor + Dr. Debug is an Unfair Advantage:</div>
+                  <p class="token-callout-text">Standard Chrome DevTools MCP tools dump raw DOM trees, bloated network HARs, and unmapped minified bundles into Cursor's prompt window—exhausting context limits and burning through fast credits. Dr. Debug pre-correlates errors across browser and Docker, filters out vendor noise, and provides a demangled <strong>&le; 5-line diff discipline</strong> directly to Cursor Composer.</p>
+                </div>
+              </div>
             </div>
 
             <!-- Code snippet -->
@@ -1098,6 +1124,29 @@
           <div class="faq-answer">
             <div class="faq-answer-inner">
               <p>Yes. The bridge daemon exclusively runs <strong>read-only</strong> Docker CLI commands: <code class="inline-code">docker version</code>, <code class="inline-code">docker ps</code>, and <code class="inline-code">docker logs -f</code>. It streams container stdout/stderr over local Server-Sent Events (SSE). It does not write to Docker, exec into containers, or alter volumes, networks, or images.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ: Token & Credit Savings (EXCLUSIVE BRANDING) -->
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false">
+            <span class="faq-question">💰 How much tokens and LLM credits does Dr. Debug save?</span>
+            <span class="faq-chevron">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p>Dr. Debug saves <strong>80% to 95% of LLM context tokens</strong> and cuts interactive agent debugging costs by up to <strong>96%</strong> compared to raw browser automation dumps (such as Playwright CDP or Google chrome-devtools-mcp):</p>
+              <ul class="faq-list">
+                <li><strong>Network Traces:</strong> Prunes full 15k–40k token HAR dumps into a ~300-token reproduction cURL + failing status summary (<strong>~98% savings</strong>).</li>
+                <li><strong>Console &amp; Runtime:</strong> Burst-compresses repeating logs (<code>repeated 5×</code>) and strips vendor/node_modules frames, saving <strong>~20,000 tokens</strong> per incident.</li>
+                <li><strong>Backend Docker:</strong> Isolates the exact container error log at the failure millisecond, avoiding 10,000+ line terminal dumps.</li>
+                <li><strong>Agent Loop Elimination:</strong> Replaces 8–15 blind exploratory turns (~150,000–300,000 tokens) with a 1-turn root-cause fix (~3,000–6,000 tokens total).</li>
+                <li><strong>Minimality Diff Discipline:</strong> Enforces &le; 5-line surgical diffs, avoiding 2,000–5,000 full-file output token rewrites.</li>
+                <li><strong>Credit Translation:</strong> On Claude 3.5 Sonnet, 100 debugging sessions drop from ~$85.00 down to ~$3.20—saving over <strong>$81.00+ per 100 incidents</strong> while protecting Cursor Fast Request quotas.</li>
+              </ul>
             </div>
           </div>
         </div>

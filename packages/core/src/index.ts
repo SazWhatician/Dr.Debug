@@ -8,6 +8,7 @@ export {
 export {
   generatePonytailDebugPrompt,
   generateSessionDebugPrompt,
+  normalizeSourceFile,
   type SessionReportOptions
 } from './analysis/SessionReport.js'
 export { DrDebugCore } from './DrDebugCore.js'

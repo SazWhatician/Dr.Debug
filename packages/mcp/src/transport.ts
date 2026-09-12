@@ -10,6 +10,8 @@ export class MCPTransport {
   private port: number
   private sessions: Map<string, BrowserTabTelemetry> = new Map()
   private dockerBridge?: DockerBridge
+  private isSharedClient = false
+  private syncTimer: NodeJS.Timeout | null = null
 
   constructor(port = 9229, dockerBridge?: DockerBridge) {
     this.port = port
@@ -80,6 +82,13 @@ export class MCPTransport {
               res.writeHead(500, { 'Content-Type': 'application/json' })
               res.end(JSON.stringify({ status: 'error', message: err?.message || 'Update failed' }))
             }
+            return
+          }
+
+          // 1c. Telemetry Sessions Sharing (GET /sessions)
+          if (req.method === 'GET' && (url === '/sessions' || url === '/sessions/')) {
+            res.writeHead(200, { 'Content-Type': 'application/json' })
+            res.end(JSON.stringify(Array.from(this.sessions.values())))
             return
           }
 
@@ -221,12 +230,33 @@ export class MCPTransport {
           res.end('Not Found')
         })
 
-        this.server.listen(this.port, () => {
-          resolve()
+        this.server.on('error', async (err: any) => {
+          if (err.code === 'EADDRINUSE') {
+            this.isSharedClient = true
+            // Check if existing listener is Dr. Debug daemon
+            try {
+              const res = await fetch(`http://127.0.0.1:${this.port}/`).catch(() => null)
+              if (res && res.ok) {
+                const info: any = await res.json().catch(() => null)
+                if (info && info.name?.includes('Dr. Debug')) {
+                  process.stderr.write(`ℹ️ Port ${this.port} is already hosted by Dr. Debug. Connecting to shared telemetry bridge (multi-session mode).\n`)
+                  this.startSharedSync()
+                  resolve()
+                  return
+                }
+              }
+            } catch {
+              // ignore
+            }
+            process.stderr.write(`⚠️ Port ${this.port} is already in use by another process. Operating in dedicated MCP STDIO mode.\n`)
+            resolve()
+            return
+          }
+          reject(err)
         })
 
-        this.server.on('error', (err: any) => {
-          reject(err)
+        this.server.listen(this.port, () => {
+          resolve()
         })
       } catch (err) {
         reject(err)
@@ -284,7 +314,29 @@ export class MCPTransport {
     return this.sessions
   }
 
+  private startSharedSync(): void {
+    const sync = async () => {
+      try {
+        const res = await fetch(`http://127.0.0.1:${this.port}/sessions`).catch(() => null)
+        if (res && res.ok) {
+          const sessions: BrowserTabTelemetry[] = await res.json().catch(() => [])
+          for (const s of sessions) {
+            this.sessions.set(s.tabId, s)
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+    sync()
+    this.syncTimer = setInterval(sync, 2500)
+  }
+
   public stop(): Promise<void> {
+    if (this.syncTimer) {
+      clearInterval(this.syncTimer)
+      this.syncTimer = null
+    }
     return new Promise((resolve) => {
       if (this.server) {
         this.server.close(() => {

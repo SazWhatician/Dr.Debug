@@ -57,8 +57,26 @@ function isAppFrame(frame: StackFrame): boolean {
   )
 }
 
+/**
+ * Normalizes browser stack frame filenames (stripping Vite/Webpack URLs, query parameters,
+ * and protocol/host) to clean relative workspace paths that agentic IDEs can resolve directly.
+ */
+export function normalizeSourceFile(file: string): string {
+  if (!file) return 'unknown'
+  let clean = file.trim()
+  // Strip protocol and host (e.g. http://localhost:5173/, http://127.0.0.1:3000/, https://...)
+  clean = clean.replace(/^https?:\/\/[^/]+\//, '')
+  // Strip webpack:/// or (webpack)://
+  clean = clean.replace(/^(?:webpack:\/{2,3}|\(webpack\):\/{1,3})/, '')
+  // Strip query strings and hash (e.g. ?t=17892345 or ?v=123)
+  clean = clean.replace(/[?#].*$/, '')
+  // Strip leading slash if any
+  clean = clean.replace(/^\/+/, '')
+  return clean || file
+}
+
 function frameLabel(frame: StackFrame): string {
-  const file = frame.filename || 'unknown'
+  const file = normalizeSourceFile(frame.filename || 'unknown')
   const line = frame.lineno ?? 0
   const col = frame.colno ?? 0
   const fn = frame.functionName || '<anonymous>'
@@ -282,7 +300,7 @@ function buildConsoleFinding(entry: ConsoleEntry): DiagnosticFinding {
   }
 
   const files = appFrames
-    .map((f) => (f.filename && f.lineno ? `${f.filename}:${f.lineno}` : f.filename || ''))
+    .map((f) => (f.filename && f.lineno ? `${normalizeSourceFile(f.filename)}:${f.lineno}` : normalizeSourceFile(f.filename || '')))
     .filter(Boolean)
 
   const origin = appFrames[0] ? ` at ${frameLabel(appFrames[0])}` : ''

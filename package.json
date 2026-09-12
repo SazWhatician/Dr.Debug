@@ -1,6 +1,6 @@
 {
   "name": "dr-debug-monorepo",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "private": true,
   "description": "Autonomous in-browser AI debugging & observability agent",
   "author": "Saswat Mohanty (https://github.com/SazWhatician)",

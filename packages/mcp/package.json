@@ -1,6 +1,6 @@
 {
   "name": "@dr-debug/mcp",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "publishConfig": {
     "access": "public"
   },
@@ -18,7 +18,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc -b tsconfig.json",
+    "build": "tsc -b tsconfig.json && esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:@modelcontextprotocol/sdk --external:zod && esbuild src/cli.ts --bundle --platform=node --format=esm --outfile=dist/cli.js --external:@modelcontextprotocol/sdk --external:zod",
     "start": "node dist/cli.js"
   },
   "dependencies": {

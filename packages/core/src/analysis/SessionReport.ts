@@ -1,5 +1,6 @@
 import { type DebugState, generateCurlCommand } from '@dr-debug/controller'
-import { type DiagnosticFinding, LocalDiagnosticEngine } from './LocalDiagnosticEngine.js'
+import { type DiagnosticFinding, LocalDiagnosticEngine, normalizeSourceFile } from './LocalDiagnosticEngine.js'
+export { normalizeSourceFile } from './LocalDiagnosticEngine.js'
 import type { InvestigationResult } from '../types.js'
 
 export interface SessionReportOptions {
@@ -30,7 +31,6 @@ function prettyJson(raw: string): string[] {
     return fence(raw)
   }
 }
-
 /**
  * Builds a minimalist, surgical incident brief adhering to the Ponytail philosophy.
  * Eliminates telemetry bloat, demangles and isolates application stack frames,
@@ -85,7 +85,7 @@ export function generatePonytailDebugPrompt(
       const framesToShow = appFrames.length > 0 ? appFrames.slice(0, 3) : primary.parsedStack.slice(0, 2)
       lines.push('**Application Call Frame(s):**')
       framesToShow.forEach((frame, i) => {
-        const file = frame.filename || 'unknown'
+        const file = normalizeSourceFile(frame.filename || 'unknown')
         lines.push(`${i + 1}. \`${frame.functionName || '<anonymous>'}\` at \`${file}:${frame.lineno ?? 0}:${frame.colno ?? 0}\``)
       })
     } else if (primary.stack) {
@@ -152,7 +152,7 @@ export function generatePonytailDebugPrompt(
   lines.push('6. **One-Liner / Concise Construct**: If the fix can be written cleanly in 1–3 lines, do that. Avoid multi-layer abstractions.')
   lines.push('7. **Target Diff Size**: Target a unified git diff of ≤ 5 lines whenever possible.')
   lines.push('8. **Non-Negotiables**: Never compromise on input validation, security, or error handling.')
-  lines.push('9. **Output Format**: Output strictly a unified git diff and a 1-sentence verification command. No conversational filler or decorative fluff.')
+  lines.push('9. **Action Required**: If running in an agentic IDE with file tools (Google Antigravity, Cursor, Claude Code), locate the culprit source file in the workspace, inspect the line, and directly apply the minimal surgical fix using your file editing tools (`replace_file_content` / `write_to_file`). If direct tool execution is unavailable: Output strictly a unified git diff and a 1-sentence verification command. No conversational filler or decorative fluff.')
 
   return lines.join('\n')
 }
@@ -371,7 +371,7 @@ export function generateSessionDebugPrompt(
       lines.push('')
       if (entry.parsedStack && entry.parsedStack.length > 0) {
         entry.parsedStack.slice(0, 8).forEach((frame, i) => {
-          const file = frame.filename || 'unknown'
+          const file = normalizeSourceFile(frame.filename || 'unknown')
           const vendor = file.includes('node_modules') || file.startsWith('chrome-extension://')
           lines.push(
             `${i + 1}. ${vendor ? '[vendor]' : '[app]'} \`${frame.functionName || '<anonymous>'}\` — \`${file}:${frame.lineno ?? 0}:${frame.colno ?? 0}\``
@@ -485,7 +485,7 @@ export function generateSessionDebugPrompt(
   if (analysis.filesToModify.length > 0) {
     lines.push('## Source locations named by the stacks')
     lines.push('')
-    analysis.filesToModify.forEach((file) => lines.push(`- \`${file}\``))
+    analysis.filesToModify.forEach((file) => lines.push(`- \`${normalizeSourceFile(file)}\``))
     lines.push('')
   }
 
@@ -497,7 +497,7 @@ export function generateSessionDebugPrompt(
   lines.push(`1. Open the source locations named above and find the code that produced ${analysis.headline}.`)
   lines.push('2. Confirm or refute the suggested root cause against the actual code. The evidence here is real; the attribution is a heuristic and may be wrong.')
   lines.push('3. Fix the root cause rather than the symptom — the causal chain shows which failures are downstream.')
-  lines.push('4. Give me the minimal diff, and tell me how to verify it against the reproduction command above.')
+  lines.push('4. If you have file editing tools (in Google Antigravity, Cursor, or Claude Code), directly apply the minimal surgical fix (≤ 5 lines) to the target file using your tools and tell me how to verify it. Otherwise, output strictly a unified git diff and a 1-sentence verification command.')
   lines.push('')
   lines.push('If the evidence is insufficient to locate the cause, say what additional telemetry you need instead of guessing.')
 
