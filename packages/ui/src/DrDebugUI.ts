@@ -87,13 +87,15 @@ export class DrDebugUI {
       getController: options.getController,
       getSessionPrompt: options.getSessionPrompt || (() => this.buildSessionPrompt()),
       onSaveSettings: options.onSaveSettings,
-      onTestConnection: options.onTestConnection
+      onTestConnection: options.onTestConnection,
+      onThemeChange: (theme) => this.pill.setTheme(theme)
     })
 
     // Floating Pill
     this.pill = new FloatingPill(() => {
       this.cockpit.toggle()
     })
+    this.pill.setTheme(this.cockpit.getTheme())
 
     this.shadowRoot.appendChild(this.pill.getElement())
     this.shadowRoot.appendChild(this.cockpit.getElement())
@@ -180,6 +182,7 @@ export class DrDebugUI {
 
   public setTheme(theme: DrDebugTheme): void {
     this.cockpit.setTheme(theme)
+    this.pill.setTheme(theme)
   }
 
   public getTheme(): DrDebugTheme {

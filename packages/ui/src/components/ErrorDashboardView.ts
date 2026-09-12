@@ -345,7 +345,7 @@ export class ErrorDashboardView {
     let html = `
       <div class="dr-debug-hist-title">
         <span>Timeline Frequency</span>
-        <span style="font-size:10px; color:#94a3b8;">${buckets.length} Windows</span>
+        <span class="dr-debug-hist-count">${buckets.length} Windows</span>
       </div>
       <div class="dr-debug-histogram">
     `
@@ -553,7 +553,7 @@ export class ErrorDashboardView {
       this.errorListContainer.innerHTML = `
         <div class="dr-debug-err-empty">
           <div>No errors matching current matrix filter.</div>
-          <div style="font-size:10.5px; margin-top:4px; color:#64748b;">Substrates healthy and within normal operating parameters.</div>
+          <div class="dr-debug-err-empty-sub">Substrates healthy and within normal operating parameters.</div>
         </div>
       `
       this.selectedErrorId = null

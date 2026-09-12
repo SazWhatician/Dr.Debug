@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Dr. Debug — Autonomous In-Browser AI Debugger",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "author": "Saswat Kumar Mohanty",
   "description": "The AI Doctor Living Inside Your Webpage That Observes, Diagnoses, and Prescribes Fixes for Live Bugs.",
   "icons": {

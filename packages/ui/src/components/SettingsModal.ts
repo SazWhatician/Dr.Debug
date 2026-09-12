@@ -108,41 +108,47 @@ export class SettingsModal {
         </div>
 
         <div class="dr-debug-settings-body">
-          <div class="dr-debug-form-group">
-            <label class="dr-debug-form-label">Cockpit Theme</label>
-            <select class="dr-debug-form-select" id="dr-debug-theme">
-              <option value="dr-debug" selected>Dr.Debug (original)</option>
-              <option value="minimal-glass">Minimalistic glassmorphism (light theme)</option>
-              <option value="monotone-skeuomorphic">Monotone skeuomorphism (darker theme)</option>
-            </select>
-          </div>
-
-          <div class="dr-debug-form-group">
-            <label class="dr-debug-form-label">Model Provider</label>
-            <select class="dr-debug-form-select" id="dr-debug-provider">
-              <option value="groq" selected>Groq LPU (Ultra-Fast · openai/gpt-oss-120b)</option>
-              <option value="openai">OpenAI (GPT-4o / GPT-4o-mini)</option>
-              <option value="gemini">Gemini Flash (gemini-flash-latest)</option>
-              <option value="litert">LiteRT / Local (On-Device)</option>
-            </select>
-          </div>
-
-          <div class="dr-debug-form-group" id="dr-debug-api-key-group">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-              <label class="dr-debug-form-label" style="margin-bottom:0;">API Key</label>
-              <span id="dr-debug-key-hint" style="font-size:10px; color:#38bdf8; cursor:pointer;">Show</span>
+          <div class="dr-debug-settings-groupbox">
+            <div class="dr-debug-settings-groupbox-title">Display &amp; Appearance</div>
+            <div class="dr-debug-form-group">
+              <label class="dr-debug-form-label">Cockpit Theme</label>
+              <select class="dr-debug-form-select" id="dr-debug-theme">
+                <option value="dr-debug" selected>Dr.Debug (original)</option>
+                <option value="minimal-glass">Windows XP (Luna Blue)</option>
+                <option value="monotone-skeuomorphic">Monotone skeuomorphism (darker theme)</option>
+              </select>
             </div>
-            <input type="password" class="dr-debug-form-input" id="dr-debug-api-key" placeholder="gsk_... or sk-..." />
           </div>
 
-          <div class="dr-debug-form-group">
-            <label class="dr-debug-form-label">Model Name</label>
-            <input type="text" class="dr-debug-form-input" id="dr-debug-model" value="openai/gpt-oss-120b" />
-          </div>
+          <div class="dr-debug-settings-groupbox">
+            <div class="dr-debug-settings-groupbox-title">AI Reasoning Substrate</div>
+            <div class="dr-debug-form-group">
+              <label class="dr-debug-form-label">Model Provider</label>
+              <select class="dr-debug-form-select" id="dr-debug-provider">
+                <option value="groq" selected>Groq LPU (Ultra-Fast · openai/gpt-oss-120b)</option>
+                <option value="openai">OpenAI (GPT-4o / GPT-4o-mini)</option>
+                <option value="gemini">Gemini Flash (gemini-flash-latest)</option>
+                <option value="litert">LiteRT / Local (On-Device)</option>
+              </select>
+            </div>
 
-          <div class="dr-debug-form-group">
-            <label class="dr-debug-form-label">Base URL (Optional override)</label>
-            <input type="text" class="dr-debug-form-input" id="dr-debug-base-url" placeholder="https://api.groq.com/openai/v1" />
+            <div class="dr-debug-form-group" id="dr-debug-api-key-group">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <label class="dr-debug-form-label" style="margin-bottom:0;">API Key</label>
+                <span id="dr-debug-key-hint" class="dr-debug-key-hint">Show</span>
+              </div>
+              <input type="password" class="dr-debug-form-input" id="dr-debug-api-key" placeholder="gsk_... or sk-..." />
+            </div>
+
+            <div class="dr-debug-form-group">
+              <label class="dr-debug-form-label">Model Name</label>
+              <input type="text" class="dr-debug-form-input" id="dr-debug-model" value="openai/gpt-oss-120b" />
+            </div>
+
+            <div class="dr-debug-form-group">
+              <label class="dr-debug-form-label">Base URL (Optional override)</label>
+              <input type="text" class="dr-debug-form-input" id="dr-debug-base-url" placeholder="https://api.groq.com/openai/v1" />
+            </div>
           </div>
 
           <div id="dr-debug-settings-status" class="dr-debug-settings-status"></div>
@@ -159,7 +165,7 @@ export class SettingsModal {
           <div class="dr-debug-settings-update-banner">
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
-              <span class="dr-debug-update-version">Dr. Debug v0.1.10</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.11</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
@@ -167,8 +173,8 @@ export class SettingsModal {
             </button>
           </div>
 
-          <div style="text-align:center; font-size:11px; color:#64748b; margin-top:14px; border-top:1px solid rgba(148,163,184,0.15); padding-top:10px;">
-            Created by <a href="https://github.com/SazWhatician" target="_blank" rel="noopener noreferrer" style="color:#38bdf8; text-decoration:none; font-weight:700;">Saswat Mohanty (@SazWhatician)</a> · <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" rel="noopener noreferrer" style="color:#818cf8; text-decoration:none;">LinkedIn</a>
+          <div class="dr-debug-settings-footer">
+            Created by <a href="https://github.com/SazWhatician" target="_blank" rel="noopener noreferrer" class="dr-debug-link-author">Saswat Mohanty (@SazWhatician)</a> · <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" rel="noopener noreferrer" class="dr-debug-link-social">LinkedIn</a>
           </div>
         </div>
       </div>
@@ -363,7 +369,7 @@ export class SettingsModal {
 
   private async handleCheckUpdate(btn: HTMLButtonElement): Promise<void> {
     const originalText = btn.innerHTML
-    const currentVersion = '0.1.10'
+    const currentVersion = '0.1.11'
 
     btn.disabled = true
     btn.innerHTML = `<span>Checking...</span>`
@@ -376,7 +382,7 @@ export class SettingsModal {
       try {
         const controller = new AbortController()
         const timeout = setTimeout(() => controller.abort(), 4000)
-        const res = await fetch('https://api.github.com/repos/SazWhatician/DebugCopilot/releases/latest', {
+        const res = await fetch('https://api.github.com/repos/SazWhatician/Dr.Debug/releases/latest', {
           signal: controller.signal
         })
         clearTimeout(timeout)
@@ -409,7 +415,7 @@ export class SettingsModal {
           this.element.querySelector('#dr-debug-update-status-msg')?.remove()
           const statusSpan = document.createElement('span')
           statusSpan.id = 'dr-debug-update-status-msg'
-          statusSpan.style.cssText = 'font-size:10px; color:#34d399; font-weight:600; margin-top:2px;'
+          statusSpan.className = 'dr-debug-update-status-msg up-to-date'
           statusSpan.textContent = `You're on the latest release (v${currentVersion})`
           bannerMeta.appendChild(statusSpan)
         }
@@ -437,7 +443,7 @@ export class SettingsModal {
         this.element.querySelector('#dr-debug-update-status-msg')?.remove()
         const statusSpan = document.createElement('span')
         statusSpan.id = 'dr-debug-update-status-msg'
-        statusSpan.style.cssText = 'font-size:10px; color:#60a5fa; font-weight:700; margin-top:2px;'
+        statusSpan.className = 'dr-debug-update-status-msg update-available'
         statusSpan.textContent = `v${latestVersion} available! Click to update.`
         bannerMeta.appendChild(statusSpan)
       }

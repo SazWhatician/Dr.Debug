@@ -125,5 +125,14 @@ export class FloatingPill {
 
     this.element.addEventListener('mousedown', onMouseDown)
   }
+
+  public setTheme(theme: string): void {
+    this.element.classList.remove('theme-minimal-glass', 'theme-monotone-skeuomorphic')
+    if (theme === 'minimal-glass') {
+      this.element.classList.add('theme-minimal-glass')
+    } else if (theme === 'monotone-skeuomorphic') {
+      this.element.classList.add('theme-monotone-skeuomorphic')
+    }
+  }
 }
 

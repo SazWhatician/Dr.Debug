@@ -9423,11 +9423,11 @@ ${msg.content}<end_of_turn>
         <div style="margin-bottom: 8px;">
           <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#38bdf8" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         </div>
-        <div style="font-weight: 700; font-size: 14px; color: #38bdf8;">Autonomous Causal Topology Matrix</div>
-        <div style="font-size: 12px; color: #94a3b8; max-width: 360px; margin: 6px auto 14px auto;">
+        <div class="dr-debug-graph-empty-title">Autonomous Causal Topology Matrix</div>
+        <div class="dr-debug-graph-empty-desc">
           Cross-correlating Docker backend logs, network requests, and console runtime exceptions in real-time.
         </div>
-        <div style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 9999px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; font-size: 12px; font-weight: 600;">
+        <div class="dr-debug-graph-empty-badge">
           <span class="dr-debug-status-dot dot-ok"></span> <span>No Root Cause Anomalies Detected</span>
         </div>
       </div>
@@ -9520,10 +9520,10 @@ ${msg.content}<end_of_turn>
       this.element.innerHTML = `
       <div class="dr-debug-graph-toolbar">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-weight: 700; font-size: 13px; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
+          <span class="dr-debug-graph-title">
             <span>Causal Dependency Graph</span>
           </span>
-          <span class="dr-debug-badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">
+          <span class="dr-debug-badge dr-debug-graph-badge">
             ${nodes.length} Nodes / ${edges.length} Causal Links
           </span>
         </div>
@@ -9846,7 +9846,7 @@ ${msg.content}<end_of_turn>
         <div class="dr-debug-dock-connected-bar">
           <div style="display:flex; align-items:center; gap:8px;">
             <span class="dr-debug-dock-dot-live"></span>
-            <span style="font-size:11px; color:#cbd5e1; font-weight:600;">Streaming host containers via port 9229</span>
+            <span class="dr-debug-dock-connected-text">Streaming host containers via port 9229</span>
           </div>
           <button class="dr-debug-dock-toggle-help" id="dr-debug-toggle-dock-help">Connection Guide \u25BE</button>
         </div>
@@ -9869,7 +9869,7 @@ ${msg.content}<end_of_turn>
           <div class="dr-debug-dock-guide-top">
             <div style="display:flex; align-items:center; gap:8px;">
               <span class="dr-debug-status-dot dot-sys"></span>
-              <span style="font-weight:700; color:#f8fafc; font-size:12px;">Connect Your Host Docker to Dr. Debug</span>
+              <span class="dr-debug-dock-guide-title">Connect Your Host Docker to Dr. Debug</span>
             </div>
             <span class="dr-debug-dock-guide-badge">ZERO-CONFIG SETUP</span>
           </div>
@@ -10062,8 +10062,8 @@ ${msg.content}<end_of_turn>
         <div class="dr-debug-dock-offline-icon" style="margin-bottom: 8px;">
           <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8v4h8V3z"/></svg>
         </div>
-        <h3 style="color: #f8fafc; font-size: 15px; margin-bottom: 6px;">Docker Substrate Daemon Offline</h3>
-        <p style="color: #94a3b8; font-size: 12px; max-width: 440px; margin-bottom: 14px; line-height: 1.5;">
+        <h3 class="dr-debug-dock-offline-title">Docker Substrate Daemon Offline</h3>
+        <p class="dr-debug-dock-offline-desc">
           Connect your local Docker engine to stream backend container panics, database connection exhausts, and correlate them with frontend network timeouts.
         </p>
         <div class="dr-debug-dock-cmd-box">
@@ -10114,7 +10114,7 @@ ${msg.content}<end_of_turn>
       }
     }
     highlightErrors(text) {
-      return text.replace(/(FATAL|PANIC|CRITICAL)/gi, '<strong style="color:#f43f5e;">$1</strong>').replace(/(ERROR|FAIL|EXCEPTION)/gi, '<span style="color:#fb7185;">$1</span>').replace(/(WARN(?:ING)?)/gi, '<span style="color:#fbbf24;">$1</span>');
+      return text.replace(/(FATAL|PANIC|CRITICAL)/gi, '<strong class="dr-debug-log-fatal">$1</strong>').replace(/(ERROR|FAIL|EXCEPTION)/gi, '<span class="dr-debug-log-error">$1</span>').replace(/(WARN(?:ING)?)/gi, '<span class="dr-debug-log-warn">$1</span>');
     }
     escapeHtml(str) {
       return (str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -10388,7 +10388,7 @@ ${msg.content}<end_of_turn>
       let html = `
       <div class="dr-debug-hist-title">
         <span>Timeline Frequency</span>
-        <span style="font-size:10px; color:#94a3b8;">${buckets.length} Windows</span>
+        <span class="dr-debug-hist-count">${buckets.length} Windows</span>
       </div>
       <div class="dr-debug-histogram">
     `;
@@ -10571,7 +10571,7 @@ ${msg.content}<end_of_turn>
         this.errorListContainer.innerHTML = `
         <div class="dr-debug-err-empty">
           <div>No errors matching current matrix filter.</div>
-          <div style="font-size:10.5px; margin-top:4px; color:#64748b;">Substrates healthy and within normal operating parameters.</div>
+          <div class="dr-debug-err-empty-sub">Substrates healthy and within normal operating parameters.</div>
         </div>
       `;
         this.selectedErrorId = null;
@@ -10959,41 +10959,47 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         </div>
 
         <div class="dr-debug-settings-body">
-          <div class="dr-debug-form-group">
-            <label class="dr-debug-form-label">Cockpit Theme</label>
-            <select class="dr-debug-form-select" id="dr-debug-theme">
-              <option value="dr-debug" selected>Dr.Debug (original)</option>
-              <option value="minimal-glass">Minimalistic glassmorphism (light theme)</option>
-              <option value="monotone-skeuomorphic">Monotone skeuomorphism (darker theme)</option>
-            </select>
-          </div>
-
-          <div class="dr-debug-form-group">
-            <label class="dr-debug-form-label">Model Provider</label>
-            <select class="dr-debug-form-select" id="dr-debug-provider">
-              <option value="groq" selected>Groq LPU (Ultra-Fast \xB7 openai/gpt-oss-120b)</option>
-              <option value="openai">OpenAI (GPT-4o / GPT-4o-mini)</option>
-              <option value="gemini">Gemini Flash (gemini-flash-latest)</option>
-              <option value="litert">LiteRT / Local (On-Device)</option>
-            </select>
-          </div>
-
-          <div class="dr-debug-form-group" id="dr-debug-api-key-group">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-              <label class="dr-debug-form-label" style="margin-bottom:0;">API Key</label>
-              <span id="dr-debug-key-hint" style="font-size:10px; color:#38bdf8; cursor:pointer;">Show</span>
+          <div class="dr-debug-settings-groupbox">
+            <div class="dr-debug-settings-groupbox-title">Display &amp; Appearance</div>
+            <div class="dr-debug-form-group">
+              <label class="dr-debug-form-label">Cockpit Theme</label>
+              <select class="dr-debug-form-select" id="dr-debug-theme">
+                <option value="dr-debug" selected>Dr.Debug (original)</option>
+                <option value="minimal-glass">Windows XP (Luna Blue)</option>
+                <option value="monotone-skeuomorphic">Monotone skeuomorphism (darker theme)</option>
+              </select>
             </div>
-            <input type="password" class="dr-debug-form-input" id="dr-debug-api-key" placeholder="gsk_... or sk-..." />
           </div>
 
-          <div class="dr-debug-form-group">
-            <label class="dr-debug-form-label">Model Name</label>
-            <input type="text" class="dr-debug-form-input" id="dr-debug-model" value="openai/gpt-oss-120b" />
-          </div>
+          <div class="dr-debug-settings-groupbox">
+            <div class="dr-debug-settings-groupbox-title">AI Reasoning Substrate</div>
+            <div class="dr-debug-form-group">
+              <label class="dr-debug-form-label">Model Provider</label>
+              <select class="dr-debug-form-select" id="dr-debug-provider">
+                <option value="groq" selected>Groq LPU (Ultra-Fast \xB7 openai/gpt-oss-120b)</option>
+                <option value="openai">OpenAI (GPT-4o / GPT-4o-mini)</option>
+                <option value="gemini">Gemini Flash (gemini-flash-latest)</option>
+                <option value="litert">LiteRT / Local (On-Device)</option>
+              </select>
+            </div>
 
-          <div class="dr-debug-form-group">
-            <label class="dr-debug-form-label">Base URL (Optional override)</label>
-            <input type="text" class="dr-debug-form-input" id="dr-debug-base-url" placeholder="https://api.groq.com/openai/v1" />
+            <div class="dr-debug-form-group" id="dr-debug-api-key-group">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <label class="dr-debug-form-label" style="margin-bottom:0;">API Key</label>
+                <span id="dr-debug-key-hint" class="dr-debug-key-hint">Show</span>
+              </div>
+              <input type="password" class="dr-debug-form-input" id="dr-debug-api-key" placeholder="gsk_... or sk-..." />
+            </div>
+
+            <div class="dr-debug-form-group">
+              <label class="dr-debug-form-label">Model Name</label>
+              <input type="text" class="dr-debug-form-input" id="dr-debug-model" value="openai/gpt-oss-120b" />
+            </div>
+
+            <div class="dr-debug-form-group">
+              <label class="dr-debug-form-label">Base URL (Optional override)</label>
+              <input type="text" class="dr-debug-form-input" id="dr-debug-base-url" placeholder="https://api.groq.com/openai/v1" />
+            </div>
           </div>
 
           <div id="dr-debug-settings-status" class="dr-debug-settings-status"></div>
@@ -11010,7 +11016,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
           <div class="dr-debug-settings-update-banner">
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
-              <span class="dr-debug-update-version">Dr. Debug v0.1.10</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.11</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
@@ -11018,8 +11024,8 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
             </button>
           </div>
 
-          <div style="text-align:center; font-size:11px; color:#64748b; margin-top:14px; border-top:1px solid rgba(148,163,184,0.15); padding-top:10px;">
-            Created by <a href="https://github.com/SazWhatician" target="_blank" rel="noopener noreferrer" style="color:#38bdf8; text-decoration:none; font-weight:700;">Saswat Mohanty (@SazWhatician)</a> \xB7 <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" rel="noopener noreferrer" style="color:#818cf8; text-decoration:none;">LinkedIn</a>
+          <div class="dr-debug-settings-footer">
+            Created by <a href="https://github.com/SazWhatician" target="_blank" rel="noopener noreferrer" class="dr-debug-link-author">Saswat Mohanty (@SazWhatician)</a> \xB7 <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" rel="noopener noreferrer" class="dr-debug-link-social">LinkedIn</a>
           </div>
         </div>
       </div>
@@ -11193,7 +11199,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     async handleCheckUpdate(btn) {
       var _a, _b;
       const originalText = btn.innerHTML;
-      const currentVersion = "0.1.10";
+      const currentVersion = "0.1.11";
       btn.disabled = true;
       btn.innerHTML = `<span>Checking...</span>`;
       btn.style.opacity = "0.85";
@@ -11203,7 +11209,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         try {
           const controller = new AbortController();
           const timeout = setTimeout(() => controller.abort(), 4e3);
-          const res = await fetch("https://api.github.com/repos/SazWhatician/DebugCopilot/releases/latest", {
+          const res = await fetch("https://api.github.com/repos/SazWhatician/Dr.Debug/releases/latest", {
             signal: controller.signal
           });
           clearTimeout(timeout);
@@ -11231,7 +11237,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
             (_a = this.element.querySelector("#dr-debug-update-status-msg")) == null ? void 0 : _a.remove();
             const statusSpan = document.createElement("span");
             statusSpan.id = "dr-debug-update-status-msg";
-            statusSpan.style.cssText = "font-size:10px; color:#34d399; font-weight:600; margin-top:2px;";
+            statusSpan.className = "dr-debug-update-status-msg up-to-date";
             statusSpan.textContent = `You're on the latest release (v${currentVersion})`;
             bannerMeta.appendChild(statusSpan);
           }
@@ -11255,7 +11261,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
           (_b = this.element.querySelector("#dr-debug-update-status-msg")) == null ? void 0 : _b.remove();
           const statusSpan = document.createElement("span");
           statusSpan.id = "dr-debug-update-status-msg";
-          statusSpan.style.cssText = "font-size:10px; color:#60a5fa; font-weight:700; margin-top:2px;";
+          statusSpan.className = "dr-debug-update-status-msg update-available";
           statusSpan.textContent = `v${latestVersion} available! Click to update.`;
           bannerMeta.appendChild(statusSpan);
         }
@@ -11401,6 +11407,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
           return typeof window !== "undefined" ? (_a = window.__DR_DEBUG__) == null ? void 0 : _a.getController() : void 0;
         }
       } : onCloseOrOptions;
+      this.options = options;
       this.onInvestigateHandler = options.onInvestigate;
       this.getSessionPrompt = options.getSessionPrompt;
       this.element = document.createElement("div");
@@ -11602,9 +11609,9 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       const creditFooter = document.createElement("div");
       creditFooter.className = "dr-debug-cockpit-footer";
       creditFooter.innerHTML = `
-      <span>Dr. Debug by <a href="https://github.com/SazWhatician" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;text-decoration:none;font-weight:700;">Saswat Mohanty (@SazWhatician)</a></span>
-      <span style="color:#64748b;">\xB7</span>
-      <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" rel="noopener noreferrer" style="color:#818cf8;text-decoration:none;">LinkedIn</a>
+      <span>Dr. Debug by <a href="https://github.com/SazWhatician" target="_blank" rel="noopener noreferrer" class="dr-debug-footer-author">Saswat Mohanty (@SazWhatician)</a></span>
+      <span class="dr-debug-footer-sep">\xB7</span>
+      <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" rel="noopener noreferrer" class="dr-debug-footer-link">LinkedIn</a>
     `;
       this.element.appendChild(creditFooter);
       this.renderEmptyTimeline();
@@ -11648,6 +11655,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     thinkingCard = null;
     onInvestigateHandler;
     getSessionPrompt;
+    options;
     getElement() {
       return this.element;
     }
@@ -12179,7 +12187,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     formatDiffHtml(diff) {
       return diff.split("\n").map((line) => {
         if (line.startsWith("+++") || line.startsWith("---") || line.startsWith("@@")) {
-          return `<div style="color: #94a3b8;">${this.escapeHtml(line)}</div>`;
+          return `<div class="dr-debug-diff-meta">${this.escapeHtml(line)}</div>`;
         }
         if (line.startsWith("+")) return `<span class="dr-debug-diff-add">${this.escapeHtml(line)}</span>`;
         if (line.startsWith("-")) return `<span class="dr-debug-diff-del">${this.escapeHtml(line)}</span>`;
@@ -12346,6 +12354,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       return this.activeInfoTab;
     }
     setTheme(theme) {
+      var _a, _b;
       this.currentTheme = theme;
       this.element.classList.remove("theme-minimal-glass", "theme-monotone-skeuomorphic");
       if (theme === "minimal-glass") {
@@ -12358,6 +12367,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       } catch {
       }
       this.settingsModal.setTheme(theme);
+      (_b = (_a = this.options).onThemeChange) == null ? void 0 : _b.call(_a, theme);
     }
     getTheme() {
       return this.currentTheme;
@@ -12467,11 +12477,19 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       };
       this.element.addEventListener("mousedown", onMouseDown);
     }
+    setTheme(theme) {
+      this.element.classList.remove("theme-minimal-glass", "theme-monotone-skeuomorphic");
+      if (theme === "minimal-glass") {
+        this.element.classList.add("theme-minimal-glass");
+      } else if (theme === "monotone-skeuomorphic") {
+        this.element.classList.add("theme-monotone-skeuomorphic");
+      }
+    }
   };
 
   // packages/ui/src/styles.ts
   var shadowStyles = `
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Silkscreen:wght@400;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
 
 :host {
   all: initial;
@@ -15141,6 +15159,176 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   transform: translate(1.5px, -1.5px);
 }
 
+.dr-debug-settings-groupbox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.dr-debug-settings-groupbox-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #38bdf8;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 2px;
+}
+
+.dr-debug-key-hint {
+  font-size: 10px;
+  color: #38bdf8;
+  cursor: pointer;
+}
+
+.dr-debug-settings-footer {
+  text-align: center;
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 14px;
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+  padding-top: 10px;
+}
+
+.dr-debug-link-author {
+  color: #38bdf8;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.dr-debug-link-social {
+  color: #818cf8;
+  text-decoration: none;
+}
+
+.dr-debug-update-status-msg {
+  font-size: 10px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.dr-debug-update-status-msg.up-to-date {
+  color: #34d399;
+}
+
+.dr-debug-update-status-msg.update-available {
+  color: #60a5fa;
+  font-weight: 700;
+}
+
+.dr-debug-dock-connected-text {
+  font-size: 11px;
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.dr-debug-dock-guide-title {
+  font-weight: 700;
+  color: #f8fafc;
+  font-size: 12px;
+}
+
+.dr-debug-dock-offline-title {
+  color: #f8fafc;
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+
+.dr-debug-dock-offline-desc {
+  color: #94a3b8;
+  font-size: 12px;
+  max-width: 440px;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.dr-debug-log-fatal {
+  color: #f43f5e;
+  font-weight: 800;
+}
+
+.dr-debug-log-error {
+  color: #fb7185;
+}
+
+.dr-debug-log-warn {
+  color: #fbbf24;
+}
+
+.dr-debug-footer-author {
+  color: #38bdf8;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.dr-debug-footer-link {
+  color: #818cf8;
+  text-decoration: none;
+}
+
+.dr-debug-footer-sep {
+  color: #64748b;
+}
+
+.dr-debug-diff-meta {
+  color: #94a3b8;
+}
+
+.dr-debug-graph-empty-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: #38bdf8;
+}
+
+.dr-debug-graph-empty-desc {
+  font-size: 12px;
+  color: #94a3b8;
+  max-width: 360px;
+  margin: 6px auto 14px auto;
+}
+
+.dr-debug-graph-empty-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dr-debug-graph-title {
+  font-weight: 700;
+  font-size: 13px;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dr-debug-graph-badge {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.dr-debug-hist-count {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.dr-debug-err-empty-sub {
+  font-size: 10.5px;
+  margin-top: 4px;
+  color: #64748b;
+}
+
 @media (max-width: 520px) {
   .dr-debug-modal {
     width: calc(100vw - 20px) !important;
@@ -16028,20 +16216,91 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 }
 
 /* ==========================================================================
-   THEME 2: Minimalistic Glassmorphism (Light Theme)
+   THEME 2: Windows XP (Luna Blue)
    ========================================================================== */
+
+/* Floating Pill HUD: The Iconic Windows XP Start Button */
+.dr-debug-pill.theme-minimal-glass {
+  background: linear-gradient(180deg, #38823b 0%, #4cb848 10%, #44ab42 45%, #2a7e2b 50%, #359837 88%, #2c842e 100%);
+  border: 1px solid #185c1a;
+  border-top-color: #60d25c;
+  border-radius: 0 18px 18px 0;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.7);
+  color: #ffffff;
+  padding: 5px 16px 5px 10px;
+  transition: all 0.12s ease;
+  font-family: 'Trebuchet MS', Tahoma, sans-serif;
+}
+
+.dr-debug-pill.theme-minimal-glass:hover {
+  background: linear-gradient(180deg, #429945 0%, #5ad856 10%, #4ec04c 45%, #329433 50%, #3eb440 88%, #359d37 100%);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.85);
+  transform: translateY(-2px);
+}
+
+.dr-debug-pill.theme-minimal-glass .dr-debug-equalizer {
+  background: #ffffff;
+  border: 1px solid #7f9db9;
+  border-radius: 2px;
+  padding: 2px;
+  box-shadow: inset 1px 1px 1px rgba(0, 0, 0, 0.2);
+  gap: 2px;
+}
+
+.dr-debug-pill.theme-minimal-glass .dr-debug-equalizer .dr-debug-eq-bar {
+  background: linear-gradient(180deg, #9ae286 0%, #54cb37 40%, #33a817 50%, #46bd28 100%);
+  border-radius: 1px;
+}
+
+.dr-debug-pill.theme-minimal-glass .dr-debug-pill-badge span {
+  color: #ffffff;
+  font-family: 'Trebuchet MS', Tahoma, sans-serif;
+  font-size: 13px;
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.85);
+}
+
+.dr-debug-pill.theme-minimal-glass .dr-debug-chip {
+  border-radius: 3px;
+  font-family: Tahoma, sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  font-style: normal;
+  padding: 2px 6px;
+  border: 1px solid #003c74;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.dr-debug-pill.theme-minimal-glass .dr-debug-chip.ok {
+  background: linear-gradient(180deg, #ffffff 0%, #e1e0d6 100%);
+  color: #000000;
+  text-shadow: none;
+}
+
+.dr-debug-pill.theme-minimal-glass .dr-debug-chip.err,
+.dr-debug-pill.theme-minimal-glass .dr-debug-chip.run {
+  background: linear-gradient(180deg, #ff8c70 0%, #cc1b06 100%);
+  color: #ffffff;
+  border-color: #800000;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* Modal Frame: Windows XP Luna Blue Dialog Frame */
 .dr-debug-modal.theme-minimal-glass {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  letter-spacing: -0.012em;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(226, 232, 240, 0.95);
+  font-family: Tahoma, 'Segoe UI', Arial, sans-serif;
+  letter-spacing: 0;
+  background: #ece9d8;
+  border: 3px solid #0055ea;
+  border-radius: 8px 8px 0 0;
   box-shadow:
-    0 24px 60px -8px rgba(100, 116, 139, 0.25),
-    0 0 20px rgba(56, 189, 248, 0.12),
-    inset 0 1px 1px rgba(255, 255, 255, 0.9);
+    2px 6px 20px rgba(0, 0, 0, 0.5),
+    0 0 0 1px #002e8a;
   color: #000000;
 }
 
+/* Typography Hierarchy */
 .dr-debug-modal.theme-minimal-glass button,
 .dr-debug-modal.theme-minimal-glass input,
 .dr-debug-modal.theme-minimal-glass select,
@@ -16053,8 +16312,16 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 .dr-debug-modal.theme-minimal-glass .dr-debug-step-reasoning-label,
 .dr-debug-modal.theme-minimal-glass .dr-debug-settings-title,
 .dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-title,
-.dr-debug-modal.theme-minimal-glass .dr-debug-tab-view-title {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-view-title,
+.dr-debug-modal.theme-minimal-glass .dr-debug-insp-title,
+.dr-debug-modal.theme-minimal-glass .dr-debug-insp-sec-title,
+.dr-debug-modal.theme-minimal-glass .dr-debug-rfc-title,
+.dr-debug-modal.theme-minimal-glass .dr-debug-card-name,
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-title,
+.dr-debug-modal.theme-minimal-glass .dr-debug-matrix-th,
+.dr-debug-modal.theme-minimal-glass .dr-debug-metric-badge {
+  font-family: Tahoma, 'Segoe UI', Arial, sans-serif;
+  letter-spacing: 0;
 }
 
 .dr-debug-modal.theme-minimal-glass code,
@@ -16062,471 +16329,571 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 .dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-payload,
 .dr-debug-modal.theme-minimal-glass .dr-debug-step-output,
 .dr-debug-modal.theme-minimal-glass .dr-debug-docker-terminal,
-.dr-debug-modal.theme-minimal-glass .dr-debug-metric-badge {
-  font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
+.dr-debug-modal.theme-minimal-glass .dr-debug-code-box,
+.dr-debug-modal.theme-minimal-glass .dr-debug-curl-preview {
+  font-family: 'Lucida Console', 'Courier New', Monaco, monospace;
 }
 
+/* Luna Blue Window Header */
 .dr-debug-modal.theme-minimal-glass .dr-debug-header {
-  background: rgba(248, 250, 252, 0.92);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
-  color: #000000;
+  background: linear-gradient(180deg, #0058ee 0%, #3593ff 4%, #288eff 6%, #127dff 8%, #036ffc 10%, #0262ee 14%, #0057e5 20%, #0054e3 40%, #0055e7 60%, #0054e3 80%, #0041c2 100%);
+  border-bottom: 1px solid #002266;
+  padding: 5px 8px 6px 10px;
+  border-radius: 5px 5px 0 0;
+  color: #ffffff;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-brand-bold {
-  color: #0284c7;
+  color: #ffffff;
+  font-family: 'Trebuchet MS', Tahoma, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-shadow: 1px 1px 2px #0f2a7a;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Iconic 4-Color Windows XP Flag Tile */
+.dr-debug-modal.theme-minimal-glass .dr-debug-brand-bold::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  background:
+    linear-gradient(135deg, #f34336 0%, #d32f2f 100%) 0 0 / 6px 6px no-repeat,
+    linear-gradient(135deg, #4caf50 0%, #2e7d32 100%) 8px 0 / 6px 6px no-repeat,
+    linear-gradient(135deg, #2196f3 0%, #1565c0 100%) 0 8px / 6px 6px no-repeat,
+    linear-gradient(135deg, #ffeb3b 0%, #fbc02d 100%) 8px 8px / 6px 6px no-repeat;
+  border-radius: 1px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-brand-sub {
-  color: #000000;
-  font-weight: 600;
+  color: #dbeafe;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  text-shadow: 1px 1px 1px #0f2a7a;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-metric-badge {
-  background: rgba(241, 245, 249, 0.95);
-  border: 1px solid rgba(203, 213, 225, 0.9);
-  color: #000000;
+  background: rgba(0, 34, 102, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 3px;
+  color: #ffffff;
+  font-family: Tahoma, sans-serif;
+  font-size: 10px;
+  padding: 2px 7px;
+  text-shadow: 1px 1px 1px #0f2a7a;
   font-weight: 600;
 }
 
+/* Iconic Windows XP Red Jelly Close Button */
 .dr-debug-modal.theme-minimal-glass .dr-debug-close-btn {
-  background: rgba(241, 245, 249, 0.9);
-  border: 1px solid rgba(203, 213, 225, 0.9);
-  color: #000000;
+  background: radial-gradient(circle at 35% 30%, #ff8c70 0%, #f27254 30%, #e6431e 65%, #cc1b06 85%, #900a00 100%);
+  border: 1px solid #ffffff;
+  box-shadow: 0 0 1px 1px #002266, inset 0 1px 2px rgba(255, 255, 255, 0.8);
+  border-radius: 3px;
+  width: 21px;
+  height: 21px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: all 0.1s ease;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-close-btn:hover {
-  background: rgba(244, 63, 94, 0.15);
-  color: #e11d48;
+  filter: brightness(1.2) contrast(1.1);
+  box-shadow: 0 0 4px #ff3b30, inset 0 1px 3px #ffffff;
+  transform: none;
 }
 
+.dr-debug-modal.theme-minimal-glass .dr-debug-close-btn:active {
+  background: radial-gradient(circle at 45% 40%, #cc1b06 0%, #a81504 70%, #750d02 100%);
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+/* Windows XP Luna Tabs */
 .dr-debug-modal.theme-minimal-glass .dr-debug-tabs {
-  background: rgba(241, 245, 249, 0.9);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
+  background: #ece9d8;
+  border-bottom: 1px solid #919b9c;
+  padding: 6px 8px 0 8px;
+  gap: 3px;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-tab {
-  color: #000000;
-  font-weight: 600;
+  background: linear-gradient(180deg, #fbfaf6 0%, #ece9d8 100%);
+  border: 1px solid #919b9c;
+  border-bottom: 1px solid #919b9c;
+  border-radius: 4px 4px 0 0;
+  color: #333333;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  padding: 5px 12px;
+  margin-bottom: 0;
+  transition: all 0.1s ease;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-tab:hover {
+  background: linear-gradient(180deg, #fffcf0 0%, #fae6a0 100%);
   color: #000000;
-  background: rgba(226, 232, 240, 0.85);
+  border-color: #e5a000;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-tab.active {
+  background: #ffffff;
+  border: 1px solid #919b9c;
+  border-bottom: 1px solid #ffffff;
+  border-top: 3px solid #ff8000; /* Signature XP Orange Strip */
+  border-radius: 4px 4px 0 0;
   color: #000000;
   font-weight: 700;
-  background: rgba(2, 132, 199, 0.16);
-  border-color: rgba(2, 132, 199, 0.45);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7);
+  margin-bottom: -1px;
+  padding-top: 3px;
+  box-shadow: none;
 }
 
+/* Body & Tab Views */
 .dr-debug-modal.theme-minimal-glass .dr-debug-body {
-  background: rgba(248, 250, 252, 0.75);
+  background: #ece9d8;
   color: #000000;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-tab-view-header {
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(226, 232, 240, 0.95);
+  background: #ece9d8;
+  border: 2px solid;
+  border-color: #ffffff #919b9c #919b9c #ffffff;
+  border-radius: 3px;
   color: #000000;
+  padding: 6px 10px;
+  box-shadow: none;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-tab-view-title {
-  color: #000000;
+  color: #003c74;
+  font-family: Tahoma, sans-serif;
+  font-size: 12px;
   font-weight: 700;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-tab-guide-trigger {
-  background: rgba(0, 0, 0, 0.05);
-  border-color: rgba(0, 0, 0, 0.18);
+  background: linear-gradient(180deg, #ffffff 0%, #f0f0ea 45%, #e1e0d6 50%, #e4e3da 100%);
+  border: 1px solid #003c74;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
   color: #000000;
-  font-weight: 600;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  padding: 3px 10px;
+  transition: all 0.1s ease;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-tab-guide-trigger:hover {
-  background: rgba(0, 0, 0, 0.1);
-  border-color: rgba(0, 0, 0, 0.35);
+  background: linear-gradient(180deg, #fffef5 0%, #fffae8 45%, #fedc77 50%, #fde08f 100%);
+  border-color: #e5a000;
+  box-shadow: 0 0 5px #ffc000, inset 0 1px 0 #ffffff;
   color: #000000;
 }
 
+/* Toolbars & Section Headers */
 .dr-debug-modal.theme-minimal-glass .dr-debug-err-header,
 .dr-debug-modal.theme-minimal-glass .dr-debug-matrix-toolbar,
 .dr-debug-modal.theme-minimal-glass .dr-debug-docker-header,
 .dr-debug-modal.theme-minimal-glass .dr-debug-docker-section,
 .dr-debug-modal.theme-minimal-glass .dr-debug-docker-toolbar {
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(226, 232, 240, 0.95);
+  background: #ece9d8;
+  border: 2px solid;
+  border-color: #ffffff #919b9c #919b9c #ffffff;
+  border-radius: 3px;
+  box-shadow: none;
   color: #000000;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-err-title {
-  color: #000000;
+  color: #003c74;
   font-weight: 700;
+  font-size: 12px;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-stat-chip {
   color: #000000;
-  font-weight: 700;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-mode-btn {
-  color: #000000;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
   font-weight: 600;
 }
 
-.dr-debug-modal.theme-minimal-glass .dr-debug-mode-btn.active {
-  color: #000000;
-  font-weight: 700;
-}
-
+.dr-debug-modal.theme-minimal-glass .dr-debug-mode-btn,
 .dr-debug-modal.theme-minimal-glass .dr-debug-filter-btn {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f0ea 45%, #e1e0d6 50%, #e4e3da 100%);
+  border: 1px solid #003c74;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
   color: #000000;
-  font-weight: 600;
+  font-size: 11px;
+  font-family: Tahoma, sans-serif;
+  font-weight: 400;
+  padding: 3px 10px;
+  transition: all 0.1s ease;
 }
 
+.dr-debug-modal.theme-minimal-glass .dr-debug-mode-btn:hover,
+.dr-debug-modal.theme-minimal-glass .dr-debug-filter-btn:hover {
+  background: linear-gradient(180deg, #fffef5 0%, #fffae8 45%, #fedc77 50%, #fde08f 100%);
+  border-color: #e5a000;
+  box-shadow: 0 0 5px #ffc000, inset 0 1px 0 #ffffff;
+  transform: none;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-mode-btn.active,
 .dr-debug-modal.theme-minimal-glass .dr-debug-filter-btn.active {
+  background: linear-gradient(180deg, #fffcf0 0%, #fedc77 50%, #fde08f 100%);
+  border-color: #e5a000;
+  box-shadow: 0 0 5px #ffc000, inset 0 1px 0 #ffffff;
   color: #000000;
   font-weight: 700;
 }
 
+/* 2D Matrix Sunken Groupbox */
 .dr-debug-modal.theme-minimal-glass .dr-debug-2d-matrix {
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(226, 232, 240, 0.95);
+  background: #ffffff;
+  border: 2px solid;
+  border-color: #7f9db9;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.12);
+  border-radius: 2px;
   color: #000000;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-matrix-th {
-  color: #000000;
+  color: #003c74;
   font-weight: 700;
-  border-bottom: 1px solid #cbd5e1;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  background: #ece9d8;
+  border-bottom: 1px solid #919b9c;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-matrix-sub-label {
-  color: #000000;
-  font-weight: 600;
+  color: #555555;
+  font-family: Tahoma, sans-serif;
+  font-size: 10px;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-matrix-cell {
-  background: rgba(248, 250, 252, 0.85);
-  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border: 1px solid #d4d0c8;
   color: #000000;
-  font-weight: 600;
+  font-family: Tahoma, sans-serif;
+  transition: background 0.1s ease;
 }
 
+.dr-debug-modal.theme-minimal-glass .dr-debug-matrix-cell:hover {
+  background: #e5f1fb;
+  border-color: #316ac5;
+}
+
+/* XP Sunken Inputs & Form Elements */
 .dr-debug-modal.theme-minimal-glass .dr-debug-search-input,
 .dr-debug-modal.theme-minimal-glass .dr-debug-dock-search,
 .dr-debug-modal.theme-minimal-glass .dr-debug-input,
 .dr-debug-modal.theme-minimal-glass .dr-debug-form-input,
 .dr-debug-modal.theme-minimal-glass .dr-debug-form-select {
   background: #ffffff;
-  border: 1px solid #cbd5e1;
+  border: 2px solid;
+  border-color: #7f9db9;
+  box-shadow: inset 1px 1px 1px rgba(0, 0, 0, 0.15);
+  border-radius: 0px;
   color: #000000;
-  font-weight: 500;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-search-input:focus,
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-search:focus,
+.dr-debug-modal.theme-minimal-glass .dr-debug-input:focus,
+.dr-debug-modal.theme-minimal-glass .dr-debug-form-input:focus,
+.dr-debug-modal.theme-minimal-glass .dr-debug-form-select:focus {
+  border-color: #316ac5;
+  outline: 1px solid #316ac5;
+  box-shadow: 0 0 3px rgba(49, 106, 197, 0.5);
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-search-input::placeholder,
 .dr-debug-modal.theme-minimal-glass .dr-debug-dock-search::placeholder,
 .dr-debug-modal.theme-minimal-glass .dr-debug-input::placeholder {
-  color: #475569;
+  color: #737373;
+  font-family: Tahoma, sans-serif;
 }
 
+/* Diagnostic Cards & Panels */
 .dr-debug-modal.theme-minimal-glass .dr-debug-err-item,
 .dr-debug-modal.theme-minimal-glass .dr-debug-step-card,
 .dr-debug-modal.theme-minimal-glass .dr-debug-prescription-card,
 .dr-debug-modal.theme-minimal-glass .dr-debug-docker-card {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(226, 232, 240, 0.95);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  background: #ffffff;
+  border: 2px solid;
+  border-color: #7f9db9;
+  border-radius: 2px;
+  box-shadow: inset 1px 1px 1px rgba(0, 0, 0, 0.08);
   color: #000000;
+  transition: border-color 0.12s ease;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-item:hover,
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-card:hover,
+.dr-debug-modal.theme-minimal-glass .dr-debug-prescription-card:hover,
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-card:hover {
+  border-color: #316ac5;
+  box-shadow: 0 0 4px rgba(49, 106, 197, 0.35);
+  transform: none;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-err-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 2px solid #7f9db9;
+  border-left: 5px solid #d32f2f;
+  border-radius: 2px;
+  box-shadow: inset 1px 1px 1px rgba(0, 0, 0, 0.08);
   color: #000000;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-err-card-title {
-  color: #000000;
+  color: #d32f2f;
   font-weight: 700;
+  font-size: 12px;
+  font-family: Tahoma, sans-serif;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-err-card-subtitle {
-  color: #000000;
+  color: #333333;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-err-time {
-  color: #111827;
-  font-weight: 500;
+  color: #666666;
+  font-family: Tahoma, sans-serif;
+  font-size: 10px;
 }
 
-.dr-debug-modal.theme-minimal-glass .dr-debug-insp-title {
-  color: #000000;
-  font-weight: 700;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-insp-sec-title {
-  color: #000000;
-  font-weight: 700;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-code-box {
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  color: #000000;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-curl-preview {
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  color: #000000;
-}
-
+.dr-debug-modal.theme-minimal-glass .dr-debug-insp-title,
+.dr-debug-modal.theme-minimal-glass .dr-debug-insp-sec-title,
 .dr-debug-modal.theme-minimal-glass .dr-debug-rfc-title {
-  color: #000000;
+  color: #003c74;
   font-weight: 700;
+  font-family: Tahoma, sans-serif;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-code-box,
+.dr-debug-modal.theme-minimal-glass .dr-debug-curl-preview {
+  background: #ffffff;
+  border: 2px solid #7f9db9;
+  border-radius: 0px;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.15);
+  color: #000000;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-rfc-desc {
-  color: #000000;
+  color: #333333;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-rfc-rec {
-  color: #000000;
-  font-weight: 600;
+  color: #003c74;
+  font-weight: 700;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-frame-fn {
-  color: #000000;
-  font-weight: 600;
+  color: #003c74;
+  font-weight: 700;
+  font-family: 'Lucida Console', Monaco, monospace;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-frame-loc {
-  color: #111827;
+  color: #666666;
+  font-family: Tahoma, sans-serif;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-err-empty {
-  color: #000000;
+  color: #666666;
+  font-family: Tahoma, sans-serif;
 }
 
-/* Light Mode: Telemetry Substrate High Contrast Black Styling */
+/* Telemetry Stream High-Contrast XP Styling */
 .dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid #7f9db9;
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   color: #000000;
+  transition: background 0.1s ease;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.error {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-left: 3.5px solid #ef4444;
-  color: #000000;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.error .dr-debug-telemetry-payload {
-  color: #991b1b;
-  font-weight: 600;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.error .dr-debug-telemetry-tag {
-  color: #dc2626;
-  font-weight: 700;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.net-fail {
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  border-left: 3.5px solid #d97706;
-  color: #000000;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.net-fail .dr-debug-telemetry-payload {
-  color: #92400e;
-  font-weight: 600;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.net-fail .dr-debug-telemetry-tag {
-  color: #b45309;
-  font-weight: 700;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.warn {
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
-  border-left: 3.5px solid #0284c7;
-  color: #000000;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.warn .dr-debug-telemetry-payload {
-  color: #0369a1;
-  font-weight: 600;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.warn .dr-debug-telemetry-tag {
-  color: #0284c7;
-  font-weight: 700;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.ok {
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-left: 3.5px solid #16a34a;
-  color: #000000;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-item.ok .dr-debug-telemetry-tag {
-  color: #15803d;
-  font-weight: 700;
+  background: #e5f1fb;
+  border-color: #316ac5;
+  transform: none;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-payload {
-  color: #000000;
-  font-weight: 600;
+  background: #fbfbf8;
+  border: 1px solid #d4d0c8;
+  border-radius: 2px;
+  color: #000000 !important;
+  font-family: 'Lucida Console', Monaco, monospace;
+  font-size: 11px;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-text {
-  color: #000000;
-  font-weight: 500;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-meta {
-  color: #000000;
+  color: #000000 !important;
+  font-family: Tahoma, sans-serif;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-telemetry-time {
-  color: #111827;
+  color: #666666;
+  font-family: Tahoma, sans-serif;
+  font-size: 10px;
 }
 
-.dr-debug-modal.theme-minimal-glass .dr-debug-triage-empty-title {
-  color: #16a34a;
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-card-header {
+  background: #ece9d8;
+  border-bottom: 1px solid #919b9c;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-num {
+  background: #003c74;
+  color: #ffffff;
+  border-radius: 3px;
+  font-family: Tahoma, sans-serif;
+  font-size: 10px;
   font-weight: 700;
 }
 
-.dr-debug-modal.theme-minimal-glass .dr-debug-triage-empty-desc {
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-badge {
+  background: #ffffff;
+  border: 1px solid #7f9db9;
+  border-radius: 3px;
   color: #000000;
+  font-family: Tahoma, sans-serif;
+  font-size: 10px;
 }
 
-.dr-debug-modal.theme-minimal-glass .dr-debug-empty-title {
-  color: #000000;
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-tool-name {
+  color: #003c74;
   font-weight: 700;
+  font-family: Tahoma, sans-serif;
 }
 
-.dr-debug-modal.theme-minimal-glass .dr-debug-empty-desc {
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-copy-btn {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f0ea 45%, #e1e0d6 50%, #e4e3da 100%);
+  border: 1px solid #003c74;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+  color: #000000;
+  transition: all 0.1s ease;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-copy-btn:hover {
+  background: linear-gradient(180deg, #fffef5 0%, #fffae8 45%, #fedc77 50%, #fde08f 100%);
+  border-color: #e5a000;
+  box-shadow: 0 0 4px #ffc000;
+  transform: none;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-card-body {
+  background: #ffffff;
   color: #000000;
 }
 
-.dr-debug-modal.theme-minimal-glass .dr-debug-presc-files {
+.dr-debug-modal.theme-minimal-glass .dr-debug-step-reasoning {
+  background: #fbfbf8;
+  border: 1px solid #d4d0c8;
+  border-left: 4px solid #316ac5;
+  border-radius: 2px;
   color: #000000;
-  font-weight: 600;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-presc-label {
-  color: #000000;
-  font-weight: 700;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-presc-text {
-  color: #000000;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-confidence-chip {
-  background: #ecfdf5;
-  color: #047857;
-  border: 1px solid #a7f3d0;
-  font-weight: 600;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-prescription-diff {
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  color: #000000;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-handoff {
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  color: #000000;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-handoff-desc {
-  color: #000000;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-step-pill {
-  background: #e2e8f0;
-  color: #000000;
-  font-weight: 700;
-  border: 1px solid #cbd5e1;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-step-tool {
-  background: #f1f5f9;
-  color: #000000;
-  font-weight: 600;
-  border: 1px solid #cbd5e1;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-step-thought {
-  color: #000000;
+  color: #333333;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-step-output {
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border: 2px solid #7f9db9;
+  border-radius: 0px;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.12);
   color: #000000;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-step-output-label {
-  color: #000000;
+  color: #003c74;
   font-weight: 700;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-thinking-card {
-  background: rgba(243, 232, 255, 0.7);
-  border: 1px solid #d8b4fe;
+  background: #fffae8;
+  border: 1px solid #fedc77;
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-thinking-text {
   color: #000000;
+  font-family: Tahoma, sans-serif;
 }
 
-/* Causal Graph Light Styling */
+/* Causal Graph */
 .dr-debug-modal.theme-minimal-glass .dr-debug-graph-toolbar {
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(226, 232, 240, 0.95);
+  background: #ece9d8;
+  border: 2px solid;
+  border-color: #ffffff #919b9c #919b9c #ffffff;
+  border-radius: 3px;
   color: #000000;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-graph-node {
   background: #ffffff;
-  border: 1px solid #cbd5e1;
+  border: 2px solid #7f9db9;
+  border-radius: 3px;
+  box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.12);
   color: #000000;
+  transition: all 0.1s ease;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-graph-node:hover {
+  border-color: #316ac5;
+  box-shadow: 0 0 6px rgba(49, 106, 197, 0.6);
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-node-title {
-  color: #000000;
+  color: #003c74;
   font-weight: 700;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-node-summary {
-  color: #000000;
+  color: #333333;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-node-layer {
-  color: #000000;
+  color: #003c74;
   font-weight: 700;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-detail-header {
-  color: #000000;
+  color: #003c74;
+  font-weight: 700;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-detail-title {
@@ -16535,135 +16902,439 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-detail-pre {
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border: 2px solid #7f9db9;
+  border-radius: 2px;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.12);
   color: #000000;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-graph-empty {
-  color: #000000;
+  color: #555555;
+  font-family: Tahoma, sans-serif;
 }
 
-/* Docker Light Styling */
+.dr-debug-modal.theme-minimal-glass .dr-debug-graph-empty-title {
+  color: #003c74 !important;
+  font-weight: 700;
+  font-family: Tahoma, sans-serif;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-graph-empty-desc {
+  color: #333333 !important;
+  font-family: Tahoma, sans-serif;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-graph-empty-badge {
+  background: #e8f5e9 !important;
+  border: 1px solid #2e7d32 !important;
+  color: #1b5e20 !important;
+  font-family: Tahoma, sans-serif;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-graph-title {
+  color: #003c74 !important;
+  font-weight: 700;
+  font-family: Tahoma, sans-serif;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-graph-badge {
+  background: #eff6ff !important;
+  border: 1px solid #316ac5 !important;
+  color: #003c74 !important;
+  font-family: Tahoma, sans-serif;
+}
+
+/* Docker Subsystem - High Contrast Windows XP Luna Styles */
 .dr-debug-modal.theme-minimal-glass .dr-debug-docker-terminal-wrapper {
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border: 2px solid #7f9db9;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.15);
+  border-radius: 2px;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-dock-msg {
-  color: #000000;
-  font-weight: 500;
+  color: #000000 !important;
+  font-family: 'Lucida Console', Monaco, monospace;
+  font-size: 11px;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-dock-time {
-  color: #111827;
+  color: #555555 !important;
+  font-family: Tahoma, sans-serif;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-dock-container-tag {
-  color: #000000;
-  font-weight: 600;
+  background: #003c74 !important;
+  color: #ffffff !important;
+  border-radius: 2px;
+  font-family: Tahoma, sans-serif;
+  font-size: 9px;
+  padding: 1px 5px;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-dock-stream-tag {
-  color: #111827;
+  color: #555555 !important;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-log-fatal {
+  color: #b91c1c !important;
+  font-weight: 800;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-log-error {
+  color: #dc2626 !important;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-log-warn {
+  color: #b45309 !important;
+  font-weight: 700;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-docker-title {
-  color: #000000;
+  color: #003c74 !important;
   font-weight: 700;
+  font-family: 'Trebuchet MS', Tahoma, sans-serif;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-docker-sub {
-  color: #000000;
+  color: #444444 !important;
+  font-family: Tahoma, sans-serif;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-docker-hint {
-  color: #111827;
+  color: #555555 !important;
+  font-family: Tahoma, sans-serif;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-docker-stat-pill {
+  background: #ffffff;
+  border: 1px solid #7f9db9;
+  border-radius: 3px;
   color: #000000;
-  font-weight: 600;
+  font-family: Tahoma, sans-serif;
+  font-size: 10px;
 }
 
-.dr-debug-modal.theme-minimal-glass .dr-debug-dock-btn {
-  color: #000000;
-  font-weight: 600;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-dock-btn.active {
-  color: #000000;
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-stat-pill strong {
+  color: #003c74 !important;
   font-weight: 700;
 }
 
-.dr-debug-modal.theme-minimal-glass .dr-debug-card-name {
-  color: #000000;
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-stat-pill span {
+  color: #333333 !important;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-stat-pill.pill-errors.alert strong {
+  color: #d32f2f !important;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-badge {
+  font-family: Tahoma, sans-serif;
+  font-size: 10px;
   font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
 }
 
-.dr-debug-modal.theme-minimal-glass .dr-debug-card-desc {
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-badge.badge-running {
+  background: #e8f5e9 !important;
+  border: 1px solid #2e7d32 !important;
+  color: #1b5e20 !important;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-badge.badge-stopped {
+  background: #ffebee !important;
+  border: 1px solid #c62828 !important;
+  color: #b71c1c !important;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-connected-bar {
+  background: #eef7ee;
+  border: 1px solid #a3d3a7;
+  border-radius: 2px;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-connected-text {
+  color: #1b5e20 !important;
+  font-weight: 700;
+  font-family: Tahoma, sans-serif;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-toggle-help {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f0ea 45%, #e1e0d6 50%, #e4e3da 100%);
+  border: 1px solid #003c74;
+  box-shadow: inset 0 1px 0 #ffffff;
+  border-radius: 3px;
   color: #000000;
+  font-family: Tahoma, sans-serif;
+  font-size: 10px;
 }
 
-.dr-debug-modal.theme-minimal-glass .dr-debug-card-image {
-  color: #111827;
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-instructions-card {
+  background: #ffffff;
+  border: 2px solid #7f9db9;
+  border-radius: 2px;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.08);
 }
 
-.dr-debug-modal.theme-minimal-glass .dr-debug-card-ports {
-  color: #111827;
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-guide-top {
+  border-bottom: 1px solid #d4d0c8;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-guide-title {
+  color: #003c74 !important;
+  font-weight: 700;
+  font-family: 'Trebuchet MS', Tahoma, sans-serif;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-guide-badge {
+  background: #003c74 !important;
+  color: #ffffff !important;
+  font-family: Tahoma, sans-serif;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-guide-desc {
+  color: #222222 !important;
+  font-family: Tahoma, sans-serif;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-dock-step-box {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
+  background: #fdfdfd;
+  border: 1px solid #7f9db9;
+  border-radius: 2px;
   color: #000000;
 }
 
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-step-badge {
+  background: #003c74 !important;
+  color: #ffffff !important;
+}
+
 .dr-debug-modal.theme-minimal-glass .dr-debug-dock-step-label {
-  color: #000000;
+  color: #003c74 !important;
   font-weight: 700;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-dock-step-text {
+  color: #333333 !important;
+  font-family: Tahoma, sans-serif;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-launcher-box {
+  background: #f7f7f4;
+  border: 1px solid #d4d0c8;
+  color: #333333;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-launcher-box code,
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-cmd-line code {
+  color: #003c74 !important;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-cmd-line {
+  background: #ffffff;
+  border: 1px solid #7f9db9;
   color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-copy-cmd-btn,
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-action-btn {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f0ea 45%, #e1e0d6 50%, #e4e3da 100%);
+  border: 1px solid #003c74;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+  color: #000000;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-copy-cmd-btn:hover,
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-action-btn:hover {
+  background: linear-gradient(180deg, #fffef5 0%, #fffae8 45%, #fedc77 50%, #fde08f 100%);
+  border-color: #e5a000;
+  box-shadow: 0 0 5px #ffc000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-action-btn.primary {
+  border-color: #316ac5;
+  color: #003c74;
+  font-weight: 700;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-dock-step-footer {
-  color: #000000;
+  color: #555555 !important;
+  font-family: Tahoma, sans-serif;
 }
 
-.dr-debug-modal.theme-minimal-glass .dr-debug-dock-guide-desc {
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-btn {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f0ea 45%, #e1e0d6 50%, #e4e3da 100%);
+  border: 1px solid #003c74;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+  color: #000000;
+  font-size: 11px;
+  font-weight: 400;
+  transition: all 0.1s ease;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-btn:hover {
+  background: linear-gradient(180deg, #fffef5 0%, #fffae8 45%, #fedc77 50%, #fde08f 100%);
+  border-color: #e5a000;
+  box-shadow: 0 0 5px #ffc000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-btn.active {
+  background: linear-gradient(180deg, #fffcf0 0%, #fedc77 50%, #fde08f 100%);
+  border-color: #e5a000;
+  box-shadow: 0 0 5px #ffc000, inset 0 1px 0 #ffffff;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-card {
+  background: #ffffff;
+  border: 2px solid #7f9db9;
+  border-radius: 2px;
+  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-docker-card.selected {
+  background: #eff6ff !important;
+  border-color: #316ac5 !important;
+  box-shadow: 0 0 6px rgba(49, 106, 197, 0.5) !important;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-card-name {
+  color: #003c74 !important;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-card-desc {
+  color: #333333 !important;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-card-image {
+  color: #555555 !important;
+  font-family: 'Lucida Console', Monaco, monospace;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-card-ports {
+  color: #003c74 !important;
+  font-family: 'Lucida Console', Monaco, monospace;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-card-errors {
+  color: #d32f2f !important;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-card-state.state-running {
+  background: #e8f5e9;
+  border: 1px solid #2e7d32;
+  color: #1b5e20 !important;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-card-state.state-exited,
+.dr-debug-modal.theme-minimal-glass .dr-debug-card-state.state-stopped {
+  background: #ffebee;
+  border: 1px solid #c62828;
+  color: #b71c1c !important;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-badge {
+  background: #d32f2f;
+  color: #ffffff !important;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-empty-containers {
+  color: #555555;
+  font-family: Tahoma, sans-serif;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-autoscroll {
+  color: #000000 !important;
+  font-family: Tahoma, sans-serif;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-inline-diag {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f0ea 45%, #e1e0d6 50%, #e4e3da 100%);
+  border: 1px solid #003c74;
+  color: #003c74;
+  border-radius: 3px;
+  box-shadow: inset 0 1px 0 #ffffff;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-offline-box {
+  background: #ece9d8;
+  border: 2px solid;
+  border-color: #ffffff #919b9c #919b9c #ffffff;
+  box-shadow: inset 1px 1px 0 #ffffff;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-offline-icon {
+  color: #003c74 !important;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-offline-title {
+  color: #003c74 !important;
+  font-family: 'Trebuchet MS', Tahoma, sans-serif;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-offline-desc {
+  color: #333333 !important;
+  font-family: Tahoma, sans-serif;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-cmd-box {
+  background: #ffffff;
+  border: 2px solid #7f9db9;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-dock-cmd-box code {
+  color: #003c74 !important;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass #dr-debug-dock-copy-cmd {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f0ea 45%, #e1e0d6 50%, #e4e3da 100%);
+  border: 1px solid #003c74;
+  box-shadow: inset 0 1px 0 #ffffff;
   color: #000000;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-dock-term-empty {
-  color: #000000;
+  color: #555555 !important;
+  font-family: Tahoma, sans-serif;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-dock-log-row.log-error {
-  background: rgba(239, 68, 68, 0.08);
-  border-left: 2px solid #ef4444;
+  background: #fff0f0;
+  border-left: 4px solid #d32f2f;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-dock-log-row.log-error .dr-debug-dock-msg {
-  color: #991b1b;
-  font-weight: 600;
+  color: #d32f2f !important;
+  font-weight: 700;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-dock-log-row.log-warn {
-  background: rgba(245, 158, 11, 0.08);
-  border-left: 2px solid #d97706;
+  background: #fffbe8;
+  border-left: 4px solid #e5a000;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-dock-log-row.log-warn .dr-debug-dock-msg {
-  color: #92400e;
-  font-weight: 600;
+  color: #b45309 !important;
+  font-weight: 700;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-err-name,
 .dr-debug-modal.theme-minimal-glass .dr-debug-presc-title,
 .dr-debug-modal.theme-minimal-glass .dr-debug-step-reasoning-label {
-  color: #000000;
+  color: #003c74;
   font-weight: 700;
 }
 
@@ -16671,72 +17342,382 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   color: #000000;
 }
 
+.dr-debug-modal.theme-minimal-glass .dr-debug-hist-count,
+.dr-debug-modal.theme-minimal-glass .dr-debug-err-empty-sub {
+  color: #555555 !important;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-diff-meta {
+  color: #003c74 !important;
+  font-weight: 700;
+}
+
+/* Query Bar & Footer */
 .dr-debug-modal.theme-minimal-glass .dr-debug-query-wrapper {
-  background: rgba(248, 250, 252, 0.95);
-  border-top: 1px solid rgba(226, 232, 240, 0.95);
+  background: #ece9d8;
+  border-top: 1px solid #919b9c;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-query-box {
   background: #ffffff;
-  border: 1px solid #cbd5e1;
+  border: 2px solid #7f9db9;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.15);
+  border-radius: 0px;
+}
+
+/* Luna Push Buttons */
+.dr-debug-modal.theme-minimal-glass .dr-debug-btn {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f0ea 45%, #e1e0d6 50%, #e4e3da 100%);
+  border: 1px solid #316ac5;
+  box-shadow: 0 0 4px rgba(49, 106, 197, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  border-radius: 3px;
+  color: #000000;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 14px;
+  transition: all 0.1s ease;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-btn:hover {
+  background: linear-gradient(180deg, #fffef5 0%, #fffae8 45%, #fedc77 50%, #fde08f 100%);
+  border-color: #e5a000;
+  box-shadow: 0 0 6px #ffc000, inset 0 1px 0 #ffffff;
+  color: #000000;
+  transform: none;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-btn:active {
+  background: linear-gradient(180deg, #d8d4c4 0%, #e5e2d6 50%, #f4f2ea 100%);
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-btn-outline {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f0ea 45%, #e1e0d6 50%, #e4e3da 100%);
+  border: 1px solid #003c74;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+  color: #000000;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  padding: 4px 14px;
+  transition: all 0.1s ease;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-btn-outline:hover {
+  background: linear-gradient(180deg, #fffef5 0%, #fffae8 45%, #fedc77 50%, #fde08f 100%);
+  border-color: #e5a000;
+  box-shadow: 0 0 5px #ffc000, inset 0 1px 0 #ffffff;
+  color: #000000;
+  transform: none;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-cockpit-footer {
-  background: rgba(241, 245, 249, 0.95);
-  border-top: 1px solid rgba(226, 232, 240, 0.95);
-  color: #000000;
-  font-weight: 500;
+  background: #ece9d8;
+  border-top: 1px solid #ffffff;
+  box-shadow: inset 0 1px 0 #919b9c;
+  color: #333333;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-cockpit-footer span {
-  color: #000000;
+  color: #333333;
 }
 
-.dr-debug-modal.theme-minimal-glass .dr-debug-settings-overlay,
-.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-card {
-  background: rgba(255, 255, 255, 0.98);
-  border: 1px solid rgba(203, 213, 225, 0.95);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
-  color: #000000;
-}
-
-.dr-debug-modal.theme-minimal-glass .dr-debug-settings-title,
-.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-title {
-  color: #000000;
+.dr-debug-modal.theme-minimal-glass .dr-debug-footer-author,
+.dr-debug-modal.theme-minimal-glass .dr-debug-link-author {
+  color: #003c74 !important;
+  text-decoration: underline;
   font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-footer-link,
+.dr-debug-modal.theme-minimal-glass .dr-debug-link-social {
+  color: #003c74 !important;
+  text-decoration: underline;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-footer-sep {
+  color: #888888 !important;
+}
+
+/* ==========================================================================
+   AUTHENTIC WINDOWS XP LUNA SETTINGS DIALOG
+   ========================================================================== */
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-overlay {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-modal {
+  background: #ece9d8;
+  border: 3px solid #0055ea;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 2px 8px 24px rgba(0, 0, 0, 0.55), 0 0 0 1px #002266;
+  color: #000000;
+  max-width: 480px;
+  width: 100%;
+  max-height: 92vh;
+  height: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-header {
+  background: linear-gradient(180deg, #0058ee 0%, #3593ff 4%, #288eff 6%, #127dff 8%, #036ffc 10%, #0262ee 14%, #0057e5 20%, #0054e3 40%, #0055e7 60%, #0054e3 80%, #0041c2 100%);
+  border-bottom: 1px solid #002266;
+  border-radius: 5px 5px 0 0;
+  padding: 6px 8px 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-title {
+  color: #ffffff;
+  font-family: 'Trebuchet MS', Tahoma, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  text-shadow: 1px 1px 1px #0f2a7a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-header .dr-debug-close-btn {
+  background: linear-gradient(180deg, #e76142 0%, #dd4425 45%, #ca2f0e 50%, #d83d1c 100%) !important;
+  border: 1px solid #ffffff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+  border-radius: 3px !important;
+  width: 21px;
+  height: 21px;
+  min-width: 21px;
+  color: #ffffff !important;
+  font-weight: 900;
+  font-size: 11px;
+  text-shadow: 0 -1px 0 #7b1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: none;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-header .dr-debug-close-btn:hover {
+  background: linear-gradient(180deg, #f27b5e 0%, #e85536 45%, #d93d1b 50%, #eb5837 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 0 4px #ff6644 !important;
+  transform: none;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-header .dr-debug-close-btn:active {
+  background: linear-gradient(180deg, #b9270b 0%, #ce3817 50%, #e24925 100%) !important;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.6) !important;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-body {
+  background: #ece9d8;
+  padding: 8px 12px;
+  gap: 5px;
+  overflow-y: auto;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-groupbox {
+  background: #ece9d8;
+  border: 1px solid #d4d0c8;
+  box-shadow: 1px 1px 0 #ffffff, inset 1px 1px 0 #ffffff;
+  border-radius: 3px;
+  padding: 6px 10px;
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-groupbox-title {
+  color: #003c74;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-bottom: 2px;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-form-group {
+  gap: 2px;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-form-label {
   color: #000000;
+  font-family: Tahoma, sans-serif;
+  font-size: 10.5px;
+  font-weight: 400;
+  margin-bottom: 0;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-key-hint {
+  color: #003c74 !important;
+  font-family: Tahoma, sans-serif;
+  font-size: 10.5px;
   font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-actions {
+  border-top: 1px solid #d4d0c8;
+  box-shadow: 0 -1px 0 #ffffff;
+  padding-top: 6px;
+  margin-top: 2px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-actions .dr-debug-btn {
+  min-width: 90px;
+  height: 24px;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-actions .dr-debug-btn-outline {
+  min-width: 90px;
+  height: 24px;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-update-banner {
+  background: #ffffff;
+  border: 1px solid #7f9db9;
+  box-shadow: inset 1px 1px 1px rgba(0, 0, 0, 0.08);
+  border-radius: 2px;
+  padding: 5px 8px;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-update-tag {
+  background: linear-gradient(180deg, #38823b 0%, #2c842e 100%);
+  color: #ffffff !important;
+  border-radius: 2px;
+  font-family: Tahoma, sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-update-version {
+  color: #003c74;
+  font-family: Tahoma, sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-btn-update {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f0ea 45%, #e1e0d6 50%, #e4e3da 100%);
+  border: 1px solid #316ac5;
+  box-shadow: 0 0 3px rgba(49, 106, 197, 0.6), inset 0 1px 0 #ffffff;
+  border-radius: 3px;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #000000;
+  padding: 4px 10px;
+  transition: all 0.1s ease;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-btn-update:hover {
+  background: linear-gradient(180deg, #fffef5 0%, #fffae8 45%, #fedc77 50%, #fde08f 100%);
+  border-color: #e5a000;
+  box-shadow: 0 0 6px #ffc000;
+  transform: none;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-status {
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  min-height: 16px;
+  margin-top: 2px;
+  color: #000000;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-update-status-msg {
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-update-status-msg.up-to-date {
+  color: #1b5e20 !important;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-update-status-msg.update-available {
+  color: #003c74 !important;
+}
+
+.dr-debug-modal.theme-minimal-glass .dr-debug-settings-footer {
+  text-align: center;
+  font-size: 10.5px;
+  font-family: Tahoma, sans-serif;
+  color: #555555;
+  margin-top: 4px;
+  border-top: 1px solid #d4d0c8;
+  box-shadow: 0 -1px 0 #ffffff;
+  padding-top: 4px;
+}
+
+/* Info Panels */
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-card {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  color: #000000;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-header,
 .dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-footer {
-  background: rgba(248, 250, 252, 0.96);
-  border-color: rgba(226, 232, 240, 0.95);
+  background: #ece9d8;
+  border-color: #919b9c;
   color: #000000;
 }
 
-.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-sec-title {
-  color: #000000;
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-title {
+  color: #003c74;
+  font-family: 'Trebuchet MS', Tahoma, sans-serif;
+  font-size: 12px;
   font-weight: 700;
 }
 
-.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-desc {
-  background: rgba(241, 245, 249, 0.85);
-  border: 1px solid #cbd5e1;
-  color: #000000;
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-sec-title {
+  color: #003c74;
+  font-weight: 700;
 }
 
+.dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-desc,
 .dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-tip-item {
-  background: rgba(248, 250, 252, 0.95);
-  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border: 2px solid;
+  border-color: #7f9db9;
+  border-radius: 2px;
+  box-shadow: inset 1px 1px 1px rgba(0, 0, 0, 0.08);
   color: #000000;
 }
 
 .dr-debug-modal.theme-minimal-glass .dr-debug-tab-info-tip-bullet {
-  color: #000000;
+  color: #316ac5;
   font-weight: 700;
 }
 
@@ -17012,11 +17993,13 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         getController: options.getController,
         getSessionPrompt: options.getSessionPrompt || (() => this.buildSessionPrompt()),
         onSaveSettings: options.onSaveSettings,
-        onTestConnection: options.onTestConnection
+        onTestConnection: options.onTestConnection,
+        onThemeChange: (theme) => this.pill.setTheme(theme)
       });
       this.pill = new FloatingPill(() => {
         this.cockpit.toggle();
       });
+      this.pill.setTheme(this.cockpit.getTheme());
       this.shadowRoot.appendChild(this.pill.getElement());
       this.shadowRoot.appendChild(this.cockpit.getElement());
     }
@@ -17074,6 +18057,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     }
     setTheme(theme) {
       this.cockpit.setTheme(theme);
+      this.pill.setTheme(theme);
     }
     getTheme() {
       return this.cockpit.getTheme();

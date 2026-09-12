@@ -129,6 +129,7 @@ export interface CockpitPanelOptions {
   getSessionPrompt?: () => string
   onSaveSettings?: (settings: SettingsData) => void
   onTestConnection?: (settings: SettingsData) => Promise<{ success: boolean; message: string }>
+  onThemeChange?: (theme: DrDebugTheme) => void
 }
 
 export class CockpitPanel {
@@ -167,6 +168,7 @@ export class CockpitPanel {
   private thinkingCard: HTMLElement | null = null
   private onInvestigateHandler: (query: string) => void
   private getSessionPrompt?: () => string
+  private options: CockpitPanelOptions
 
   constructor(
     private onCloseOrOptions: (() => void) | CockpitPanelOptions,
@@ -181,6 +183,7 @@ export class CockpitPanel {
           }
         : onCloseOrOptions
 
+    this.options = options
     this.onInvestigateHandler = options.onInvestigate
     this.getSessionPrompt = options.getSessionPrompt
     this.element = document.createElement('div')
@@ -418,9 +421,9 @@ export class CockpitPanel {
     const creditFooter = document.createElement('div')
     creditFooter.className = 'dr-debug-cockpit-footer'
     creditFooter.innerHTML = `
-      <span>Dr. Debug by <a href="https://github.com/SazWhatician" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;text-decoration:none;font-weight:700;">Saswat Mohanty (@SazWhatician)</a></span>
-      <span style="color:#64748b;">·</span>
-      <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" rel="noopener noreferrer" style="color:#818cf8;text-decoration:none;">LinkedIn</a>
+      <span>Dr. Debug by <a href="https://github.com/SazWhatician" target="_blank" rel="noopener noreferrer" class="dr-debug-footer-author">Saswat Mohanty (@SazWhatician)</a></span>
+      <span class="dr-debug-footer-sep">·</span>
+      <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" rel="noopener noreferrer" class="dr-debug-footer-link">LinkedIn</a>
     `
     this.element.appendChild(creditFooter)
 
@@ -1060,7 +1063,7 @@ export class CockpitPanel {
       .split('\n')
       .map((line) => {
         if (line.startsWith('+++') || line.startsWith('---') || line.startsWith('@@')) {
-          return `<div style="color: #94a3b8;">${this.escapeHtml(line)}</div>`
+          return `<div class="dr-debug-diff-meta">${this.escapeHtml(line)}</div>`
         }
         if (line.startsWith('+')) return `<span class="dr-debug-diff-add">${this.escapeHtml(line)}</span>`
         if (line.startsWith('-')) return `<span class="dr-debug-diff-del">${this.escapeHtml(line)}</span>`
@@ -1280,6 +1283,7 @@ export class CockpitPanel {
       // ignore
     }
     this.settingsModal.setTheme(theme)
+    this.options.onThemeChange?.(theme)
   }
 
   public getTheme(): DrDebugTheme {

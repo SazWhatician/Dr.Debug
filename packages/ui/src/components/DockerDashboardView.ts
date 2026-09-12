@@ -283,7 +283,7 @@ export class DockerDashboardView {
         <div class="dr-debug-dock-connected-bar">
           <div style="display:flex; align-items:center; gap:8px;">
             <span class="dr-debug-dock-dot-live"></span>
-            <span style="font-size:11px; color:#cbd5e1; font-weight:600;">Streaming host containers via port 9229</span>
+            <span class="dr-debug-dock-connected-text">Streaming host containers via port 9229</span>
           </div>
           <button class="dr-debug-dock-toggle-help" id="dr-debug-toggle-dock-help">Connection Guide ▾</button>
         </div>
@@ -306,7 +306,7 @@ export class DockerDashboardView {
           <div class="dr-debug-dock-guide-top">
             <div style="display:flex; align-items:center; gap:8px;">
               <span class="dr-debug-status-dot dot-sys"></span>
-              <span style="font-weight:700; color:#f8fafc; font-size:12px;">Connect Your Host Docker to Dr. Debug</span>
+              <span class="dr-debug-dock-guide-title">Connect Your Host Docker to Dr. Debug</span>
             </div>
             <span class="dr-debug-dock-guide-badge">ZERO-CONFIG SETUP</span>
           </div>
@@ -518,8 +518,8 @@ export class DockerDashboardView {
         <div class="dr-debug-dock-offline-icon" style="margin-bottom: 8px;">
           <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8v4h8V3z"/></svg>
         </div>
-        <h3 style="color: #f8fafc; font-size: 15px; margin-bottom: 6px;">Docker Substrate Daemon Offline</h3>
-        <p style="color: #94a3b8; font-size: 12px; max-width: 440px; margin-bottom: 14px; line-height: 1.5;">
+        <h3 class="dr-debug-dock-offline-title">Docker Substrate Daemon Offline</h3>
+        <p class="dr-debug-dock-offline-desc">
           Connect your local Docker engine to stream backend container panics, database connection exhausts, and correlate them with frontend network timeouts.
         </p>
         <div class="dr-debug-dock-cmd-box">
@@ -577,9 +577,9 @@ export class DockerDashboardView {
 
   private highlightErrors(text: string): string {
     return text
-      .replace(/(FATAL|PANIC|CRITICAL)/gi, '<strong style="color:#f43f5e;">$1</strong>')
-      .replace(/(ERROR|FAIL|EXCEPTION)/gi, '<span style="color:#fb7185;">$1</span>')
-      .replace(/(WARN(?:ING)?)/gi, '<span style="color:#fbbf24;">$1</span>')
+      .replace(/(FATAL|PANIC|CRITICAL)/gi, '<strong class="dr-debug-log-fatal">$1</strong>')
+      .replace(/(ERROR|FAIL|EXCEPTION)/gi, '<span class="dr-debug-log-error">$1</span>')
+      .replace(/(WARN(?:ING)?)/gi, '<span class="dr-debug-log-warn">$1</span>')
   }
 
   private escapeHtml(str: string): string {
