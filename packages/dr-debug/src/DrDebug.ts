@@ -318,6 +318,8 @@ export class DrDebug {
   public syncUIStatus(): void {
     if (!this.ui) return
 
+    this.ui.ensureHostAttached?.()
+
     const errors = this.controller.getConsoleEntries().filter((e) => e.level === 'error')
     const failedNet = this.controller.getNetworkRecords().filter((r) => r.isFailed)
     const slowNet = this.controller.getNetworkRecords().filter((r) => r.isSlow && !r.isFailed)

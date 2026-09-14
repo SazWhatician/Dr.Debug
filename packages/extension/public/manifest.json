@@ -27,7 +27,8 @@
         "content.js"
       ],
       "run_at": "document_start",
-      "world": "MAIN"
+      "world": "MAIN",
+      "match_about_blank": true
     },
     {
       "matches": [
@@ -36,7 +37,8 @@
       "js": [
         "bridge.js"
       ],
-      "run_at": "document_start"
+      "run_at": "document_start",
+      "match_about_blank": true
     }
   ],
   "permissions": [

@@ -19,19 +19,23 @@ export class FloatingPill {
     // Live Equalizer Visualizer Bars
     this.equalizer = document.createElement('div')
     this.equalizer.className = 'dr-debug-equalizer'
-    this.equalizer.innerHTML = `
-      <div class="dr-debug-eq-bar"></div>
-      <div class="dr-debug-eq-bar"></div>
-      <div class="dr-debug-eq-bar"></div>
-    `
+    for (let i = 0; i < 3; i++) {
+      const bar = document.createElement('div')
+      bar.className = 'dr-debug-eq-bar'
+      this.equalizer.appendChild(bar)
+    }
 
     const icon = document.createElement('span')
     icon.className = 'dr-debug-pill-icon'
-    icon.innerHTML = `<img src="${DR_DEBUG_LOGO}" class="dr-debug-logo pill-logo" alt="Dr. Debug" />`
+    const img = document.createElement('img')
+    img.src = DR_DEBUG_LOGO
+    img.className = 'dr-debug-logo pill-logo'
+    img.alt = 'Dr. Debug'
+    icon.appendChild(img)
 
     this.badgeText = document.createElement('div')
     this.badgeText.className = 'dr-debug-pill-badge'
-    this.badgeText.innerHTML = `<span>Dr. Debug</span> <span class="dr-debug-chip ok">ACTIVE</span>`
+    this.renderBadge('Dr. Debug', 'ACTIVE', 'ok')
 
     this.element.appendChild(this.equalizer)
     this.element.appendChild(icon)
@@ -50,6 +54,20 @@ export class FloatingPill {
     return this.element
   }
 
+  private renderBadge(title: string, chipText: string, chipClass: string): void {
+    while (this.badgeText.firstChild) {
+      this.badgeText.removeChild(this.badgeText.firstChild)
+    }
+    const titleSpan = document.createElement('span')
+    titleSpan.textContent = title
+    const chipSpan = document.createElement('span')
+    chipSpan.className = `dr-debug-chip ${chipClass}`
+    chipSpan.textContent = chipText
+    this.badgeText.appendChild(titleSpan)
+    this.badgeText.appendChild(document.createTextNode(' '))
+    this.badgeText.appendChild(chipSpan)
+  }
+
   public updateStatus(
     errorCount: number,
     failedNetCount = 0,
@@ -57,20 +75,30 @@ export class FloatingPill {
     isRunning = false
   ): void {
     if (isRunning) {
-      this.badgeText.innerHTML = `<span>Dr. Debug</span> <span class="dr-debug-chip run">DIAGNOSING</span>`
+      this.renderBadge('Dr. Debug', 'DIAGNOSING', 'run')
       return
     }
 
     const totalIssues = errorCount + failedNetCount + slowNetCount
 
     if (totalIssues > 0) {
-      const chips: string[] = []
-      if (errorCount > 0) chips.push(`<span class="dr-debug-chip err">${errorCount} ERR</span>`)
-      if (failedNetCount > 0) chips.push(`<span class="dr-debug-chip net">${failedNetCount} NET</span>`)
-      if (slowNetCount > 0) chips.push(`<span class="dr-debug-chip net">${slowNetCount} SLOW</span>`)
-      this.badgeText.innerHTML = chips.join(' ')
+      while (this.badgeText.firstChild) {
+        this.badgeText.removeChild(this.badgeText.firstChild)
+      }
+      const chips: Array<{ text: string; cls: string }> = []
+      if (errorCount > 0) chips.push({ text: `${errorCount} ERR`, cls: 'err' })
+      if (failedNetCount > 0) chips.push({ text: `${failedNetCount} NET`, cls: 'net' })
+      if (slowNetCount > 0) chips.push({ text: `${slowNetCount} SLOW`, cls: 'net' })
+
+      chips.forEach((c, idx) => {
+        if (idx > 0) this.badgeText.appendChild(document.createTextNode(' '))
+        const chipSpan = document.createElement('span')
+        chipSpan.className = `dr-debug-chip ${c.cls}`
+        chipSpan.textContent = c.text
+        this.badgeText.appendChild(chipSpan)
+      })
     } else {
-      this.badgeText.innerHTML = `<span>Dr. Debug</span> <span class="dr-debug-chip ok">HEALTHY</span>`
+      this.renderBadge('Dr. Debug', 'HEALTHY', 'ok')
     }
   }
 

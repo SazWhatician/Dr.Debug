@@ -12432,17 +12432,21 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.element.title = "Dr. Debug - Click to open Cockpit";
       this.equalizer = document.createElement("div");
       this.equalizer.className = "dr-debug-equalizer";
-      this.equalizer.innerHTML = `
-      <div class="dr-debug-eq-bar"></div>
-      <div class="dr-debug-eq-bar"></div>
-      <div class="dr-debug-eq-bar"></div>
-    `;
+      for (let i = 0; i < 3; i++) {
+        const bar = document.createElement("div");
+        bar.className = "dr-debug-eq-bar";
+        this.equalizer.appendChild(bar);
+      }
       const icon = document.createElement("span");
       icon.className = "dr-debug-pill-icon";
-      icon.innerHTML = `<img src="${DR_DEBUG_LOGO}" class="dr-debug-logo pill-logo" alt="Dr. Debug" />`;
+      const img = document.createElement("img");
+      img.src = DR_DEBUG_LOGO;
+      img.className = "dr-debug-logo pill-logo";
+      img.alt = "Dr. Debug";
+      icon.appendChild(img);
       this.badgeText = document.createElement("div");
       this.badgeText.className = "dr-debug-pill-badge";
-      this.badgeText.innerHTML = `<span>Dr. Debug</span> <span class="dr-debug-chip ok">ACTIVE</span>`;
+      this.renderBadge("Dr. Debug", "ACTIVE", "ok");
       this.element.appendChild(this.equalizer);
       this.element.appendChild(icon);
       this.element.appendChild(this.badgeText);
@@ -12456,20 +12460,42 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     getElement() {
       return this.element;
     }
+    renderBadge(title, chipText, chipClass) {
+      while (this.badgeText.firstChild) {
+        this.badgeText.removeChild(this.badgeText.firstChild);
+      }
+      const titleSpan = document.createElement("span");
+      titleSpan.textContent = title;
+      const chipSpan = document.createElement("span");
+      chipSpan.className = `dr-debug-chip ${chipClass}`;
+      chipSpan.textContent = chipText;
+      this.badgeText.appendChild(titleSpan);
+      this.badgeText.appendChild(document.createTextNode(" "));
+      this.badgeText.appendChild(chipSpan);
+    }
     updateStatus(errorCount, failedNetCount = 0, slowNetCount = 0, isRunning = false) {
       if (isRunning) {
-        this.badgeText.innerHTML = `<span>Dr. Debug</span> <span class="dr-debug-chip run">DIAGNOSING</span>`;
+        this.renderBadge("Dr. Debug", "DIAGNOSING", "run");
         return;
       }
       const totalIssues = errorCount + failedNetCount + slowNetCount;
       if (totalIssues > 0) {
+        while (this.badgeText.firstChild) {
+          this.badgeText.removeChild(this.badgeText.firstChild);
+        }
         const chips = [];
-        if (errorCount > 0) chips.push(`<span class="dr-debug-chip err">${errorCount} ERR</span>`);
-        if (failedNetCount > 0) chips.push(`<span class="dr-debug-chip net">${failedNetCount} NET</span>`);
-        if (slowNetCount > 0) chips.push(`<span class="dr-debug-chip net">${slowNetCount} SLOW</span>`);
-        this.badgeText.innerHTML = chips.join(" ");
+        if (errorCount > 0) chips.push({ text: `${errorCount} ERR`, cls: "err" });
+        if (failedNetCount > 0) chips.push({ text: `${failedNetCount} NET`, cls: "net" });
+        if (slowNetCount > 0) chips.push({ text: `${slowNetCount} SLOW`, cls: "net" });
+        chips.forEach((c, idx) => {
+          if (idx > 0) this.badgeText.appendChild(document.createTextNode(" "));
+          const chipSpan = document.createElement("span");
+          chipSpan.className = `dr-debug-chip ${c.cls}`;
+          chipSpan.textContent = c.text;
+          this.badgeText.appendChild(chipSpan);
+        });
       } else {
-        this.badgeText.innerHTML = `<span>Dr. Debug</span> <span class="dr-debug-chip ok">HEALTHY</span>`;
+        this.renderBadge("Dr. Debug", "HEALTHY", "ok");
       }
     }
     initDraggable() {
@@ -18169,45 +18195,54 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     cockpit;
     getController;
     engine = new LocalDiagnosticEngine();
+    container;
+    observer;
+    observedTarget;
     constructor(options = {}) {
       this.getController = options.getController;
       let host = document.getElementById("dr-debug-root");
       if (!host) {
         host = document.createElement("div");
         host.id = "dr-debug-root";
-        host.style.position = "fixed";
-        host.style.zIndex = "2147483647";
-        host.style.pointerEvents = "none";
-        host.style.top = "0";
-        host.style.left = "0";
-        host.style.width = "0";
-        host.style.height = "0";
-        host.style.border = "none";
-        host.style.margin = "0";
-        host.style.padding = "0";
-        if (options.container) {
-          options.container.appendChild(host);
-        } else if (typeof document !== "undefined" && document.body) {
-          document.body.appendChild(host);
-        } else if (typeof document !== "undefined") {
-          const onReady = () => {
-            if (document.body && !host.isConnected) {
-              document.body.appendChild(host);
-            }
-          };
-          if (document.readyState === "loading") {
-            document.addEventListener("DOMContentLoaded", onReady, { once: true });
-          } else {
-            window.addEventListener("load", onReady, { once: true });
-          }
-        }
+        host.style.setProperty("all", "initial", "important");
+        host.style.setProperty("position", "fixed", "important");
+        host.style.setProperty("top", "0", "important");
+        host.style.setProperty("left", "0", "important");
+        host.style.setProperty("width", "0", "important");
+        host.style.setProperty("height", "0", "important");
+        host.style.setProperty("z-index", "2147483647", "important");
+        host.style.setProperty("pointer-events", "none", "important");
+        host.style.setProperty("display", "block", "important");
+        host.style.setProperty("visibility", "visible", "important");
+        host.style.setProperty("opacity", "1", "important");
+        host.style.setProperty("border", "none", "important");
+        host.style.setProperty("margin", "0", "important");
+        host.style.setProperty("padding", "0", "important");
+        host.style.setProperty("transform", "none", "important");
+        host.style.setProperty("filter", "none", "important");
+        host.style.setProperty("clip", "auto", "important");
       }
       this.host = host;
+      this.attachHostToDOM(options.container);
       this.shadowRoot = host.shadowRoot || host.attachShadow({ mode: "open" });
-      this.shadowRoot.innerHTML = "";
-      const styleEl = document.createElement("style");
-      styleEl.textContent = shadowStyles;
-      this.shadowRoot.appendChild(styleEl);
+      while (this.shadowRoot.firstChild) {
+        this.shadowRoot.removeChild(this.shadowRoot.firstChild);
+      }
+      let stylesInjected = false;
+      if (typeof CSSStyleSheet !== "undefined" && "adoptedStyleSheets" in Document.prototype) {
+        try {
+          const sheet = new CSSStyleSheet();
+          sheet.replaceSync(shadowStyles);
+          this.shadowRoot.adoptedStyleSheets = [sheet];
+          stylesInjected = true;
+        } catch {
+        }
+      }
+      if (!stylesInjected) {
+        const styleEl = document.createElement("style");
+        styleEl.textContent = shadowStyles;
+        this.shadowRoot.appendChild(styleEl);
+      }
       this.cockpit = new CockpitPanel({
         onClose: () => this.cockpit.hide(),
         onInvestigate: async (query) => {
@@ -18413,7 +18448,73 @@ Direction: ${finding.remediation}`
         false
       );
     }
+    attachHostToDOM(customContainer) {
+      if (typeof document === "undefined") return;
+      this.container = customContainer;
+      this.ensureHostAttached();
+      this.setupMountListeners();
+      this.setupObserver();
+    }
+    ensureHostAttached() {
+      if (typeof document === "undefined") return;
+      const target = this.container || document.body || document.documentElement;
+      if (!target) return;
+      if (!document.contains(this.host)) {
+        try {
+          target.appendChild(this.host);
+        } catch {
+        }
+      } else if (document.body && this.host.parentElement === document.documentElement && !this.container) {
+        try {
+          document.body.appendChild(this.host);
+        } catch {
+        }
+      }
+    }
+    setupMountListeners() {
+      if (typeof document === "undefined") return;
+      const onReady = () => {
+        this.ensureHostAttached();
+        this.setupObserver();
+      };
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", onReady, { once: true });
+        document.addEventListener("readystatechange", () => {
+          if (document.readyState === "interactive" || document.readyState === "complete") {
+            onReady();
+          }
+        });
+        if (typeof window !== "undefined") {
+          window.addEventListener("load", onReady, { once: true });
+        }
+      }
+    }
+    setupObserver() {
+      if (typeof MutationObserver === "undefined") return;
+      const target = this.container || document.body || document.documentElement;
+      if (!target) return;
+      if (this.observedTarget === target) return;
+      if (this.observer) {
+        this.observer.disconnect();
+        this.observer = void 0;
+      }
+      try {
+        this.observer = new MutationObserver(() => {
+          if (!document.contains(this.host)) {
+            this.ensureHostAttached();
+          }
+        });
+        this.observer.observe(target, { childList: true });
+        this.observedTarget = target;
+      } catch {
+      }
+    }
     destroy() {
+      if (this.observer) {
+        this.observer.disconnect();
+        this.observer = void 0;
+      }
+      this.observedTarget = void 0;
       if (this.host.parentNode) {
         this.host.parentNode.removeChild(this.host);
       }
@@ -18647,6 +18748,7 @@ Direction: ${finding.remediation}`
     }
     syncUIStatus() {
       if (!this.ui) return;
+      this.ui.ensureHostAttached?.();
       const errors = this.controller.getConsoleEntries().filter((e) => e.level === "error");
       const failedNet = this.controller.getNetworkRecords().filter((r) => r.isFailed);
       const slowNet = this.controller.getNetworkRecords().filter((r) => r.isSlow && !r.isFailed);

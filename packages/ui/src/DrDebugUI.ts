@@ -23,52 +23,63 @@ export class DrDebugUI {
   private cockpit: CockpitPanel
   private getController?: () => DebugController | undefined
   private engine = new LocalDiagnosticEngine()
+  private container?: HTMLElement
+  private observer?: MutationObserver
+  private observedTarget?: Node
 
   constructor(options: DrDebugUIOptions = {}) {
     this.getController = options.getController
 
     // Check if #dr-debug-root already exists
-    let host = document.getElementById('dr-debug-root')
+    let host = document.getElementById('dr-debug-root') as HTMLElement | null
     if (!host) {
       host = document.createElement('div')
       host.id = 'dr-debug-root'
-      host.style.position = 'fixed'
-      host.style.zIndex = '2147483647'
-      host.style.pointerEvents = 'none'
-      host.style.top = '0'
-      host.style.left = '0'
-      host.style.width = '0'
-      host.style.height = '0'
-      host.style.border = 'none'
-      host.style.margin = '0'
-      host.style.padding = '0'
-
-      if (options.container) {
-        options.container.appendChild(host)
-      } else if (typeof document !== 'undefined' && document.body) {
-        document.body.appendChild(host)
-      } else if (typeof document !== 'undefined') {
-        const onReady = () => {
-          if (document.body && !host!.isConnected) {
-            document.body.appendChild(host!)
-          }
-        }
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', onReady, { once: true })
-        } else {
-          window.addEventListener('load', onReady, { once: true })
-        }
-      }
+      // Use setProperty with 'important' so page stylesheets cannot hide, collapse, or clip the host
+      host.style.setProperty('all', 'initial', 'important')
+      host.style.setProperty('position', 'fixed', 'important')
+      host.style.setProperty('top', '0', 'important')
+      host.style.setProperty('left', '0', 'important')
+      host.style.setProperty('width', '0', 'important')
+      host.style.setProperty('height', '0', 'important')
+      host.style.setProperty('z-index', '2147483647', 'important')
+      host.style.setProperty('pointer-events', 'none', 'important')
+      host.style.setProperty('display', 'block', 'important')
+      host.style.setProperty('visibility', 'visible', 'important')
+      host.style.setProperty('opacity', '1', 'important')
+      host.style.setProperty('border', 'none', 'important')
+      host.style.setProperty('margin', '0', 'important')
+      host.style.setProperty('padding', '0', 'important')
+      host.style.setProperty('transform', 'none', 'important')
+      host.style.setProperty('filter', 'none', 'important')
+      host.style.setProperty('clip', 'auto', 'important')
     }
     this.host = host
 
-    this.shadowRoot = host.shadowRoot || host.attachShadow({ mode: 'open' })
-    this.shadowRoot.innerHTML = ''
+    this.attachHostToDOM(options.container)
 
-    // Inject Isolated Styles
-    const styleEl = document.createElement('style')
-    styleEl.textContent = shadowStyles
-    this.shadowRoot.appendChild(styleEl)
+    this.shadowRoot = host.shadowRoot || host.attachShadow({ mode: 'open' })
+    while (this.shadowRoot.firstChild) {
+      this.shadowRoot.removeChild(this.shadowRoot.firstChild)
+    }
+
+    // Inject Isolated Styles using Constructable Stylesheets (CSP-compliant) or fallback
+    let stylesInjected = false
+    if (typeof CSSStyleSheet !== 'undefined' && 'adoptedStyleSheets' in Document.prototype) {
+      try {
+        const sheet = new CSSStyleSheet()
+        sheet.replaceSync(shadowStyles)
+        this.shadowRoot.adoptedStyleSheets = [sheet]
+        stylesInjected = true
+      } catch {
+        // Fallback to style element
+      }
+    }
+    if (!stylesInjected) {
+      const styleEl = document.createElement('style')
+      styleEl.textContent = shadowStyles
+      this.shadowRoot.appendChild(styleEl)
+    }
 
     // Cockpit Panel
     this.cockpit = new CockpitPanel({
@@ -333,7 +344,84 @@ export class DrDebugUI {
     )
   }
 
+  private attachHostToDOM(customContainer?: HTMLElement): void {
+    if (typeof document === 'undefined') return
+    this.container = customContainer
+    this.ensureHostAttached()
+    this.setupMountListeners()
+    this.setupObserver()
+  }
+
+  public ensureHostAttached(): void {
+    if (typeof document === 'undefined') return
+    const target = this.container || document.body || document.documentElement
+    if (!target) return
+
+    if (!document.contains(this.host)) {
+      try {
+        target.appendChild(this.host)
+      } catch {
+        // Target might not be connected or ready yet
+      }
+    } else if (document.body && this.host.parentElement === document.documentElement && !this.container) {
+      // Once document.body is parsed, relocate from <html> to <body> for standard layout behavior
+      try {
+        document.body.appendChild(this.host)
+      } catch {
+        // Fallback
+      }
+    }
+  }
+
+  private setupMountListeners(): void {
+    if (typeof document === 'undefined') return
+    const onReady = () => {
+      this.ensureHostAttached()
+      this.setupObserver()
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', onReady, { once: true })
+      document.addEventListener('readystatechange', () => {
+        if (document.readyState === 'interactive' || document.readyState === 'complete') {
+          onReady()
+        }
+      })
+      if (typeof window !== 'undefined') {
+        window.addEventListener('load', onReady, { once: true })
+      }
+    }
+  }
+
+  private setupObserver(): void {
+    if (typeof MutationObserver === 'undefined') return
+    const target = this.container || document.body || document.documentElement
+    if (!target) return
+
+    if (this.observedTarget === target) return
+    if (this.observer) {
+      this.observer.disconnect()
+      this.observer = undefined
+    }
+
+    try {
+      this.observer = new MutationObserver(() => {
+        if (!document.contains(this.host)) {
+          this.ensureHostAttached()
+        }
+      })
+      this.observer.observe(target, { childList: true })
+      this.observedTarget = target
+    } catch {
+      // MutationObserver fallback
+    }
+  }
+
   public destroy(): void {
+    if (this.observer) {
+      this.observer.disconnect()
+      this.observer = undefined
+    }
+    this.observedTarget = undefined
     if (this.host.parentNode) {
       this.host.parentNode.removeChild(this.host)
     }

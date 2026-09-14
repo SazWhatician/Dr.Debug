@@ -88,6 +88,33 @@ document.addEventListener('DOMContentLoaded', () => {
     showStatus('Testing connection with provider...', false)
     if (btnTestKey) btnTestKey.textContent = '⏳ Testing...'
 
+    if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+      chrome.runtime.sendMessage(
+        {
+          type: 'DR_DEBUG_TEST_CONNECTION',
+          payload: {
+            settings: { provider, apiKey }
+          }
+        },
+        (response) => {
+          if (btnTestKey) btnTestKey.innerHTML = '<span>⚡</span> <span>Test Key</span>'
+          const err = chrome.runtime.lastError
+          if (err) {
+            showStatus(`❌ ${err.message}`, true)
+            return
+          }
+          const result = response?.result
+          if (result?.success) {
+            showStatus(`✅ ${result.message || 'Connected successfully!'}`, false)
+          } else {
+            showStatus(`❌ ${result?.message || 'Connection test failed.'}`, true)
+          }
+        }
+      )
+      return
+    }
+
+    // Fallback if chrome runtime is not available
     let testUrl = 'https://api.groq.com/openai/v1/chat/completions'
     let testModel = 'openai/gpt-oss-120b'
     if (provider === 'openai') {

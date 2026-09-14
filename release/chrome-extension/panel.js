@@ -534,6 +534,41 @@ btnDtTest?.addEventListener('click', async () => {
     dtStatusMsg.style.color = '#38bdf8'
   }
 
+  if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+    chrome.runtime.sendMessage(
+      {
+        type: 'DR_DEBUG_TEST_CONNECTION',
+        payload: {
+          settings: { provider, apiKey }
+        }
+      },
+      (response) => {
+        if (btnDtTest) btnDtTest.innerHTML = '<span>⚡</span> <span>Test Key</span>'
+        const err = chrome.runtime.lastError
+        if (err) {
+          if (dtStatusMsg) {
+            dtStatusMsg.textContent = `❌ ${err.message}`
+            dtStatusMsg.style.color = '#f43f5e'
+          }
+          return
+        }
+        const result = response?.result
+        if (result?.success) {
+          if (dtStatusMsg) {
+            dtStatusMsg.textContent = `✅ ${result.message || 'Connected successfully!'}`
+            dtStatusMsg.style.color = '#10b981'
+          }
+        } else {
+          if (dtStatusMsg) {
+            dtStatusMsg.textContent = `❌ ${result?.message || 'Connection test failed.'}`
+            dtStatusMsg.style.color = '#f43f5e'
+          }
+        }
+      }
+    )
+    return
+  }
+
   let testUrl = 'https://api.groq.com/openai/v1/chat/completions'
   let testModel = 'openai/gpt-oss-120b'
   if (provider === 'openai') {
