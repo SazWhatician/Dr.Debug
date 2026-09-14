@@ -3255,6 +3255,12 @@ ${causalChain.join("\n")}`);
     }
     buildConclusion(state) {
       const analysis = this.engine.analyze(state);
+      const debugContext = [];
+      if (analysis.headline) debugContext.push(analysis.headline);
+      const errors = state.console.entries.filter((e) => e.level === "error");
+      if (errors.length > 0) debugContext.push(`Console: ${errors[0].message.slice(0, 110)}`);
+      const failedNet = state.network.records.filter((r) => r.isFailed || (r.status ?? 0) >= 400);
+      if (failedNet.length > 0) debugContext.push(`Network: ${failedNet[0].method} ${failedNet[0].url} \u2192 ${failedNet[0].status || "FAILED"}`);
       return {
         tool: "done",
         args: {
@@ -3262,7 +3268,9 @@ ${causalChain.join("\n")}`);
           rootCause: analysis.rootCause,
           fix: analysis.suggestedFix,
           confidence: analysis.confidence,
-          filesToModify: analysis.filesToModify
+          filesToModify: analysis.filesToModify,
+          debugContext: debugContext.length > 0 ? debugContext : void 0,
+          debugRoute: analysis.causalChain.length > 0 ? analysis.causalChain : void 0
         },
         hypothesis: analysis.hasEvidence ? `Every layer with evidence has been inspected. ${analysis.headline} is the earliest critical signal and the ${analysis.causalChain.length > 0 ? "causal chain confirms" : "evidence indicates"} it as the root cause. Writing up the conclusion.` : "All buffers are empty \u2014 there is no fault to attribute. Reporting a clean session.",
         goal: "Conclude the investigation with the derived diagnosis and remediation plan."
@@ -3798,6 +3806,16 @@ Your mission is to investigate runtime errors, failed network requests, and perf
           type: "array",
           items: { type: "string" },
           description: "List of filenames that need to be edited to resolve the bug."
+        },
+        debugContext: {
+          type: "array",
+          items: { type: "string" },
+          description: "Key evidence facts and signals (e.g. failing endpoint, component stack frame)."
+        },
+        debugRoute: {
+          type: "array",
+          items: { type: "string" },
+          description: "Step-by-step causal investigation route linking user trigger, network, state, and UI."
         }
       },
       required: ["diagnosis", "rootCause", "fix", "confidence"]
@@ -8704,7 +8722,9 @@ ${result.stack || ""}`;
         memory: memoryStore,
         signal: options.signal
       };
-      const initialDebugState = this.controller.serialize();
+      const snapshot = this.controller.getSnapshot();
+      const ponytailBrief = generatePonytailDebugPrompt(snapshot);
+      const initialDebugState = ponytailBrief || this.controller.serialize();
       const messages = [
         {
           role: "system",
@@ -8848,6 +8868,7 @@ Please analyze the telemetry, formulate your working hypothesis, and choose the 
               synthesizedDiagnosis = `Uncaught runtime exception: ${primaryErr.message}`;
               synthesizedRootCause = primaryErr.stack || primaryErr.message;
             }
+            const analysis = new LocalDiagnosticEngine().analyze(this.controller.getSnapshot());
             const concludedResult = {
               goal,
               status: "resolved",
@@ -8855,6 +8876,12 @@ Please analyze the telemetry, formulate your working hypothesis, and choose the 
               rootCause: synthesizedRootCause,
               fix: suggestedFix,
               confidence: 0.9,
+              filesToModify: analysis.filesToModify,
+              debugContext: [
+                primaryNet ? `Network: ${primaryNet.method} ${primaryNet.url} [HTTP ${primaryNet.status || "ERR"}]` : "",
+                primaryErr ? `Console: ${primaryErr.message.slice(0, 100)}` : ""
+              ].filter(Boolean),
+              debugRoute: analysis.causalChain.length > 0 ? analysis.causalChain : void 0,
               steps,
               durationMs: Date.now() - startTime,
               finalMemory: cumulativeMemory
@@ -8900,6 +8927,7 @@ Please analyze the telemetry, formulate your working hypothesis, and choose the 
         steps.push(agentStep);
         if (actionName === "done") {
           const finalData = memoryStore["finalResult"] || actionArgs;
+          const analysis = new LocalDiagnosticEngine().analyze(this.controller.getSnapshot());
           const result = {
             goal,
             status: "resolved",
@@ -8907,7 +8935,12 @@ Please analyze the telemetry, formulate your working hypothesis, and choose the 
             rootCause: finalData.rootCause || "Diagnostic conclusion reached.",
             fix: finalData.fix,
             confidence: finalData.confidence ?? 0.9,
-            filesToModify: finalData.filesToModify,
+            filesToModify: finalData.filesToModify || analysis.filesToModify,
+            debugContext: finalData.debugContext || [
+              finalData.diagnosis || "",
+              finalData.rootCause ? `Root Cause: ${finalData.rootCause.slice(0, 100)}` : ""
+            ].filter(Boolean),
+            debugRoute: finalData.debugRoute || (analysis.causalChain.length > 0 ? analysis.causalChain : void 0),
             steps,
             durationMs: Date.now() - startTime,
             finalMemory: cumulativeMemory
@@ -11040,9 +11073,6 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         localStorage.setItem("dr_debug_settings", JSON.stringify(settings));
       } catch {
       }
-      if (typeof chrome !== "undefined" && chrome.storage?.local) {
-        chrome.storage.local.set(settings);
-      }
       this.options.onSave(settings);
       this.statusMessage.textContent = "Settings saved & active!";
       this.statusMessage.style.color = "#34d399";
@@ -11485,30 +11515,62 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         }
       } catch {
       }
-      const queryWrapper = document.createElement("div");
-      queryWrapper.className = "dr-debug-query-wrapper";
-      const queryBox = document.createElement("div");
-      queryBox.className = "dr-debug-query-box";
+      const actionBar = document.createElement("div");
+      actionBar.className = "dr-debug-action-bar";
+      const statusRow = document.createElement("div");
+      statusRow.className = "dr-debug-action-status";
+      this.actionStatusDot = document.createElement("span");
+      this.actionStatusDot.className = "dr-debug-status-dot dot-ok";
+      this.actionStatusText = document.createElement("span");
+      this.actionStatusText.className = "dr-debug-status-text";
+      this.actionStatusText.id = "dr-debug-action-status-text";
+      this.actionStatusText.textContent = "Substrate ready";
+      statusRow.appendChild(this.actionStatusDot);
+      statusRow.appendChild(this.actionStatusText);
+      const controlsRow = document.createElement("div");
+      controlsRow.className = "dr-debug-action-controls";
+      this.queryButton = document.createElement("button");
+      this.queryButton.id = "dr-debug-query-submit";
+      this.queryButton.className = "dr-debug-btn dr-debug-btn-action";
+      this.queryButton.innerHTML = `
+      <span class="dr-debug-action-icon">\u26A1</span>
+      <span class="dr-debug-action-label" id="dr-debug-btn-action-label">Generate AI Debug Route & Solution</span>
+    `;
+      this.queryButton.addEventListener("click", () => this.triggerInvestigate());
+      this.customQueryToggleBtn = document.createElement("button");
+      this.customQueryToggleBtn.type = "button";
+      this.customQueryToggleBtn.id = "dr-debug-toggle-custom-query";
+      this.customQueryToggleBtn.className = "dr-debug-btn-icon-only";
+      this.customQueryToggleBtn.title = "Add custom diagnosis query / hint";
+      this.customQueryToggleBtn.innerHTML = `<span>\u270F\uFE0F</span>`;
+      this.customQueryToggleBtn.addEventListener("click", () => {
+        const isHidden = this.customQueryDrawer.style.display === "none";
+        this.customQueryDrawer.style.display = isHidden ? "block" : "none";
+        if (isHidden) this.queryInput.focus();
+      });
+      controlsRow.appendChild(this.queryButton);
+      controlsRow.appendChild(this.customQueryToggleBtn);
+      this.customQueryDrawer = document.createElement("div");
+      this.customQueryDrawer.className = "dr-debug-custom-query-drawer";
+      this.customQueryDrawer.id = "dr-debug-custom-query-drawer";
+      this.customQueryDrawer.style.display = "none";
       this.queryInput = document.createElement("input");
       this.queryInput.className = "dr-debug-input";
-      this.queryInput.placeholder = "Ask Dr. Debug (e.g. Why did /api/agents/resource/run fail?)...";
+      this.queryInput.id = "dr-debug-input";
+      this.queryInput.placeholder = "Optional custom goal (e.g. Why did /api/cart return 500?)...";
       this.queryInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") this.triggerInvestigate();
       });
-      this.queryButton = document.createElement("button");
-      this.queryButton.id = "dr-debug-query-submit";
-      this.queryButton.className = "dr-debug-btn";
-      this.queryButton.innerHTML = `<span>Diagnose</span>`;
-      this.queryButton.addEventListener("click", () => this.triggerInvestigate());
-      queryBox.appendChild(this.queryInput);
-      queryBox.appendChild(this.queryButton);
-      queryWrapper.appendChild(queryBox);
+      this.customQueryDrawer.appendChild(this.queryInput);
+      actionBar.appendChild(statusRow);
+      actionBar.appendChild(controlsRow);
+      actionBar.appendChild(this.customQueryDrawer);
       this.element.appendChild(header);
       this.element.appendChild(tabs);
       this.element.appendChild(this.tabInfoBackdrop);
       this.element.appendChild(this.tabInfoCard);
       this.element.appendChild(body);
-      this.element.appendChild(queryWrapper);
+      this.element.appendChild(actionBar);
       this.element.addEventListener("keydown", (e) => {
         if (e.key === "Escape" && this.isTabInfoVisible()) {
           e.stopPropagation();
@@ -11543,6 +11605,10 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     causalGraphView = new CausalGraphView();
     queryInput;
     queryButton;
+    actionStatusText;
+    actionStatusDot;
+    customQueryDrawer;
+    customQueryToggleBtn;
     tabTimeline;
     tabErrors;
     tabTriage;
@@ -11586,7 +11652,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     setBusy(busy) {
       this.queryInput.disabled = busy;
       this.queryButton.disabled = busy;
-      this.queryButton.innerHTML = busy ? `<span>Diagnosing...</span>` : `<span>Diagnose</span>`;
+      this.queryButton.innerHTML = busy ? `<span class="dr-debug-action-icon">\u23F3</span> <span class="dr-debug-action-label">Synthesizing Route & Solution...</span>` : `<span class="dr-debug-action-icon">\u26A1</span> <span class="dr-debug-action-label" id="dr-debug-btn-action-label">Generate AI Debug Route & Solution</span>`;
     }
     switchTab(tab) {
       if (this.isTabInfoVisible()) {
@@ -11742,28 +11808,86 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       title.className = "dr-debug-presc-title";
       title.innerHTML = `
       <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo" alt="Dr. Debug" style="display:inline-block; vertical-align:middle;" />
-      <span>Verified Root Cause Diagnosis</span>
+      <span>AI Incident Diagnosis & Solution</span>
     `;
+      const badges = document.createElement("div");
+      badges.className = "dr-debug-presc-badges";
+      const tokenChip = document.createElement("span");
+      tokenChip.className = "dr-debug-token-badge";
+      tokenChip.textContent = "Ponytail Protocol (95% Token Saver)";
       const confChip = document.createElement("div");
       confChip.className = "dr-debug-confidence-chip";
       confChip.textContent = `${Math.round((prescription.confidence ?? 0.95) * 100)}% Confidence`;
+      badges.appendChild(tokenChip);
+      badges.appendChild(confChip);
       header.appendChild(title);
-      header.appendChild(confChip);
-      const sectionFinding = document.createElement("div");
-      sectionFinding.className = "dr-debug-presc-section";
-      sectionFinding.innerHTML = `
-      <div class="dr-debug-presc-label">Diagnostic Finding</div>
-      <div class="dr-debug-presc-text">${this.escapeHtml(prescription.diagnosis)}</div>
+      header.appendChild(badges);
+      card.appendChild(header);
+      const tier1 = document.createElement("div");
+      tier1.className = "dr-debug-presc-tier";
+      tier1.innerHTML = `
+      <div class="dr-debug-tier-header">
+        <span class="dr-debug-tier-num">1</span>
+        <span class="dr-debug-presc-label">Debug Context (The Evidence)</span>
+      </div>
+      <div class="dr-debug-presc-text dr-debug-finding-text">${this.escapeHtml(prescription.diagnosis)}</div>
     `;
-      const sectionRCA = document.createElement("div");
-      sectionRCA.className = "dr-debug-presc-section";
-      sectionRCA.innerHTML = `
-      <div class="dr-debug-presc-label">Root Cause Mechanism</div>
+      if (prescription.debugContext && prescription.debugContext.length > 0) {
+        const ctxList = document.createElement("div");
+        ctxList.className = "dr-debug-context-list";
+        prescription.debugContext.forEach((item) => {
+          const chip = document.createElement("div");
+          chip.className = "dr-debug-context-item";
+          chip.innerHTML = `<span class="dr-debug-context-bullet">\u2022</span> <span>${this.escapeHtml(item)}</span>`;
+          ctxList.appendChild(chip);
+        });
+        tier1.appendChild(ctxList);
+      }
+      const rcaBox = document.createElement("div");
+      rcaBox.className = "dr-debug-rca-box";
+      rcaBox.innerHTML = `
+      <div class="dr-debug-presc-label" style="font-size: 9.5px; opacity: 0.85; margin-bottom: 2px;">Root Cause Mechanism</div>
       <div class="dr-debug-presc-text">${this.escapeHtml(prescription.rootCause)}</div>
     `;
-      card.appendChild(header);
-      card.appendChild(sectionFinding);
-      card.appendChild(sectionRCA);
+      tier1.appendChild(rcaBox);
+      card.appendChild(tier1);
+      const tier2 = document.createElement("div");
+      tier2.className = "dr-debug-presc-tier";
+      tier2.innerHTML = `
+      <div class="dr-debug-tier-header">
+        <span class="dr-debug-tier-num">2</span>
+        <span class="dr-debug-presc-label">Debug Route (Causal Investigation Path)</span>
+      </div>
+    `;
+      const routeFlow = document.createElement("div");
+      routeFlow.className = "dr-debug-route-flow";
+      const routeItems = prescription.debugRoute && prescription.debugRoute.length > 0 ? prescription.debugRoute : [
+        "User Interaction / Substrate Event",
+        prescription.diagnosis.slice(0, 70),
+        prescription.rootCause.slice(0, 70)
+      ];
+      routeItems.forEach((step, idx) => {
+        if (idx > 0) {
+          const arrow = document.createElement("span");
+          arrow.className = "dr-debug-route-arrow";
+          arrow.textContent = "\u2794";
+          routeFlow.appendChild(arrow);
+        }
+        const stepBadge = document.createElement("div");
+        stepBadge.className = "dr-debug-route-step";
+        stepBadge.innerHTML = `<span class="dr-debug-step-idx">${idx + 1}</span> <span>${this.escapeHtml(step)}</span>`;
+        routeFlow.appendChild(stepBadge);
+      });
+      tier2.appendChild(routeFlow);
+      card.appendChild(tier2);
+      const tier3 = document.createElement("div");
+      tier3.className = "dr-debug-presc-tier";
+      tier3.innerHTML = `
+      <div class="dr-debug-tier-header">
+        <span class="dr-debug-tier-num">3</span>
+        <span class="dr-debug-presc-label">Solution & Code Patch</span>
+      </div>
+    `;
       if (prescription.filesToModify && prescription.filesToModify.length > 0) {
         const sectionFiles = document.createElement("div");
         sectionFiles.className = "dr-debug-presc-section";
@@ -11773,18 +11897,17 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
           ${prescription.filesToModify.map((f) => this.escapeHtml(f)).join(" &nbsp;|&nbsp; ")}
         </div>
       `;
-        card.appendChild(sectionFiles);
+        tier3.appendChild(sectionFiles);
       }
       if (prescription.fix) {
         const sectionFix = document.createElement("div");
         sectionFix.className = "dr-debug-presc-section";
-        sectionFix.innerHTML = `<div class="dr-debug-presc-label">Prescribed Code Patch</div>`;
         const diffContainer = document.createElement("div");
         diffContainer.className = "dr-debug-prescription-diff";
         diffContainer.innerHTML = this.formatDiffHtml(prescription.fix);
         const copyBtn = document.createElement("button");
         copyBtn.className = "dr-debug-copy-btn";
-        const idle = `<span>Copy remediation plan</span>`;
+        const idle = `<span>Copy Remediation Plan</span>`;
         copyBtn.innerHTML = idle;
         this.bindCopyFeedback(
           copyBtn,
@@ -11794,26 +11917,26 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         );
         sectionFix.appendChild(diffContainer);
         sectionFix.appendChild(copyBtn);
-        card.appendChild(sectionFix);
+        tier3.appendChild(sectionFix);
       }
       const handoff = document.createElement("div");
       handoff.className = "dr-debug-presc-section dr-debug-handoff";
       handoff.innerHTML = `
-      <div class="dr-debug-presc-label">Hand off to a coding agent</div>
+      <div class="dr-debug-presc-label">Hand off to an external coding agent</div>
       <div class="dr-debug-handoff-desc">
-        Exports this whole session \u2014 every finding with its evidence, the causal chain, demangled stacks,
-        full HTTP transactions with a cURL reproduction, backend logs and the chronological timeline \u2014
-        as one Markdown brief for Claude Code, Antigravity or Cursor.
+        Exports this complete session \u2014 every finding with verified evidence, the causal debug route, demangled stacks,
+        cURL reproduction, backend Docker logs, and chronological timeline \u2014 as a surgical Markdown brief for Claude Code, Antigravity, or Cursor.
       </div>
     `;
       handoff.appendChild(
         this.makeSessionPromptButton(
           "dr-debug-copy-btn primary",
-          "Copy full brief for AI",
-          "Copy the complete session brief as Markdown"
+          "Copy surgical brief for AI",
+          "Copy the complete session brief as Markdown (Ponytail Protocol \u2014 95% Token Saver)"
         )
       );
-      card.appendChild(handoff);
+      tier3.appendChild(handoff);
+      card.appendChild(tier3);
       return card;
     }
     updateTriage(telemetry) {
@@ -11838,6 +11961,20 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       }
       const ctrl = this.getControllerInstance();
       const allRecords = ctrl?.getNetworkRecords?.() || [];
+      const errorCount = (telemetry.errors || []).length;
+      const failNetCount = allRecords.filter((r) => r.isFailed).length;
+      const totalIssues = errorCount + failNetCount;
+      if (this.actionStatusText && this.actionStatusDot) {
+        if (totalIssues > 0) {
+          this.actionStatusDot.className = "dr-debug-status-dot dot-err";
+          this.actionStatusText.textContent = `${totalIssues} active issue${totalIssues === 1 ? "" : "s"} detected (${errorCount} error${errorCount === 1 ? "" : "s"}, ${failNetCount} failed API${failNetCount === 1 ? "" : "s"})`;
+          this.queryButton?.classList.add("pulse");
+        } else {
+          this.actionStatusDot.className = "dr-debug-status-dot dot-ok";
+          this.actionStatusText.textContent = "Substrate healthy (no active runtime errors)";
+          this.queryButton?.classList.remove("pulse");
+        }
+      }
       if (telemetry.errors.length > 0) {
         for (const errItem of telemetry.errors) {
           const isObj = typeof errItem === "object" && errItem !== null;
@@ -12081,8 +12218,8 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       }, 1e3);
     }
     triggerInvestigate() {
-      const query = this.queryInput.value.trim();
-      if (!query) return;
+      const customQuery = this.queryInput.value.trim();
+      const query = customQuery || "Diagnose active incident, trace causal debug route, and synthesize verified code patch.";
       this.setBusy(true);
       this.switchTab("timeline");
       this.onInvestigateHandler(query);
@@ -13299,6 +13436,124 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   border-radius: 9999px;
 }
 
+.dr-debug-presc-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dr-debug-token-badge {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #a7f3d0;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.dr-debug-presc-tier {
+  background: rgba(4, 10, 8, 0.6);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dr-debug-tier-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.dr-debug-tier-num {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 800;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dr-debug-finding-text {
+  font-weight: 600;
+  color: #6ee7b7;
+}
+
+.dr-debug-context-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 0;
+}
+
+.dr-debug-context-item {
+  font-size: 11px;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 2px solid #10b981;
+  padding: 4px 8px;
+  border-radius: 0 4px 4px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.dr-debug-context-bullet {
+  color: #34d399;
+  font-weight: bold;
+}
+
+.dr-debug-rca-box {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(16, 185, 129, 0.2);
+}
+
+.dr-debug-route-flow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.dr-debug-route-step {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dr-debug-step-idx {
+  background: rgba(16, 185, 129, 0.25);
+  color: #34d399;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.dr-debug-route-arrow {
+  color: #34d399;
+  font-weight: bold;
+  font-size: 12px;
+}
+
 .dr-debug-presc-section {
   display: flex;
   flex-direction: column;
@@ -13527,13 +13782,88 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
    6. QUICK PROMPTS & INTERACTIVE QUERY BAR
    ========================================================================== */
 
-.dr-debug-query-wrapper {
-  background: rgba(8, 12, 22, 0.85);
+.dr-debug-query-wrapper,
+.dr-debug-action-bar {
+  background: rgba(8, 12, 22, 0.92);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 8px 12px;
+  backdrop-filter: blur(12px);
+}
+
+.dr-debug-action-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #94a3b8;
+  padding: 0 2px;
+}
+
+.dr-debug-action-controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.dr-debug-btn-action {
+  flex: 1;
+  background: linear-gradient(135deg, #0284c7 0%, #0d9488 100%);
+  color: #ffffff;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  box-shadow: 0 3px 12px rgba(13, 148, 136, 0.3);
+  padding: 8px 14px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dr-debug-btn-action:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #0f766e 100%);
+  box-shadow: 0 4px 16px rgba(13, 148, 136, 0.5);
+  transform: translateY(-1px);
+  border-color: #38bdf8;
+}
+
+.dr-debug-btn-action.pulse {
+  animation: drDebugActionPulse 2s infinite;
+}
+
+@keyframes drDebugActionPulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); border-color: rgba(239, 68, 68, 0.8); }
+  70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.4); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.dr-debug-btn-icon-only {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 7px 9px;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.dr-debug-btn-icon-only:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f1f5f9;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dr-debug-custom-query-drawer {
+  padding-top: 4px;
 }
 
 .dr-debug-chips-row {
@@ -18135,6 +18465,9 @@ Direction: ${finding.remediation}`
             options.onSaveSettings?.(settings);
           },
           onTestConnection: async (settings) => {
+            if (options.onTestConnection) {
+              return await options.onTestConnection(settings);
+            }
             return await this.testLLMConnection(settings);
           }
         });
@@ -18160,6 +18493,8 @@ Direction: ${finding.remediation}`
       this.options = { ...this.options, ...config };
       if (config.llmClient) {
         this.llmClient = config.llmClient;
+      } else if (this.llmClient && typeof this.llmClient.saveSettings === "function") {
+        void this.llmClient.saveSettings(config);
       } else if (config.liteRT || config.model && config.model.toLowerCase().includes("litert")) {
         this.llmClient = new LiteRTClient(config.liteRT || { modelName: config.model });
       } else if (config.apiKey || config.baseURL || config.model || config.provider) {
@@ -18181,6 +18516,9 @@ Direction: ${finding.remediation}`
       this.core = new DrDebugCore(this.controller, this.llmClient);
     }
     async testLLMConnection(config) {
+      if (this.options.onTestConnection) {
+        return await this.options.onTestConnection(config);
+      }
       const targetConfig = config ? { ...this.options, ...config } : this.options;
       if (this.llmClient && typeof this.llmClient.testConnection === "function") {
         return await this.llmClient.testConnection(targetConfig);
@@ -18287,7 +18625,9 @@ Direction: ${finding.remediation}`
             rootCause: result.rootCause,
             fix: result.fix || "",
             confidence: result.confidence,
-            filesToModify: result.filesToModify
+            filesToModify: result.filesToModify,
+            debugContext: result.debugContext,
+            debugRoute: result.debugRoute
           });
         }
         return result;
@@ -18609,7 +18949,29 @@ Direction: ${finding.remediation}`
         this.instance.updateLLMConfig({ llmClient: this.llmClient, ...settings });
         this.instance.getUI()?.updateSettings(settings);
         return;
-      } else if (settings.provider || settings.theme) {
+      }
+      if (!settings.hasApiKey) {
+        try {
+          const raw = localStorage.getItem("dr_debug_settings");
+          if (raw) {
+            const local = JSON.parse(raw);
+            if (local.apiKey) {
+              await this.llmClient.saveSettings(local);
+              this.instance.updateLLMConfig({ llmClient: this.llmClient, ...local });
+              this.instance.getUI()?.updateSettings({
+                ...local,
+                hasApiKey: true,
+                apiKeyMasked: "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" + local.apiKey.slice(-4),
+                apiKey: void 0
+                // Don't leak key into the UI state
+              });
+              return;
+            }
+          }
+        } catch {
+        }
+      }
+      if (settings.provider || settings.theme) {
         this.instance.getUI()?.updateSettings(settings);
       }
       if (attempt < 4) {
@@ -18643,8 +19005,12 @@ Direction: ${finding.remediation}`
       this.instance = new DrDebug({
         enableUI: true,
         enableMCP: true,
+        llmClient: this.llmClient,
         onSaveSettings: (settings) => {
           void this.llmClient.saveSettings(settings);
+        },
+        onTestConnection: async (settings) => {
+          return await this.llmClient.testConnection(settings);
         }
       });
       window.__DR_DEBUG__ = this.instance;

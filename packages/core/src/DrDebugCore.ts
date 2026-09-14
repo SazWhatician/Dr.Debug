@@ -1,5 +1,7 @@
 import type { DebugController } from '@dr-debug/controller'
 import type { ChatMessage, ILLMClient, ToolDefinition } from '@dr-debug/llms'
+import { LocalDiagnosticEngine } from './analysis/LocalDiagnosticEngine.js'
+import { generatePonytailDebugPrompt } from './analysis/SessionReport.js'
 import { getSystemPrompt } from './prompts/system_prompt.js'
 import { createDefaultTools } from './tools/index.js'
 import {
@@ -84,8 +86,10 @@ export class DrDebugCore {
       signal: options.signal
     }
 
-    // Build initial state snapshot
-    const initialDebugState = this.controller.serialize()
+    // Build initial state snapshot - Token-Minimizing Ponytail State
+    const snapshot = this.controller.getSnapshot()
+    const ponytailBrief = generatePonytailDebugPrompt(snapshot)
+    const initialDebugState = ponytailBrief || this.controller.serialize()
 
     const messages: ChatMessage[] = [
       {
@@ -253,6 +257,7 @@ export class DrDebugCore {
             synthesizedRootCause = primaryErr.stack || primaryErr.message
           }
 
+          const analysis = new LocalDiagnosticEngine().analyze(this.controller.getSnapshot())
           const concludedResult: InvestigationResult = {
             goal,
             status: 'resolved',
@@ -260,6 +265,12 @@ export class DrDebugCore {
             rootCause: synthesizedRootCause,
             fix: suggestedFix,
             confidence: 0.9,
+            filesToModify: analysis.filesToModify,
+            debugContext: [
+              primaryNet ? `Network: ${primaryNet.method} ${primaryNet.url} [HTTP ${primaryNet.status || 'ERR'}]` : '',
+              primaryErr ? `Console: ${primaryErr.message.slice(0, 100)}` : ''
+            ].filter(Boolean),
+            debugRoute: analysis.causalChain.length > 0 ? analysis.causalChain : undefined,
             steps,
             durationMs: Date.now() - startTime,
             finalMemory: cumulativeMemory
@@ -316,6 +327,7 @@ export class DrDebugCore {
       // Check if investigation is done
       if (actionName === 'done') {
         const finalData = memoryStore['finalResult'] || actionArgs
+        const analysis = new LocalDiagnosticEngine().analyze(this.controller.getSnapshot())
         const result: InvestigationResult = {
           goal,
           status: 'resolved',
@@ -323,7 +335,12 @@ export class DrDebugCore {
           rootCause: finalData.rootCause || 'Diagnostic conclusion reached.',
           fix: finalData.fix,
           confidence: finalData.confidence ?? 0.9,
-          filesToModify: finalData.filesToModify,
+          filesToModify: finalData.filesToModify || analysis.filesToModify,
+          debugContext: finalData.debugContext || [
+            finalData.diagnosis || '',
+            finalData.rootCause ? `Root Cause: ${finalData.rootCause.slice(0, 100)}` : ''
+          ].filter(Boolean),
+          debugRoute: finalData.debugRoute || (analysis.causalChain.length > 0 ? analysis.causalChain : undefined),
           steps,
           durationMs: Date.now() - startTime,
           finalMemory: cumulativeMemory

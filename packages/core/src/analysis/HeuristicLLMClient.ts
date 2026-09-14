@@ -194,6 +194,13 @@ export class HeuristicLLMClient implements ILLMClient {
   private buildConclusion(state: DebugState): PlannedStep {
     const analysis = this.engine.analyze(state)
 
+    const debugContext: string[] = []
+    if (analysis.headline) debugContext.push(analysis.headline)
+    const errors = state.console.entries.filter((e) => e.level === 'error')
+    if (errors.length > 0) debugContext.push(`Console: ${errors[0].message.slice(0, 110)}`)
+    const failedNet = state.network.records.filter((r) => r.isFailed || (r.status ?? 0) >= 400)
+    if (failedNet.length > 0) debugContext.push(`Network: ${failedNet[0].method} ${failedNet[0].url} → ${failedNet[0].status || 'FAILED'}`)
+
     return {
       tool: 'done',
       args: {
@@ -201,7 +208,9 @@ export class HeuristicLLMClient implements ILLMClient {
         rootCause: analysis.rootCause,
         fix: analysis.suggestedFix,
         confidence: analysis.confidence,
-        filesToModify: analysis.filesToModify
+        filesToModify: analysis.filesToModify,
+        debugContext: debugContext.length > 0 ? debugContext : undefined,
+        debugRoute: analysis.causalChain.length > 0 ? analysis.causalChain : undefined
       },
       hypothesis: analysis.hasEvidence
         ? `Every layer with evidence has been inspected. ${analysis.headline} is the earliest critical signal and the ${analysis.causalChain.length > 0 ? 'causal chain confirms' : 'evidence indicates'} it as the root cause. Writing up the conclusion.`

@@ -101,4 +101,28 @@ describe('Extension Core & DevTools Integration', () => {
 
     expect(saveResponse).toBeDefined()
   })
+
+  it('ContentScriptBridge passes BridgeLLMClient to DrDebug and preserves it across settings updates', () => {
+    const bridge = new ContentScriptBridge()
+    bridge.init()
+
+    const instance = bridge.getInstance()
+    expect(instance).toBeDefined()
+
+    // Test that updateLLMConfig preserves the bridge client instead of replacing it with an in-page OpenAIClient
+    const initialClient = (instance as any).llmClient
+    expect(initialClient).toBeDefined()
+    expect(typeof initialClient.saveSettings).toBe('function')
+
+    instance?.updateLLMConfig({
+      provider: 'groq',
+      apiKey: 'gsk_test_key_123',
+      model: 'openai/gpt-oss-120b'
+    })
+
+    // Must remain the bridge client, NOT an in-page OpenAIClient
+    expect((instance as any).llmClient).toBe(initialClient)
+
+    bridge.destroy()
+  })
 })

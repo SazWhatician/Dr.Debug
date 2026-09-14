@@ -20,6 +20,8 @@ export interface PrescriptionData {
   fix: string
   confidence?: number
   filesToModify?: string[]
+  debugContext?: string[]
+  debugRoute?: string[]
 }
 
 export type CockpitTabKey = 'timeline' | 'errors' | 'triage' | 'graph' | 'prescription' | 'docker'
@@ -147,6 +149,10 @@ export class CockpitPanel {
   private causalGraphView: CausalGraphView = new CausalGraphView()
   private queryInput: HTMLInputElement
   private queryButton: HTMLButtonElement
+  private actionStatusText!: HTMLElement
+  private actionStatusDot!: HTMLElement
+  private customQueryDrawer!: HTMLElement
+  private customQueryToggleBtn!: HTMLButtonElement
   private tabTimeline: HTMLButtonElement
   private tabErrors: HTMLButtonElement
   private tabTriage: HTMLButtonElement
@@ -379,37 +385,76 @@ export class CockpitPanel {
     }
 
 
-    // 4. Interactive Query Wrapper
-    const queryWrapper = document.createElement('div')
-    queryWrapper.className = 'dr-debug-query-wrapper'
+    // 4. Smart Diagnostic Action Bar
+    const actionBar = document.createElement('div')
+    actionBar.className = 'dr-debug-action-bar'
 
-    const queryBox = document.createElement('div')
-    queryBox.className = 'dr-debug-query-box'
+    const statusRow = document.createElement('div')
+    statusRow.className = 'dr-debug-action-status'
+
+    this.actionStatusDot = document.createElement('span')
+    this.actionStatusDot.className = 'dr-debug-status-dot dot-ok'
+
+    this.actionStatusText = document.createElement('span')
+    this.actionStatusText.className = 'dr-debug-status-text'
+    this.actionStatusText.id = 'dr-debug-action-status-text'
+    this.actionStatusText.textContent = 'Substrate ready'
+
+    statusRow.appendChild(this.actionStatusDot)
+    statusRow.appendChild(this.actionStatusText)
+
+    const controlsRow = document.createElement('div')
+    controlsRow.className = 'dr-debug-action-controls'
+
+    this.queryButton = document.createElement('button')
+    this.queryButton.id = 'dr-debug-query-submit'
+    this.queryButton.className = 'dr-debug-btn dr-debug-btn-action'
+    this.queryButton.innerHTML = `
+      <span class="dr-debug-action-icon">⚡</span>
+      <span class="dr-debug-action-label" id="dr-debug-btn-action-label">Generate AI Debug Route & Solution</span>
+    `
+    this.queryButton.addEventListener('click', () => this.triggerInvestigate())
+
+    this.customQueryToggleBtn = document.createElement('button')
+    this.customQueryToggleBtn.type = 'button'
+    this.customQueryToggleBtn.id = 'dr-debug-toggle-custom-query'
+    this.customQueryToggleBtn.className = 'dr-debug-btn-icon-only'
+    this.customQueryToggleBtn.title = 'Add custom diagnosis query / hint'
+    this.customQueryToggleBtn.innerHTML = `<span>✏️</span>`
+    this.customQueryToggleBtn.addEventListener('click', () => {
+      const isHidden = this.customQueryDrawer.style.display === 'none'
+      this.customQueryDrawer.style.display = isHidden ? 'block' : 'none'
+      if (isHidden) this.queryInput.focus()
+    })
+
+    controlsRow.appendChild(this.queryButton)
+    controlsRow.appendChild(this.customQueryToggleBtn)
+
+    this.customQueryDrawer = document.createElement('div')
+    this.customQueryDrawer.className = 'dr-debug-custom-query-drawer'
+    this.customQueryDrawer.id = 'dr-debug-custom-query-drawer'
+    this.customQueryDrawer.style.display = 'none'
 
     this.queryInput = document.createElement('input')
     this.queryInput.className = 'dr-debug-input'
-    this.queryInput.placeholder = 'Ask Dr. Debug (e.g. Why did /api/agents/resource/run fail?)...'
+    this.queryInput.id = 'dr-debug-input'
+    this.queryInput.placeholder = 'Optional custom goal (e.g. Why did /api/cart return 500?)...'
     this.queryInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') this.triggerInvestigate()
     })
 
-    this.queryButton = document.createElement('button')
-    this.queryButton.id = 'dr-debug-query-submit'
-    this.queryButton.className = 'dr-debug-btn'
-    this.queryButton.innerHTML = `<span>Diagnose</span>`
-    this.queryButton.addEventListener('click', () => this.triggerInvestigate())
+    this.customQueryDrawer.appendChild(this.queryInput)
 
-    queryBox.appendChild(this.queryInput)
-    queryBox.appendChild(this.queryButton)
-
-    queryWrapper.appendChild(queryBox)
+    actionBar.appendChild(statusRow)
+    actionBar.appendChild(controlsRow)
+    actionBar.appendChild(this.customQueryDrawer)
 
     this.element.appendChild(header)
     this.element.appendChild(tabs)
     this.element.appendChild(this.tabInfoBackdrop)
     this.element.appendChild(this.tabInfoCard)
     this.element.appendChild(body)
-    this.element.appendChild(queryWrapper)
+    this.element.appendChild(actionBar)
 
     this.element.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.isTabInfoVisible()) {
@@ -461,8 +506,8 @@ export class CockpitPanel {
     this.queryInput.disabled = busy
     this.queryButton.disabled = busy
     this.queryButton.innerHTML = busy
-      ? `<span>Diagnosing...</span>`
-      : `<span>Diagnose</span>`
+      ? `<span class="dr-debug-action-icon">⏳</span> <span class="dr-debug-action-label">Synthesizing Route & Solution...</span>`
+      : `<span class="dr-debug-action-icon">⚡</span> <span class="dr-debug-action-label" id="dr-debug-btn-action-label">Generate AI Debug Route & Solution</span>`
   }
 
   public switchTab(tab: CockpitTabKey): void {
@@ -650,6 +695,7 @@ export class CockpitPanel {
     const card = document.createElement('div')
     card.className = 'dr-debug-prescription-card'
 
+    // Header
     const header = document.createElement('div')
     header.className = 'dr-debug-presc-header'
 
@@ -657,33 +703,103 @@ export class CockpitPanel {
     title.className = 'dr-debug-presc-title'
     title.innerHTML = `
       <img src="${DR_DEBUG_LOGO}" class="dr-debug-logo" alt="Dr. Debug" style="display:inline-block; vertical-align:middle;" />
-      <span>Verified Root Cause Diagnosis</span>
+      <span>AI Incident Diagnosis & Solution</span>
     `
+
+    const badges = document.createElement('div')
+    badges.className = 'dr-debug-presc-badges'
+
+    const tokenChip = document.createElement('span')
+    tokenChip.className = 'dr-debug-token-badge'
+    tokenChip.textContent = 'Ponytail Protocol (95% Token Saver)'
 
     const confChip = document.createElement('div')
     confChip.className = 'dr-debug-confidence-chip'
     confChip.textContent = `${Math.round((prescription.confidence ?? 0.95) * 100)}% Confidence`
 
+    badges.appendChild(tokenChip)
+    badges.appendChild(confChip)
     header.appendChild(title)
-    header.appendChild(confChip)
+    header.appendChild(badges)
+    card.appendChild(header)
 
-    const sectionFinding = document.createElement('div')
-    sectionFinding.className = 'dr-debug-presc-section'
-    sectionFinding.innerHTML = `
-      <div class="dr-debug-presc-label">Diagnostic Finding</div>
-      <div class="dr-debug-presc-text">${this.escapeHtml(prescription.diagnosis)}</div>
+    // Tier 1: Debug Context (The Evidence)
+    const tier1 = document.createElement('div')
+    tier1.className = 'dr-debug-presc-tier'
+    tier1.innerHTML = `
+      <div class="dr-debug-tier-header">
+        <span class="dr-debug-tier-num">1</span>
+        <span class="dr-debug-presc-label">Debug Context (The Evidence)</span>
+      </div>
+      <div class="dr-debug-presc-text dr-debug-finding-text">${this.escapeHtml(prescription.diagnosis)}</div>
     `
 
-    const sectionRCA = document.createElement('div')
-    sectionRCA.className = 'dr-debug-presc-section'
-    sectionRCA.innerHTML = `
-      <div class="dr-debug-presc-label">Root Cause Mechanism</div>
+    if (prescription.debugContext && prescription.debugContext.length > 0) {
+      const ctxList = document.createElement('div')
+      ctxList.className = 'dr-debug-context-list'
+      prescription.debugContext.forEach((item) => {
+        const chip = document.createElement('div')
+        chip.className = 'dr-debug-context-item'
+        chip.innerHTML = `<span class="dr-debug-context-bullet">•</span> <span>${this.escapeHtml(item)}</span>`
+        ctxList.appendChild(chip)
+      })
+      tier1.appendChild(ctxList)
+    }
+
+    const rcaBox = document.createElement('div')
+    rcaBox.className = 'dr-debug-rca-box'
+    rcaBox.innerHTML = `
+      <div class="dr-debug-presc-label" style="font-size: 9.5px; opacity: 0.85; margin-bottom: 2px;">Root Cause Mechanism</div>
       <div class="dr-debug-presc-text">${this.escapeHtml(prescription.rootCause)}</div>
     `
+    tier1.appendChild(rcaBox)
+    card.appendChild(tier1)
 
-    card.appendChild(header)
-    card.appendChild(sectionFinding)
-    card.appendChild(sectionRCA)
+    // Tier 2: Debug Route (The Causal Chain)
+    const tier2 = document.createElement('div')
+    tier2.className = 'dr-debug-presc-tier'
+    tier2.innerHTML = `
+      <div class="dr-debug-tier-header">
+        <span class="dr-debug-tier-num">2</span>
+        <span class="dr-debug-presc-label">Debug Route (Causal Investigation Path)</span>
+      </div>
+    `
+
+    const routeFlow = document.createElement('div')
+    routeFlow.className = 'dr-debug-route-flow'
+
+    const routeItems = (prescription.debugRoute && prescription.debugRoute.length > 0)
+      ? prescription.debugRoute
+      : [
+          'User Interaction / Substrate Event',
+          prescription.diagnosis.slice(0, 70),
+          prescription.rootCause.slice(0, 70)
+        ]
+
+    routeItems.forEach((step, idx) => {
+      if (idx > 0) {
+        const arrow = document.createElement('span')
+        arrow.className = 'dr-debug-route-arrow'
+        arrow.textContent = '➔'
+        routeFlow.appendChild(arrow)
+      }
+      const stepBadge = document.createElement('div')
+      stepBadge.className = 'dr-debug-route-step'
+      stepBadge.innerHTML = `<span class="dr-debug-step-idx">${idx + 1}</span> <span>${this.escapeHtml(step)}</span>`
+      routeFlow.appendChild(stepBadge)
+    })
+    tier2.appendChild(routeFlow)
+    card.appendChild(tier2)
+
+    // Tier 3: Verified Solution & Code Patch
+    const tier3 = document.createElement('div')
+    tier3.className = 'dr-debug-presc-tier'
+    tier3.innerHTML = `
+      <div class="dr-debug-tier-header">
+        <span class="dr-debug-tier-num">3</span>
+        <span class="dr-debug-presc-label">Solution & Code Patch</span>
+      </div>
+    `
 
     if (prescription.filesToModify && prescription.filesToModify.length > 0) {
       const sectionFiles = document.createElement('div')
@@ -694,13 +810,12 @@ export class CockpitPanel {
           ${prescription.filesToModify.map((f) => this.escapeHtml(f)).join(' &nbsp;|&nbsp; ')}
         </div>
       `
-      card.appendChild(sectionFiles)
+      tier3.appendChild(sectionFiles)
     }
 
     if (prescription.fix) {
       const sectionFix = document.createElement('div')
       sectionFix.className = 'dr-debug-presc-section'
-      sectionFix.innerHTML = `<div class="dr-debug-presc-label">Prescribed Code Patch</div>`
 
       const diffContainer = document.createElement('div')
       diffContainer.className = 'dr-debug-prescription-diff'
@@ -708,7 +823,7 @@ export class CockpitPanel {
 
       const copyBtn = document.createElement('button')
       copyBtn.className = 'dr-debug-copy-btn'
-      const idle = `<span>Copy remediation plan</span>`
+      const idle = `<span>Copy Remediation Plan</span>`
       copyBtn.innerHTML = idle
       this.bindCopyFeedback(
         copyBtn,
@@ -719,28 +834,28 @@ export class CockpitPanel {
 
       sectionFix.appendChild(diffContainer)
       sectionFix.appendChild(copyBtn)
-      card.appendChild(sectionFix)
+      tier3.appendChild(sectionFix)
     }
 
     // Hand-off row: the full session brief for an external coding agent.
     const handoff = document.createElement('div')
     handoff.className = 'dr-debug-presc-section dr-debug-handoff'
     handoff.innerHTML = `
-      <div class="dr-debug-presc-label">Hand off to a coding agent</div>
+      <div class="dr-debug-presc-label">Hand off to an external coding agent</div>
       <div class="dr-debug-handoff-desc">
-        Exports this whole session — every finding with its evidence, the causal chain, demangled stacks,
-        full HTTP transactions with a cURL reproduction, backend logs and the chronological timeline —
-        as one Markdown brief for Claude Code, Antigravity or Cursor.
+        Exports this complete session — every finding with verified evidence, the causal debug route, demangled stacks,
+        cURL reproduction, backend Docker logs, and chronological timeline — as a surgical Markdown brief for Claude Code, Antigravity, or Cursor.
       </div>
     `
     handoff.appendChild(
       this.makeSessionPromptButton(
         'dr-debug-copy-btn primary',
-        'Copy full brief for AI',
-        'Copy the complete session brief as Markdown'
+        'Copy surgical brief for AI',
+        'Copy the complete session brief as Markdown (Ponytail Protocol — 95% Token Saver)'
       )
     )
-    card.appendChild(handoff)
+    tier3.appendChild(handoff)
+    card.appendChild(tier3)
 
     return card
   }
@@ -778,6 +893,22 @@ export class CockpitPanel {
 
     const ctrl = this.getControllerInstance()
     const allRecords = ctrl?.getNetworkRecords?.() || []
+
+    const errorCount = (telemetry.errors || []).length
+    const failNetCount = allRecords.filter((r: any) => r.isFailed).length
+    const totalIssues = errorCount + failNetCount
+
+    if (this.actionStatusText && this.actionStatusDot) {
+      if (totalIssues > 0) {
+        this.actionStatusDot.className = 'dr-debug-status-dot dot-err'
+        this.actionStatusText.textContent = `${totalIssues} active issue${totalIssues === 1 ? '' : 's'} detected (${errorCount} error${errorCount === 1 ? '' : 's'}, ${failNetCount} failed API${failNetCount === 1 ? '' : 's'})`
+        this.queryButton?.classList.add('pulse')
+      } else {
+        this.actionStatusDot.className = 'dr-debug-status-dot dot-ok'
+        this.actionStatusText.textContent = 'Substrate healthy (no active runtime errors)'
+        this.queryButton?.classList.remove('pulse')
+      }
+    }
 
     // 1. Errors section
     if (telemetry.errors.length > 0) {
@@ -1051,8 +1182,8 @@ export class CockpitPanel {
   }
 
   private triggerInvestigate(): void {
-    const query = this.queryInput.value.trim()
-    if (!query) return
+    const customQuery = this.queryInput.value.trim()
+    const query = customQuery || 'Diagnose active incident, trace causal debug route, and synthesize verified code patch.'
     this.setBusy(true)
     this.switchTab('timeline')
     this.onInvestigateHandler(query)

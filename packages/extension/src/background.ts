@@ -256,7 +256,16 @@ export class BackgroundWorker {
    */
   private async resolveClient(override?: StoredSettings): Promise<OpenAIClient> {
     const stored = await this.readSettings()
-    const settings = { ...stored, ...(override || {}) }
+    // Filter out undefined and empty string values so override never accidentally wipes stored fields
+    const cleanOverride: Record<string, any> = {}
+    if (override) {
+      for (const [k, v] of Object.entries(override)) {
+        if (v !== undefined && v !== '') {
+          cleanOverride[k] = v
+        }
+      }
+    }
+    const settings = { ...stored, ...cleanOverride }
     const isGroqKey = Boolean(settings.apiKey?.startsWith('gsk_'))
     const isGeminiKey = Boolean(settings.apiKey?.startsWith('AQ.') || settings.apiKey?.startsWith('AIza'))
     let provider = settings.provider
@@ -300,7 +309,12 @@ export class BackgroundWorker {
 
       case 'DR_DEBUG_SAVE_SETTINGS':
         if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-          chrome.storage.local.set(message.payload, () => {
+          const toSave = { ...(message.payload || {}) }
+          // If no new apiKey was typed in (e.g. saving other options), don't wipe existing key
+          if (!toSave.apiKey) {
+            delete toSave.apiKey
+          }
+          chrome.storage.local.set(toSave, () => {
             sendResponse({ status: 'saved' })
           })
           return true
@@ -332,12 +346,13 @@ export class BackgroundWorker {
       }
 
       case 'DR_DEBUG_TEST_CONNECTION': {
-        const override = message.payload?.settings || message.payload
-        this.resolveClient(override && Object.keys(override).length > 0 ? override : undefined)
+        const raw = message.payload?.settings || message.payload
+        const override = raw && typeof raw === 'object' && Object.keys(raw).length > 0 ? raw : undefined
+        this.resolveClient(override)
           .then((client) => client.testConnection())
           .then((result) => sendResponse({ result }))
           .catch((err: any) =>
-            sendResponse({ result: { success: false, message: err?.message || 'Failed' } })
+            sendResponse({ result: { success: false, message: err?.message || 'Connection test failed' } })
           )
         return true
       }

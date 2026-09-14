@@ -26,6 +26,16 @@ export const doneTool: DiagnosticTool = {
         type: 'array',
         items: { type: 'string' },
         description: 'List of filenames that need to be edited to resolve the bug.'
+      },
+      debugContext: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Key evidence facts and signals (e.g. failing endpoint, component stack frame).'
+      },
+      debugRoute: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Step-by-step causal investigation route linking user trigger, network, state, and UI.'
       }
     },
     required: ['diagnosis', 'rootCause', 'fix', 'confidence']
@@ -37,6 +47,8 @@ export const doneTool: DiagnosticTool = {
       fix: string
       confidence: number
       filesToModify?: string[]
+      debugContext?: string[]
+      debugRoute?: string[]
     },
     context: ToolContext
   ): Promise<string> {

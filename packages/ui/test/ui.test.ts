@@ -134,6 +134,54 @@ describe('DrDebugUI (Shadow DOM HUD & Cockpit)', () => {
     ui.destroy()
   })
 
+  it('invokes onInvestigate with default goal when 1-click action button is clicked', async () => {
+    const onInvestigate = vi.fn()
+    const ui = new DrDebugUI({ onInvestigate })
+    const shadow = ui.getShadowRoot()
+
+    const btn = shadow.querySelector('#dr-debug-query-submit') as HTMLButtonElement
+    expect(btn).toBeDefined()
+    btn.click()
+
+    expect(onInvestigate).toHaveBeenCalledWith('Diagnose active incident, trace causal debug route, and synthesize verified code patch.')
+
+    ui.destroy()
+  })
+
+  it('renders 3-tier prescription card with debugContext, debugRoute breadcrumb, and token badge', () => {
+    const ui = new DrDebugUI()
+    const shadow = ui.getShadowRoot()
+
+    ui.openCockpit()
+    ui.showPrescription({
+      diagnosis: 'Failed network transaction to /api/cart [HTTP 500]',
+      rootCause: 'Missing Authorization bearer token',
+      fix: '--- a/cart.ts\n+++ b/cart.ts\n- fetch("/api/cart")\n+ fetch("/api/cart", { headers: { Authorization: `Bearer ${token}` } })',
+      confidence: 0.96,
+      filesToModify: ['src/services/cart.ts'],
+      debugContext: ['Network: POST /api/cart → 500', 'Console: UnhandledRejection in CartProvider'],
+      debugRoute: ['User Click: #add-to-cart', 'Network: POST /api/cart (500)', 'State: CartContext crash', 'Render: UI frozen']
+    })
+
+    const prescriptionCard = shadow.querySelector('.dr-debug-prescription-card')
+    expect(prescriptionCard).toBeDefined()
+    expect(prescriptionCard?.textContent).toContain('Ponytail Protocol (95% Token Saver)')
+
+    const tiers = prescriptionCard!.querySelectorAll('.dr-debug-presc-tier')
+    expect(tiers.length).toBe(3)
+
+    const contextItems = prescriptionCard!.querySelectorAll('.dr-debug-context-item')
+    expect(contextItems.length).toBe(2)
+    expect(contextItems[0].textContent).toContain('Network: POST /api/cart → 500')
+
+    const routeSteps = prescriptionCard!.querySelectorAll('.dr-debug-route-step')
+    expect(routeSteps.length).toBe(4)
+    expect(routeSteps[0].textContent).toContain('User Click: #add-to-cart')
+    expect(routeSteps[1].textContent).toContain('Network: POST /api/cart (500)')
+
+    ui.destroy()
+  })
+
   it('switches to errors tab and renders 2D error matrix view with search and mode switcher', () => {
     const ui = new DrDebugUI()
     const shadow = ui.getShadowRoot()

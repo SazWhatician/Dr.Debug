@@ -32,6 +32,7 @@ export interface DrDebugOptions {
   enableDocker?: boolean
   mcpPort?: number
   onSaveSettings?: (settings: any) => void
+  onTestConnection?: (settings: any) => Promise<{ success: boolean; message: string }>
 }
 
 export class DrDebug {
@@ -89,6 +90,9 @@ export class DrDebug {
           options.onSaveSettings?.(settings)
         },
         onTestConnection: async (settings) => {
+          if (options.onTestConnection) {
+            return await options.onTestConnection(settings)
+          }
           return await this.testLLMConnection(settings)
         }
       })
@@ -124,6 +128,10 @@ export class DrDebug {
 
     if (config.llmClient) {
       this.llmClient = config.llmClient
+    } else if (this.llmClient && typeof (this.llmClient as any).saveSettings === 'function') {
+      // Retain the extension bridge client so calls stay routed through the background service worker.
+      // Do NOT replace with direct in-page OpenAIClient which would fail page CSP/CORS.
+      void (this.llmClient as any).saveSettings(config)
     } else if (config.liteRT || (config.model && config.model.toLowerCase().includes('litert'))) {
       this.llmClient = new LiteRTClient(config.liteRT || { modelName: config.model })
     } else if (config.apiKey || config.baseURL || config.model || config.provider) {
@@ -150,6 +158,9 @@ export class DrDebug {
   }
 
   public async testLLMConnection(config?: Partial<DrDebugOptions>): Promise<{ success: boolean; message: string }> {
+    if (this.options.onTestConnection) {
+      return await this.options.onTestConnection(config)
+    }
     const targetConfig = config ? { ...this.options, ...config } : this.options
 
     if (this.llmClient && typeof (this.llmClient as any).testConnection === 'function') {
@@ -281,7 +292,9 @@ export class DrDebug {
           rootCause: result.rootCause,
           fix: result.fix || '',
           confidence: result.confidence,
-          filesToModify: result.filesToModify
+          filesToModify: result.filesToModify,
+          debugContext: result.debugContext,
+          debugRoute: result.debugRoute
         })
       }
       return result

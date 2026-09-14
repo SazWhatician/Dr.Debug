@@ -67,7 +67,7 @@ window.addEventListener('message', async (event: MessageEvent) => {
 
       case 'TEST_CONNECTION': {
         const res = await askWorker('DR_DEBUG_TEST_CONNECTION', msg.payload)
-        respond(msg.id, true, res?.result)
+        respond(msg.id, true, res?.result || { success: false, message: 'No response from background worker' })
         break
       }
 

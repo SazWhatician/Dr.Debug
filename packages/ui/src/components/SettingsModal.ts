@@ -271,16 +271,15 @@ export class SettingsModal {
   private handleSave(): void {
     const settings = this.getFormValues()
 
-    // Persist to localStorage
+    // Persist to page localStorage as the resilient backup.
+    // This survives extension reloads/rebuilds, unlike chrome.storage.local
+    // which gets wiped when an unpacked extension is reloaded.
+    // The actual chrome.storage.local write happens via the bridge callback
+    // (onSave → onSaveSettings → BridgeLLMClient.saveSettings).
     try {
       localStorage.setItem('dr_debug_settings', JSON.stringify(settings))
     } catch {
-      // ignore
-    }
-
-    // Persist to chrome.storage.local if available
-    if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-      chrome.storage.local.set(settings)
+      // ignore (incognito, storage full, etc.)
     }
 
     this.options.onSave(settings)

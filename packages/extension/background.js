@@ -359,7 +359,15 @@ var BackgroundWorker = class {
    */
   async resolveClient(override) {
     const stored = await this.readSettings();
-    const settings = { ...stored, ...override || {} };
+    const cleanOverride = {};
+    if (override) {
+      for (const [k, v] of Object.entries(override)) {
+        if (v !== void 0 && v !== "") {
+          cleanOverride[k] = v;
+        }
+      }
+    }
+    const settings = { ...stored, ...cleanOverride };
     const isGroqKey = Boolean(settings.apiKey?.startsWith("gsk_"));
     const isGeminiKey = Boolean(settings.apiKey?.startsWith("AQ.") || settings.apiKey?.startsWith("AIza"));
     let provider = settings.provider;
@@ -393,7 +401,11 @@ var BackgroundWorker = class {
         break;
       case "DR_DEBUG_SAVE_SETTINGS":
         if (typeof chrome !== "undefined" && chrome.storage?.local) {
-          chrome.storage.local.set(message.payload, () => {
+          const toSave = { ...message.payload || {} };
+          if (!toSave.apiKey) {
+            delete toSave.apiKey;
+          }
+          chrome.storage.local.set(toSave, () => {
             sendResponse({ status: "saved" });
           });
           return true;
@@ -419,9 +431,10 @@ var BackgroundWorker = class {
         return true;
       }
       case "DR_DEBUG_TEST_CONNECTION": {
-        const override = message.payload?.settings || message.payload;
-        this.resolveClient(override && Object.keys(override).length > 0 ? override : void 0).then((client) => client.testConnection()).then((result) => sendResponse({ result })).catch(
-          (err) => sendResponse({ result: { success: false, message: err?.message || "Failed" } })
+        const raw = message.payload?.settings || message.payload;
+        const override = raw && typeof raw === "object" && Object.keys(raw).length > 0 ? raw : void 0;
+        this.resolveClient(override).then((client) => client.testConnection()).then((result) => sendResponse({ result })).catch(
+          (err) => sendResponse({ result: { success: false, message: err?.message || "Connection test failed" } })
         );
         return true;
       }

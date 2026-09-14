@@ -147,7 +147,35 @@ export class ContentScriptBridge {
       this.instance.updateLLMConfig({ llmClient: this.llmClient, ...settings })
       this.instance.getUI()?.updateSettings(settings)
       return
-    } else if (settings.provider || settings.theme) {
+    }
+
+    // chrome.storage.local gets wiped when the unpacked extension is reloaded.
+    // Recover saved settings from page localStorage and re-push them to the
+    // background worker so the key survives extension rebuilds.
+    if (!settings.hasApiKey) {
+      try {
+        const raw = localStorage.getItem('dr_debug_settings')
+        if (raw) {
+          const local = JSON.parse(raw)
+          if (local.apiKey) {
+            // Re-push the full settings to chrome.storage.local via the bridge
+            await this.llmClient.saveSettings(local)
+            this.instance.updateLLMConfig({ llmClient: this.llmClient, ...local })
+            this.instance.getUI()?.updateSettings({
+              ...local,
+              hasApiKey: true,
+              apiKeyMasked: '••••••••' + local.apiKey.slice(-4),
+              apiKey: undefined  // Don't leak key into the UI state
+            })
+            return
+          }
+        }
+      } catch {
+        // localStorage may be unavailable (incognito, etc.)
+      }
+    }
+
+    if (settings.provider || settings.theme) {
       this.instance.getUI()?.updateSettings(settings)
     }
 
@@ -185,14 +213,18 @@ export class ContentScriptBridge {
 
   private bootInstance(): void {
     if (this.instance) return
-    // No apiKey passed: with none saved, DrDebug falls back to its offline
-    // engine, and applySettings() upgrades it to the bridge client if a key
-    // exists. Either way the key stays out of this world.
+    // Always attach this.llmClient (BridgeLLMClient) so that all LLM queries,
+    // credential handling, and connection tests route through the background
+    // worker where CSP connect-src and CORS do not apply.
     this.instance = new DrDebug({
       enableUI: true,
       enableMCP: true,
+      llmClient: this.llmClient,
       onSaveSettings: (settings) => {
         void this.llmClient.saveSettings(settings)
+      },
+      onTestConnection: async (settings) => {
+        return await this.llmClient.testConnection(settings)
       }
     })
     ;(window as any).__DR_DEBUG__ = this.instance

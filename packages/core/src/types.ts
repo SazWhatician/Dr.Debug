@@ -69,6 +69,8 @@ export interface InvestigationResult {
   fix?: string
   confidence: number
   filesToModify?: string[]
+  debugContext?: string[]
+  debugRoute?: string[]
   steps: AgentStep[]
   durationMs: number
   finalMemory: string
