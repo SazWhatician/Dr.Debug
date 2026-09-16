@@ -1,6 +1,9 @@
 import type { DebugController } from '@dr-debug/controller'
 import { generatePonytailDebugPrompt, generateSessionDebugPrompt, LocalDiagnosticEngine } from '@dr-debug/core'
+import { AudioChimes } from './components/AudioChimes.js'
 import { CockpitPanel, type CockpitTabKey, type PrescriptionData, type StepItem } from './components/CockpitPanel.js'
+import { IncidentExporter } from './components/IncidentExporter.js'
+import { StethoscopeInspector } from './components/StethoscopeInspector.js'
 import type { DrDebugTheme } from './components/SettingsModal.js'
 import type { CausalErrorGraph } from './components/CausalGraphView.js'
 import { FloatingPill } from './components/FloatingPill.js'
@@ -21,6 +24,9 @@ export class DrDebugUI {
   private shadowRoot: ShadowRoot
   private pill: FloatingPill
   private cockpit: CockpitPanel
+  private audioChimes: AudioChimes
+  private incidentExporter: IncidentExporter
+  private stethoscope: StethoscopeInspector
   private getController?: () => DebugController | undefined
   private engine = new LocalDiagnosticEngine()
   private container?: HTMLElement
@@ -29,18 +35,20 @@ export class DrDebugUI {
 
   constructor(options: DrDebugUIOptions = {}) {
     this.getController = options.getController
+    this.audioChimes = new AudioChimes()
+    this.incidentExporter = new IncidentExporter()
+    this.stethoscope = new StethoscopeInspector({
+      onElementInspected: (info) => {
+        this.cockpit.openCustomQuery(`Inspect component: <${info.tagName}${info.id ? '#' + info.id : ''}>`)
+        this.openCockpit()
+      }
+    })
 
     // Check if #dr-debug-root already exists
     let host = document.getElementById('dr-debug-root') as HTMLElement | null
     if (!host) {
       host = document.createElement('div')
       host.id = 'dr-debug-root'
-      // Use setProperty with 'important' so page stylesheets cannot hide, collapse, or clip the host
-      host.style.setProperty('all', 'initial', 'important')
-      host.style.setProperty('position', 'fixed', 'important')
-      host.style.setProperty('top', '0', 'important')
-      host.style.setProperty('left', '0', 'important')
-      host.style.setProperty('width', '0', 'important')
       host.style.setProperty('height', '0', 'important')
       host.style.setProperty('z-index', '2147483647', 'important')
       host.style.setProperty('pointer-events', 'none', 'important')
@@ -99,13 +107,16 @@ export class DrDebugUI {
       getSessionPrompt: options.getSessionPrompt || (() => this.buildSessionPrompt()),
       onSaveSettings: options.onSaveSettings,
       onTestConnection: options.onTestConnection,
-      onThemeChange: (theme) => this.pill.setTheme(theme)
+      onThemeChange: (theme) => this.pill.setTheme(theme),
+      audioChimes: this.audioChimes,
+      stethoscopeInspector: this.stethoscope,
+      incidentExporter: this.incidentExporter
     })
 
     // Floating Pill
     this.pill = new FloatingPill(() => {
       this.cockpit.toggle()
-    })
+    }, this.audioChimes)
     this.pill.setTheme(this.cockpit.getTheme())
 
     this.shadowRoot.appendChild(this.pill.getElement())
@@ -214,6 +225,34 @@ export class DrDebugUI {
 
   public updateSettings(settings: any): void {
     this.cockpit.updateSettings(settings)
+  }
+
+  public toggleStethoscope(): boolean {
+    return this.stethoscope.toggle()
+  }
+
+  public exportIncidentBundle(): void {
+    this.cockpit.exportIncidentBundle()
+  }
+
+  public async copyGitHubIssue(): Promise<boolean> {
+    return this.cockpit.copyGitHubIssue()
+  }
+
+  public toggleSound(): boolean {
+    return this.audioChimes.toggleSound()
+  }
+
+  public getAudioChimes(): AudioChimes {
+    return this.audioChimes
+  }
+
+  public getStethoscopeInspector(): StethoscopeInspector {
+    return this.stethoscope
+  }
+
+  public getIncidentExporter(): IncidentExporter {
+    return this.incidentExporter
   }
 
   private buildSessionPrompt(): string {
@@ -417,6 +456,8 @@ export class DrDebugUI {
   }
 
   public destroy(): void {
+    this.stethoscope.destroy()
+    this.audioChimes.destroy()
     if (this.observer) {
       this.observer.disconnect()
       this.observer = undefined

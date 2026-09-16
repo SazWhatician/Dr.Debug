@@ -9595,6 +9595,154 @@ ${msg.content}<end_of_turn>
   // packages/ui/src/assets/logo.ts
   var DR_DEBUG_LOGO = "data:image/png;base64,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";
 
+  // packages/ui/src/components/AudioChimes.ts
+  var AudioChimes = class {
+    ctx = null;
+    isEnabled = true;
+    constructor(enabled = true) {
+      this.isEnabled = enabled;
+      try {
+        if (typeof localStorage !== "undefined") {
+          const stored = localStorage.getItem("dr_debug_sound_enabled");
+          if (stored !== null) {
+            this.isEnabled = stored === "true";
+          }
+        }
+      } catch {
+      }
+    }
+    initContext() {
+      if (this.ctx) return this.ctx;
+      try {
+        if (typeof window !== "undefined") {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) {
+            this.ctx = new AudioCtx();
+          }
+        }
+      } catch {
+      }
+      return this.ctx;
+    }
+    /**
+     * Subtle sci-fi alert chime triggered on red incident detection
+     * Smooth dual-frequency frequency slide (880Hz -> 440Hz) with exponential gain decay
+     */
+    playIncidentAlert() {
+      if (!this.isEnabled || typeof window === "undefined") return;
+      const ctx = this.initContext();
+      if (!ctx) return;
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {
+        });
+      }
+      try {
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(440, now + 0.09);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(1e-4, now + 0.12);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      } catch {
+      }
+    }
+    /**
+     * Ascending gentle harmonic chime when issues resolve or healthy state restored
+     */
+    playResolveChime() {
+      if (!this.isEnabled || typeof window === "undefined") return;
+      const ctx = this.initContext();
+      if (!ctx) return;
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {
+        });
+      }
+      try {
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.1);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(1e-4, now + 0.16);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.16);
+      } catch {
+      }
+    }
+    /**
+     * Delicate tactile micro-tick for HUD toggles and button presses
+     */
+    playClickSound() {
+      if (!this.isEnabled || typeof window === "undefined") return;
+      const ctx = this.initContext();
+      if (!ctx) return;
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {
+        });
+      }
+      try {
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(1200, now);
+        osc.frequency.exponentialRampToValueAtTime(600, now + 0.02);
+        gain.gain.setValueAtTime(0.04, now);
+        gain.gain.exponentialRampToValueAtTime(1e-4, now + 0.035);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.035);
+      } catch {
+      }
+    }
+    toggleSound() {
+      this.isEnabled = !this.isEnabled;
+      try {
+        if (typeof localStorage !== "undefined") {
+          localStorage.setItem("dr_debug_sound_enabled", String(this.isEnabled));
+        }
+      } catch {
+      }
+      if (this.isEnabled) {
+        this.playClickSound();
+      }
+      return this.isEnabled;
+    }
+    setEnabled(enabled) {
+      this.isEnabled = enabled;
+      try {
+        if (typeof localStorage !== "undefined") {
+          localStorage.setItem("dr_debug_sound_enabled", String(this.isEnabled));
+        }
+      } catch {
+      }
+    }
+    getIsEnabled() {
+      return this.isEnabled;
+    }
+    destroy() {
+      if (this.ctx) {
+        try {
+          this.ctx.close().catch(() => {
+          });
+        } catch {
+        }
+        this.ctx = null;
+      }
+    }
+  };
+
   // packages/ui/src/components/DockerDashboardView.ts
   var DockerDashboardView = class {
     element;
@@ -10838,6 +10986,352 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     }
   };
 
+  // packages/ui/src/components/IncidentExporter.ts
+  var IncidentExporter = class {
+    /**
+     * Generates a self-contained, zero-dependency HTML document and triggers browser download
+     */
+    exportHTML(data, filename) {
+      const html = this.buildHTMLReport(data);
+      if (typeof window !== "undefined" && typeof document !== "undefined") {
+        try {
+          const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = filename || `dr-debug-incident-${Date.now()}.html`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          console.warn("Dr. Debug: Failed to trigger HTML download", err);
+        }
+      }
+      return html;
+    }
+    /**
+     * Formats incident data as GitHub/Linear Flavored Markdown and copies to clipboard
+     */
+    async copyGitHubIssue(data) {
+      const md = this.buildGitHubMarkdown(data);
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        try {
+          await navigator.clipboard.writeText(md);
+          return true;
+        } catch {
+        }
+      }
+      if (typeof document !== "undefined") {
+        try {
+          const textarea = document.createElement("textarea");
+          textarea.value = md;
+          textarea.style.position = "fixed";
+          textarea.style.opacity = "0";
+          document.body.appendChild(textarea);
+          textarea.select();
+          const success = document.execCommand("copy");
+          document.body.removeChild(textarea);
+          return success;
+        } catch {
+          return false;
+        }
+      }
+      return false;
+    }
+    buildGitHubMarkdown(data) {
+      const rx = data.prescription;
+      const lines = [];
+      lines.push(`# \u{1FA7A} Dr. Debug Incident Report`);
+      lines.push(`**Target URL:** \`${data.url}\` | **Recorded:** ${data.timestamp}`);
+      lines.push(`**Environment:** ${data.userAgent} (${data.viewport.width}x${data.viewport.height})`);
+      lines.push("");
+      lines.push(`## \u{1F4CA} Incident Telemetry Summary`);
+      lines.push(`- **Console Errors:** ${data.metrics.errorCount}`);
+      lines.push(`- **Failed Network Requests:** ${data.metrics.failedNetCount}`);
+      lines.push(`- **Slow Network Requests:** ${data.metrics.slowNetCount}`);
+      if (data.metrics.heapMB) lines.push(`- **JS Heap Usage:** ${data.metrics.heapMB} MB`);
+      lines.push("");
+      if (rx?.rootCause) {
+        lines.push(`## \u{1F4A5} Root Cause Analysis (AI Diagnosed)`);
+        lines.push(rx.rootCause);
+        lines.push("");
+      }
+      if (rx?.codePatches && rx.codePatches.length > 0) {
+        lines.push(`## \u{1F6E0}\uFE0F Suggested Code Fix`);
+        for (const patch of rx.codePatches) {
+          lines.push(`### File: \`${patch.file}\``);
+          lines.push("```diff");
+          lines.push(patch.diff);
+          lines.push("```");
+        }
+        lines.push("");
+      }
+      if (data.interactions && data.interactions.length > 0) {
+        lines.push(`## \u{1F4CB} User Interaction Replay (Reproduction Trace)`);
+        lines.push("| Event | Target | Details |");
+        lines.push("|---|---|---|");
+        for (const ev of data.interactions.slice(-15)) {
+          lines.push(`| \`${ev.type}\` | \`${ev.target || "-"}\` | ${ev.detail || "-"} |`);
+        }
+        lines.push("");
+      }
+      if (data.errors && data.errors.length > 0) {
+        lines.push(`## \u{1F6A8} Console Errors & Stack Traces`);
+        for (const err of data.errors.slice(0, 5)) {
+          lines.push(`\`\`\``);
+          lines.push(err.message);
+          if (err.stack) lines.push(err.stack);
+          lines.push(`\`\`\``);
+        }
+        lines.push("");
+      }
+      if (data.networkRequests && data.networkRequests.length > 0) {
+        lines.push(`## \u{1F310} Network Anomalies`);
+        lines.push("| Status | Method | URL | Duration |");
+        lines.push("|---|---|---|---|");
+        for (const req of data.networkRequests.slice(0, 10)) {
+          lines.push(`| \`${req.status}\` | ${req.method} | \`${req.url}\` | ${req.durationMs}ms |`);
+        }
+        lines.push("");
+      }
+      lines.push(`---`);
+      lines.push(`*Generated autonomously by [Dr. Debug](https://github.com/SazWhatician/Dr.Debug)*`);
+      return lines.join("\n");
+    }
+    buildHTMLReport(data) {
+      const rawJson = JSON.stringify(data, null, 2).replace(/</g, "\\u003c").replace(/>/g, "\\u003e");
+      const errorsHtml = data.errors.map((err) => `
+      <div class="card err-card">
+        <div class="err-title">${this.escape(err.message)}</div>
+        ${err.stack ? `<pre class="code-block">${this.escape(err.stack)}</pre>` : ""}
+      </div>
+    `).join("");
+      const netHtml = data.networkRequests.map((req) => `
+      <tr>
+        <td><span class="badge ${req.status >= 400 ? "badge-err" : "badge-warn"}">${req.status}</span></td>
+        <td><strong>${this.escape(req.method)}</strong></td>
+        <td class="mono-url">${this.escape(req.url)}</td>
+        <td>${req.durationMs}ms</td>
+      </tr>
+    `).join("");
+      const interactionHtml = data.interactions.slice(-20).map((ev) => `
+      <div class="timeline-row">
+        <span class="timeline-badge">${this.escape(ev.type)}</span>
+        <span class="timeline-target">${this.escape(ev.target || "window")}</span>
+        <span class="timeline-detail">${this.escape(ev.detail || "")}</span>
+      </div>
+    `).join("");
+      const patchesHtml = (data.prescription?.codePatches || []).map((p) => `
+      <div class="patch-box">
+        <div class="patch-file">\u{1F4C4} ${this.escape(p.file)}</div>
+        <pre class="code-diff">${this.escape(p.diff)}</pre>
+      </div>
+    `).join("");
+      return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>\u{1FA7A} Dr. Debug Incident Report \u2014 ${this.escape(data.url)}</title>
+  <style>
+    :root {
+      --bg: #07090e;
+      --card: rgba(15, 20, 31, 0.85);
+      --border: rgba(56, 189, 248, 0.2);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #00f0ff;
+      --err: #f43f5e;
+      --warn: #fbbf24;
+      --ok: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+      padding: 32px 20px;
+    }
+    .container { max-width: 1080px; margin: 0 auto; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand h1 { font-size: 22px; font-weight: 800; letter-spacing: 0.5px; color: #fff; }
+    .brand span { color: var(--accent); font-size: 13px; font-family: monospace; }
+    .meta-tag {
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--accent);
+      font-family: monospace;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+    .stat-val { font-size: 26px; font-weight: 800; font-family: monospace; margin-top: 4px; }
+    .stat-val.err { color: var(--err); }
+    .stat-val.warn { color: var(--warn); }
+    .stat-val.ok { color: var(--ok); }
+    .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+    h2 { font-size: 17px; font-weight: 700; margin: 24px 0 12px 0; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .rca-box { border-left: 4px solid var(--accent); }
+    .code-block, .code-diff {
+      background: #020408;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: ui-monospace, 'JetBrains Mono', Menlo, monospace;
+      font-size: 12px;
+      overflow-x: auto;
+      margin-top: 8px;
+      white-space: pre-wrap;
+    }
+    .patch-box { margin-top: 10px; }
+    .patch-file { font-size: 13px; font-weight: 600; color: var(--accent); font-family: monospace; }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    th { color: var(--muted); text-transform: uppercase; font-size: 11px; font-weight: 600; }
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: monospace;
+    }
+    .badge-err { background: rgba(244,63,94,0.2); color: var(--err); border: 1px solid rgba(244,63,94,0.4); }
+    .badge-warn { background: rgba(251,191,36,0.2); color: var(--warn); border: 1px solid rgba(251,191,36,0.4); }
+    .mono-url { font-family: monospace; word-break: break-all; }
+    .timeline-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 12px;
+    }
+    .timeline-badge {
+      font-family: monospace;
+      background: rgba(255,255,255,0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--accent);
+      font-size: 10.5px;
+    }
+    .timeline-target { font-family: monospace; color: #fff; font-weight: 600; }
+    .timeline-detail { color: var(--muted); font-size: 11px; }
+    footer { margin-top: 40px; border-top: 1px solid var(--border); padding-top: 16px; font-size: 12px; color: var(--muted); text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <h1>\u{1FA7A} DR. DEBUG</h1>
+        <span>// INCIDENT REPLAY BUNDLE</span>
+      </div>
+      <div class="meta-tag">${this.escape(data.timestamp)}</div>
+    </header>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Console Errors</div>
+        <div class="stat-val ${data.metrics.errorCount > 0 ? "err" : "ok"}">${data.metrics.errorCount}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Failed Requests</div>
+        <div class="stat-val ${data.metrics.failedNetCount > 0 ? "err" : "ok"}">${data.metrics.failedNetCount}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Slow Endpoints</div>
+        <div class="stat-val ${data.metrics.slowNetCount > 0 ? "warn" : "ok"}">${data.metrics.slowNetCount}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Heap Memory</div>
+        <div class="stat-val ok">${data.metrics.heapMB || 48} MB</div>
+      </div>
+    </div>
+
+    ${data.prescription?.rootCause ? `
+      <h2>\u{1F4A5} AI Root Cause Analysis</h2>
+      <div class="card rca-box">
+        <p>${this.escape(data.prescription.rootCause)}</p>
+        ${patchesHtml}
+      </div>
+    ` : ""}
+
+    ${data.interactions.length > 0 ? `
+      <h2>\u{1F4CB} Interaction Replay Timeline</h2>
+      <div class="card">
+        ${interactionHtml}
+      </div>
+    ` : ""}
+
+    ${data.errors.length > 0 ? `
+      <h2>\u{1F6A8} Console Errors</h2>
+      <div>${errorsHtml}</div>
+    ` : ""}
+
+    ${data.networkRequests.length > 0 ? `
+      <h2>\u{1F310} Network Anomalies</h2>
+      <div class="card" style="padding: 0; overflow-x: auto;">
+        <table>
+          <thead>
+            <tr><th>Status</th><th>Method</th><th>URL</th><th>Duration</th></tr>
+          </thead>
+          <tbody>
+            ${netHtml}
+          </tbody>
+        </table>
+      </div>
+    ` : ""}
+
+    <footer>
+      Report generated autonomously by <strong>Dr. Debug</strong> \xB7 Target: <code>${this.escape(data.url)}</code>
+    </footer>
+  </div>
+
+  <script id="dr-debug-raw-bundle" type="application/json">
+${rawJson}
+  <\/script>
+</body>
+</html>`;
+    }
+    escape(str) {
+      if (!str) return "";
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+  };
+
   // packages/ui/src/components/SettingsModal.ts
   var SettingsModal = class {
     constructor(options) {
@@ -10850,6 +11344,9 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     }
     element;
     themeSelect;
+    soundSelect;
+    soundToggleBtn;
+    isSoundEnabled = true;
     providerSelect;
     apiKeyInput;
     apiKeyGroup;
@@ -10883,9 +11380,23 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     getTheme() {
       return this.themeSelect?.value || "dr-debug";
     }
+    setSoundEnabled(enabled) {
+      this.isSoundEnabled = enabled;
+      if (this.soundSelect) this.soundSelect.value = enabled ? "enabled" : "muted";
+      if (this.soundToggleBtn) {
+        this.soundToggleBtn.innerHTML = enabled ? "\u{1F514} Sound: Enabled" : "\u{1F515} Sound: Muted";
+        this.soundToggleBtn.style.color = enabled ? "#34d399" : "#94a3b8";
+      }
+    }
+    getSoundEnabled() {
+      return this.isSoundEnabled;
+    }
     updateSettings(settings) {
       if (!settings) return;
       if (settings.theme) this.setTheme(settings.theme);
+      if (settings.soundEnabled !== void 0) {
+        this.setSoundEnabled(settings.soundEnabled);
+      }
       if (settings.provider && this.providerSelect) {
         this.providerSelect.value = settings.provider;
         this.handleProviderChange();
@@ -10918,13 +11429,25 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 
         <div class="dr-debug-settings-body">
           <div class="dr-debug-settings-groupbox">
-            <div class="dr-debug-settings-groupbox-title">Display &amp; Appearance</div>
+            <div class="dr-debug-settings-groupbox-title">Display &amp; Audio</div>
             <div class="dr-debug-form-group">
               <label class="dr-debug-form-label">Cockpit Theme</label>
               <select class="dr-debug-form-select" id="dr-debug-theme">
                 <option value="dr-debug" selected>Dr.Debug (original)</option>
                 <option value="minimal-glass">Windows XP (Luna Blue)</option>
                 <option value="monotone-skeuomorphic">Monotone skeuomorphism (darker theme)</option>
+              </select>
+            </div>
+            <div class="dr-debug-form-group">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <label class="dr-debug-form-label" style="margin-bottom:0;">Tactile Audio HUD</label>
+                <button type="button" id="dr-debug-btn-sound-toggle" class="dr-debug-btn-outline" style="padding: 2px 8px; font-size: 11px; cursor: pointer;">
+                  \u{1F514} Sound: Enabled
+                </button>
+              </div>
+              <select class="dr-debug-form-select" id="dr-debug-sound">
+                <option value="enabled" selected>Sound FX Enabled (Tactile audio chimes on incident)</option>
+                <option value="muted">Muted (Silent HUD)</option>
               </select>
             </div>
           </div>
@@ -10992,6 +11515,27 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.themeSelect.addEventListener("change", () => {
         const theme = this.themeSelect.value || "dr-debug";
         this.options.onThemeChange?.(theme);
+      });
+      this.soundSelect = this.element.querySelector("#dr-debug-sound");
+      this.soundToggleBtn = this.element.querySelector("#dr-debug-btn-sound-toggle");
+      const syncSoundUI = (enabled) => {
+        this.isSoundEnabled = enabled;
+        if (this.soundSelect) this.soundSelect.value = enabled ? "enabled" : "muted";
+        if (this.soundToggleBtn) {
+          this.soundToggleBtn.innerHTML = enabled ? "\u{1F514} Sound: Enabled" : "\u{1F515} Sound: Muted";
+          this.soundToggleBtn.style.color = enabled ? "#34d399" : "#94a3b8";
+        }
+        try {
+          localStorage.setItem("dr_debug_sound_fx", enabled ? "true" : "false");
+        } catch {
+        }
+        this.options.onSoundChange?.(enabled);
+      };
+      this.soundSelect?.addEventListener("change", () => {
+        syncSoundUI(this.soundSelect.value === "enabled");
+      });
+      this.soundToggleBtn?.addEventListener("click", () => {
+        syncSoundUI(!this.isSoundEnabled);
       });
       this.providerSelect = this.element.querySelector("#dr-debug-provider");
       this.apiKeyInput = this.element.querySelector("#dr-debug-api-key");
@@ -11090,6 +11634,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       }
       const baseURL = this.baseURLInput.value.trim() || void 0;
       const theme = this.themeSelect?.value || "dr-debug";
+      const soundEnabled = this.soundSelect ? this.soundSelect.value === "enabled" : this.isSoundEnabled;
       return {
         provider,
         apiKey: apiKey || void 0,
@@ -11097,6 +11642,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         model,
         baseURL,
         theme,
+        soundEnabled,
         enableUI: true
       };
     }
@@ -11109,6 +11655,13 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         } catch {
         }
       }
+      try {
+        const savedSound = localStorage.getItem("dr_debug_sound_fx");
+        if (savedSound !== null) {
+          this.setSoundEnabled(savedSound !== "false");
+        }
+      } catch {
+      }
       if (loaded) {
         if (loaded.model === "llama-3.3-70b-versatile") {
           loaded.model = "openai/gpt-oss-120b";
@@ -11116,6 +11669,9 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         if (loaded.hasApiKey) {
           this.hasSavedApiKey = true;
           this.apiKeyInput.placeholder = loaded.apiKeyMasked || "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022 (Configured via Extension)";
+        }
+        if (loaded.soundEnabled !== void 0) {
+          this.setSoundEnabled(Boolean(loaded.soundEnabled));
         }
         if (loaded.theme && this.themeSelect) {
           this.themeSelect.value = loaded.theme;
@@ -11357,6 +11913,9 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.options = options;
       this.onInvestigateHandler = options.onInvestigate;
       this.getSessionPrompt = options.getSessionPrompt;
+      this.audioChimes = options.audioChimes || new AudioChimes();
+      this.stethoscopeInspector = options.stethoscopeInspector;
+      this.incidentExporter = options.incidentExporter || new IncidentExporter();
       this.element = document.createElement("div");
       this.element.className = "dr-debug-modal hidden";
       const header = document.createElement("div");
@@ -11387,6 +11946,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       );
       this.settingsBtn = document.createElement("button");
       this.settingsBtn.className = "dr-debug-close-btn";
+      this.settingsBtn.id = "dr-debug-settings-btn";
       this.settingsBtn.innerHTML = "\u2699";
       this.settingsBtn.title = "AI Settings & API Keys";
       this.settingsBtn.addEventListener("click", () => this.settingsModal.toggle());
@@ -11454,7 +12014,23 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.triageContainer.style.display = "none";
       this.triageContainer.style.flexDirection = "column";
       this.triageContainer.style.gap = "10px";
-      this.triageContainer.appendChild(this.createInTabHeader("triage", "Telemetry & Health Substrate", "dot-sys"));
+      const initialTriageWrapper = document.createElement("div");
+      initialTriageWrapper.style.display = "flex";
+      initialTriageWrapper.style.justifyContent = "space-between";
+      initialTriageWrapper.style.alignItems = "center";
+      initialTriageWrapper.appendChild(this.createInTabHeader("triage", "Telemetry & Health Substrate", "dot-sys"));
+      const initExportBtn = document.createElement("button");
+      initExportBtn.className = "dr-debug-btn-outline";
+      initExportBtn.id = "dr-debug-tab-export-html-init";
+      initExportBtn.innerHTML = "<span>\u{1F4E6} Export HTML</span>";
+      initExportBtn.title = "Export standalone offline HTML replay bundle with all traces and fixes";
+      initExportBtn.style.fontSize = "11px";
+      initExportBtn.style.padding = "3px 8px";
+      initExportBtn.addEventListener("click", () => {
+        options.onExportIncidentBundle?.() || this.exportIncidentBundle();
+      });
+      initialTriageWrapper.appendChild(initExportBtn);
+      this.triageContainer.appendChild(initialTriageWrapper);
       this.graphContainer = document.createElement("div");
       this.graphContainer.style.display = "none";
       this.graphContainer.style.flexDirection = "column";
@@ -11489,6 +12065,9 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
           if (settings.theme) {
             this.setTheme(settings.theme);
           }
+          if (settings.soundEnabled !== void 0) {
+            this.audioChimes.setEnabled(settings.soundEnabled);
+          }
           options.onSaveSettings?.(settings);
           if (typeof window !== "undefined" && window.__DR_DEBUG__) {
             window.__DR_DEBUG__.updateLLMConfig?.(settings);
@@ -11496,6 +12075,9 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         },
         onThemeChange: (theme) => {
           this.setTheme(theme);
+        },
+        onSoundChange: (enabled) => {
+          this.audioChimes.setEnabled(enabled);
         },
         onTestConnection: async (settings) => {
           if (options.onTestConnection) {
@@ -11550,6 +12132,21 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       });
       controlsRow.appendChild(this.queryButton);
       controlsRow.appendChild(this.customQueryToggleBtn);
+      this.stethoscopeBtn = document.createElement("button");
+      this.stethoscopeBtn.type = "button";
+      this.stethoscopeBtn.id = "dr-debug-btn-stethoscope";
+      this.stethoscopeBtn.className = "dr-debug-btn-icon-only";
+      this.stethoscopeBtn.title = "Stethoscope: Click any element on page to inspect state & components (Esc to exit)";
+      this.stethoscopeBtn.innerHTML = `<span>\u{1FA7A}</span>`;
+      this.stethoscopeBtn.addEventListener("click", () => {
+        if (this.stethoscopeInspector) {
+          const active = this.stethoscopeInspector.toggle();
+          this.stethoscopeBtn?.classList.toggle("active", active);
+        } else {
+          options.onToggleStethoscope?.();
+        }
+      });
+      controlsRow.appendChild(this.stethoscopeBtn);
       this.customQueryDrawer = document.createElement("div");
       this.customQueryDrawer.className = "dr-debug-custom-query-drawer";
       this.customQueryDrawer.id = "dr-debug-custom-query-drawer";
@@ -11629,6 +12226,11 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     settingsBtn;
     thinkingCard = null;
     onInvestigateHandler;
+    audioChimes;
+    stethoscopeInspector;
+    incidentExporter;
+    lastPrescription = null;
+    stethoscopeBtn;
     getSessionPrompt;
     options;
     getElement() {
@@ -11792,6 +12394,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       }
     }
     showPrescription(prescription) {
+      this.lastPrescription = prescription;
       this.timelineContainer.appendChild(this.buildPrescriptionCard(prescription));
       this.prescriptionContainer.innerHTML = "";
       this.prescriptionContainer.appendChild(this.createInTabHeader("prescription", "Remediation & Root Cause Prescription", "dot-ok"));
@@ -11879,6 +12482,24 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         routeFlow.appendChild(stepBadge);
       });
       tier2.appendChild(routeFlow);
+      if (prescription.steps && prescription.steps.length > 0) {
+        const stepsList = document.createElement("div");
+        stepsList.className = "dr-debug-step-list";
+        stepsList.style.marginTop = "10px";
+        prescription.steps.forEach((step, idx) => {
+          const stepEl = document.createElement("div");
+          stepEl.className = "dr-debug-plan-step";
+          stepEl.innerHTML = `
+          <span class="dr-debug-step-badge">${idx + 1}</span>
+          <div class="dr-debug-step-content">
+            <div class="dr-debug-step-action">${this.escapeHtml(step.action)}</div>
+            ${step.reasoning ? `<div class="dr-debug-step-reason">${this.escapeHtml(step.reasoning)}</div>` : ""}
+          </div>
+        `;
+          stepsList.appendChild(stepEl);
+        });
+        tier2.appendChild(stepsList);
+      }
       card.appendChild(tier2);
       const tier3 = document.createElement("div");
       tier3.className = "dr-debug-presc-tier";
@@ -11935,6 +12556,31 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
           "Copy the complete session brief as Markdown (Ponytail Protocol \u2014 95% Token Saver)"
         )
       );
+      const exportHtmlBtn = document.createElement("button");
+      exportHtmlBtn.className = "dr-debug-btn-outline";
+      exportHtmlBtn.style.marginTop = "6px";
+      exportHtmlBtn.style.marginRight = "6px";
+      exportHtmlBtn.innerHTML = "<span>\u{1F4E6} Export Incident HTML</span>";
+      exportHtmlBtn.title = "Export self-contained HTML replay bundle with all logs and code fixes";
+      exportHtmlBtn.addEventListener("click", () => {
+        this.exportIncidentBundle();
+      });
+      const copyIssueBtn = document.createElement("button");
+      copyIssueBtn.className = "dr-debug-btn-outline";
+      copyIssueBtn.style.marginTop = "6px";
+      copyIssueBtn.innerHTML = "<span>\u{1F4CB} Copy GitHub Issue MD</span>";
+      copyIssueBtn.title = "Copy GitHub/Linear formatted bug report to clipboard";
+      copyIssueBtn.addEventListener("click", async () => {
+        const ok = await this.copyGitHubIssue();
+        if (ok) {
+          copyIssueBtn.innerHTML = "<span>\u2713 Copied to Clipboard!</span>";
+          setTimeout(() => {
+            copyIssueBtn.innerHTML = "<span>\u{1F4CB} Copy GitHub Issue MD</span>";
+          }, 2e3);
+        }
+      });
+      handoff.appendChild(exportHtmlBtn);
+      handoff.appendChild(copyIssueBtn);
       tier3.appendChild(handoff);
       card.appendChild(tier3);
       return card;
@@ -11948,13 +12594,29 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       headerWrapper.style.marginBottom = "4px";
       const header = this.createInTabHeader("triage", "Telemetry & Health Substrate", "dot-sys");
       headerWrapper.appendChild(header);
+      const triageActions = document.createElement("div");
+      triageActions.style.display = "flex";
+      triageActions.style.alignItems = "center";
+      triageActions.style.gap = "6px";
+      const exportHtmlBtn = document.createElement("button");
+      exportHtmlBtn.className = "dr-debug-btn-outline";
+      exportHtmlBtn.id = "dr-debug-tab-export-html";
+      exportHtmlBtn.innerHTML = "<span>\u{1F4E6} Export HTML</span>";
+      exportHtmlBtn.title = "Export self-contained offline HTML replay bundle with all traces and fixes";
+      exportHtmlBtn.style.fontSize = "11px";
+      exportHtmlBtn.style.padding = "3px 8px";
+      exportHtmlBtn.addEventListener("click", () => {
+        this.exportIncidentBundle();
+      });
+      triageActions.appendChild(exportHtmlBtn);
       const copyAllBtn = this.makeSessionPromptButton(
         "dr-debug-export-btn",
         "Copy for AI",
         "Copy surgical, minimal incident brief (Ponytail Protocol \u2014 80% Token Saver) for Claude Code, Antigravity & Cursor"
       );
       copyAllBtn.style.marginRight = "4px";
-      headerWrapper.appendChild(copyAllBtn);
+      triageActions.appendChild(copyAllBtn);
+      headerWrapper.appendChild(triageActions);
       this.triageContainer.appendChild(headerWrapper);
       if (telemetry.memory && telemetry.memory.usedMB) {
         this.heapMetricBadge.innerHTML = `<span class="dr-debug-status-dot dot-sys"></span> <span id="dr-debug-heap-val">Heap: ${telemetry.memory.usedMB}MB</span>`;
@@ -12039,6 +12701,8 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
           if (curlCmd) {
             actionsDiv.appendChild(this.makeCurlButton(curlCmd));
           }
+          actionsDiv.appendChild(this.makeNetworkMockButton(reqItem));
+          actionsDiv.appendChild(this.makeReplayButton(reqItem));
           actionsDiv.appendChild(this.makeCopyBtn(reqSummary));
           this.triageContainer.appendChild(item);
         }
@@ -12413,6 +13077,148 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     updateSettings(settings) {
       this.settingsModal.updateSettings(settings);
     }
+    openCustomQuery(query) {
+      if (this.queryInput) {
+        this.queryInput.value = query;
+      }
+      if (this.customQueryDrawer) {
+        this.customQueryDrawer.style.display = "block";
+      }
+    }
+    makeNetworkMockButton(reqItem) {
+      const btn = document.createElement("button");
+      btn.className = "dr-debug-mock-chip";
+      btn.textContent = "Mock 500";
+      btn.title = "Mock 500: Intercept matching requests and return HTTP 500 response";
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const ctrl = this.getControllerInstance();
+        const mockInterceptor = ctrl?.getNetworkMock?.();
+        const url = typeof reqItem === "object" ? reqItem.url : String(reqItem);
+        if (mockInterceptor) {
+          mockInterceptor.addRule({
+            urlPattern: url,
+            mockStatus: 500,
+            mockBody: JSON.stringify({ error: "Mocked 500 Internal Server Error (Dr. Debug Mock Substrate)" }),
+            isActive: true
+          });
+          btn.textContent = "Mock Active";
+          btn.style.background = "rgba(244,63,94,0.3)";
+          btn.style.color = "#fff";
+        } else {
+          btn.textContent = "Mock Rule Added";
+        }
+      });
+      return btn;
+    }
+    makeReplayButton(reqItem) {
+      const btn = document.createElement("button");
+      btn.className = "dr-debug-mock-chip";
+      btn.textContent = "Replay \u21BA";
+      btn.title = "Replay Request: Re-sends this request in the current browser session";
+      btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const url = typeof reqItem === "object" ? reqItem.url : String(reqItem);
+        const method = typeof reqItem === "object" ? reqItem.method || "GET" : "GET";
+        btn.textContent = "Replaying...";
+        try {
+          await fetch(url, { method });
+          btn.textContent = "Replayed \u2713";
+        } catch {
+          btn.textContent = "Replayed (Failed)";
+        }
+        setTimeout(() => {
+          btn.textContent = "Replay \u21BA";
+        }, 2e3);
+      });
+      return btn;
+    }
+    exportIncidentBundle() {
+      const ctrl = this.getControllerInstance();
+      const rawTelemetry = ctrl ? ctrl.getTelemetry() : { errors: [], slowRequests: [] };
+      const interactions = ctrl?.getInteractions?.() || [];
+      const bundleData = {
+        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+        url: typeof window !== "undefined" ? window.location.href : "http://localhost",
+        userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "Browser",
+        viewport: {
+          width: typeof window !== "undefined" ? window.innerWidth : 1920,
+          height: typeof window !== "undefined" ? window.innerHeight : 1080
+        },
+        metrics: {
+          errorCount: rawTelemetry.errors?.length || 0,
+          failedNetCount: rawTelemetry.failedRequests?.length || 0,
+          slowNetCount: rawTelemetry.slowRequests?.length || 0
+        },
+        errors: (rawTelemetry.errors || []).map((e) => ({
+          message: typeof e === "string" ? e : e.message || "Unknown error",
+          stack: typeof e === "object" ? e.stack : void 0,
+          timestamp: e.timestamp || Date.now()
+        })),
+        networkRequests: (rawTelemetry.network || rawTelemetry.failedRequests || []).map((r) => ({
+          url: r.url || "",
+          method: r.method || "GET",
+          status: r.status || 0,
+          durationMs: r.duration || 0,
+          error: r.error
+        })),
+        interactions: interactions.map((i) => ({
+          type: i.type,
+          timestamp: i.timestamp,
+          target: i.target,
+          detail: i.detail
+        })),
+        prescription: this.lastPrescription ? {
+          rootCause: this.lastPrescription.rootCause,
+          steps: this.lastPrescription.steps,
+          codePatches: this.lastPrescription.codePatches
+        } : void 0
+      };
+      this.incidentExporter.exportHTML(bundleData);
+    }
+    async copyGitHubIssue() {
+      const ctrl = this.getControllerInstance();
+      const rawTelemetry = ctrl ? ctrl.getTelemetry() : { errors: [], slowRequests: [] };
+      const interactions = ctrl?.getInteractions?.() || [];
+      const bundleData = {
+        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+        url: typeof window !== "undefined" ? window.location.href : "http://localhost",
+        userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "Browser",
+        viewport: {
+          width: typeof window !== "undefined" ? window.innerWidth : 1920,
+          height: typeof window !== "undefined" ? window.innerHeight : 1080
+        },
+        metrics: {
+          errorCount: rawTelemetry.errors?.length || 0,
+          failedNetCount: rawTelemetry.failedRequests?.length || 0,
+          slowNetCount: rawTelemetry.slowRequests?.length || 0
+        },
+        errors: (rawTelemetry.errors || []).map((e) => ({
+          message: typeof e === "string" ? e : e.message || "Unknown error",
+          stack: typeof e === "object" ? e.stack : void 0,
+          timestamp: e.timestamp || Date.now()
+        })),
+        networkRequests: (rawTelemetry.network || rawTelemetry.failedRequests || []).map((r) => ({
+          url: r.url || "",
+          method: r.method || "GET",
+          status: r.status || 0,
+          durationMs: r.duration || 0,
+          error: r.error
+        })),
+        interactions: interactions.map((i) => ({
+          type: i.type,
+          timestamp: i.timestamp,
+          target: i.target,
+          detail: i.detail
+        })),
+        prescription: this.lastPrescription ? {
+          rootCause: this.lastPrescription.rootCause,
+          steps: this.lastPrescription.steps,
+          codePatches: this.lastPrescription.codePatches
+        } : void 0
+      };
+      return this.incidentExporter.copyGitHubIssue(bundleData);
+    }
   };
 
   // packages/ui/src/components/FloatingPill.ts
@@ -12420,16 +13226,20 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     element;
     badgeText;
     equalizer;
+    audioChimes;
     isDragging = false;
     startX = 0;
     startY = 0;
     initialX = 0;
     initialY = 0;
     hasMoved = false;
-    constructor(onClick) {
+    isCollapsed = false;
+    previousTotalIssues = 0;
+    constructor(onClick, audioChimes) {
+      this.audioChimes = audioChimes || new AudioChimes();
       this.element = document.createElement("div");
       this.element.className = "dr-debug-pill";
-      this.element.title = "Dr. Debug - Click to open Cockpit";
+      this.element.title = "Dr. Debug - Click to open Cockpit \xB7 Double-click to collapse";
       this.equalizer = document.createElement("div");
       this.equalizer.className = "dr-debug-equalizer";
       for (let i = 0; i < 3; i++) {
@@ -12451,20 +13261,53 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       this.element.appendChild(icon);
       this.element.appendChild(this.badgeText);
       this.element.addEventListener("click", () => {
-        if (!this.hasMoved) {
+        if (this.hasMoved) return;
+        if (this.isCollapsed) {
+          this.expand();
+        } else {
           onClick();
         }
+      });
+      this.element.addEventListener("dblclick", (e) => {
+        e.stopPropagation();
+        this.toggleCollapse();
       });
       this.initDraggable();
     }
     getElement() {
       return this.element;
     }
+    getIsCollapsed() {
+      return this.isCollapsed;
+    }
+    collapse() {
+      if (this.isCollapsed) return;
+      this.isCollapsed = true;
+      this.element.classList.add("dr-debug-pill-collapsed");
+      this.element.title = "Dr. Debug (Collapsed) \u2014 Click to expand HUD";
+      this.audioChimes.playClickSound();
+    }
+    expand() {
+      if (!this.isCollapsed) return;
+      this.isCollapsed = false;
+      this.element.classList.remove("dr-debug-pill-collapsed");
+      this.element.title = "Dr. Debug - Click to open Cockpit \xB7 Double-click to collapse";
+      this.audioChimes.playClickSound();
+    }
+    toggleCollapse() {
+      if (this.isCollapsed) {
+        this.expand();
+      } else {
+        this.collapse();
+      }
+      return this.isCollapsed;
+    }
     renderBadge(title, chipText, chipClass) {
       while (this.badgeText.firstChild) {
         this.badgeText.removeChild(this.badgeText.firstChild);
       }
       const titleSpan = document.createElement("span");
+      titleSpan.className = "dr-debug-pill-title";
       titleSpan.textContent = title;
       const chipSpan = document.createElement("span");
       chipSpan.className = `dr-debug-chip ${chipClass}`;
@@ -12479,7 +13322,12 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         return;
       }
       const totalIssues = errorCount + failedNetCount + slowNetCount;
+      if (totalIssues > this.previousTotalIssues && (errorCount > 0 || failedNetCount > 0)) {
+        this.audioChimes.playIncidentAlert();
+      }
+      this.previousTotalIssues = totalIssues;
       if (totalIssues > 0) {
+        this.element.classList.add("has-incident");
         while (this.badgeText.firstChild) {
           this.badgeText.removeChild(this.badgeText.firstChild);
         }
@@ -12495,6 +13343,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
           this.badgeText.appendChild(chipSpan);
         });
       } else {
+        this.element.classList.remove("has-incident");
         this.renderBadge("Dr. Debug", "HEALTHY", "ok");
       }
     }
@@ -12529,13 +13378,18 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         window.removeEventListener("mouseup", onMouseUp);
         if (this.hasMoved) {
           const rect = this.element.getBoundingClientRect();
-          const snapPadding = 24;
+          const snapPadding = 20;
+          const isNearLeftEdge = rect.left < 50;
+          const isNearRightEdge = rect.right > window.innerWidth - 50;
           if (rect.left < window.innerWidth / 2) {
             this.element.style.left = `${snapPadding}px`;
             this.element.style.right = "auto";
           } else {
             this.element.style.left = "auto";
             this.element.style.right = `${snapPadding}px`;
+          }
+          if (isNearLeftEdge || isNearRightEdge) {
+            this.collapse();
           }
         }
       };
@@ -12548,6 +13402,209 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
       } else if (theme === "monotone-skeuomorphic") {
         this.element.classList.add("theme-monotone-skeuomorphic");
       }
+    }
+    getAudioChimes() {
+      return this.audioChimes;
+    }
+  };
+
+  // packages/ui/src/components/StethoscopeInspector.ts
+  var StethoscopeInspector = class {
+    isActive = false;
+    options;
+    overlayEl = null;
+    badgeEl = null;
+    currentTarget = null;
+    hoveredListeners = null;
+    constructor(options = {}) {
+      this.options = options;
+    }
+    getIsActive() {
+      return this.isActive;
+    }
+    toggle() {
+      if (this.isActive) {
+        this.deactivate();
+      } else {
+        this.activate();
+      }
+      return this.isActive;
+    }
+    activate() {
+      if (this.isActive || typeof document === "undefined") return;
+      this.isActive = true;
+      this.createOverlay();
+      const onMove = (e) => {
+        if (!this.isActive) return;
+        const target = e.target;
+        if (!target || target.id?.startsWith("dr-debug") || target.closest?.("#dr-debug-root")) {
+          this.hideOverlay();
+          return;
+        }
+        this.currentTarget = target;
+        this.updateOverlay(target);
+      };
+      const onClick = (e) => {
+        if (!this.isActive) return;
+        const target = e.target;
+        if (target?.id?.startsWith("dr-debug") || target?.closest?.("#dr-debug-root")) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (this.currentTarget) {
+          const info = this.inspectElement(this.currentTarget);
+          this.options.onElementInspected?.(info);
+          this.deactivate();
+        }
+      };
+      const onKeyDown = (e) => {
+        if (e.key === "Escape") {
+          this.deactivate();
+        }
+      };
+      this.hoveredListeners = { move: onMove, click: onClick, keydown: onKeyDown };
+      window.addEventListener("mousemove", onMove, true);
+      window.addEventListener("click", onClick, true);
+      window.addEventListener("keydown", onKeyDown, true);
+      document.body?.classList.add("dr-debug-stethoscope-active");
+      this.options.onToggle?.(true);
+    }
+    deactivate() {
+      if (!this.isActive) return;
+      this.isActive = false;
+      if (this.hoveredListeners) {
+        window.removeEventListener("mousemove", this.hoveredListeners.move, true);
+        window.removeEventListener("click", this.hoveredListeners.click, true);
+        window.removeEventListener("keydown", this.hoveredListeners.keydown, true);
+        this.hoveredListeners = null;
+      }
+      this.hideOverlay();
+      if (typeof document !== "undefined") {
+        document.body?.classList.remove("dr-debug-stethoscope-active");
+      }
+      this.currentTarget = null;
+      this.options.onToggle?.(false);
+    }
+    createOverlay() {
+      if (typeof document === "undefined" || this.overlayEl) return;
+      this.overlayEl = document.createElement("div");
+      this.overlayEl.className = "dr-debug-stethoscope-overlay";
+      this.overlayEl.style.display = "none";
+      this.badgeEl = document.createElement("div");
+      this.badgeEl.className = "dr-debug-stethoscope-badge";
+      this.badgeEl.style.display = "none";
+      document.body.appendChild(this.overlayEl);
+      document.body.appendChild(this.badgeEl);
+    }
+    updateOverlay(el) {
+      if (!this.overlayEl || !this.badgeEl) return;
+      const rect = el.getBoundingClientRect();
+      this.overlayEl.style.display = "block";
+      this.overlayEl.style.top = `${rect.top + window.scrollY}px`;
+      this.overlayEl.style.left = `${rect.left + window.scrollX}px`;
+      this.overlayEl.style.width = `${rect.width}px`;
+      this.overlayEl.style.height = `${rect.height}px`;
+      const tag = el.tagName.toLowerCase();
+      const id = el.id ? `#${el.id}` : "";
+      const cls = typeof el.className === "string" && el.className ? `.${el.className.split(/\s+/).slice(0, 2).join(".")}` : "";
+      const compName = this.detectComponentName(el);
+      this.badgeEl.style.display = "flex";
+      this.badgeEl.innerHTML = `
+      <span class="badge-tag">&lt;${tag}${id}${cls}&gt;</span>
+      ${compName ? `<span class="badge-comp">\u269B ${compName}</span>` : ""}
+      <span class="badge-dims">${Math.round(rect.width)}\xD7${Math.round(rect.height)}</span>
+    `;
+      const badgeTop = rect.top + window.scrollY - 28;
+      this.badgeEl.style.top = `${badgeTop > 5 ? badgeTop : rect.bottom + window.scrollY + 6}px`;
+      this.badgeEl.style.left = `${Math.max(8, rect.left + window.scrollX)}px`;
+    }
+    hideOverlay() {
+      if (this.overlayEl) this.overlayEl.style.display = "none";
+      if (this.badgeEl) this.badgeEl.style.display = "none";
+    }
+    inspectElement(el) {
+      const rect = el.getBoundingClientRect();
+      const selector = this.getSelector(el);
+      const compName = this.detectComponentName(el);
+      const attributes = {};
+      if (el.attributes) {
+        for (let i = 0; i < el.attributes.length; i++) {
+          const attr = el.attributes[i];
+          if (!attr.name.startsWith("data-dr-debug")) {
+            attributes[attr.name] = attr.value.slice(0, 80);
+          }
+        }
+      }
+      return {
+        selector,
+        tagName: el.tagName.toLowerCase(),
+        id: el.id || "",
+        className: typeof el.className === "string" ? el.className : "",
+        componentName: compName,
+        dimensions: {
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+          top: Math.round(rect.top),
+          left: Math.round(rect.left)
+        },
+        textContentSnippet: el.textContent?.trim().slice(0, 80) || "",
+        attributes
+      };
+    }
+    detectComponentName(el) {
+      try {
+        const keys = Object.keys(el);
+        const fiberKey = keys.find((k) => k.startsWith("__reactFiber$") || k.startsWith("__reactInternalInstance$"));
+        if (fiberKey) {
+          let fiber = el[fiberKey];
+          while (fiber) {
+            if (typeof fiber.type === "function") {
+              return fiber.type.displayName || fiber.type.name || void 0;
+            }
+            if (typeof fiber.type === "string") {
+            } else if (fiber.type && typeof fiber.type === "object") {
+              return fiber.type.displayName || fiber.type.name || void 0;
+            }
+            fiber = fiber.return;
+          }
+        }
+        if (el.__vueParentComponent) {
+          return el.__vueParentComponent?.type?.name || el.__vueParentComponent?.type?.__name;
+        }
+      } catch {
+      }
+      return void 0;
+    }
+    highlightFailingElements(selectors) {
+      if (typeof document === "undefined") return;
+      document.querySelectorAll(".dr-debug-error-boundary-outline").forEach((node) => {
+        node.classList.remove("dr-debug-error-boundary-outline");
+      });
+      for (const sel of selectors) {
+        try {
+          const el = document.querySelector(sel);
+          if (el && !el.id?.startsWith("dr-debug")) {
+            el.classList.add("dr-debug-error-boundary-outline");
+          }
+        } catch {
+        }
+      }
+    }
+    getSelector(el) {
+      if (el.id) return `#${el.id}`;
+      const tag = el.tagName.toLowerCase();
+      const cls = typeof el.className === "string" && el.className ? `.${el.className.split(/\s+/).slice(0, 2).join(".")}` : "";
+      return `${tag}${cls}`;
+    }
+    destroy() {
+      this.deactivate();
+      if (this.overlayEl?.parentNode) {
+        this.overlayEl.parentNode.removeChild(this.overlayEl);
+      }
+      if (this.badgeEl?.parentNode) {
+        this.badgeEl.parentNode.removeChild(this.badgeEl);
+      }
+      this.overlayEl = null;
+      this.badgeEl = null;
     }
   };
 
@@ -12580,6 +13637,9 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
    ========================================================================== */
 
 .dr-debug-pill {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   pointer-events: auto;
   position: fixed;
   bottom: 24px;
@@ -12600,7 +13660,7 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   cursor: pointer;
   user-select: none;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, box-shadow;
+  will-change: transform, box-shadow, width, height;
 }
 
 .dr-debug-pill:hover {
@@ -12615,6 +13675,54 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
 
 .dr-debug-pill:active {
   transform: translateY(-1px) scale(0.98);
+}
+
+/* Stealth Bezel Collapse: Mini 36px Glowing Orb HUD */
+.dr-debug-pill.dr-debug-pill-collapsed {
+  padding: 8px !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  border-radius: 50% !important;
+  gap: 0 !important;
+  justify-content: center !important;
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.85),
+    0 0 14px rgba(6, 182, 212, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  animation: orb-gentle-breathe 3s infinite ease-in-out;
+}
+
+.dr-debug-pill.dr-debug-pill-collapsed .dr-debug-equalizer,
+.dr-debug-pill.dr-debug-pill-collapsed .dr-debug-pill-badge {
+  display: none !important;
+}
+
+.dr-debug-pill.dr-debug-pill-collapsed .dr-debug-pill-icon {
+  font-size: 15px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dr-debug-pill.dr-debug-pill-collapsed.has-incident {
+  border-color: rgba(244, 63, 94, 0.7) !important;
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.9),
+    0 0 18px rgba(244, 63, 94, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+  animation: orb-pulse-red 1.6s infinite ease-in-out !important;
+}
+
+@keyframes orb-gentle-breathe {
+  0%, 100% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85), 0 0 12px rgba(6, 182, 212, 0.3); }
+  50% { box-shadow: 0 8px 28px rgba(0, 0, 0, 0.95), 0 0 20px rgba(6, 182, 212, 0.6); }
+}
+
+@keyframes orb-pulse-red {
+  0%, 100% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.9), 0 0 12px rgba(244, 63, 94, 0.4); transform: scale(1); }
+  50% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.95), 0 0 22px rgba(244, 63, 94, 0.85); transform: scale(1.06); }
 }
 
 /* Live Equalizer Activity Waves */
@@ -12660,14 +13768,35 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   display: flex;
   align-items: center;
   gap: 6px;
+  font-family: inherit;
 }
 
+/* Match Cockpit Header Bold Brand Typography */
+.dr-debug-pill-title {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif;
+  font-weight: 800;
+  font-size: 12.5px;
+  letter-spacing: 0.6px;
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Match Cockpit Monospace Telemetry Badges */
 .dr-debug-chip {
   padding: 2px 7px;
   border-radius: 9999px;
-  font-size: 10.5px;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.3;
 }
 
 .dr-debug-chip.err {
@@ -12871,6 +14000,13 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   background: rgba(244, 63, 94, 0.4);
   border-color: rgba(244, 63, 94, 0.7);
   transform: scale(1.05);
+}
+
+#dr-debug-settings-btn:hover {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.5);
+  transform: rotate(30deg) scale(1.05);
 }
 
 /* Tabs */
@@ -13886,6 +15022,13 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   background: rgba(255, 255, 255, 0.1);
   color: #f1f5f9;
   border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dr-debug-btn-icon-only.active {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
 }
 
 .dr-debug-custom-query-drawer {
@@ -18185,6 +19328,127 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
   border: 1px solid #282d38;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
+
+/* Floating Pill HUD: Theme 3 Monotone Skeuomorphic */
+.dr-debug-pill.theme-monotone-skeuomorphic {
+  background: #0d0f13;
+  border: 1px solid #282d38;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.dr-debug-pill.theme-monotone-skeuomorphic .dr-debug-pill-title {
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  color: #f1f5f9;
+  text-shadow: none;
+}
+
+.dr-debug-pill.theme-monotone-skeuomorphic .dr-debug-chip {
+  font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  background: #181b22;
+  border: 1px solid #323846;
+  color: #cbd5e1;
+}
+
+/* \u2500\u2500 Minimalist Action & Tool Buttons \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.dr-debug-btn-action-icon {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 11.5px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.dr-debug-btn-action-icon:hover {
+  color: #fff;
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.45);
+}
+
+.dr-debug-btn-action-icon.active {
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.22);
+  border-color: rgba(0, 240, 255, 0.6);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
+}
+
+.dr-debug-mock-chip {
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #c084fc;
+  font-size: 9.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  transition: all 0.18s ease;
+}
+
+.dr-debug-mock-chip:hover {
+  background: rgba(168, 85, 247, 0.35);
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+}
+
+/* \u2500\u2500 In-Page Stethoscope & Error Boundary Overlays \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+body.dr-debug-stethoscope-active,
+body.dr-debug-stethoscope-active * {
+  cursor: crosshair !important;
+}
+
+.dr-debug-stethoscope-overlay {
+  position: absolute;
+  pointer-events: none;
+  border: 1.5px dashed #00f0ff;
+  background: rgba(0, 240, 255, 0.08);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
+  border-radius: 4px;
+  z-index: 2147483640;
+  transition: all 0.05s ease;
+}
+
+.dr-debug-stethoscope-badge {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(8, 12, 22, 0.94);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 2147483641;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.dr-debug-stethoscope-badge .badge-tag { color: #00f0ff; font-weight: 700; }
+.dr-debug-stethoscope-badge .badge-comp { color: #c084fc; font-weight: 600; }
+.dr-debug-stethoscope-badge .badge-dims { color: #94a3b8; font-size: 10px; }
+
+.dr-debug-error-boundary-outline {
+  outline: 2px dashed #f43f5e !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 16px rgba(244, 63, 94, 0.4) !important;
+  position: relative;
+}
 `;
 
   // packages/ui/src/DrDebugUI.ts
@@ -18193,6 +19457,9 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     shadowRoot;
     pill;
     cockpit;
+    audioChimes;
+    incidentExporter;
+    stethoscope;
     getController;
     engine = new LocalDiagnosticEngine();
     container;
@@ -18200,15 +19467,18 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     observedTarget;
     constructor(options = {}) {
       this.getController = options.getController;
+      this.audioChimes = new AudioChimes();
+      this.incidentExporter = new IncidentExporter();
+      this.stethoscope = new StethoscopeInspector({
+        onElementInspected: (info) => {
+          this.cockpit.openCustomQuery(`Inspect component: <${info.tagName}${info.id ? "#" + info.id : ""}>`);
+          this.openCockpit();
+        }
+      });
       let host = document.getElementById("dr-debug-root");
       if (!host) {
         host = document.createElement("div");
         host.id = "dr-debug-root";
-        host.style.setProperty("all", "initial", "important");
-        host.style.setProperty("position", "fixed", "important");
-        host.style.setProperty("top", "0", "important");
-        host.style.setProperty("left", "0", "important");
-        host.style.setProperty("width", "0", "important");
         host.style.setProperty("height", "0", "important");
         host.style.setProperty("z-index", "2147483647", "important");
         host.style.setProperty("pointer-events", "none", "important");
@@ -18260,11 +19530,14 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
         getSessionPrompt: options.getSessionPrompt || (() => this.buildSessionPrompt()),
         onSaveSettings: options.onSaveSettings,
         onTestConnection: options.onTestConnection,
-        onThemeChange: (theme) => this.pill.setTheme(theme)
+        onThemeChange: (theme) => this.pill.setTheme(theme),
+        audioChimes: this.audioChimes,
+        stethoscopeInspector: this.stethoscope,
+        incidentExporter: this.incidentExporter
       });
       this.pill = new FloatingPill(() => {
         this.cockpit.toggle();
-      });
+      }, this.audioChimes);
       this.pill.setTheme(this.cockpit.getTheme());
       this.shadowRoot.appendChild(this.pill.getElement());
       this.shadowRoot.appendChild(this.cockpit.getElement());
@@ -18339,6 +19612,27 @@ Timestamp: ${new Date(dockerLog.timestamp).toISOString()}</pre>
     }
     updateSettings(settings) {
       this.cockpit.updateSettings(settings);
+    }
+    toggleStethoscope() {
+      return this.stethoscope.toggle();
+    }
+    exportIncidentBundle() {
+      this.cockpit.exportIncidentBundle();
+    }
+    async copyGitHubIssue() {
+      return this.cockpit.copyGitHubIssue();
+    }
+    toggleSound() {
+      return this.audioChimes.toggleSound();
+    }
+    getAudioChimes() {
+      return this.audioChimes;
+    }
+    getStethoscopeInspector() {
+      return this.stethoscope;
+    }
+    getIncidentExporter() {
+      return this.incidentExporter;
     }
     buildSessionPrompt() {
       const controller = this.getController?.();
@@ -18510,6 +19804,8 @@ Direction: ${finding.remediation}`
       }
     }
     destroy() {
+      this.stethoscope.destroy();
+      this.audioChimes.destroy();
       if (this.observer) {
         this.observer.disconnect();
         this.observer = void 0;

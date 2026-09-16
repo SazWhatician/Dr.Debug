@@ -10,6 +10,7 @@ export interface SettingsData {
   baseURL?: string
   model?: string
   theme?: DrDebugTheme
+  soundEnabled?: boolean
   enableUI?: boolean
   autoInvestigate?: boolean
 }
@@ -18,12 +19,16 @@ export interface SettingsModalOptions {
   onSave: (settings: SettingsData) => void
   onTestConnection: (settings: SettingsData) => Promise<{ success: boolean; message: string }>
   onThemeChange?: (theme: DrDebugTheme) => void
+  onSoundChange?: (enabled: boolean) => void
   initialSettings?: SettingsData
 }
 
 export class SettingsModal {
   private element: HTMLElement
   private themeSelect!: HTMLSelectElement
+  private soundSelect!: HTMLSelectElement
+  private soundToggleBtn!: HTMLButtonElement
+  private isSoundEnabled = true
   private providerSelect!: HTMLSelectElement
   private apiKeyInput!: HTMLInputElement
   private apiKeyGroup!: HTMLElement
@@ -73,9 +78,25 @@ export class SettingsModal {
     return (this.themeSelect?.value as DrDebugTheme) || 'dr-debug'
   }
 
+  public setSoundEnabled(enabled: boolean): void {
+    this.isSoundEnabled = enabled
+    if (this.soundSelect) this.soundSelect.value = enabled ? 'enabled' : 'muted'
+    if (this.soundToggleBtn) {
+      this.soundToggleBtn.innerHTML = enabled ? '🔔 Sound: Enabled' : '🔕 Sound: Muted'
+      this.soundToggleBtn.style.color = enabled ? '#34d399' : '#94a3b8'
+    }
+  }
+
+  public getSoundEnabled(): boolean {
+    return this.isSoundEnabled
+  }
+
   public updateSettings(settings: Partial<SettingsData> & { hasApiKey?: boolean; apiKeyMasked?: string }): void {
     if (!settings) return
     if (settings.theme) this.setTheme(settings.theme)
+    if (settings.soundEnabled !== undefined) {
+      this.setSoundEnabled(settings.soundEnabled)
+    }
     if (settings.provider && this.providerSelect) {
       this.providerSelect.value = settings.provider
       this.handleProviderChange()
@@ -109,13 +130,25 @@ export class SettingsModal {
 
         <div class="dr-debug-settings-body">
           <div class="dr-debug-settings-groupbox">
-            <div class="dr-debug-settings-groupbox-title">Display &amp; Appearance</div>
+            <div class="dr-debug-settings-groupbox-title">Display &amp; Audio</div>
             <div class="dr-debug-form-group">
               <label class="dr-debug-form-label">Cockpit Theme</label>
               <select class="dr-debug-form-select" id="dr-debug-theme">
                 <option value="dr-debug" selected>Dr.Debug (original)</option>
                 <option value="minimal-glass">Windows XP (Luna Blue)</option>
                 <option value="monotone-skeuomorphic">Monotone skeuomorphism (darker theme)</option>
+              </select>
+            </div>
+            <div class="dr-debug-form-group">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <label class="dr-debug-form-label" style="margin-bottom:0;">Tactile Audio HUD</label>
+                <button type="button" id="dr-debug-btn-sound-toggle" class="dr-debug-btn-outline" style="padding: 2px 8px; font-size: 11px; cursor: pointer;">
+                  🔔 Sound: Enabled
+                </button>
+              </div>
+              <select class="dr-debug-form-select" id="dr-debug-sound">
+                <option value="enabled" selected>Sound FX Enabled (Tactile audio chimes on incident)</option>
+                <option value="muted">Muted (Silent HUD)</option>
               </select>
             </div>
           </div>
@@ -184,6 +217,32 @@ export class SettingsModal {
     this.themeSelect.addEventListener('change', () => {
       const theme = (this.themeSelect.value as DrDebugTheme) || 'dr-debug'
       this.options.onThemeChange?.(theme)
+    })
+
+    this.soundSelect = this.element.querySelector('#dr-debug-sound')!
+    this.soundToggleBtn = this.element.querySelector('#dr-debug-btn-sound-toggle')!
+
+    const syncSoundUI = (enabled: boolean) => {
+      this.isSoundEnabled = enabled
+      if (this.soundSelect) this.soundSelect.value = enabled ? 'enabled' : 'muted'
+      if (this.soundToggleBtn) {
+        this.soundToggleBtn.innerHTML = enabled ? '🔔 Sound: Enabled' : '🔕 Sound: Muted'
+        this.soundToggleBtn.style.color = enabled ? '#34d399' : '#94a3b8'
+      }
+      try {
+        localStorage.setItem('dr_debug_sound_fx', enabled ? 'true' : 'false')
+      } catch {
+        // ignore
+      }
+      this.options.onSoundChange?.(enabled)
+    }
+
+    this.soundSelect?.addEventListener('change', () => {
+      syncSoundUI(this.soundSelect.value === 'enabled')
+    })
+
+    this.soundToggleBtn?.addEventListener('click', () => {
+      syncSoundUI(!this.isSoundEnabled)
     })
 
     this.providerSelect = this.element.querySelector('#dr-debug-provider')!
@@ -301,6 +360,7 @@ export class SettingsModal {
     }
     const baseURL = this.baseURLInput.value.trim() || undefined
     const theme = (this.themeSelect?.value as DrDebugTheme) || 'dr-debug'
+    const soundEnabled = this.soundSelect ? this.soundSelect.value === 'enabled' : this.isSoundEnabled
 
     return {
       provider,
@@ -309,6 +369,7 @@ export class SettingsModal {
       model,
       baseURL,
       theme,
+      soundEnabled,
       enableUI: true
     }
   }
@@ -325,6 +386,15 @@ export class SettingsModal {
       }
     }
 
+    try {
+      const savedSound = localStorage.getItem('dr_debug_sound_fx')
+      if (savedSound !== null) {
+        this.setSoundEnabled(savedSound !== 'false')
+      }
+    } catch {
+      // ignore
+    }
+
     if (loaded) {
       if (loaded.model === 'llama-3.3-70b-versatile') {
         loaded.model = 'openai/gpt-oss-120b'
@@ -332,6 +402,9 @@ export class SettingsModal {
       if (loaded.hasApiKey) {
         this.hasSavedApiKey = true
         this.apiKeyInput.placeholder = loaded.apiKeyMasked || '•••••••• (Configured via Extension)'
+      }
+      if (loaded.soundEnabled !== undefined) {
+        this.setSoundEnabled(Boolean(loaded.soundEnabled))
       }
       if (loaded.theme && this.themeSelect) {
         this.themeSelect.value = loaded.theme

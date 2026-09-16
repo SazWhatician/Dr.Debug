@@ -1,20 +1,25 @@
 import { DR_DEBUG_LOGO } from '../assets/logo.js'
+import { AudioChimes } from './AudioChimes.js'
 
 export class FloatingPill {
   private element: HTMLElement
   private badgeText: HTMLElement
   private equalizer: HTMLElement
+  private audioChimes: AudioChimes
   private isDragging = false
   private startX = 0
   private startY = 0
   private initialX = 0
   private initialY = 0
   private hasMoved = false
+  private isCollapsed = false
+  private previousTotalIssues = 0
 
-  constructor(onClick: () => void) {
+  constructor(onClick: () => void, audioChimes?: AudioChimes) {
+    this.audioChimes = audioChimes || new AudioChimes()
     this.element = document.createElement('div')
     this.element.className = 'dr-debug-pill'
-    this.element.title = 'Dr. Debug - Click to open Cockpit'
+    this.element.title = 'Dr. Debug - Click to open Cockpit · Double-click to collapse'
 
     // Live Equalizer Visualizer Bars
     this.equalizer = document.createElement('div')
@@ -41,10 +46,20 @@ export class FloatingPill {
     this.element.appendChild(icon)
     this.element.appendChild(this.badgeText)
 
+    // Click handler: expand if collapsed, otherwise open Cockpit
     this.element.addEventListener('click', () => {
-      if (!this.hasMoved) {
+      if (this.hasMoved) return
+      if (this.isCollapsed) {
+        this.expand()
+      } else {
         onClick()
       }
+    })
+
+    // Double click: Stealth Bezel Collapse toggle
+    this.element.addEventListener('dblclick', (e) => {
+      e.stopPropagation()
+      this.toggleCollapse()
     })
 
     this.initDraggable()
@@ -54,11 +69,41 @@ export class FloatingPill {
     return this.element
   }
 
+  public getIsCollapsed(): boolean {
+    return this.isCollapsed
+  }
+
+  public collapse(): void {
+    if (this.isCollapsed) return
+    this.isCollapsed = true
+    this.element.classList.add('dr-debug-pill-collapsed')
+    this.element.title = 'Dr. Debug (Collapsed) — Click to expand HUD'
+    this.audioChimes.playClickSound()
+  }
+
+  public expand(): void {
+    if (!this.isCollapsed) return
+    this.isCollapsed = false
+    this.element.classList.remove('dr-debug-pill-collapsed')
+    this.element.title = 'Dr. Debug - Click to open Cockpit · Double-click to collapse'
+    this.audioChimes.playClickSound()
+  }
+
+  public toggleCollapse(): boolean {
+    if (this.isCollapsed) {
+      this.expand()
+    } else {
+      this.collapse()
+    }
+    return this.isCollapsed
+  }
+
   private renderBadge(title: string, chipText: string, chipClass: string): void {
     while (this.badgeText.firstChild) {
       this.badgeText.removeChild(this.badgeText.firstChild)
     }
     const titleSpan = document.createElement('span')
+    titleSpan.className = 'dr-debug-pill-title'
     titleSpan.textContent = title
     const chipSpan = document.createElement('span')
     chipSpan.className = `dr-debug-chip ${chipClass}`
@@ -81,7 +126,14 @@ export class FloatingPill {
 
     const totalIssues = errorCount + failedNetCount + slowNetCount
 
+    // Trigger subtle sci-fi alert chime when new issues emerge
+    if (totalIssues > this.previousTotalIssues && (errorCount > 0 || failedNetCount > 0)) {
+      this.audioChimes.playIncidentAlert()
+    }
+    this.previousTotalIssues = totalIssues
+
     if (totalIssues > 0) {
+      this.element.classList.add('has-incident')
       while (this.badgeText.firstChild) {
         this.badgeText.removeChild(this.badgeText.firstChild)
       }
@@ -98,6 +150,7 @@ export class FloatingPill {
         this.badgeText.appendChild(chipSpan)
       })
     } else {
+      this.element.classList.remove('has-incident')
       this.renderBadge('Dr. Debug', 'HEALTHY', 'ok')
     }
   }
@@ -140,13 +193,21 @@ export class FloatingPill {
       // Magnetic Snap to closest edge if moved
       if (this.hasMoved) {
         const rect = this.element.getBoundingClientRect()
-        const snapPadding = 24
+        const snapPadding = 20
+        const isNearLeftEdge = rect.left < 50
+        const isNearRightEdge = rect.right > window.innerWidth - 50
+
         if (rect.left < window.innerWidth / 2) {
           this.element.style.left = `${snapPadding}px`
           this.element.style.right = 'auto'
         } else {
           this.element.style.left = 'auto'
           this.element.style.right = `${snapPadding}px`
+        }
+
+        // Stealth Bezel Collapse if dragged directly onto screen edge
+        if (isNearLeftEdge || isNearRightEdge) {
+          this.collapse()
         }
       }
     }
@@ -162,5 +223,8 @@ export class FloatingPill {
       this.element.classList.add('theme-monotone-skeuomorphic')
     }
   }
-}
 
+  public getAudioChimes(): AudioChimes {
+    return this.audioChimes
+  }
+}

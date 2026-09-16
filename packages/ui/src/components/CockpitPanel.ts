@@ -1,8 +1,11 @@
 import { DR_DEBUG_LOGO } from '../assets/logo.js'
+import { AudioChimes } from './AudioChimes.js'
 import { CausalGraphView, type CausalErrorGraph } from './CausalGraphView.js'
 import { DockerDashboardView } from './DockerDashboardView.js'
 import { ErrorDashboardView } from './ErrorDashboardView.js'
+import { IncidentExporter, type IncidentBundleData } from './IncidentExporter.js'
 import { SettingsModal, type SettingsData, type DrDebugTheme } from './SettingsModal.js'
+import { StethoscopeInspector } from './StethoscopeInspector.js'
 import { copyToClipboard } from './clipboard.js'
 
 export interface StepItem {
@@ -22,6 +25,8 @@ export interface PrescriptionData {
   filesToModify?: string[]
   debugContext?: string[]
   debugRoute?: string[]
+  steps?: Array<{ action: string; reasoning: string }>
+  codePatches?: Array<{ file: string; diff: string }>
 }
 
 export type CockpitTabKey = 'timeline' | 'errors' | 'triage' | 'graph' | 'prescription' | 'docker'
@@ -132,6 +137,11 @@ export interface CockpitPanelOptions {
   onSaveSettings?: (settings: SettingsData) => void
   onTestConnection?: (settings: SettingsData) => Promise<{ success: boolean; message: string }>
   onThemeChange?: (theme: DrDebugTheme) => void
+  audioChimes?: AudioChimes
+  stethoscopeInspector?: StethoscopeInspector
+  incidentExporter?: IncidentExporter
+  onToggleStethoscope?: () => void
+  onExportIncidentBundle?: () => void
 }
 
 export class CockpitPanel {
@@ -173,6 +183,11 @@ export class CockpitPanel {
   private settingsBtn!: HTMLButtonElement
   private thinkingCard: HTMLElement | null = null
   private onInvestigateHandler: (query: string) => void
+  private audioChimes: AudioChimes
+  private stethoscopeInspector?: StethoscopeInspector
+  private incidentExporter: IncidentExporter
+  private lastPrescription: PrescriptionData | null = null
+  private stethoscopeBtn?: HTMLButtonElement
   private getSessionPrompt?: () => string
   private options: CockpitPanelOptions
 
@@ -192,6 +207,9 @@ export class CockpitPanel {
     this.options = options
     this.onInvestigateHandler = options.onInvestigate
     this.getSessionPrompt = options.getSessionPrompt
+    this.audioChimes = options.audioChimes || new AudioChimes()
+    this.stethoscopeInspector = options.stethoscopeInspector
+    this.incidentExporter = options.incidentExporter || new IncidentExporter()
     this.element = document.createElement('div')
 
     this.element.className = 'dr-debug-modal hidden'
@@ -231,6 +249,7 @@ export class CockpitPanel {
 
     this.settingsBtn = document.createElement('button')
     this.settingsBtn.className = 'dr-debug-close-btn'
+    this.settingsBtn.id = 'dr-debug-settings-btn'
     this.settingsBtn.innerHTML = '⚙'
     this.settingsBtn.title = 'AI Settings & API Keys'
     this.settingsBtn.addEventListener('click', () => this.settingsModal.toggle())
@@ -314,7 +333,23 @@ export class CockpitPanel {
     this.triageContainer.style.display = 'none'
     this.triageContainer.style.flexDirection = 'column'
     this.triageContainer.style.gap = '10px'
-    this.triageContainer.appendChild(this.createInTabHeader('triage', 'Telemetry & Health Substrate', 'dot-sys'))
+    const initialTriageWrapper = document.createElement('div')
+    initialTriageWrapper.style.display = 'flex'
+    initialTriageWrapper.style.justifyContent = 'space-between'
+    initialTriageWrapper.style.alignItems = 'center'
+    initialTriageWrapper.appendChild(this.createInTabHeader('triage', 'Telemetry & Health Substrate', 'dot-sys'))
+    const initExportBtn = document.createElement('button')
+    initExportBtn.className = 'dr-debug-btn-outline'
+    initExportBtn.id = 'dr-debug-tab-export-html-init'
+    initExportBtn.innerHTML = '<span>📦 Export HTML</span>'
+    initExportBtn.title = 'Export standalone offline HTML replay bundle with all traces and fixes'
+    initExportBtn.style.fontSize = '11px'
+    initExportBtn.style.padding = '3px 8px'
+    initExportBtn.addEventListener('click', () => {
+      options.onExportIncidentBundle?.() || this.exportIncidentBundle()
+    })
+    initialTriageWrapper.appendChild(initExportBtn)
+    this.triageContainer.appendChild(initialTriageWrapper)
 
     this.graphContainer = document.createElement('div')
     this.graphContainer.style.display = 'none'
@@ -355,6 +390,9 @@ export class CockpitPanel {
         if (settings.theme) {
           this.setTheme(settings.theme)
         }
+        if (settings.soundEnabled !== undefined) {
+          this.audioChimes.setEnabled(settings.soundEnabled)
+        }
         options.onSaveSettings?.(settings)
         if (typeof window !== 'undefined' && (window as any).__DR_DEBUG__) {
           (window as any).__DR_DEBUG__.updateLLMConfig?.(settings)
@@ -362,6 +400,9 @@ export class CockpitPanel {
       },
       onThemeChange: (theme) => {
         this.setTheme(theme)
+      },
+      onSoundChange: (enabled) => {
+        this.audioChimes.setEnabled(enabled)
       },
       onTestConnection: async (settings) => {
         if (options.onTestConnection) {
@@ -429,6 +470,22 @@ export class CockpitPanel {
 
     controlsRow.appendChild(this.queryButton)
     controlsRow.appendChild(this.customQueryToggleBtn)
+
+    this.stethoscopeBtn = document.createElement('button')
+    this.stethoscopeBtn.type = 'button'
+    this.stethoscopeBtn.id = 'dr-debug-btn-stethoscope'
+    this.stethoscopeBtn.className = 'dr-debug-btn-icon-only'
+    this.stethoscopeBtn.title = 'Stethoscope: Click any element on page to inspect state & components (Esc to exit)'
+    this.stethoscopeBtn.innerHTML = `<span>🩺</span>`
+    this.stethoscopeBtn.addEventListener('click', () => {
+      if (this.stethoscopeInspector) {
+        const active = this.stethoscopeInspector.toggle()
+        this.stethoscopeBtn?.classList.toggle('active', active)
+      } else {
+        options.onToggleStethoscope?.()
+      }
+    })
+    controlsRow.appendChild(this.stethoscopeBtn)
 
     this.customQueryDrawer = document.createElement('div')
     this.customQueryDrawer.className = 'dr-debug-custom-query-drawer'
@@ -680,6 +737,7 @@ export class CockpitPanel {
   }
 
   public showPrescription(prescription: PrescriptionData): void {
+    this.lastPrescription = prescription
     // Built twice rather than cloned: cloneNode() drops event listeners, which
     // would leave the copy buttons on the timeline copy inert.
     this.timelineContainer.appendChild(this.buildPrescriptionCard(prescription))
@@ -789,9 +847,28 @@ export class CockpitPanel {
       routeFlow.appendChild(stepBadge)
     })
     tier2.appendChild(routeFlow)
+
+    if (prescription.steps && prescription.steps.length > 0) {
+      const stepsList = document.createElement('div')
+      stepsList.className = 'dr-debug-step-list'
+      stepsList.style.marginTop = '10px'
+      prescription.steps.forEach((step, idx) => {
+        const stepEl = document.createElement('div')
+        stepEl.className = 'dr-debug-plan-step'
+        stepEl.innerHTML = `
+          <span class="dr-debug-step-badge">${idx + 1}</span>
+          <div class="dr-debug-step-content">
+            <div class="dr-debug-step-action">${this.escapeHtml(step.action)}</div>
+            ${step.reasoning ? `<div class="dr-debug-step-reason">${this.escapeHtml(step.reasoning)}</div>` : ''}
+          </div>
+        `
+        stepsList.appendChild(stepEl)
+      })
+      tier2.appendChild(stepsList)
+    }
     card.appendChild(tier2)
 
-    // Tier 3: Verified Solution & Code Patch
+    // Tier 3: Code Patch & External Hand-off
     const tier3 = document.createElement('div')
     tier3.className = 'dr-debug-presc-tier'
     tier3.innerHTML = `
@@ -854,6 +931,32 @@ export class CockpitPanel {
         'Copy the complete session brief as Markdown (Ponytail Protocol — 95% Token Saver)'
       )
     )
+
+    const exportHtmlBtn = document.createElement('button')
+    exportHtmlBtn.className = 'dr-debug-btn-outline'
+    exportHtmlBtn.style.marginTop = '6px'
+    exportHtmlBtn.style.marginRight = '6px'
+    exportHtmlBtn.innerHTML = '<span>📦 Export Incident HTML</span>'
+    exportHtmlBtn.title = 'Export self-contained HTML replay bundle with all logs and code fixes'
+    exportHtmlBtn.addEventListener('click', () => {
+      this.exportIncidentBundle()
+    })
+
+    const copyIssueBtn = document.createElement('button')
+    copyIssueBtn.className = 'dr-debug-btn-outline'
+    copyIssueBtn.style.marginTop = '6px'
+    copyIssueBtn.innerHTML = '<span>📋 Copy GitHub Issue MD</span>'
+    copyIssueBtn.title = 'Copy GitHub/Linear formatted bug report to clipboard'
+    copyIssueBtn.addEventListener('click', async () => {
+      const ok = await this.copyGitHubIssue()
+      if (ok) {
+        copyIssueBtn.innerHTML = '<span>✓ Copied to Clipboard!</span>'
+        setTimeout(() => { copyIssueBtn.innerHTML = '<span>📋 Copy GitHub Issue MD</span>' }, 2000)
+      }
+    })
+
+    handoff.appendChild(exportHtmlBtn)
+    handoff.appendChild(copyIssueBtn)
     tier3.appendChild(handoff)
     card.appendChild(tier3)
 
@@ -878,13 +981,31 @@ export class CockpitPanel {
     const header = this.createInTabHeader('triage', 'Telemetry & Health Substrate', 'dot-sys')
     headerWrapper.appendChild(header)
 
+    const triageActions = document.createElement('div')
+    triageActions.style.display = 'flex'
+    triageActions.style.alignItems = 'center'
+    triageActions.style.gap = '6px'
+
+    const exportHtmlBtn = document.createElement('button')
+    exportHtmlBtn.className = 'dr-debug-btn-outline'
+    exportHtmlBtn.id = 'dr-debug-tab-export-html'
+    exportHtmlBtn.innerHTML = '<span>📦 Export HTML</span>'
+    exportHtmlBtn.title = 'Export self-contained offline HTML replay bundle with all traces and fixes'
+    exportHtmlBtn.style.fontSize = '11px'
+    exportHtmlBtn.style.padding = '3px 8px'
+    exportHtmlBtn.addEventListener('click', () => {
+      this.exportIncidentBundle()
+    })
+    triageActions.appendChild(exportHtmlBtn)
+
     const copyAllBtn = this.makeSessionPromptButton(
       'dr-debug-export-btn',
       'Copy for AI',
       'Copy surgical, minimal incident brief (Ponytail Protocol — 80% Token Saver) for Claude Code, Antigravity & Cursor'
     )
     copyAllBtn.style.marginRight = '4px'
-    headerWrapper.appendChild(copyAllBtn)
+    triageActions.appendChild(copyAllBtn)
+    headerWrapper.appendChild(triageActions)
     this.triageContainer.appendChild(headerWrapper)
 
     if (telemetry.memory && telemetry.memory.usedMB) {
@@ -980,6 +1101,8 @@ export class CockpitPanel {
         if (curlCmd) {
           actionsDiv.appendChild(this.makeCurlButton(curlCmd))
         }
+        actionsDiv.appendChild(this.makeNetworkMockButton(reqItem))
+        actionsDiv.appendChild(this.makeReplayButton(reqItem))
         actionsDiv.appendChild(this.makeCopyBtn(reqSummary))
         this.triageContainer.appendChild(item)
       }
@@ -1424,6 +1547,156 @@ export class CockpitPanel {
   public updateSettings(settings: Partial<SettingsData> & { hasApiKey?: boolean; apiKeyMasked?: string }): void {
     this.settingsModal.updateSettings(settings)
   }
+
+  public openCustomQuery(query: string): void {
+    if (this.queryInput) {
+      this.queryInput.value = query
+    }
+    if (this.customQueryDrawer) {
+      this.customQueryDrawer.style.display = 'block'
+    }
+  }
+
+  private makeNetworkMockButton(reqItem: any): HTMLElement {
+    const btn = document.createElement('button')
+    btn.className = 'dr-debug-mock-chip'
+    btn.textContent = 'Mock 500'
+    btn.title = 'Mock 500: Intercept matching requests and return HTTP 500 response'
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      const ctrl = this.getControllerInstance()
+      const mockInterceptor = ctrl?.getNetworkMock?.()
+      const url = typeof reqItem === 'object' ? reqItem.url : String(reqItem)
+      if (mockInterceptor) {
+        mockInterceptor.addRule({
+          urlPattern: url,
+          mockStatus: 500,
+          mockBody: JSON.stringify({ error: 'Mocked 500 Internal Server Error (Dr. Debug Mock Substrate)' }),
+          isActive: true
+        })
+        btn.textContent = 'Mock Active'
+        btn.style.background = 'rgba(244,63,94,0.3)'
+        btn.style.color = '#fff'
+      } else {
+        btn.textContent = 'Mock Rule Added'
+      }
+    })
+    return btn
+  }
+
+  private makeReplayButton(reqItem: any): HTMLElement {
+    const btn = document.createElement('button')
+    btn.className = 'dr-debug-mock-chip'
+    btn.textContent = 'Replay ↺'
+    btn.title = 'Replay Request: Re-sends this request in the current browser session'
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation()
+      const url = typeof reqItem === 'object' ? reqItem.url : String(reqItem)
+      const method = typeof reqItem === 'object' ? (reqItem.method || 'GET') : 'GET'
+      btn.textContent = 'Replaying...'
+      try {
+        await fetch(url, { method })
+        btn.textContent = 'Replayed ✓'
+      } catch {
+        btn.textContent = 'Replayed (Failed)'
+      }
+      setTimeout(() => { btn.textContent = 'Replay ↺' }, 2000)
+    })
+    return btn
+  }
+
+  public exportIncidentBundle(): void {
+    const ctrl = this.getControllerInstance()
+    const rawTelemetry = ctrl ? ctrl.getTelemetry() : { errors: [], slowRequests: [] }
+    const interactions = ctrl?.getInteractions?.() || []
+
+    const bundleData: IncidentBundleData = {
+      timestamp: new Date().toISOString(),
+      url: typeof window !== 'undefined' ? window.location.href : 'http://localhost',
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Browser',
+      viewport: {
+        width: typeof window !== 'undefined' ? window.innerWidth : 1920,
+        height: typeof window !== 'undefined' ? window.innerHeight : 1080
+      },
+      metrics: {
+        errorCount: rawTelemetry.errors?.length || 0,
+        failedNetCount: rawTelemetry.failedRequests?.length || 0,
+        slowNetCount: rawTelemetry.slowRequests?.length || 0
+      },
+      errors: (rawTelemetry.errors || []).map((e: any) => ({
+        message: typeof e === 'string' ? e : e.message || 'Unknown error',
+        stack: typeof e === 'object' ? e.stack : undefined,
+        timestamp: e.timestamp || Date.now()
+      })),
+      networkRequests: (rawTelemetry.network || rawTelemetry.failedRequests || []).map((r: any) => ({
+        url: r.url || '',
+        method: r.method || 'GET',
+        status: r.status || 0,
+        durationMs: r.duration || 0,
+        error: r.error
+      })),
+      interactions: interactions.map((i: any) => ({
+        type: i.type,
+        timestamp: i.timestamp,
+        target: i.target,
+        detail: i.detail
+      })),
+      prescription: this.lastPrescription ? {
+        rootCause: this.lastPrescription.rootCause,
+        steps: this.lastPrescription.steps,
+        codePatches: this.lastPrescription.codePatches
+      } : undefined
+    }
+
+    this.incidentExporter.exportHTML(bundleData)
+  }
+
+  public async copyGitHubIssue(): Promise<boolean> {
+    const ctrl = this.getControllerInstance()
+    const rawTelemetry = ctrl ? ctrl.getTelemetry() : { errors: [], slowRequests: [] }
+    const interactions = ctrl?.getInteractions?.() || []
+
+    const bundleData: IncidentBundleData = {
+      timestamp: new Date().toISOString(),
+      url: typeof window !== 'undefined' ? window.location.href : 'http://localhost',
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Browser',
+      viewport: {
+        width: typeof window !== 'undefined' ? window.innerWidth : 1920,
+        height: typeof window !== 'undefined' ? window.innerHeight : 1080
+      },
+      metrics: {
+        errorCount: rawTelemetry.errors?.length || 0,
+        failedNetCount: rawTelemetry.failedRequests?.length || 0,
+        slowNetCount: rawTelemetry.slowRequests?.length || 0
+      },
+      errors: (rawTelemetry.errors || []).map((e: any) => ({
+        message: typeof e === 'string' ? e : e.message || 'Unknown error',
+        stack: typeof e === 'object' ? e.stack : undefined,
+        timestamp: e.timestamp || Date.now()
+      })),
+      networkRequests: (rawTelemetry.network || rawTelemetry.failedRequests || []).map((r: any) => ({
+        url: r.url || '',
+        method: r.method || 'GET',
+        status: r.status || 0,
+        durationMs: r.duration || 0,
+        error: r.error
+      })),
+      interactions: interactions.map((i: any) => ({
+        type: i.type,
+        timestamp: i.timestamp,
+        target: i.target,
+        detail: i.detail
+      })),
+      prescription: this.lastPrescription ? {
+        rootCause: this.lastPrescription.rootCause,
+        steps: this.lastPrescription.steps,
+        codePatches: this.lastPrescription.codePatches
+      } : undefined
+    }
+
+    return this.incidentExporter.copyGitHubIssue(bundleData)
+  }
 }
+
 
 

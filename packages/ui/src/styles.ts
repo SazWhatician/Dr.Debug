@@ -26,6 +26,9 @@ export const shadowStyles = `
    ========================================================================== */
 
 .dr-debug-pill {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   pointer-events: auto;
   position: fixed;
   bottom: 24px;
@@ -46,7 +49,7 @@ export const shadowStyles = `
   cursor: pointer;
   user-select: none;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, box-shadow;
+  will-change: transform, box-shadow, width, height;
 }
 
 .dr-debug-pill:hover {
@@ -61,6 +64,54 @@ export const shadowStyles = `
 
 .dr-debug-pill:active {
   transform: translateY(-1px) scale(0.98);
+}
+
+/* Stealth Bezel Collapse: Mini 36px Glowing Orb HUD */
+.dr-debug-pill.dr-debug-pill-collapsed {
+  padding: 8px !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  border-radius: 50% !important;
+  gap: 0 !important;
+  justify-content: center !important;
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.85),
+    0 0 14px rgba(6, 182, 212, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  animation: orb-gentle-breathe 3s infinite ease-in-out;
+}
+
+.dr-debug-pill.dr-debug-pill-collapsed .dr-debug-equalizer,
+.dr-debug-pill.dr-debug-pill-collapsed .dr-debug-pill-badge {
+  display: none !important;
+}
+
+.dr-debug-pill.dr-debug-pill-collapsed .dr-debug-pill-icon {
+  font-size: 15px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dr-debug-pill.dr-debug-pill-collapsed.has-incident {
+  border-color: rgba(244, 63, 94, 0.7) !important;
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.9),
+    0 0 18px rgba(244, 63, 94, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+  animation: orb-pulse-red 1.6s infinite ease-in-out !important;
+}
+
+@keyframes orb-gentle-breathe {
+  0%, 100% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85), 0 0 12px rgba(6, 182, 212, 0.3); }
+  50% { box-shadow: 0 8px 28px rgba(0, 0, 0, 0.95), 0 0 20px rgba(6, 182, 212, 0.6); }
+}
+
+@keyframes orb-pulse-red {
+  0%, 100% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.9), 0 0 12px rgba(244, 63, 94, 0.4); transform: scale(1); }
+  50% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.95), 0 0 22px rgba(244, 63, 94, 0.85); transform: scale(1.06); }
 }
 
 /* Live Equalizer Activity Waves */
@@ -106,14 +157,35 @@ export const shadowStyles = `
   display: flex;
   align-items: center;
   gap: 6px;
+  font-family: inherit;
 }
 
+/* Match Cockpit Header Bold Brand Typography */
+.dr-debug-pill-title {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif;
+  font-weight: 800;
+  font-size: 12.5px;
+  letter-spacing: 0.6px;
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Match Cockpit Monospace Telemetry Badges */
 .dr-debug-chip {
   padding: 2px 7px;
   border-radius: 9999px;
-  font-size: 10.5px;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.3;
 }
 
 .dr-debug-chip.err {
@@ -317,6 +389,13 @@ export const shadowStyles = `
   background: rgba(244, 63, 94, 0.4);
   border-color: rgba(244, 63, 94, 0.7);
   transform: scale(1.05);
+}
+
+#dr-debug-settings-btn:hover {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.5);
+  transform: rotate(30deg) scale(1.05);
 }
 
 /* Tabs */
@@ -1332,6 +1411,13 @@ export const shadowStyles = `
   background: rgba(255, 255, 255, 0.1);
   color: #f1f5f9;
   border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dr-debug-btn-icon-only.active {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
 }
 
 .dr-debug-custom-query-drawer {
@@ -5630,6 +5716,127 @@ export const shadowStyles = `
   background: #101217;
   border: 1px solid #282d38;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Floating Pill HUD: Theme 3 Monotone Skeuomorphic */
+.dr-debug-pill.theme-monotone-skeuomorphic {
+  background: #0d0f13;
+  border: 1px solid #282d38;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.dr-debug-pill.theme-monotone-skeuomorphic .dr-debug-pill-title {
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  color: #f1f5f9;
+  text-shadow: none;
+}
+
+.dr-debug-pill.theme-monotone-skeuomorphic .dr-debug-chip {
+  font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  background: #181b22;
+  border: 1px solid #323846;
+  color: #cbd5e1;
+}
+
+/* ── Minimalist Action & Tool Buttons ─────────────────────────────────── */
+.dr-debug-btn-action-icon {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 11.5px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.dr-debug-btn-action-icon:hover {
+  color: #fff;
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.45);
+}
+
+.dr-debug-btn-action-icon.active {
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.22);
+  border-color: rgba(0, 240, 255, 0.6);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
+}
+
+.dr-debug-mock-chip {
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #c084fc;
+  font-size: 9.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  transition: all 0.18s ease;
+}
+
+.dr-debug-mock-chip:hover {
+  background: rgba(168, 85, 247, 0.35);
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+}
+
+/* ── In-Page Stethoscope & Error Boundary Overlays ────────────────────── */
+body.dr-debug-stethoscope-active,
+body.dr-debug-stethoscope-active * {
+  cursor: crosshair !important;
+}
+
+.dr-debug-stethoscope-overlay {
+  position: absolute;
+  pointer-events: none;
+  border: 1.5px dashed #00f0ff;
+  background: rgba(0, 240, 255, 0.08);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
+  border-radius: 4px;
+  z-index: 2147483640;
+  transition: all 0.05s ease;
+}
+
+.dr-debug-stethoscope-badge {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(8, 12, 22, 0.94);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 2147483641;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.dr-debug-stethoscope-badge .badge-tag { color: #00f0ff; font-weight: 700; }
+.dr-debug-stethoscope-badge .badge-comp { color: #c084fc; font-weight: 600; }
+.dr-debug-stethoscope-badge .badge-dims { color: #94a3b8; font-size: 10px; }
+
+.dr-debug-error-boundary-outline {
+  outline: 2px dashed #f43f5e !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 16px rgba(244, 63, 94, 0.4) !important;
+  position: relative;
 }
 `
 
