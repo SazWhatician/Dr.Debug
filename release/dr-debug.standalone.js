@@ -11839,7 +11839,7 @@ ${rawJson}
           <div class="dr-debug-settings-update-banner">
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
-              <span class="dr-debug-update-version">Dr. Debug v0.1.17</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.18</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
@@ -12081,7 +12081,7 @@ ${rawJson}
     async handleCheckUpdate(btn) {
       var _a, _b;
       const originalText = btn.innerHTML;
-      const currentVersion = "0.1.17";
+      const currentVersion = "0.1.18";
       btn.disabled = true;
       btn.innerHTML = `<span>Checking...</span>`;
       btn.style.opacity = "0.85";

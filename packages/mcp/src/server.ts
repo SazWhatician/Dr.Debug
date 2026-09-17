@@ -28,7 +28,7 @@ export class DrDebugMCPServer {
     this.mcpServer = new McpServer(
       {
         name: 'Dr. Debug Autonomous Observability',
-        version: '0.1.17'
+        version: '0.1.18'
       },
       {
         capabilities: {
@@ -424,7 +424,7 @@ export class DrDebugMCPServer {
             },
             serverInfo: {
               name: 'Dr. Debug Autonomous Observability MCP Server',
-              version: '0.1.17'
+              version: '0.1.18'
             }
           }
         }
