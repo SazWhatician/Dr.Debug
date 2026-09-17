@@ -87,8 +87,24 @@ describe('Mega Update Features (Typography, Bezel Collapse, Audio Chimes, Stetho
       const chimes = new AudioChimes()
 
       expect(() => chimes.playIncidentAlert()).not.toThrow()
+      expect(() => chimes.playIncidentAlert('warp-drop')).not.toThrow()
+      expect(() => chimes.playIncidentAlert('sonar-pulse')).not.toThrow()
+      expect(() => chimes.playIncidentAlert('cyber-glitch')).not.toThrow()
+      expect(() => chimes.playIncidentAlert('subtle-bell')).not.toThrow()
+      expect(() => chimes.playIncidentAlert('retro-alarm')).not.toThrow()
+
+      expect(() => chimes.playWarpDropChime()).not.toThrow()
+      expect(() => chimes.playSonarPulseChime()).not.toThrow()
+      expect(() => chimes.playCyberGlitchChime()).not.toThrow()
+      expect(() => chimes.playSubtleBellChime()).not.toThrow()
+      expect(() => chimes.playRetroAlarmChime()).not.toThrow()
+
       expect(() => chimes.playResolveChime()).not.toThrow()
       expect(() => chimes.playClickSound()).not.toThrow()
+
+      expect(chimes.getErrorChimeProfile()).toBe('warp-drop')
+      chimes.setErrorChimeProfile('cyber-glitch')
+      expect(chimes.getErrorChimeProfile()).toBe('cyber-glitch')
     })
 
     it('toggles sound mute state and updates preference', () => {
@@ -280,6 +296,22 @@ describe('Mega Update Features (Typography, Bezel Collapse, Audio Chimes, Stetho
       expect(ui.getAudioChimes().getIsEnabled()).toBe(true)
       expect(soundSelect.value).toBe('enabled')
       expect(soundToggleBtn.textContent).toContain('Enabled')
+
+      // Incident Error Chimes selector
+      const chimeSelect = shadow.querySelector('#dr-debug-error-chime') as HTMLSelectElement
+      const testChimeBtn = shadow.querySelector('#dr-debug-btn-test-chime') as HTMLButtonElement
+
+      expect(chimeSelect).toBeTruthy()
+      expect(testChimeBtn).toBeTruthy()
+      expect(chimeSelect.options.length).toBe(5)
+
+      // Change error chime selection to cyber-glitch
+      chimeSelect.value = 'cyber-glitch'
+      chimeSelect.dispatchEvent(new Event('change'))
+      expect(ui.getAudioChimes().getErrorChimeProfile()).toBe('cyber-glitch')
+
+      // Preview chime click
+      expect(() => testChimeBtn.click()).not.toThrow()
 
       ui.destroy()
     })

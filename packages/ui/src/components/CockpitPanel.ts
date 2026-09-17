@@ -393,6 +393,9 @@ export class CockpitPanel {
         if (settings.soundEnabled !== undefined) {
           this.audioChimes.setEnabled(settings.soundEnabled)
         }
+        if (settings.errorChime) {
+          this.audioChimes.setErrorChimeProfile(settings.errorChime)
+        }
         options.onSaveSettings?.(settings)
         if (typeof window !== 'undefined' && (window as any).__DR_DEBUG__) {
           (window as any).__DR_DEBUG__.updateLLMConfig?.(settings)
@@ -403,6 +406,12 @@ export class CockpitPanel {
       },
       onSoundChange: (enabled) => {
         this.audioChimes.setEnabled(enabled)
+      },
+      onErrorChimeChange: (chime) => {
+        this.audioChimes.setErrorChimeProfile(chime)
+      },
+      onTestChime: (chime) => {
+        this.audioChimes.playIncidentAlert(chime)
       },
       onTestConnection: async (settings) => {
         if (options.onTestConnection) {
@@ -1546,6 +1555,9 @@ export class CockpitPanel {
 
   public updateSettings(settings: Partial<SettingsData> & { hasApiKey?: boolean; apiKeyMasked?: string }): void {
     this.settingsModal.updateSettings(settings)
+    if (settings.errorChime) {
+      this.audioChimes.setErrorChimeProfile(settings.errorChime)
+    }
   }
 
   public openCustomQuery(query: string): void {

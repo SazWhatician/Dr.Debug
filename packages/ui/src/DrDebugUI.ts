@@ -107,7 +107,7 @@ export class DrDebugUI {
       getSessionPrompt: options.getSessionPrompt || (() => this.buildSessionPrompt()),
       onSaveSettings: options.onSaveSettings,
       onTestConnection: options.onTestConnection,
-      onThemeChange: (theme) => this.pill.setTheme(theme),
+      onThemeChange: (theme) => this.pill?.setTheme(theme),
       audioChimes: this.audioChimes,
       stethoscopeInspector: this.stethoscope,
       incidentExporter: this.incidentExporter
@@ -225,6 +225,9 @@ export class DrDebugUI {
 
   public updateSettings(settings: any): void {
     this.cockpit.updateSettings(settings)
+    if (settings?.errorChime) {
+      this.audioChimes.setErrorChimeProfile(settings.errorChime)
+    }
   }
 
   public toggleStethoscope(): boolean {

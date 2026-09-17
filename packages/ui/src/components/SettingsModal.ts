@@ -1,4 +1,5 @@
 declare const chrome: any
+import { type ErrorChimeProfile, ERROR_CHIME_OPTIONS } from './AudioChimes.js'
 
 export type DrDebugTheme = 'dr-debug' | 'minimal-glass' | 'monotone-skeuomorphic'
 
@@ -11,6 +12,7 @@ export interface SettingsData {
   model?: string
   theme?: DrDebugTheme
   soundEnabled?: boolean
+  errorChime?: ErrorChimeProfile
   enableUI?: boolean
   autoInvestigate?: boolean
 }
@@ -20,6 +22,8 @@ export interface SettingsModalOptions {
   onTestConnection: (settings: SettingsData) => Promise<{ success: boolean; message: string }>
   onThemeChange?: (theme: DrDebugTheme) => void
   onSoundChange?: (enabled: boolean) => void
+  onErrorChimeChange?: (chime: ErrorChimeProfile) => void
+  onTestChime?: (chime: ErrorChimeProfile) => void
   initialSettings?: SettingsData
 }
 
@@ -28,6 +32,8 @@ export class SettingsModal {
   private themeSelect!: HTMLSelectElement
   private soundSelect!: HTMLSelectElement
   private soundToggleBtn!: HTMLButtonElement
+  private errorChimeSelect!: HTMLSelectElement
+  private testChimeBtn!: HTMLButtonElement
   private isSoundEnabled = true
   private providerSelect!: HTMLSelectElement
   private apiKeyInput!: HTMLInputElement
@@ -91,11 +97,24 @@ export class SettingsModal {
     return this.isSoundEnabled
   }
 
+  public setErrorChime(chime: ErrorChimeProfile): void {
+    if (this.errorChimeSelect) {
+      this.errorChimeSelect.value = chime
+    }
+  }
+
+  public getErrorChime(): ErrorChimeProfile {
+    return (this.errorChimeSelect?.value as ErrorChimeProfile) || 'warp-drop'
+  }
+
   public updateSettings(settings: Partial<SettingsData> & { hasApiKey?: boolean; apiKeyMasked?: string }): void {
     if (!settings) return
     if (settings.theme) this.setTheme(settings.theme)
     if (settings.soundEnabled !== undefined) {
       this.setSoundEnabled(settings.soundEnabled)
+    }
+    if (settings.errorChime && this.errorChimeSelect) {
+      this.errorChimeSelect.value = settings.errorChime
     }
     if (settings.provider && this.providerSelect) {
       this.providerSelect.value = settings.provider
@@ -142,13 +161,28 @@ export class SettingsModal {
             <div class="dr-debug-form-group">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                 <label class="dr-debug-form-label" style="margin-bottom:0;">Tactile Audio HUD</label>
-                <button type="button" id="dr-debug-btn-sound-toggle" class="dr-debug-btn-outline" style="padding: 2px 8px; font-size: 11px; cursor: pointer;">
+                <button type="button" id="dr-debug-btn-sound-toggle" class="dr-debug-btn-outline" style="flex: 0 0 auto; padding: 1px 6px; font-size: 9.5px; height: 18px; line-height: 1; border-radius: 4px; cursor: pointer;">
                   🔔 Sound: Enabled
                 </button>
               </div>
               <select class="dr-debug-form-select" id="dr-debug-sound">
                 <option value="enabled" selected>Sound FX Enabled (Tactile audio chimes on incident)</option>
                 <option value="muted">Muted (Silent HUD)</option>
+              </select>
+            </div>
+            <div class="dr-debug-form-group" id="dr-debug-error-chime-group">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <label class="dr-debug-form-label" style="margin-bottom:0;">Incident Error Chime (5 Sounds)</label>
+                <button type="button" id="dr-debug-btn-test-chime" class="dr-debug-btn-outline" style="flex: 0 0 auto; padding: 1px 6px; font-size: 9.5px; height: 18px; line-height: 1; border-radius: 4px; cursor: pointer;" title="Preview selected error chime">
+                  ▶ Preview Chime
+                </button>
+              </div>
+              <select class="dr-debug-form-select" id="dr-debug-error-chime">
+                <option value="warp-drop" selected>1. Warp Drop (Default · 880Hz Slide)</option>
+                <option value="sonar-pulse">2. Sonar Pulse (Dual Acoustic Ping)</option>
+                <option value="cyber-glitch">3. Cyber Glitch (Tri-Tone Digital Strobe)</option>
+                <option value="subtle-bell">4. Subtle Bell (Glassy Ambient Ping)</option>
+                <option value="retro-alarm">5. Retro Synth (8-Bit Arcade Warning)</option>
               </select>
             </div>
           </div>
@@ -243,6 +277,25 @@ export class SettingsModal {
 
     this.soundToggleBtn?.addEventListener('click', () => {
       syncSoundUI(!this.isSoundEnabled)
+    })
+
+    this.errorChimeSelect = this.element.querySelector('#dr-debug-error-chime')!
+    this.testChimeBtn = this.element.querySelector('#dr-debug-btn-test-chime')!
+
+    this.errorChimeSelect?.addEventListener('change', () => {
+      const chime = (this.errorChimeSelect.value as ErrorChimeProfile) || 'warp-drop'
+      try {
+        localStorage.setItem('dr_debug_error_chime', chime)
+      } catch {
+        // ignore
+      }
+      this.options.onErrorChimeChange?.(chime)
+      this.options.onTestChime?.(chime)
+    })
+
+    this.testChimeBtn?.addEventListener('click', () => {
+      const chime = (this.errorChimeSelect?.value as ErrorChimeProfile) || 'warp-drop'
+      this.options.onTestChime?.(chime)
     })
 
     this.providerSelect = this.element.querySelector('#dr-debug-provider')!
@@ -361,6 +414,7 @@ export class SettingsModal {
     const baseURL = this.baseURLInput.value.trim() || undefined
     const theme = (this.themeSelect?.value as DrDebugTheme) || 'dr-debug'
     const soundEnabled = this.soundSelect ? this.soundSelect.value === 'enabled' : this.isSoundEnabled
+    const errorChime = (this.errorChimeSelect?.value as ErrorChimeProfile) || 'warp-drop'
 
     return {
       provider,
@@ -370,6 +424,7 @@ export class SettingsModal {
       baseURL,
       theme,
       soundEnabled,
+      errorChime,
       enableUI: true
     }
   }
@@ -395,7 +450,19 @@ export class SettingsModal {
       // ignore
     }
 
+    try {
+      const savedChime = localStorage.getItem('dr_debug_error_chime') as ErrorChimeProfile
+      if (savedChime && this.errorChimeSelect) {
+        this.errorChimeSelect.value = savedChime
+      }
+    } catch {
+      // ignore
+    }
+
     if (loaded) {
+      if (loaded.errorChime && this.errorChimeSelect) {
+        this.errorChimeSelect.value = loaded.errorChime
+      }
       if (loaded.model === 'llama-3.3-70b-versatile') {
         loaded.model = 'openai/gpt-oss-120b'
       }
