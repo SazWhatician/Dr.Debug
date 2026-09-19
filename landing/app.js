@@ -591,6 +591,17 @@ document.addEventListener('DOMContentLoaded', () => {
       ]
     }
   }
+}`,
+    windsurf: `{
+  "mcpServers": {
+    "dr-debug": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@dr-debug/mcp"
+      ]
+    }
+  }
 }`
   }
 
