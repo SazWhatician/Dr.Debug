@@ -34,6 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   providerSelect?.addEventListener('change', updateVisibility)
 
+  const btnRecenterPill = document.getElementById('btn-recenter-pill')
+
   // Toggle Cockpit in active tab
   btnToggleUI?.addEventListener('click', () => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -44,6 +46,22 @@ document.addEventListener('DOMContentLoaded', () => {
             showStatus('Please refresh the page to inject Dr. Debug', true)
           } else {
             showStatus('Cockpit toggled!')
+          }
+        })
+      }
+    })
+  })
+
+  // Recenter HUD Pill in active tab
+  btnRecenterPill?.addEventListener('click', () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const activeTab = tabs[0]
+      if (activeTab?.id) {
+        chrome.tabs.sendMessage(activeTab.id, { type: 'DR_DEBUG_RECENTER_PILL' }, (response) => {
+          if (chrome.runtime.lastError || !response) {
+            showStatus('Please refresh the page to inject Dr. Debug', true)
+          } else {
+            showStatus('🎯 Pill recentered to bottom right!')
           }
         })
       }

@@ -38,6 +38,7 @@ export interface SettingsModalOptions {
   onSoundChange?: (enabled: boolean) => void
   onErrorChimeChange?: (chime: ErrorChimeProfile) => void
   onTestChime?: (chime: ErrorChimeProfile) => void
+  getCurrentTheme?: () => DrDebugTheme
   initialSettings?: SettingsData
 }
 
@@ -74,6 +75,16 @@ export class SettingsModal {
   }
 
   public show(): void {
+    if (this.options.getCurrentTheme) {
+      this.setTheme(this.options.getCurrentTheme())
+    } else {
+      try {
+        const saved = localStorage.getItem('dr_debug_theme')
+        if (saved) this.setTheme(normalizeDrDebugTheme(saved))
+      } catch {
+        // ignore
+      }
+    }
     this.isVisible = true
     this.element.style.display = 'flex'
   }
@@ -90,7 +101,7 @@ export class SettingsModal {
 
   public setTheme(theme: DrDebugTheme): void {
     const valid = normalizeDrDebugTheme(theme)
-    if (this.themeSelect && this.themeSelect.value !== valid) {
+    if (this.themeSelect) {
       this.themeSelect.value = valid
     }
   }
@@ -264,10 +275,13 @@ export class SettingsModal {
     `
 
     this.themeSelect = this.element.querySelector('#dr-debug-theme')!
-    this.themeSelect.addEventListener('change', () => {
-      const theme = (this.themeSelect.value as DrDebugTheme) || 'dr-debug'
+    const handleThemeApply = () => {
+      const theme = normalizeDrDebugTheme(this.themeSelect.value)
       this.options.onThemeChange?.(theme)
-    })
+    }
+    this.themeSelect.addEventListener('change', handleThemeApply)
+    this.themeSelect.addEventListener('input', handleThemeApply)
+    this.themeSelect.addEventListener('click', handleThemeApply)
 
     this.soundSelect = this.element.querySelector('#dr-debug-sound')!
     this.soundToggleBtn = this.element.querySelector('#dr-debug-btn-sound-toggle')!

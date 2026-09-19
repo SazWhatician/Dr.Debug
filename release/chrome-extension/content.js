@@ -9593,7 +9593,7 @@ ${msg.content}<end_of_turn>
   };
 
   // packages/ui/src/assets/logo.ts
-  var DR_DEBUG_LOGO = "data:image/png;base64,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";
+  var DR_DEBUG_LOGO = "data:image/png;base64,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";
 
   // packages/ui/src/components/AudioChimes.ts
   var ERROR_CHIME_OPTIONS = [
@@ -11544,6 +11544,18 @@ ${rawJson}
   };
 
   // packages/ui/src/components/SettingsModal.ts
+  var VALID_DR_DEBUG_THEMES = [
+    "dr-debug",
+    "cyber-matrix",
+    "minimal-glass",
+    "monotone-skeuomorphic",
+    "windows-xp"
+  ];
+  function normalizeDrDebugTheme(theme) {
+    if (!theme) return "dr-debug";
+    if (theme === "windows-xp") return "minimal-glass";
+    return VALID_DR_DEBUG_THEMES.includes(theme) ? theme : "dr-debug";
+  }
   var SettingsModal = class {
     constructor(options) {
       this.options = options;
@@ -11574,6 +11586,15 @@ ${rawJson}
       return this.element;
     }
     show() {
+      if (this.options.getCurrentTheme) {
+        this.setTheme(this.options.getCurrentTheme());
+      } else {
+        try {
+          const saved = localStorage.getItem("dr_debug_theme");
+          if (saved) this.setTheme(normalizeDrDebugTheme(saved));
+        } catch {
+        }
+      }
       this.isVisible = true;
       this.element.style.display = "flex";
     }
@@ -11586,12 +11607,13 @@ ${rawJson}
       else this.show();
     }
     setTheme(theme) {
-      if (this.themeSelect && this.themeSelect.value !== theme) {
-        this.themeSelect.value = theme;
+      const valid = normalizeDrDebugTheme(theme);
+      if (this.themeSelect) {
+        this.themeSelect.value = valid;
       }
     }
     getTheme() {
-      return this.themeSelect?.value || "dr-debug";
+      return normalizeDrDebugTheme(this.themeSelect?.value);
     }
     setSoundEnabled(enabled) {
       this.isSoundEnabled = enabled;
@@ -11614,7 +11636,7 @@ ${rawJson}
     }
     updateSettings(settings) {
       if (!settings) return;
-      if (settings.theme) this.setTheme(settings.theme);
+      if (settings.theme) this.setTheme(normalizeDrDebugTheme(settings.theme));
       if (settings.soundEnabled !== void 0) {
         this.setSoundEnabled(settings.soundEnabled);
       }
@@ -11657,9 +11679,10 @@ ${rawJson}
             <div class="dr-debug-form-group">
               <label class="dr-debug-form-label">Cockpit Theme</label>
               <select class="dr-debug-form-select" id="dr-debug-theme">
-                <option value="dr-debug" selected>Dr.Debug (original)</option>
-                <option value="minimal-glass">Windows XP (Luna Blue)</option>
-                <option value="monotone-skeuomorphic">Monotone skeuomorphism (darker theme)</option>
+                <option value="dr-debug" selected>Dr.Debug (Original Obsidian Cyan)</option>
+                <option value="cyber-matrix">Cyber Matrix HUD (Tactical Neo-Tokyo Deck)</option>
+                <option value="minimal-glass">Windows XP (Luna Blue Retro)</option>
+                <option value="monotone-skeuomorphic">Monotone Skeuomorphism (Dark Studio)</option>
               </select>
             </div>
             <div class="dr-debug-form-group">
@@ -11751,10 +11774,13 @@ ${rawJson}
       </div>
     `;
       this.themeSelect = this.element.querySelector("#dr-debug-theme");
-      this.themeSelect.addEventListener("change", () => {
-        const theme = this.themeSelect.value || "dr-debug";
+      const handleThemeApply = () => {
+        const theme = normalizeDrDebugTheme(this.themeSelect.value);
         this.options.onThemeChange?.(theme);
-      });
+      };
+      this.themeSelect.addEventListener("change", handleThemeApply);
+      this.themeSelect.addEventListener("input", handleThemeApply);
+      this.themeSelect.addEventListener("click", handleThemeApply);
       this.soundSelect = this.element.querySelector("#dr-debug-sound");
       this.soundToggleBtn = this.element.querySelector("#dr-debug-btn-sound-toggle");
       const syncSoundUI = (enabled) => {
@@ -11887,7 +11913,7 @@ ${rawJson}
         model = provider === "groq" ? "openai/gpt-oss-120b" : provider === "gemini" ? "gemini-flash-latest" : "gpt-4o";
       }
       const baseURL = this.baseURLInput.value.trim() || void 0;
-      const theme = this.themeSelect?.value || "dr-debug";
+      const theme = normalizeDrDebugTheme(this.themeSelect?.value);
       const soundEnabled = this.soundSelect ? this.soundSelect.value === "enabled" : this.isSoundEnabled;
       const errorChime = this.errorChimeSelect?.value || "warp-drop";
       return {
@@ -11925,6 +11951,22 @@ ${rawJson}
         }
       } catch {
       }
+      let themeToApply = "dr-debug";
+      if (loaded?.theme) {
+        themeToApply = normalizeDrDebugTheme(loaded.theme);
+      } else {
+        try {
+          const savedTheme = localStorage.getItem("dr_debug_theme");
+          if (savedTheme) {
+            themeToApply = normalizeDrDebugTheme(savedTheme);
+          }
+        } catch {
+        }
+      }
+      if (this.themeSelect) {
+        this.themeSelect.value = themeToApply;
+      }
+      this.options.onThemeChange?.(themeToApply);
       if (loaded) {
         if (loaded.errorChime && this.errorChimeSelect) {
           this.errorChimeSelect.value = loaded.errorChime;
@@ -11939,34 +11981,12 @@ ${rawJson}
         if (loaded.soundEnabled !== void 0) {
           this.setSoundEnabled(Boolean(loaded.soundEnabled));
         }
-        if (loaded.theme && this.themeSelect) {
-          this.themeSelect.value = loaded.theme;
-          this.options.onThemeChange?.(loaded.theme);
-        } else {
-          try {
-            const savedTheme = localStorage.getItem("dr_debug_theme");
-            if (savedTheme && this.themeSelect) {
-              this.themeSelect.value = savedTheme;
-              this.options.onThemeChange?.(savedTheme);
-            }
-          } catch {
-          }
-        }
         if (loaded.provider) this.providerSelect.value = loaded.provider;
         if (loaded.apiKey) this.apiKeyInput.value = loaded.apiKey;
         if (loaded.baseURL) this.baseURLInput.value = loaded.baseURL;
         this.handleProviderChange();
         if (loaded.model) this.modelInput.value = loaded.model;
         if (loaded.apiKey) this.apiKeyInput.value = loaded.apiKey;
-      } else {
-        try {
-          const savedTheme = localStorage.getItem("dr_debug_theme");
-          if (savedTheme && this.themeSelect) {
-            this.themeSelect.value = savedTheme;
-            this.options.onThemeChange?.(savedTheme);
-          }
-        } catch {
-        }
       }
     }
     async handleCheckUpdate(btn) {
@@ -12215,7 +12235,10 @@ ${rawJson}
       this.settingsBtn.id = "dr-debug-settings-btn";
       this.settingsBtn.innerHTML = "\u2699";
       this.settingsBtn.title = "AI Settings & API Keys";
-      this.settingsBtn.addEventListener("click", () => this.settingsModal.toggle());
+      this.settingsBtn.addEventListener("click", () => {
+        this.settingsModal.setTheme(this.currentTheme);
+        this.settingsModal.toggle();
+      });
       this.maximizeBtn = document.createElement("button");
       this.maximizeBtn.className = "dr-debug-close-btn";
       this.maximizeBtn.innerHTML = "\u2922";
@@ -12327,6 +12350,7 @@ ${rawJson}
       body.appendChild(this.dockerContainer);
       body.appendChild(this.prescriptionContainer);
       this.settingsModal = new SettingsModal({
+        getCurrentTheme: () => this.currentTheme,
         onSave: (settings) => {
           if (settings.theme) {
             this.setTheme(settings.theme);
@@ -12365,13 +12389,8 @@ ${rawJson}
         }
       });
       this.element.appendChild(this.settingsModal.getElement());
-      try {
-        const savedTheme = localStorage.getItem("dr_debug_theme");
-        if (savedTheme) {
-          this.setTheme(savedTheme);
-        }
-      } catch {
-      }
+      const initialTheme = this.settingsModal.getTheme();
+      this.setTheme(initialTheme);
       const actionBar = document.createElement("div");
       actionBar.className = "dr-debug-action-bar";
       const statusRow = document.createElement("div");
@@ -12460,6 +12479,8 @@ ${rawJson}
       this.renderEmptyTimeline();
       this.renderEmptyPrescription();
       this.startUptimeTicker();
+      this.restoreSavedSize();
+      this.initResizable();
       this.initDraggable(header);
       this.errorDashboardView.update();
     }
@@ -13176,21 +13197,251 @@ ${rawJson}
     escapeHtml(str) {
       return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
+    restoreSavedSize() {
+      if (typeof localStorage === "undefined" || typeof window === "undefined") return;
+      try {
+        const raw = localStorage.getItem("dr_debug_cockpit_size");
+        if (!raw) return;
+        const size = JSON.parse(raw);
+        if (size && typeof size.width === "number" && typeof size.height === "number") {
+          const winW = window.innerWidth || 1024;
+          const winH = window.innerHeight || 768;
+          const validW = Math.max(360, Math.min(winW - 24, size.width));
+          const validH = Math.max(340, Math.min(winH - 30, size.height));
+          this.element.style.width = `${validW}px`;
+          this.element.style.height = `${validH}px`;
+        }
+      } catch {
+      }
+    }
+    resetSize() {
+      this.element.style.width = "";
+      this.element.style.height = "";
+      try {
+        if (typeof localStorage !== "undefined") {
+          localStorage.removeItem("dr_debug_cockpit_size");
+        }
+      } catch {
+      }
+    }
+    resetLayout() {
+      this.resetSize();
+      this.element.style.left = "";
+      this.element.style.top = "";
+      this.element.style.right = "";
+      this.element.style.bottom = "";
+      if (this.isMaximized) {
+        this.toggleMaximize();
+      }
+    }
+    initResizable() {
+      const handleT = document.createElement("div");
+      handleT.className = "dr-debug-resize-handle dr-debug-resize-t";
+      handleT.title = "Drag to resize Cockpit height";
+      const handleB = document.createElement("div");
+      handleB.className = "dr-debug-resize-handle dr-debug-resize-b";
+      handleB.title = "Drag to resize Cockpit height";
+      const handleL = document.createElement("div");
+      handleL.className = "dr-debug-resize-handle dr-debug-resize-l";
+      handleL.title = "Drag to resize Cockpit width";
+      const handleR = document.createElement("div");
+      handleR.className = "dr-debug-resize-handle dr-debug-resize-r";
+      handleR.title = "Drag to resize Cockpit width";
+      const handleTL = document.createElement("div");
+      handleTL.className = "dr-debug-resize-handle dr-debug-resize-tl";
+      handleTL.title = "Drag to resize Cockpit dynamically";
+      const gripTL = document.createElement("div");
+      gripTL.className = "dr-debug-resize-corner-grip";
+      handleTL.appendChild(gripTL);
+      const handleTR = document.createElement("div");
+      handleTR.className = "dr-debug-resize-handle dr-debug-resize-tr";
+      handleTR.title = "Drag to resize Cockpit dynamically";
+      const handleBL = document.createElement("div");
+      handleBL.className = "dr-debug-resize-handle dr-debug-resize-bl";
+      handleBL.title = "Drag to resize Cockpit dynamically";
+      const handleBR = document.createElement("div");
+      handleBR.className = "dr-debug-resize-handle dr-debug-resize-br";
+      handleBR.title = "Drag to resize Cockpit dynamically";
+      const gripBR = document.createElement("div");
+      gripBR.className = "dr-debug-resize-corner-grip-br";
+      handleBR.appendChild(gripBR);
+      this.element.appendChild(handleT);
+      this.element.appendChild(handleB);
+      this.element.appendChild(handleL);
+      this.element.appendChild(handleR);
+      this.element.appendChild(handleTL);
+      this.element.appendChild(handleTR);
+      this.element.appendChild(handleBL);
+      this.element.appendChild(handleBR);
+      const attachResizeHandler = (handle, edge) => {
+        let isResizing = false;
+        let startX = 0;
+        let startY = 0;
+        let startLeft = 0;
+        let startTop = 0;
+        let startRight = 0;
+        let startBottom = 0;
+        let startWidth = 0;
+        let startHeight = 0;
+        let isPositionedByLeft = false;
+        let isPositionedByTop = false;
+        const handleResizeStart = (clientX, clientY, pointerId) => {
+          if (this.isMaximized) return;
+          isResizing = true;
+          startX = clientX;
+          startY = clientY;
+          const rect = this.element.getBoundingClientRect();
+          startLeft = rect.left;
+          startTop = rect.top;
+          startRight = rect.right;
+          startBottom = rect.bottom;
+          startWidth = rect.width;
+          startHeight = rect.height;
+          isPositionedByLeft = this.element.style.left !== "" && this.element.style.left !== "auto";
+          isPositionedByTop = this.element.style.top !== "" && this.element.style.top !== "auto";
+          this.element.classList.add("dr-debug-resizing");
+          if (pointerId !== void 0 && typeof handle.setPointerCapture === "function") {
+            try {
+              handle.setPointerCapture(pointerId);
+            } catch {
+            }
+          }
+        };
+        const handleResizeMove = (clientX, clientY) => {
+          if (!isResizing) return;
+          const winW = typeof window !== "undefined" ? window.innerWidth : 1920;
+          const winH = typeof window !== "undefined" ? window.innerHeight : 1080;
+          const minW = Math.min(380, winW - 32);
+          const maxW = winW - 16;
+          const minH = 340;
+          const maxH = winH - 20;
+          const isLeft = edge === "left" || edge === "top-left" || edge === "bottom-left";
+          const isRight = edge === "right" || edge === "top-right" || edge === "bottom-right";
+          const isTop = edge === "top" || edge === "top-left" || edge === "top-right";
+          const isBottom = edge === "bottom" || edge === "bottom-left" || edge === "bottom-right";
+          if (isLeft) {
+            const deltaX = clientX - startX;
+            const maxAllowedLeft = startRight - minW;
+            const minAllowedLeft = Math.max(8, startRight - maxW);
+            const targetLeft = Math.max(minAllowedLeft, Math.min(maxAllowedLeft, startLeft + deltaX));
+            const newW = startRight - targetLeft;
+            if (isPositionedByLeft) {
+              this.element.style.left = `${targetLeft}px`;
+            }
+            this.element.style.width = `${newW}px`;
+          } else if (isRight) {
+            const deltaX = clientX - startX;
+            const maxAllowedRight = Math.min(winW - 8, startLeft + maxW);
+            const minAllowedRight = startLeft + minW;
+            const targetRight = Math.max(minAllowedRight, Math.min(maxAllowedRight, startRight + deltaX));
+            const newW = targetRight - startLeft;
+            if (!isPositionedByLeft) {
+              this.element.style.left = `${startLeft}px`;
+              this.element.style.right = "auto";
+              isPositionedByLeft = true;
+            }
+            this.element.style.width = `${newW}px`;
+          }
+          if (isTop) {
+            const deltaY = clientY - startY;
+            const maxAllowedTop = startBottom - minH;
+            const minAllowedTop = Math.max(8, startBottom - maxH);
+            const targetTop = Math.max(minAllowedTop, Math.min(maxAllowedTop, startTop + deltaY));
+            const newH = startBottom - targetTop;
+            if (isPositionedByTop) {
+              this.element.style.top = `${targetTop}px`;
+            }
+            this.element.style.height = `${newH}px`;
+          } else if (isBottom) {
+            const deltaY = clientY - startY;
+            const maxAllowedBottom = Math.min(winH - 8, startTop + maxH);
+            const minAllowedBottom = startTop + minH;
+            const targetBottom = Math.max(minAllowedBottom, Math.min(maxAllowedBottom, startBottom + deltaY));
+            const newH = targetBottom - startTop;
+            if (!isPositionedByTop) {
+              this.element.style.top = `${startTop}px`;
+              this.element.style.bottom = "auto";
+              isPositionedByTop = true;
+            }
+            this.element.style.height = `${newH}px`;
+          }
+        };
+        const handleResizeEnd = (pointerId) => {
+          if (!isResizing) return;
+          isResizing = false;
+          this.element.classList.remove("dr-debug-resizing");
+          if (pointerId !== void 0 && typeof handle.releasePointerCapture === "function") {
+            try {
+              handle.releasePointerCapture(pointerId);
+            } catch {
+            }
+          }
+          const rect = this.element.getBoundingClientRect();
+          try {
+            if (typeof localStorage !== "undefined") {
+              localStorage.setItem(
+                "dr_debug_cockpit_size",
+                JSON.stringify({ width: Math.round(rect.width), height: Math.round(rect.height) })
+              );
+            }
+          } catch {
+          }
+        };
+        if (typeof window !== "undefined" && "PointerEvent" in window) {
+          handle.addEventListener("pointerdown", (e) => {
+            if (e.button !== 0) return;
+            e.preventDefault();
+            e.stopPropagation();
+            handleResizeStart(e.clientX, e.clientY, e.pointerId);
+          });
+          handle.addEventListener("pointermove", (e) => {
+            handleResizeMove(e.clientX, e.clientY);
+          });
+          handle.addEventListener("pointerup", (e) => {
+            handleResizeEnd(e.pointerId);
+          });
+          handle.addEventListener("pointercancel", (e) => {
+            handleResizeEnd(e.pointerId);
+          });
+        }
+        handle.addEventListener("mousedown", (e) => {
+          if (e.button !== 0 || isResizing) return;
+          e.preventDefault();
+          e.stopPropagation();
+          handleResizeStart(e.clientX, e.clientY);
+          const onMouseMove = (ev) => handleResizeMove(ev.clientX, ev.clientY);
+          const onMouseUp = () => {
+            handleResizeEnd();
+            window.removeEventListener("mousemove", onMouseMove);
+            window.removeEventListener("mouseup", onMouseUp);
+          };
+          window.addEventListener("mousemove", onMouseMove);
+          window.addEventListener("mouseup", onMouseUp);
+        });
+      };
+      attachResizeHandler(handleT, "top");
+      attachResizeHandler(handleB, "bottom");
+      attachResizeHandler(handleL, "left");
+      attachResizeHandler(handleR, "right");
+      attachResizeHandler(handleTL, "top-left");
+      attachResizeHandler(handleTR, "top-right");
+      attachResizeHandler(handleBL, "bottom-left");
+      attachResizeHandler(handleBR, "bottom-right");
+    }
     initDraggable(header) {
       let isDragging = false;
       let startX = 0;
       let startY = 0;
       let initialX = 0;
       let initialY = 0;
-      const onMouseDown = (e) => {
+      const handleDragStart = (clientX, clientY, target, pointerId) => {
         if (this.isMaximized) return;
-        const target = e.target;
-        if (target.closest(".dr-debug-close-btn") || target.tagName === "BUTTON" || target.tagName === "INPUT") {
+        if (target.closest(".dr-debug-close-btn") || target.tagName === "BUTTON" || target.tagName === "INPUT" || target.tagName === "A") {
           return;
         }
         isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
+        startX = clientX;
+        startY = clientY;
         const rect = this.element.getBoundingClientRect();
         initialX = rect.left;
         initialY = rect.top;
@@ -13198,28 +13449,65 @@ ${rawJson}
         this.element.style.top = `${initialY}px`;
         this.element.style.right = "auto";
         this.element.style.bottom = "auto";
-        window.addEventListener("mousemove", onMouseMove);
-        window.addEventListener("mouseup", onMouseUp);
+        if (pointerId !== void 0 && typeof header.setPointerCapture === "function") {
+          try {
+            header.setPointerCapture(pointerId);
+          } catch {
+          }
+        }
       };
-      const onMouseMove = (e) => {
+      const handleDragMove = (clientX, clientY) => {
         if (!isDragging) return;
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
+        const dx = clientX - startX;
+        const dy = clientY - startY;
         let newX = initialX + dx;
         let newY = initialY + dy;
-        const maxX = window.innerWidth - this.element.offsetWidth - 10;
-        const maxY = window.innerHeight - this.element.offsetHeight - 10;
-        newX = Math.max(10, Math.min(newX, maxX));
-        newY = Math.max(10, Math.min(newY, maxY));
+        const winW = typeof window !== "undefined" ? window.innerWidth : 1920;
+        const winH = typeof window !== "undefined" ? window.innerHeight : 1080;
+        const maxX = winW - this.element.offsetWidth - 8;
+        const maxY = winH - this.element.offsetHeight - 8;
+        newX = Math.max(8, Math.min(newX, maxX));
+        newY = Math.max(8, Math.min(newY, maxY));
         this.element.style.left = `${newX}px`;
         this.element.style.top = `${newY}px`;
       };
-      const onMouseUp = () => {
+      const handleDragEnd = (pointerId) => {
+        if (!isDragging) return;
         isDragging = false;
-        window.removeEventListener("mousemove", onMouseMove);
-        window.removeEventListener("mouseup", onMouseUp);
+        if (pointerId !== void 0 && typeof header.releasePointerCapture === "function") {
+          try {
+            header.releasePointerCapture(pointerId);
+          } catch {
+          }
+        }
       };
-      header.addEventListener("mousedown", onMouseDown);
+      if (typeof window !== "undefined" && "PointerEvent" in window) {
+        header.addEventListener("pointerdown", (e) => {
+          if (e.button !== 0) return;
+          handleDragStart(e.clientX, e.clientY, e.target, e.pointerId);
+        });
+        header.addEventListener("pointermove", (e) => {
+          handleDragMove(e.clientX, e.clientY);
+        });
+        header.addEventListener("pointerup", (e) => {
+          handleDragEnd(e.pointerId);
+        });
+        header.addEventListener("pointercancel", (e) => {
+          handleDragEnd(e.pointerId);
+        });
+      }
+      header.addEventListener("mousedown", (e) => {
+        if (e.button !== 0 || isDragging) return;
+        handleDragStart(e.clientX, e.clientY, e.target);
+        const onMouseMove = (ev) => handleDragMove(ev.clientX, ev.clientY);
+        const onMouseUp = () => {
+          handleDragEnd();
+          window.removeEventListener("mousemove", onMouseMove);
+          window.removeEventListener("mouseup", onMouseUp);
+        };
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("mouseup", onMouseUp);
+      });
     }
     createInTabHeader(tabKey, title, dotClass = "dot-sys") {
       const header = document.createElement("div");
@@ -13332,24 +13620,35 @@ ${rawJson}
       return this.activeInfoTab;
     }
     setTheme(theme) {
-      this.currentTheme = theme;
-      this.element.classList.remove("theme-minimal-glass", "theme-monotone-skeuomorphic");
-      if (theme === "minimal-glass") {
+      const validTheme = normalizeDrDebugTheme(theme);
+      this.currentTheme = validTheme;
+      this.element.classList.remove(
+        "theme-minimal-glass",
+        "theme-windows-xp",
+        "theme-monotone-skeuomorphic",
+        "theme-cyber-matrix"
+      );
+      if (validTheme === "minimal-glass" || validTheme === "windows-xp") {
         this.element.classList.add("theme-minimal-glass");
-      } else if (theme === "monotone-skeuomorphic") {
+      } else if (validTheme === "monotone-skeuomorphic") {
         this.element.classList.add("theme-monotone-skeuomorphic");
+      } else if (validTheme === "cyber-matrix") {
+        this.element.classList.add("theme-cyber-matrix");
       }
       try {
-        localStorage.setItem("dr_debug_theme", theme);
+        localStorage.setItem("dr_debug_theme", validTheme);
       } catch {
       }
-      this.settingsModal.setTheme(theme);
-      this.options.onThemeChange?.(theme);
+      this.settingsModal?.setTheme(validTheme);
+      this.options.onThemeChange?.(validTheme);
     }
     getTheme() {
       return this.currentTheme;
     }
     updateSettings(settings) {
+      if (settings.theme) {
+        this.setTheme(settings.theme);
+      }
       this.settingsModal.updateSettings(settings);
       if (settings.errorChime) {
         this.audioChimes.setErrorChimeProfile(settings.errorChime);
@@ -13538,7 +13837,7 @@ ${rawJson}
       this.element.appendChild(this.equalizer);
       this.element.appendChild(icon);
       this.element.appendChild(this.badgeText);
-      this.element.addEventListener("click", () => {
+      this.element.addEventListener("click", (e) => {
         if (this.hasMoved) return;
         if (this.isCollapsed) {
           this.expand();
@@ -13550,6 +13849,7 @@ ${rawJson}
         e.stopPropagation();
         this.toggleCollapse();
       });
+      this.restoreSavedPosition();
       this.initDraggable();
     }
     getElement() {
@@ -13579,6 +13879,55 @@ ${rawJson}
         this.collapse();
       }
       return this.isCollapsed;
+    }
+    /**
+     * Smoothly recenters the floating pill to its default home position (bottom-right: 24px, 24px),
+     * uncollapses if collapsed, clears saved position, and gives audio/visual feedback.
+     */
+    recenter() {
+      this.element.style.left = "";
+      this.element.style.top = "";
+      this.element.style.right = "24px";
+      this.element.style.bottom = "24px";
+      if (this.isCollapsed) {
+        this.expand();
+      }
+      try {
+        if (typeof localStorage !== "undefined") {
+          localStorage.removeItem("dr_debug_pill_pos");
+        }
+      } catch {
+      }
+      this.audioChimes.playClickSound();
+      this.element.classList.remove("dr-debug-pill-recentered");
+      void this.element.offsetWidth;
+      this.element.classList.add("dr-debug-pill-recentered");
+      setTimeout(() => {
+        this.element.classList.remove("dr-debug-pill-recentered");
+      }, 1200);
+    }
+    restoreSavedPosition() {
+      if (typeof localStorage === "undefined" || typeof window === "undefined") return;
+      try {
+        const raw = localStorage.getItem("dr_debug_pill_pos");
+        if (!raw) return;
+        const pos = JSON.parse(raw);
+        if (pos && typeof pos.top === "number" && (pos.side === "left" || pos.side === "right")) {
+          const maxY = Math.max(8, (window.innerHeight || 800) - 50);
+          const validTop = Math.max(8, Math.min(maxY, pos.top));
+          const validOffset = typeof pos.offset === "number" ? pos.offset : 20;
+          this.element.style.top = `${validTop}px`;
+          this.element.style.bottom = "auto";
+          if (pos.side === "left") {
+            this.element.style.left = `${validOffset}px`;
+            this.element.style.right = "auto";
+          } else {
+            this.element.style.left = "auto";
+            this.element.style.right = `${validOffset}px`;
+          }
+        }
+      } catch {
+      }
     }
     renderBadge(title, chipText, chipClass) {
       while (this.badgeText.firstChild) {
@@ -13626,59 +13975,131 @@ ${rawJson}
       }
     }
     initDraggable() {
-      const onMouseDown = (e) => {
+      const handleDragStart = (clientX, clientY, pointerId) => {
         this.isDragging = true;
         this.hasMoved = false;
-        this.startX = e.clientX;
-        this.startY = e.clientY;
+        this.startX = clientX;
+        this.startY = clientY;
         const rect = this.element.getBoundingClientRect();
         this.initialX = rect.left;
         this.initialY = rect.top;
-        window.addEventListener("mousemove", onMouseMove);
-        window.addEventListener("mouseup", onMouseUp);
+        this.element.classList.add("dr-debug-pill-dragging");
+        if (pointerId !== void 0 && typeof this.element.setPointerCapture === "function") {
+          try {
+            this.element.setPointerCapture(pointerId);
+          } catch {
+          }
+        }
       };
-      const onMouseMove = (e) => {
+      const handleDragMove = (clientX, clientY) => {
         if (!this.isDragging) return;
-        const dx = e.clientX - this.startX;
-        const dy = e.clientY - this.startY;
+        const dx = clientX - this.startX;
+        const dy = clientY - this.startY;
         if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
           this.hasMoved = true;
-          this.element.style.left = `${this.initialX + dx}px`;
-          this.element.style.top = `${this.initialY + dy}px`;
+          const pillW = this.element.offsetWidth || 140;
+          const pillH = this.element.offsetHeight || 38;
+          const winW = typeof window !== "undefined" ? window.innerWidth : 1024;
+          const winH = typeof window !== "undefined" ? window.innerHeight : 768;
+          const minX = 8;
+          const maxX = Math.max(minX, winW - pillW - 8);
+          const minY = 8;
+          const maxY = Math.max(minY, winH - pillH - 8);
+          const clampedX = Math.max(minX, Math.min(maxX, this.initialX + dx));
+          const clampedY = Math.max(minY, Math.min(maxY, this.initialY + dy));
+          this.element.style.left = `${clampedX}px`;
+          this.element.style.top = `${clampedY}px`;
           this.element.style.right = "auto";
           this.element.style.bottom = "auto";
         }
       };
-      const onMouseUp = () => {
+      const handleDragEnd = (pointerId) => {
         if (!this.isDragging) return;
         this.isDragging = false;
-        window.removeEventListener("mousemove", onMouseMove);
-        window.removeEventListener("mouseup", onMouseUp);
+        this.element.classList.remove("dr-debug-pill-dragging");
+        if (pointerId !== void 0 && typeof this.element.releasePointerCapture === "function") {
+          try {
+            this.element.releasePointerCapture(pointerId);
+          } catch {
+          }
+        }
         if (this.hasMoved) {
           const rect = this.element.getBoundingClientRect();
+          const winW = typeof window !== "undefined" ? window.innerWidth : 1024;
+          const winH = typeof window !== "undefined" ? window.innerHeight : 768;
           const snapPadding = 20;
           const isNearLeftEdge = rect.left < 50;
-          const isNearRightEdge = rect.right > window.innerWidth - 50;
-          if (rect.left < window.innerWidth / 2) {
+          const isNearRightEdge = rect.right > winW - 50;
+          let side;
+          if (rect.left < winW / 2) {
             this.element.style.left = `${snapPadding}px`;
             this.element.style.right = "auto";
+            side = "left";
           } else {
             this.element.style.left = "auto";
             this.element.style.right = `${snapPadding}px`;
+            side = "right";
+          }
+          const maxY = Math.max(8, winH - rect.height - 8);
+          const clampedY = Math.max(8, Math.min(maxY, rect.top));
+          this.element.style.top = `${clampedY}px`;
+          this.element.style.bottom = "auto";
+          try {
+            if (typeof localStorage !== "undefined") {
+              localStorage.setItem(
+                "dr_debug_pill_pos",
+                JSON.stringify({ side, top: clampedY, offset: snapPadding })
+              );
+            }
+          } catch {
           }
           if (isNearLeftEdge || isNearRightEdge) {
             this.collapse();
           }
         }
       };
-      this.element.addEventListener("mousedown", onMouseDown);
+      if (typeof window !== "undefined" && "PointerEvent" in window) {
+        this.element.addEventListener("pointerdown", (e) => {
+          if (e.button !== 0) return;
+          handleDragStart(e.clientX, e.clientY, e.pointerId);
+        });
+        this.element.addEventListener("pointermove", (e) => {
+          handleDragMove(e.clientX, e.clientY);
+        });
+        this.element.addEventListener("pointerup", (e) => {
+          handleDragEnd(e.pointerId);
+        });
+        this.element.addEventListener("pointercancel", (e) => {
+          handleDragEnd(e.pointerId);
+        });
+      }
+      this.element.addEventListener("mousedown", (e) => {
+        if (e.button !== 0) return;
+        if (this.isDragging) return;
+        handleDragStart(e.clientX, e.clientY);
+        const onMouseMove = (ev) => handleDragMove(ev.clientX, ev.clientY);
+        const onMouseUp = () => {
+          handleDragEnd();
+          window.removeEventListener("mousemove", onMouseMove);
+          window.removeEventListener("mouseup", onMouseUp);
+        };
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("mouseup", onMouseUp);
+      });
     }
     setTheme(theme) {
-      this.element.classList.remove("theme-minimal-glass", "theme-monotone-skeuomorphic");
-      if (theme === "minimal-glass") {
+      this.element.classList.remove(
+        "theme-minimal-glass",
+        "theme-windows-xp",
+        "theme-monotone-skeuomorphic",
+        "theme-cyber-matrix"
+      );
+      if (theme === "minimal-glass" || theme === "windows-xp") {
         this.element.classList.add("theme-minimal-glass");
       } else if (theme === "monotone-skeuomorphic") {
         this.element.classList.add("theme-monotone-skeuomorphic");
+      } else if (theme === "cyber-matrix") {
+        this.element.classList.add("theme-cyber-matrix");
       }
     }
     getAudioChimes() {
@@ -13951,8 +14372,34 @@ ${rawJson}
   transform: translateY(-3px) scale(1.03);
 }
 
-.dr-debug-pill:active {
-  transform: translateY(-1px) scale(0.98);
+.dr-debug-pill:active,
+.dr-debug-pill.dr-debug-pill-dragging {
+  cursor: grabbing !important;
+  transition: none !important;
+  transform: scale(1.04);
+  box-shadow: 
+    0 20px 48px -4px rgba(0, 0, 0, 0.9),
+    0 0 28px rgba(6, 182, 212, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+}
+
+.dr-debug-pill.dr-debug-pill-recentered {
+  animation: dr-debug-recenter-glow 1.2s ease-out;
+}
+
+@keyframes dr-debug-recenter-glow {
+  0% {
+    transform: scale(1.18);
+    box-shadow: 0 0 36px rgba(0, 240, 255, 0.9), 0 0 12px rgba(255, 255, 255, 0.8);
+    border-color: #00f0ff;
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 24px rgba(0, 240, 255, 0.5);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Stealth Bezel Collapse: Mini 36px Glowing Orb HUD */
@@ -14031,11 +14478,39 @@ ${rawJson}
   100% { height: 6px; opacity: 0.8; }
 }
 
+.dr-debug-logo {
+  display: inline-block;
+  object-fit: contain;
+  vertical-align: middle;
+  user-select: none;
+  pointer-events: none;
+}
+
+.dr-debug-logo.pill-logo {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.7));
+}
+
+.dr-debug-logo.header-logo {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.7));
+}
+
+.dr-debug-logo.radar-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.8));
+}
+
 .dr-debug-pill-icon {
-  font-size: 16px;
   display: flex;
   align-items: center;
-  filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.6));
+  justify-content: center;
 }
 
 .dr-debug-pill-badge {
@@ -14136,6 +14611,123 @@ ${rawJson}
   animation: modal-spring-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 2147483647;
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dr-debug-modal.dr-debug-resizing {
+  transition: none !important;
+  user-select: none !important;
+}
+
+/* Dynamic Resize Handles */
+.dr-debug-resize-handle {
+  position: absolute;
+  z-index: 100;
+  user-select: none;
+  touch-action: none;
+}
+
+.dr-debug-resize-t {
+  top: 0;
+  left: 16px;
+  right: 16px;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.dr-debug-resize-b {
+  bottom: 0;
+  left: 16px;
+  right: 16px;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.dr-debug-resize-l {
+  top: 16px;
+  left: 0;
+  bottom: 16px;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.dr-debug-resize-r {
+  top: 16px;
+  right: 0;
+  bottom: 16px;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.dr-debug-resize-tl {
+  top: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.dr-debug-resize-tr {
+  top: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nesw-resize;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+.dr-debug-resize-bl {
+  bottom: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nesw-resize;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+}
+
+.dr-debug-resize-br {
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+.dr-debug-resize-corner-grip {
+  width: 10px;
+  height: 10px;
+  margin: 3px;
+  border-top: 2px solid rgba(56, 189, 248, 0.4);
+  border-left: 2px solid rgba(56, 189, 248, 0.4);
+  border-top-left-radius: 4px;
+  transition: border-color 0.2s;
+}
+
+.dr-debug-resize-corner-grip-br {
+  width: 10px;
+  height: 10px;
+  margin: 3px;
+  border-bottom: 2px solid rgba(56, 189, 248, 0.4);
+  border-right: 2px solid rgba(56, 189, 248, 0.4);
+  border-bottom-right-radius: 4px;
+  transition: border-color 0.2s;
+}
+
+.dr-debug-resize-handle:hover .dr-debug-resize-corner-grip,
+.dr-debug-resizing .dr-debug-resize-corner-grip,
+.dr-debug-resize-handle:hover .dr-debug-resize-corner-grip-br,
+.dr-debug-resizing .dr-debug-resize-corner-grip-br {
+  border-color: #00f0ff;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
 }
 
 .dr-debug-modal.hidden {
@@ -17872,24 +18464,24 @@ ${rawJson}
 /* ==========================================================================
    THEME 1: Dr.Debug (Original Cyan Dark Glassmorphism)
    ========================================================================== */
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) {
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) {
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) button,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) input,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) select,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-tab,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-btn {
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) button,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) input,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) select,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-tab,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-btn {
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) code,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) pre,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-telemetry-payload,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-step-output,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-docker-terminal,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-metric-badge {
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) code,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) pre,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-telemetry-payload,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-step-output,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-docker-terminal,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-metric-badge {
   font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
 }
 
@@ -19629,6 +20221,443 @@ ${rawJson}
   color: #cbd5e1;
 }
 
+/* ==========================================================================
+   THEME 4: Cyber Matrix HUD (Tactical Neo-Tokyo Deck)
+   ========================================================================== */
+
+/* Floating Pill HUD: Cyber Cartridge Capsule */
+.dr-debug-pill.theme-cyber-matrix {
+  background: linear-gradient(135deg, #050811 0%, #0d1527 50%, #050811 100%);
+  border: 1.5px solid #00f0ff;
+  border-radius: 0;
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
+  box-shadow:
+    0 0 16px rgba(0, 240, 255, 0.45),
+    0 8px 24px rgba(0, 0, 0, 0.9),
+    inset 0 0 8px rgba(0, 240, 255, 0.25);
+  color: #00f0ff;
+  font-family: 'Space Mono', 'JetBrains Mono', monospace;
+  padding: 6px 16px 6px 12px;
+  transition: all 0.18s ease;
+}
+
+.dr-debug-pill.theme-cyber-matrix:hover {
+  background: linear-gradient(135deg, #0a1124 0%, #162442 50%, #0a1124 100%);
+  border-color: #ffe600;
+  box-shadow:
+    0 0 24px rgba(255, 230, 0, 0.65),
+    0 12px 32px rgba(0, 0, 0, 0.95),
+    inset 0 0 12px rgba(255, 230, 0, 0.35);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.dr-debug-pill.theme-cyber-matrix .dr-debug-equalizer {
+  background: #020408;
+  border: 1px solid #00f0ff;
+  border-radius: 0;
+  padding: 2px;
+  box-shadow: inset 0 0 4px rgba(0, 240, 255, 0.4);
+  gap: 2px;
+}
+
+.dr-debug-pill.theme-cyber-matrix .dr-debug-equalizer .dr-debug-eq-bar {
+  background: linear-gradient(180deg, #ffe600 0%, #00f0ff 100%);
+  border-radius: 0;
+}
+
+.dr-debug-pill.theme-cyber-matrix .dr-debug-pill-title {
+  font-family: 'Space Mono', 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: #00f0ff;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+}
+
+.dr-debug-pill.theme-cyber-matrix .dr-debug-chip {
+  font-family: 'Space Mono', 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  border-radius: 0;
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+  padding: 2px 6px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.dr-debug-pill.theme-cyber-matrix .dr-debug-chip.ok {
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid #00f0ff;
+  color: #00f0ff;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}
+
+.dr-debug-pill.theme-cyber-matrix .dr-debug-chip.err,
+.dr-debug-pill.theme-cyber-matrix .dr-debug-chip.run {
+  background: rgba(255, 0, 85, 0.2);
+  border: 1px solid #ff0055;
+  color: #ff0055;
+  box-shadow: 0 0 10px rgba(255, 0, 85, 0.5);
+}
+
+/* Modal Frame: Cyber Matrix Tactical Deck */
+.dr-debug-modal.theme-cyber-matrix {
+  font-family: 'Space Mono', 'JetBrains Mono', 'IBM Plex Mono', monospace;
+  letter-spacing: 0.03em;
+  background: #05070f;
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
+  background-size: 20px 20px;
+  border: 2px solid #00f0ff;
+  border-radius: 0;
+  box-shadow:
+    0 0 35px rgba(0, 240, 255, 0.3),
+    0 25px 70px rgba(0, 0, 0, 0.95),
+    inset 0 0 25px rgba(0, 240, 255, 0.05);
+  color: #e2e8f0;
+}
+
+.dr-debug-modal.theme-cyber-matrix button,
+.dr-debug-modal.theme-cyber-matrix input,
+.dr-debug-modal.theme-cyber-matrix select,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-tab,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-btn,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-brand-bold,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-err-title,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-presc-title,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-step-reasoning-label,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-settings-title,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-tab-info-title,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-tab-view-title {
+  font-family: 'Space Mono', 'JetBrains Mono', 'IBM Plex Mono', monospace;
+}
+
+.dr-debug-modal.theme-cyber-matrix code,
+.dr-debug-modal.theme-cyber-matrix pre,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-payload,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-step-output,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-terminal,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-metric-badge {
+  font-family: 'JetBrains Mono', 'Space Mono', ui-monospace, monospace;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-header {
+  background: linear-gradient(90deg, #090e1a 0%, #152238 50%, #090e1a 100%);
+  border-bottom: 2px solid #ffe600;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(0, 240, 255, 0.3);
+  padding: 8px 14px;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-brand-bold {
+  color: #ffe600;
+  text-shadow: 0 0 10px rgba(255, 230, 0, 0.7);
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-brand-sub {
+  color: #00f0ff;
+  letter-spacing: 0.05em;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-metric-badge {
+  background: #020408;
+  border: 1px solid #00f0ff;
+  box-shadow: inset 0 0 6px rgba(0, 240, 255, 0.3);
+  color: #00f0ff;
+  border-radius: 0;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-close-btn {
+  background: rgba(255, 0, 85, 0.15);
+  border: 1px solid #ff0055;
+  box-shadow: 0 0 8px rgba(255, 0, 85, 0.4);
+  color: #ff0055;
+  border-radius: 0;
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-close-btn:hover {
+  background: #ff0055;
+  color: #ffffff;
+  box-shadow: 0 0 15px #ff0055;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-tabs {
+  background: #03050a;
+  border-bottom: 2px solid #00f0ff;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.9);
+  padding: 5px 8px;
+  gap: 6px;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-tab {
+  color: #7dd3fc;
+  background: rgba(0, 240, 255, 0.06);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 0;
+  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 5px 12px;
+  transition: all 0.15s ease;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-tab:hover {
+  color: #ffffff;
+  background: rgba(0, 240, 255, 0.22);
+  border-color: #00f0ff;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.45);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-tab.active {
+  background: #ffe600 !important;
+  color: #050811 !important;
+  border: 1px solid #fff566 !important;
+  font-weight: 900 !important;
+  box-shadow:
+    0 0 18px rgba(255, 230, 0, 0.7),
+    inset 0 0 4px rgba(255, 255, 255, 0.8) !important;
+  text-shadow: none !important;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-body {
+  background: #05070f;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-tab-view-header {
+  background: linear-gradient(90deg, #090e1c 0%, #101b2f 100%);
+  border: 1px solid #00f0ff;
+  border-radius: 0;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.15), inset 0 0 8px rgba(0, 240, 255, 0.1);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-err-header,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-matrix-toolbar,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-header,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-section,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-toolbar {
+  background: #070c18;
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(0, 240, 255, 0.15);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-2d-matrix {
+  background: #04060c;
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 0;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-matrix-cell {
+  background: #020306;
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 0;
+  box-shadow: inset 0 0 6px rgba(0, 240, 255, 0.1);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-matrix-th {
+  color: #00f0ff;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-search-input,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-dock-search,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-input,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-form-input,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-form-select {
+  background: #03050a;
+  border: 1.5px solid #00f0ff;
+  border-radius: 0;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  box-shadow: inset 0 0 8px rgba(0, 240, 255, 0.25);
+  color: #00f0ff;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-err-item,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-step-card,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-prescription-card,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-card {
+  background: linear-gradient(180deg, #090e1c 0%, #060913 100%);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-left: 3px solid #00f0ff;
+  border-radius: 0;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8), inset 0 0 12px rgba(0, 240, 255, 0.04);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-err-item:hover,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-step-card:hover,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-prescription-card:hover,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-card:hover {
+  border-color: #ffe600;
+  border-left-color: #ffe600;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.9), 0 0 15px rgba(255, 230, 0, 0.25);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-item {
+  background: linear-gradient(180deg, #090e1c 0%, #060914 100%);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-left: 3px solid #ffe600;
+  border-radius: 0;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.8);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-payload {
+  color: #00f0ff;
+  background: #020408;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 0;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-text {
+  color: #e2e8f0;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-time {
+  color: #ffe600;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-query-wrapper {
+  background: #070b16;
+  border-top: 2px solid #00f0ff;
+  box-shadow: 0 -4px 15px rgba(0, 240, 255, 0.15);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-query-box {
+  background: #03050a;
+  border: 1.5px solid #00f0ff;
+  border-radius: 0;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+/* Unique Cyber Button Styles */
+.dr-debug-modal.theme-cyber-matrix .dr-debug-btn {
+  background: linear-gradient(135deg, #ffe600 0%, #ffc000 100%);
+  border: 1.5px solid #fffb99;
+  border-radius: 0;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  box-shadow: 0 0 15px rgba(255, 230, 0, 0.5), inset 0 0 6px rgba(255, 255, 255, 0.6);
+  color: #050811;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-btn:hover {
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+  box-shadow: 0 0 25px rgba(255, 230, 0, 0.95);
+  transform: translateY(-1px);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-btn-outline {
+  background: rgba(0, 240, 255, 0.1);
+  border: 1.5px solid #00f0ff;
+  border-radius: 0;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+  color: #00f0ff;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-btn-outline:hover {
+  background: #00f0ff;
+  color: #050811;
+  box-shadow: 0 0 20px #00f0ff;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-cockpit-footer {
+  background: #03050a;
+  border-top: 1px solid rgba(0, 240, 255, 0.3);
+  color: #7dd3fc;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-settings-overlay,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-tab-info-card {
+  background: #070a14;
+  border: 2px solid #00f0ff;
+  border-radius: 0;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  box-shadow:
+    0 0 40px rgba(0, 240, 255, 0.4),
+    0 25px 70px rgba(0, 0, 0, 0.95),
+    inset 0 0 20px rgba(0, 240, 255, 0.1);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-settings-groupbox {
+  background: #04060d;
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 0;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.05);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-settings-groupbox-title {
+  color: #ffe600;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-btn-action-icon {
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 0;
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+  color: #00f0ff;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-btn-action-icon:hover {
+  background: #00f0ff;
+  color: #050811;
+  box-shadow: 0 0 12px #00f0ff;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-copy-btn,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-copy-inline,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-export-btn {
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid #00f0ff;
+  border-radius: 0;
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+  color: #00f0ff;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-copy-btn:hover,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-copy-inline:hover,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-export-btn:hover {
+  background: #00f0ff;
+  color: #050811;
+  box-shadow: 0 0 12px #00f0ff;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-mock-chip {
+  background: rgba(255, 230, 0, 0.15);
+  border: 1px solid #ffe600;
+  border-radius: 0;
+  clip-path: polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px);
+  color: #ffe600;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-mock-chip:hover {
+  background: #ffe600;
+  color: #050811;
+  box-shadow: 0 0 12px #ffe600;
+}
+
 /* \u2500\u2500 Minimalist Action & Tool Buttons \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
 .dr-debug-btn-action-icon {
   background: rgba(255, 255, 255, 0.06);
@@ -19742,7 +20771,14 @@ body.dr-debug-stethoscope-active * {
     engine = new LocalDiagnosticEngine();
     container;
     observer;
+    rootObserver;
     observedTarget;
+    observedBody;
+    navigationListeners = [];
+    watchdogTimer;
+    originalPushState;
+    originalReplaceState;
+    isDestroyed = false;
     constructor(options = {}) {
       this.getController = options.getController;
       this.audioChimes = new AudioChimes();
@@ -19757,20 +20793,9 @@ body.dr-debug-stethoscope-active * {
       if (!host) {
         host = document.createElement("div");
         host.id = "dr-debug-root";
-        host.style.setProperty("height", "0", "important");
-        host.style.setProperty("z-index", "2147483647", "important");
-        host.style.setProperty("pointer-events", "none", "important");
-        host.style.setProperty("display", "block", "important");
-        host.style.setProperty("visibility", "visible", "important");
-        host.style.setProperty("opacity", "1", "important");
-        host.style.setProperty("border", "none", "important");
-        host.style.setProperty("margin", "0", "important");
-        host.style.setProperty("padding", "0", "important");
-        host.style.setProperty("transform", "none", "important");
-        host.style.setProperty("filter", "none", "important");
-        host.style.setProperty("clip", "auto", "important");
       }
       this.host = host;
+      this.applyHostStyles();
       this.attachHostToDOM(options.container);
       this.shadowRoot = host.shadowRoot || host.attachShadow({ mode: "open" });
       while (this.shadowRoot.firstChild) {
@@ -19811,7 +20836,8 @@ body.dr-debug-stethoscope-active * {
         onThemeChange: (theme) => this.pill?.setTheme(theme),
         audioChimes: this.audioChimes,
         stethoscopeInspector: this.stethoscope,
-        incidentExporter: this.incidentExporter
+        incidentExporter: this.incidentExporter,
+        onRecenterPill: () => this.pill?.recenter()
       });
       this.pill = new FloatingPill(() => {
         this.cockpit.toggle();
@@ -19889,6 +20915,9 @@ body.dr-debug-stethoscope-active * {
       this.cockpit.hide();
     }
     updateSettings(settings) {
+      if (settings?.theme) {
+        this.setTheme(settings.theme);
+      }
       this.cockpit.updateSettings(settings);
       if (settings?.errorChime) {
         this.audioChimes.setErrorChimeProfile(settings.errorChime);
@@ -19914,6 +20943,25 @@ body.dr-debug-stethoscope-active * {
     }
     getIncidentExporter() {
       return this.incidentExporter;
+    }
+    getPill() {
+      return this.pill;
+    }
+    getCockpit() {
+      return this.cockpit;
+    }
+    /**
+     * Smoothly recenters the floating pill to the default bottom-right position,
+     * uncollapses it, and clears saved coordinate overrides.
+     */
+    recenterPill() {
+      this.pill.recenter();
+    }
+    /**
+     * Resets the Cockpit panel dimensions to defaults and clears saved dimensions.
+     */
+    resetCockpitSize() {
+      this.cockpit.resetSize();
     }
     buildSessionPrompt() {
       const controller = this.getController?.();
@@ -20023,6 +21071,24 @@ Direction: ${finding.remediation}`
         false
       );
     }
+    applyHostStyles() {
+      if (!this.host) return;
+      this.host.style.setProperty("position", "fixed", "important");
+      this.host.style.setProperty("inset", "auto", "important");
+      this.host.style.setProperty("height", "0", "important");
+      this.host.style.setProperty("width", "0", "important");
+      this.host.style.setProperty("z-index", "2147483647", "important");
+      this.host.style.setProperty("pointer-events", "none", "important");
+      this.host.style.setProperty("display", "block", "important");
+      this.host.style.setProperty("visibility", "visible", "important");
+      this.host.style.setProperty("opacity", "1", "important");
+      this.host.style.setProperty("border", "none", "important");
+      this.host.style.setProperty("margin", "0", "important");
+      this.host.style.setProperty("padding", "0", "important");
+      this.host.style.setProperty("transform", "none", "important");
+      this.host.style.setProperty("filter", "none", "important");
+      this.host.style.setProperty("clip", "auto", "important");
+    }
     attachHostToDOM(customContainer) {
       if (typeof document === "undefined") return;
       this.container = customContainer;
@@ -20031,19 +21097,30 @@ Direction: ${finding.remediation}`
       this.setupObserver();
     }
     ensureHostAttached() {
-      if (typeof document === "undefined") return;
-      const target = this.container || document.body || document.documentElement;
+      if (typeof document === "undefined" || this.isDestroyed) return;
+      let target = null;
+      if (this.container && document.contains(this.container)) {
+        target = this.container;
+      } else if (document.body) {
+        target = document.body;
+      } else if (document.documentElement) {
+        target = document.documentElement;
+      }
       if (!target) return;
+      this.applyHostStyles();
       if (!document.contains(this.host)) {
         try {
           target.appendChild(this.host);
         } catch {
         }
-      } else if (document.body && this.host.parentElement === document.documentElement && !this.container) {
+      } else if (document.body && this.host.parentElement === document.documentElement && (!this.container || !document.contains(this.container))) {
         try {
           document.body.appendChild(this.host);
         } catch {
         }
+      }
+      if (document.body !== this.observedBody) {
+        this.setupObserver();
       }
     }
     setupMountListeners() {
@@ -20063,43 +21140,158 @@ Direction: ${finding.remediation}`
           window.addEventListener("load", onReady, { once: true });
         }
       }
+      if (typeof window !== "undefined") {
+        const scheduleAttach = () => {
+          this.ensureHostAttached();
+          if (typeof requestAnimationFrame !== "undefined") {
+            requestAnimationFrame(() => this.ensureHostAttached());
+          }
+          setTimeout(() => this.ensureHostAttached(), 50);
+        };
+        const addNavListener = (target, type) => {
+          const handler = () => scheduleAttach();
+          try {
+            target.addEventListener(type, handler, { passive: true });
+            this.navigationListeners.push({ target, type, handler });
+          } catch {
+          }
+        };
+        addNavListener(window, "popstate");
+        addNavListener(window, "hashchange");
+        addNavListener(window, "pageshow");
+        const spaEvents = [
+          "turbo:load",
+          "turbo:render",
+          "turbo:frame-load",
+          "astro:page-load",
+          "next:route-change-complete",
+          "page:load"
+        ];
+        spaEvents.forEach((evt) => {
+          if (typeof document !== "undefined") addNavListener(document, evt);
+          addNavListener(window, evt);
+        });
+        this.patchHistoryMethods(scheduleAttach);
+        this.watchdogTimer = setInterval(() => {
+          if (this.isDestroyed) return;
+          if (!document.contains(this.host) || document.body && this.host.parentElement === document.documentElement && (!this.container || !document.contains(this.container))) {
+            this.ensureHostAttached();
+          }
+        }, 800);
+      }
+    }
+    patchHistoryMethods(onNavigate) {
+      if (typeof window === "undefined" || typeof history === "undefined") return;
+      try {
+        const origPush = history.pushState;
+        const origReplace = history.replaceState;
+        this.originalPushState = origPush;
+        this.originalReplaceState = origReplace;
+        const self = this;
+        history.pushState = function(data, unused, url) {
+          const res = origPush.call(this, data, unused, url);
+          try {
+            onNavigate();
+          } catch {
+          }
+          return res;
+        };
+        history.replaceState = function(data, unused, url) {
+          const res = origReplace.call(this, data, unused, url);
+          try {
+            onNavigate();
+          } catch {
+          }
+          return res;
+        };
+      } catch {
+      }
     }
     setupObserver() {
-      if (typeof MutationObserver === "undefined") return;
-      const target = this.container || document.body || document.documentElement;
+      if (typeof MutationObserver === "undefined" || typeof document === "undefined") return;
+      const target = this.container && document.contains(this.container) ? this.container : document.body || document.documentElement;
       if (!target) return;
-      if (this.observedTarget === target) return;
+      this.observedBody = document.body || null;
       if (this.observer) {
         this.observer.disconnect();
         this.observer = void 0;
       }
+      if (this.rootObserver) {
+        this.rootObserver.disconnect();
+        this.rootObserver = void 0;
+      }
+      const onMutation = () => {
+        if (this.isDestroyed) return;
+        if (!document.contains(this.host) || document.body && this.host.parentElement === document.documentElement && (!this.container || !document.contains(this.container))) {
+          this.ensureHostAttached();
+        }
+      };
       try {
-        this.observer = new MutationObserver(() => {
-          if (!document.contains(this.host)) {
-            this.ensureHostAttached();
-          }
-        });
-        this.observer.observe(target, { childList: true });
+        this.observer = new MutationObserver(onMutation);
+        this.observer.observe(target, { childList: true, subtree: true });
         this.observedTarget = target;
+        if (document.documentElement && target !== document.documentElement) {
+          this.rootObserver = new MutationObserver(() => {
+            if (document.body !== this.observedBody) {
+              this.ensureHostAttached();
+              this.setupObserver();
+            } else {
+              onMutation();
+            }
+          });
+          this.rootObserver.observe(document.documentElement, { childList: true });
+        }
       } catch {
       }
     }
     destroy() {
+      this.isDestroyed = true;
       this.stethoscope.destroy();
       this.audioChimes.destroy();
+      if (this.watchdogTimer) {
+        clearInterval(this.watchdogTimer);
+        this.watchdogTimer = void 0;
+      }
       if (this.observer) {
         this.observer.disconnect();
         this.observer = void 0;
       }
+      if (this.rootObserver) {
+        this.rootObserver.disconnect();
+        this.rootObserver = void 0;
+      }
       this.observedTarget = void 0;
-      if (this.host.parentNode) {
+      this.observedBody = void 0;
+      for (const { target, type, handler } of this.navigationListeners) {
+        try {
+          target.removeEventListener(type, handler);
+        } catch {
+        }
+      }
+      this.navigationListeners = [];
+      if (typeof history !== "undefined") {
+        if (this.originalPushState) {
+          try {
+            history.pushState = this.originalPushState;
+          } catch {
+          }
+        }
+        if (this.originalReplaceState) {
+          try {
+            history.replaceState = this.originalReplaceState;
+          } catch {
+          }
+        }
+      }
+      if (this.host && this.host.parentNode) {
         this.host.parentNode.removeChild(this.host);
       }
     }
   };
 
   // packages/dr-debug/src/DrDebug.ts
-  var DrDebug = class {
+  var DrDebug = class _DrDebug {
+    static globalInstance;
     controller;
     core;
     llmClient;
@@ -20111,8 +21303,52 @@ Direction: ${finding.remediation}`
     mcpSyncInterval;
     syncInterval;
     lastInvestigation = null;
+    /**
+     * Initializes or retrieves the singleton Dr. Debug instance across layout re-renders and page transitions.
+     * Safe to call repeatedly inside React layout useEffects or layout templates.
+     */
+    static init(options = {}) {
+      if (typeof window !== "undefined") {
+        const win = window;
+        if (win.__DR_DEBUG__ && win.__DR_DEBUG__ instanceof _DrDebug) {
+          if (Object.keys(options).length > 0) {
+            win.__DR_DEBUG__.updateLLMConfig(options);
+          }
+          win.__DR_DEBUG__.getUI()?.ensureHostAttached();
+          return win.__DR_DEBUG__;
+        }
+      }
+      if (_DrDebug.globalInstance) {
+        if (Object.keys(options).length > 0) {
+          _DrDebug.globalInstance.updateLLMConfig(options);
+        }
+        _DrDebug.globalInstance.getUI()?.ensureHostAttached();
+        return _DrDebug.globalInstance;
+      }
+      const instance = new _DrDebug(options);
+      _DrDebug.globalInstance = instance;
+      if (typeof window !== "undefined") {
+        ;
+        window.__DR_DEBUG__ = instance;
+      }
+      return instance;
+    }
+    static getInstance() {
+      if (typeof window !== "undefined") {
+        const win = window;
+        if (win.__DR_DEBUG__ && win.__DR_DEBUG__ instanceof _DrDebug) {
+          return win.__DR_DEBUG__;
+        }
+      }
+      return _DrDebug.globalInstance;
+    }
     constructor(options = {}) {
       this.options = options;
+      _DrDebug.globalInstance = this;
+      if (typeof window !== "undefined") {
+        ;
+        window.__DR_DEBUG__ = this;
+      }
       this.controller = new DebugController();
       this.controller.init();
       if (options.llmClient) {
@@ -20255,6 +21491,12 @@ Direction: ${finding.remediation}`
     }
     getUI() {
       return this.ui;
+    }
+    /**
+     * Smoothly brings the floating pill HUD back to its home position in the bottom-right corner.
+     */
+    recenter() {
+      this.ui?.recenterPill();
     }
     async investigate(goal, options = {}) {
       const activeGoal = goal || "Diagnose all active browser errors, network failures, and performance bottlenecks.";
@@ -20401,6 +21643,12 @@ Direction: ${finding.remediation}`
       }
     }
     destroy() {
+      if (_DrDebug.globalInstance === this) {
+        _DrDebug.globalInstance = void 0;
+      }
+      if (typeof window !== "undefined" && window.__DR_DEBUG__ === this) {
+        delete window.__DR_DEBUG__;
+      }
       if (this.syncInterval) {
         clearInterval(this.syncInterval);
         this.syncInterval = void 0;
@@ -20675,6 +21923,9 @@ Direction: ${finding.remediation}`
             break;
           case "DOCKER_EVENT":
             this.handleDockerEvent(data.payload);
+            break;
+          case "RECENTER_PILL":
+            this.instance?.getUI()?.recenterPill();
             break;
         }
       });

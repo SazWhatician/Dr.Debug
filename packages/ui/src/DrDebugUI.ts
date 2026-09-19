@@ -221,6 +221,9 @@ export class DrDebugUI {
   }
 
   public updateSettings(settings: any): void {
+    if (settings?.theme) {
+      this.setTheme(settings.theme)
+    }
     this.cockpit.updateSettings(settings)
     if (settings?.errorChime) {
       this.audioChimes.setErrorChimeProfile(settings.errorChime)

@@ -474,5 +474,96 @@ describe('Mega Update Features (Typography, Bezel Collapse, Audio Chimes, Stetho
 
       ui.destroy()
     })
+
+    it('synchronizes theme dropdown on settings modal open and propagates updates via updateSettings', () => {
+      const ui = new DrDebugUI()
+      const shadow = ui.getShadowRoot()
+      const modal = shadow.querySelector('.dr-debug-modal') as HTMLElement
+      const pill = shadow.querySelector('.dr-debug-pill') as HTMLElement
+      const settingsOverlay = shadow.querySelector('.dr-debug-settings-overlay') as HTMLElement
+      const settingsBtn = shadow.querySelector('#dr-debug-settings-btn') as HTMLButtonElement
+      const themeSelect = shadow.querySelector('#dr-debug-theme') as HTMLSelectElement
+
+      // 1. Change theme via UI
+      ui.setTheme('cyber-matrix')
+      expect(ui.getTheme()).toBe('cyber-matrix')
+      expect(modal.classList.contains('theme-cyber-matrix')).toBe(true)
+
+      // 2. Open settings modal and verify dropdown value is synced to cyber-matrix
+      settingsBtn.click()
+      expect(settingsOverlay.style.display).toBe('flex')
+      expect(themeSelect.value).toBe('cyber-matrix')
+
+      // 3. Re-selecting or clicking dropdown option triggers theme change
+      themeSelect.value = 'monotone-skeuomorphic'
+      themeSelect.dispatchEvent(new Event('change'))
+      expect(ui.getTheme()).toBe('monotone-skeuomorphic')
+      expect(modal.classList.contains('theme-monotone-skeuomorphic')).toBe(true)
+      expect(pill.classList.contains('theme-monotone-skeuomorphic')).toBe(true)
+
+      // 4. Updating settings with new theme propagates to modal and pill classes
+      ui.updateSettings({ theme: 'minimal-glass' })
+      expect(ui.getTheme()).toBe('minimal-glass')
+      expect(modal.classList.contains('theme-minimal-glass')).toBe(true)
+      expect(pill.classList.contains('theme-minimal-glass')).toBe(true)
+
+      ui.destroy()
+    })
+
+    it('provides all 8 resize handles and preserves anchored coordinates during dynamic resizing after dragging', () => {
+      const ui = new DrDebugUI()
+      const shadow = ui.getShadowRoot()
+      const modal = shadow.querySelector('.dr-debug-modal') as HTMLElement
+
+      // Check all 8 resize handles are present
+      expect(modal.querySelector('.dr-debug-resize-t')).toBeTruthy()
+      expect(modal.querySelector('.dr-debug-resize-b')).toBeTruthy()
+      expect(modal.querySelector('.dr-debug-resize-l')).toBeTruthy()
+      expect(modal.querySelector('.dr-debug-resize-r')).toBeTruthy()
+      expect(modal.querySelector('.dr-debug-resize-tl')).toBeTruthy()
+      expect(modal.querySelector('.dr-debug-resize-tr')).toBeTruthy()
+      expect(modal.querySelector('.dr-debug-resize-bl')).toBeTruthy()
+      expect(modal.querySelector('.dr-debug-resize-br')).toBeTruthy()
+
+      const handleL = modal.querySelector('.dr-debug-resize-l') as HTMLElement
+
+      // Simulate dragging modal to an explicit coordinate
+      modal.style.left = '400px'
+      modal.style.top = '200px'
+      modal.style.width = '600px'
+      modal.style.height = '400px'
+      modal.style.right = 'auto'
+      modal.style.bottom = 'auto'
+
+      // Mock getBoundingClientRect for HappyDOM
+      modal.getBoundingClientRect = () => ({
+        left: 400,
+        top: 200,
+        right: 1000,
+        bottom: 600,
+        width: 600,
+        height: 400,
+        x: 400,
+        y: 200,
+        toJSON: () => {}
+      })
+
+      // Simulate pointerdown on left resize handle at clientX=400
+      handleL.dispatchEvent(new MouseEvent('mousedown', { clientX: 400, clientY: 300, button: 0 }))
+      expect(modal.classList.contains('dr-debug-resizing')).toBe(true)
+
+      // Drag 50px to the left (clientX = 350)
+      window.dispatchEvent(new MouseEvent('mousemove', { clientX: 350, clientY: 300 }))
+
+      // Left edge should move to 350px and width should become 650px (right edge stays at 1000px)
+      expect(modal.style.left).toBe('350px')
+      expect(modal.style.width).toBe('650px')
+
+      // End resize
+      window.dispatchEvent(new MouseEvent('mouseup'))
+      expect(modal.classList.contains('dr-debug-resizing')).toBe(false)
+
+      ui.destroy()
+    })
   })
 })

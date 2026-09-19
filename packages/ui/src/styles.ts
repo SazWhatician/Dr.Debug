@@ -318,16 +318,32 @@ export const shadowStyles = `
 
 .dr-debug-resize-t {
   top: 0;
-  left: 20px;
-  right: 0;
+  left: 16px;
+  right: 16px;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.dr-debug-resize-b {
+  bottom: 0;
+  left: 16px;
+  right: 16px;
   height: 8px;
   cursor: ns-resize;
 }
 
 .dr-debug-resize-l {
-  top: 20px;
+  top: 16px;
   left: 0;
-  bottom: 0;
+  bottom: 16px;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.dr-debug-resize-r {
+  top: 16px;
+  right: 0;
+  bottom: 16px;
   width: 8px;
   cursor: ew-resize;
 }
@@ -335,12 +351,45 @@ export const shadowStyles = `
 .dr-debug-resize-tl {
   top: 0;
   left: 0;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   cursor: nwse-resize;
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
+}
+
+.dr-debug-resize-tr {
+  top: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nesw-resize;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+.dr-debug-resize-bl {
+  bottom: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nesw-resize;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+}
+
+.dr-debug-resize-br {
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
 }
 
 .dr-debug-resize-corner-grip {
@@ -353,8 +402,20 @@ export const shadowStyles = `
   transition: border-color 0.2s;
 }
 
+.dr-debug-resize-corner-grip-br {
+  width: 10px;
+  height: 10px;
+  margin: 3px;
+  border-bottom: 2px solid rgba(56, 189, 248, 0.4);
+  border-right: 2px solid rgba(56, 189, 248, 0.4);
+  border-bottom-right-radius: 4px;
+  transition: border-color 0.2s;
+}
+
 .dr-debug-resize-handle:hover .dr-debug-resize-corner-grip,
-.dr-debug-resizing .dr-debug-resize-corner-grip {
+.dr-debug-resizing .dr-debug-resize-corner-grip,
+.dr-debug-resize-handle:hover .dr-debug-resize-corner-grip-br,
+.dr-debug-resizing .dr-debug-resize-corner-grip-br {
   border-color: #00f0ff;
   box-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
 }

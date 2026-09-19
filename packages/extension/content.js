@@ -11586,6 +11586,15 @@ ${rawJson}
       return this.element;
     }
     show() {
+      if (this.options.getCurrentTheme) {
+        this.setTheme(this.options.getCurrentTheme());
+      } else {
+        try {
+          const saved = localStorage.getItem("dr_debug_theme");
+          if (saved) this.setTheme(normalizeDrDebugTheme(saved));
+        } catch {
+        }
+      }
       this.isVisible = true;
       this.element.style.display = "flex";
     }
@@ -11599,7 +11608,7 @@ ${rawJson}
     }
     setTheme(theme) {
       const valid = normalizeDrDebugTheme(theme);
-      if (this.themeSelect && this.themeSelect.value !== valid) {
+      if (this.themeSelect) {
         this.themeSelect.value = valid;
       }
     }
@@ -11765,10 +11774,13 @@ ${rawJson}
       </div>
     `;
       this.themeSelect = this.element.querySelector("#dr-debug-theme");
-      this.themeSelect.addEventListener("change", () => {
-        const theme = this.themeSelect.value || "dr-debug";
+      const handleThemeApply = () => {
+        const theme = normalizeDrDebugTheme(this.themeSelect.value);
         this.options.onThemeChange?.(theme);
-      });
+      };
+      this.themeSelect.addEventListener("change", handleThemeApply);
+      this.themeSelect.addEventListener("input", handleThemeApply);
+      this.themeSelect.addEventListener("click", handleThemeApply);
       this.soundSelect = this.element.querySelector("#dr-debug-sound");
       this.soundToggleBtn = this.element.querySelector("#dr-debug-btn-sound-toggle");
       const syncSoundUI = (enabled) => {
@@ -12223,7 +12235,10 @@ ${rawJson}
       this.settingsBtn.id = "dr-debug-settings-btn";
       this.settingsBtn.innerHTML = "\u2699";
       this.settingsBtn.title = "AI Settings & API Keys";
-      this.settingsBtn.addEventListener("click", () => this.settingsModal.toggle());
+      this.settingsBtn.addEventListener("click", () => {
+        this.settingsModal.setTheme(this.currentTheme);
+        this.settingsModal.toggle();
+      });
       this.maximizeBtn = document.createElement("button");
       this.maximizeBtn.className = "dr-debug-close-btn";
       this.maximizeBtn.innerHTML = "\u2922";
@@ -12335,6 +12350,7 @@ ${rawJson}
       body.appendChild(this.dockerContainer);
       body.appendChild(this.prescriptionContainer);
       this.settingsModal = new SettingsModal({
+        getCurrentTheme: () => this.currentTheme,
         onSave: (settings) => {
           if (settings.theme) {
             this.setTheme(settings.theme);
@@ -13222,32 +13238,67 @@ ${rawJson}
       const handleT = document.createElement("div");
       handleT.className = "dr-debug-resize-handle dr-debug-resize-t";
       handleT.title = "Drag to resize Cockpit height";
+      const handleB = document.createElement("div");
+      handleB.className = "dr-debug-resize-handle dr-debug-resize-b";
+      handleB.title = "Drag to resize Cockpit height";
       const handleL = document.createElement("div");
       handleL.className = "dr-debug-resize-handle dr-debug-resize-l";
       handleL.title = "Drag to resize Cockpit width";
+      const handleR = document.createElement("div");
+      handleR.className = "dr-debug-resize-handle dr-debug-resize-r";
+      handleR.title = "Drag to resize Cockpit width";
       const handleTL = document.createElement("div");
       handleTL.className = "dr-debug-resize-handle dr-debug-resize-tl";
       handleTL.title = "Drag to resize Cockpit dynamically";
-      const grip = document.createElement("div");
-      grip.className = "dr-debug-resize-corner-grip";
-      handleTL.appendChild(grip);
+      const gripTL = document.createElement("div");
+      gripTL.className = "dr-debug-resize-corner-grip";
+      handleTL.appendChild(gripTL);
+      const handleTR = document.createElement("div");
+      handleTR.className = "dr-debug-resize-handle dr-debug-resize-tr";
+      handleTR.title = "Drag to resize Cockpit dynamically";
+      const handleBL = document.createElement("div");
+      handleBL.className = "dr-debug-resize-handle dr-debug-resize-bl";
+      handleBL.title = "Drag to resize Cockpit dynamically";
+      const handleBR = document.createElement("div");
+      handleBR.className = "dr-debug-resize-handle dr-debug-resize-br";
+      handleBR.title = "Drag to resize Cockpit dynamically";
+      const gripBR = document.createElement("div");
+      gripBR.className = "dr-debug-resize-corner-grip-br";
+      handleBR.appendChild(gripBR);
       this.element.appendChild(handleT);
+      this.element.appendChild(handleB);
       this.element.appendChild(handleL);
+      this.element.appendChild(handleR);
       this.element.appendChild(handleTL);
+      this.element.appendChild(handleTR);
+      this.element.appendChild(handleBL);
+      this.element.appendChild(handleBR);
       const attachResizeHandler = (handle, edge) => {
         let isResizing = false;
         let startX = 0;
         let startY = 0;
+        let startLeft = 0;
+        let startTop = 0;
+        let startRight = 0;
+        let startBottom = 0;
         let startWidth = 0;
         let startHeight = 0;
+        let isPositionedByLeft = false;
+        let isPositionedByTop = false;
         const handleResizeStart = (clientX, clientY, pointerId) => {
           if (this.isMaximized) return;
           isResizing = true;
           startX = clientX;
           startY = clientY;
           const rect = this.element.getBoundingClientRect();
+          startLeft = rect.left;
+          startTop = rect.top;
+          startRight = rect.right;
+          startBottom = rect.bottom;
           startWidth = rect.width;
           startHeight = rect.height;
+          isPositionedByLeft = this.element.style.left !== "" && this.element.style.left !== "auto";
+          isPositionedByTop = this.element.style.top !== "" && this.element.style.top !== "auto";
           this.element.classList.add("dr-debug-resizing");
           if (pointerId !== void 0 && typeof handle.setPointerCapture === "function") {
             try {
@@ -13258,20 +13309,60 @@ ${rawJson}
         };
         const handleResizeMove = (clientX, clientY) => {
           if (!isResizing) return;
-          const dx = startX - clientX;
-          const dy = startY - clientY;
           const winW = typeof window !== "undefined" ? window.innerWidth : 1920;
           const winH = typeof window !== "undefined" ? window.innerHeight : 1080;
-          if (edge === "left" || edge === "top-left") {
-            const minW = Math.min(380, winW - 32);
-            const maxW = winW - 24;
-            const newW = Math.max(minW, Math.min(maxW, startWidth + dx));
+          const minW = Math.min(380, winW - 32);
+          const maxW = winW - 16;
+          const minH = 340;
+          const maxH = winH - 20;
+          const isLeft = edge === "left" || edge === "top-left" || edge === "bottom-left";
+          const isRight = edge === "right" || edge === "top-right" || edge === "bottom-right";
+          const isTop = edge === "top" || edge === "top-left" || edge === "top-right";
+          const isBottom = edge === "bottom" || edge === "bottom-left" || edge === "bottom-right";
+          if (isLeft) {
+            const deltaX = clientX - startX;
+            const maxAllowedLeft = startRight - minW;
+            const minAllowedLeft = Math.max(8, startRight - maxW);
+            const targetLeft = Math.max(minAllowedLeft, Math.min(maxAllowedLeft, startLeft + deltaX));
+            const newW = startRight - targetLeft;
+            if (isPositionedByLeft) {
+              this.element.style.left = `${targetLeft}px`;
+            }
+            this.element.style.width = `${newW}px`;
+          } else if (isRight) {
+            const deltaX = clientX - startX;
+            const maxAllowedRight = Math.min(winW - 8, startLeft + maxW);
+            const minAllowedRight = startLeft + minW;
+            const targetRight = Math.max(minAllowedRight, Math.min(maxAllowedRight, startRight + deltaX));
+            const newW = targetRight - startLeft;
+            if (!isPositionedByLeft) {
+              this.element.style.left = `${startLeft}px`;
+              this.element.style.right = "auto";
+              isPositionedByLeft = true;
+            }
             this.element.style.width = `${newW}px`;
           }
-          if (edge === "top" || edge === "top-left") {
-            const minH = 360;
-            const maxH = winH - 30;
-            const newH = Math.max(minH, Math.min(maxH, startHeight + dy));
+          if (isTop) {
+            const deltaY = clientY - startY;
+            const maxAllowedTop = startBottom - minH;
+            const minAllowedTop = Math.max(8, startBottom - maxH);
+            const targetTop = Math.max(minAllowedTop, Math.min(maxAllowedTop, startTop + deltaY));
+            const newH = startBottom - targetTop;
+            if (isPositionedByTop) {
+              this.element.style.top = `${targetTop}px`;
+            }
+            this.element.style.height = `${newH}px`;
+          } else if (isBottom) {
+            const deltaY = clientY - startY;
+            const maxAllowedBottom = Math.min(winH - 8, startTop + maxH);
+            const minAllowedBottom = startTop + minH;
+            const targetBottom = Math.max(minAllowedBottom, Math.min(maxAllowedBottom, startBottom + deltaY));
+            const newH = targetBottom - startTop;
+            if (!isPositionedByTop) {
+              this.element.style.top = `${startTop}px`;
+              this.element.style.bottom = "auto";
+              isPositionedByTop = true;
+            }
             this.element.style.height = `${newH}px`;
           }
         };
@@ -13329,8 +13420,13 @@ ${rawJson}
         });
       };
       attachResizeHandler(handleT, "top");
+      attachResizeHandler(handleB, "bottom");
       attachResizeHandler(handleL, "left");
+      attachResizeHandler(handleR, "right");
       attachResizeHandler(handleTL, "top-left");
+      attachResizeHandler(handleTR, "top-right");
+      attachResizeHandler(handleBL, "bottom-left");
+      attachResizeHandler(handleBR, "bottom-right");
     }
     initDraggable(header) {
       let isDragging = false;
@@ -13550,6 +13646,9 @@ ${rawJson}
       return this.currentTheme;
     }
     updateSettings(settings) {
+      if (settings.theme) {
+        this.setTheme(settings.theme);
+      }
       this.settingsModal.updateSettings(settings);
       if (settings.errorChime) {
         this.audioChimes.setErrorChimeProfile(settings.errorChime);
@@ -14529,16 +14628,32 @@ ${rawJson}
 
 .dr-debug-resize-t {
   top: 0;
-  left: 20px;
-  right: 0;
+  left: 16px;
+  right: 16px;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.dr-debug-resize-b {
+  bottom: 0;
+  left: 16px;
+  right: 16px;
   height: 8px;
   cursor: ns-resize;
 }
 
 .dr-debug-resize-l {
-  top: 20px;
+  top: 16px;
   left: 0;
-  bottom: 0;
+  bottom: 16px;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.dr-debug-resize-r {
+  top: 16px;
+  right: 0;
+  bottom: 16px;
   width: 8px;
   cursor: ew-resize;
 }
@@ -14546,12 +14661,45 @@ ${rawJson}
 .dr-debug-resize-tl {
   top: 0;
   left: 0;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   cursor: nwse-resize;
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
+}
+
+.dr-debug-resize-tr {
+  top: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nesw-resize;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+.dr-debug-resize-bl {
+  bottom: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nesw-resize;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+}
+
+.dr-debug-resize-br {
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
 }
 
 .dr-debug-resize-corner-grip {
@@ -14564,8 +14712,20 @@ ${rawJson}
   transition: border-color 0.2s;
 }
 
+.dr-debug-resize-corner-grip-br {
+  width: 10px;
+  height: 10px;
+  margin: 3px;
+  border-bottom: 2px solid rgba(56, 189, 248, 0.4);
+  border-right: 2px solid rgba(56, 189, 248, 0.4);
+  border-bottom-right-radius: 4px;
+  transition: border-color 0.2s;
+}
+
 .dr-debug-resize-handle:hover .dr-debug-resize-corner-grip,
-.dr-debug-resizing .dr-debug-resize-corner-grip {
+.dr-debug-resizing .dr-debug-resize-corner-grip,
+.dr-debug-resize-handle:hover .dr-debug-resize-corner-grip-br,
+.dr-debug-resizing .dr-debug-resize-corner-grip-br {
   border-color: #00f0ff;
   box-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
 }
@@ -20755,6 +20915,9 @@ body.dr-debug-stethoscope-active * {
       this.cockpit.hide();
     }
     updateSettings(settings) {
+      if (settings?.theme) {
+        this.setTheme(settings.theme);
+      }
       this.cockpit.updateSettings(settings);
       if (settings?.errorChime) {
         this.audioChimes.setErrorChimeProfile(settings.errorChime);
