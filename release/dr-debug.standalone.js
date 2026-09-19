@@ -1017,12 +1017,19 @@ ${arg.stack || ""}`;
         }
       }
       let trendMBPerMin;
-      if (this.history.length > 0 && usedJSHeapSize) {
-        const prev = this.history[this.history.length - 1];
-        if (prev.usedJSHeapSize) {
-          const deltaMB = (usedJSHeapSize - prev.usedJSHeapSize) / (1024 * 1024);
-          const deltaMinutes = (now - prev.timestamp) / (1e3 * 60);
-          if (deltaMinutes > 0) {
+      if (this.history.length >= 2 && usedJSHeapSize) {
+        let referenceSample = this.history[0];
+        for (let i = this.history.length - 1; i >= 0; i--) {
+          const s = this.history[i];
+          if (s.timestamp && now - s.timestamp >= 1e4 && s.usedJSHeapSize) {
+            referenceSample = s;
+            break;
+          }
+        }
+        if (referenceSample && referenceSample.usedJSHeapSize && referenceSample.timestamp < now) {
+          const deltaMB = (usedJSHeapSize - referenceSample.usedJSHeapSize) / (1024 * 1024);
+          const deltaMinutes = (now - referenceSample.timestamp) / (1e3 * 60);
+          if (deltaMinutes >= 0.133) {
             trendMBPerMin = Math.round(deltaMB / deltaMinutes * 100) / 100;
           }
         }
@@ -2268,7 +2275,7 @@ ${arg.stack || ""}`;
         else if (sev === "notice") noticeCount++;
       }
     });
-    if (state.memory && state.memory.trendMBPerMin && state.memory.trendMBPerMin > 2) {
+    if (state.memory && state.memory.trendMBPerMin !== void 0 && state.memory.trendMBPerMin > 2.5 && (state.memory.heapUsagePercent === void 0 || state.memory.heapUsagePercent > 15)) {
       const key = "system:high";
       cells[key].count++;
       cells[key].itemIds.push("mem_leak");
@@ -11862,7 +11869,7 @@ ${rawJson}
           <div class="dr-debug-settings-update-banner">
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
-              <span class="dr-debug-update-version">Dr. Debug v0.1.19</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.20</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
@@ -12101,7 +12108,7 @@ ${rawJson}
     async handleCheckUpdate(btn) {
       var _a, _b;
       const originalText = btn.innerHTML;
-      const currentVersion = "0.1.19";
+      const currentVersion = "0.1.20";
       btn.disabled = true;
       btn.innerHTML = `<span>Checking...</span>`;
       btn.style.opacity = "0.85";

@@ -777,7 +777,12 @@ export function computeDiagnosticMatrix(state: DebugState): DiagnosticMatrixSnap
   })
 
   // 4. System / Memory & Performance
-  if (state.memory && state.memory.trendMBPerMin && state.memory.trendMBPerMin > 2.0) {
+  if (
+    state.memory &&
+    state.memory.trendMBPerMin !== undefined &&
+    state.memory.trendMBPerMin > 2.5 &&
+    (state.memory.heapUsagePercent === undefined || state.memory.heapUsagePercent > 15)
+  ) {
     const key = 'system:high'
     cells[key].count++
     cells[key].itemIds.push('mem_leak')

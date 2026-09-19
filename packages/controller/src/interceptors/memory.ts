@@ -38,14 +38,22 @@ export class MemoryInterceptor {
       }
     }
 
-    // Calculate trend MB/min if we have past history
+    // Calculate sustained trend MB/min over a sliding window across history (at least 8-10s)
     let trendMBPerMin: number | undefined
-    if (this.history.length > 0 && usedJSHeapSize) {
-      const prev = this.history[this.history.length - 1]
-      if (prev.usedJSHeapSize) {
-        const deltaMB = (usedJSHeapSize - prev.usedJSHeapSize) / (1024 * 1024)
-        const deltaMinutes = (now - prev.timestamp) / (1000 * 60)
-        if (deltaMinutes > 0) {
+    if (this.history.length >= 2 && usedJSHeapSize) {
+      let referenceSample = this.history[0]
+      for (let i = this.history.length - 1; i >= 0; i--) {
+        const s = this.history[i]
+        if (s.timestamp && (now - s.timestamp) >= 10000 && s.usedJSHeapSize) {
+          referenceSample = s
+          break
+        }
+      }
+
+      if (referenceSample && referenceSample.usedJSHeapSize && referenceSample.timestamp < now) {
+        const deltaMB = (usedJSHeapSize - referenceSample.usedJSHeapSize) / (1024 * 1024)
+        const deltaMinutes = (now - referenceSample.timestamp) / (1000 * 60)
+        if (deltaMinutes >= 0.133) {
           trendMBPerMin = Math.round((deltaMB / deltaMinutes) * 100) / 100
         }
       }
