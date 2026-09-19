@@ -80,6 +80,48 @@ describe('Mega Update Features (Typography, Bezel Collapse, Audio Chimes, Stetho
       pill.updateStatus(0, 0, 0, false)
       expect(el.classList.contains('has-incident')).toBe(false)
     })
+
+    it('recenters the pill to bottom-right, uncollapses, and clears localStorage position on recenter()', () => {
+      const chimes = new AudioChimes()
+      const clickSpy = vi.spyOn(chimes, 'playClickSound')
+      const pill = new FloatingPill(() => {}, chimes)
+      const el = pill.getElement()
+
+      // Simulate dragging pill to custom coordinates
+      el.style.left = '120px'
+      el.style.top = '140px'
+      el.style.right = 'auto'
+      el.style.bottom = 'auto'
+      pill.collapse()
+      localStorage.setItem('dr_debug_pill_pos', JSON.stringify({ side: 'left', top: 140, offset: 20 }))
+
+      expect(pill.getIsCollapsed()).toBe(true)
+      expect(localStorage.getItem('dr_debug_pill_pos')).toBeTruthy()
+
+      // Call recenter()
+      pill.recenter()
+
+      expect(pill.getIsCollapsed()).toBe(false)
+      expect(el.style.left).toBe('')
+      expect(el.style.top).toBe('')
+      expect(el.style.right).toBe('24px')
+      expect(el.style.bottom).toBe('24px')
+      expect(localStorage.getItem('dr_debug_pill_pos')).toBeNull()
+      expect(clickSpy).toHaveBeenCalled()
+    })
+
+    it('restores saved position from localStorage on initialization', () => {
+      localStorage.setItem('dr_debug_pill_pos', JSON.stringify({ side: 'left', top: 250, offset: 20 }))
+      const pill = new FloatingPill(() => {})
+      const el = pill.getElement()
+
+      expect(el.style.left).toBe('20px')
+      expect(el.style.top).toBe('250px')
+      expect(el.style.right).toBe('auto')
+      expect(el.style.bottom).toBe('auto')
+
+      localStorage.removeItem('dr_debug_pill_pos')
+    })
   })
 
   describe('AudioChimes — Tactile Sci-Fi HUD Synthesizer', () => {
@@ -336,6 +378,99 @@ describe('Mega Update Features (Typography, Bezel Collapse, Audio Chimes, Stetho
       // Stethoscope inspect button is in controlsRow
       const stethoscopeBtn = shadow.querySelector('#dr-debug-btn-stethoscope')
       expect(stethoscopeBtn).toBeTruthy()
+
+      ui.destroy()
+    })
+
+    it('renders dynamic resize handles on the Cockpit panel and supports resetSize() / resetLayout()', () => {
+      const ui = new DrDebugUI()
+      const shadow = ui.getShadowRoot()
+      ui.openCockpit()
+
+      const modal = shadow.querySelector('.dr-debug-modal') as HTMLElement
+      expect(modal).toBeTruthy()
+
+      const handleT = modal.querySelector('.dr-debug-resize-t')
+      const handleL = modal.querySelector('.dr-debug-resize-l')
+      const handleTL = modal.querySelector('.dr-debug-resize-tl')
+
+      expect(handleT).toBeTruthy()
+      expect(handleL).toBeTruthy()
+      expect(handleTL).toBeTruthy()
+
+      // Set custom size and persist to localStorage
+      modal.style.width = '640px'
+      modal.style.height = '720px'
+      localStorage.setItem('dr_debug_cockpit_size', JSON.stringify({ width: 640, height: 720 }))
+
+      expect(localStorage.getItem('dr_debug_cockpit_size')).toBeTruthy()
+
+      ui.resetCockpitSize()
+      expect(modal.style.width).toBe('')
+      expect(modal.style.height).toBe('')
+      expect(localStorage.getItem('dr_debug_cockpit_size')).toBeNull()
+
+      ui.destroy()
+    })
+
+    it('recenters the pill via DrDebugUI.recenterPill()', () => {
+      const ui = new DrDebugUI()
+      const shadow = ui.getShadowRoot()
+      const pillEl = shadow.querySelector('.dr-debug-pill') as HTMLElement
+
+      pillEl.style.left = '50px'
+      pillEl.style.top = '50px'
+      pillEl.style.right = 'auto'
+      pillEl.style.bottom = 'auto'
+
+      ui.recenterPill()
+
+      expect(pillEl.style.left).toBe('')
+      expect(pillEl.style.top).toBe('')
+      expect(pillEl.style.right).toBe('24px')
+      expect(pillEl.style.bottom).toBe('24px')
+
+      ui.destroy()
+    })
+
+    it('guarantees Dr. Debug (original) as strict default theme without unintended Windows XP fallback', () => {
+      localStorage.removeItem('dr_debug_theme')
+      localStorage.removeItem('dr_debug_settings')
+
+      const ui = new DrDebugUI()
+      const shadow = ui.getShadowRoot()
+      const modal = shadow.querySelector('.dr-debug-modal') as HTMLElement
+      const pill = shadow.querySelector('.dr-debug-pill') as HTMLElement
+      const themeSelect = shadow.querySelector('#dr-debug-theme') as HTMLSelectElement
+
+      expect(ui.getTheme()).toBe('dr-debug')
+      expect(themeSelect.value).toBe('dr-debug')
+      expect(modal.classList.contains('theme-minimal-glass')).toBe(false)
+      expect(modal.classList.contains('theme-windows-xp')).toBe(false)
+      expect(modal.classList.contains('theme-monotone-skeuomorphic')).toBe(false)
+      expect(modal.classList.contains('theme-cyber-matrix')).toBe(false)
+      expect(pill.classList.contains('theme-minimal-glass')).toBe(false)
+      expect(pill.classList.contains('theme-cyber-matrix')).toBe(false)
+
+      ui.destroy()
+    })
+
+    it('supports Cyber Matrix HUD theme with theme-cyber-matrix class and unique polygon styling classes', () => {
+      const ui = new DrDebugUI()
+      const shadow = ui.getShadowRoot()
+      const modal = shadow.querySelector('.dr-debug-modal') as HTMLElement
+      const pill = shadow.querySelector('.dr-debug-pill') as HTMLElement
+
+      ui.setTheme('cyber-matrix')
+      expect(ui.getTheme()).toBe('cyber-matrix')
+      expect(modal.classList.contains('theme-cyber-matrix')).toBe(true)
+      expect(pill.classList.contains('theme-cyber-matrix')).toBe(true)
+
+      // Fallback for invalid theme string defaults to dr-debug
+      ui.setTheme('nonexistent-theme' as any)
+      expect(ui.getTheme()).toBe('dr-debug')
+      expect(modal.classList.contains('theme-cyber-matrix')).toBe(false)
+      expect(modal.classList.contains('theme-minimal-glass')).toBe(false)
 
       ui.destroy()
     })

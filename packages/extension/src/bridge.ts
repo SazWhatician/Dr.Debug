@@ -112,6 +112,10 @@ if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
         push('DOCKER_EVENT', message.data)
         sendResponse({ status: 'forwarded' })
         break
+      case 'DR_DEBUG_RECENTER_PILL':
+        push('RECENTER_PILL')
+        sendResponse({ status: 'forwarded' })
+        break
       default:
         return false
     }

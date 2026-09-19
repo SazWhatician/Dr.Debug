@@ -4,7 +4,7 @@ import { CausalGraphView, type CausalErrorGraph } from './CausalGraphView.js'
 import { DockerDashboardView } from './DockerDashboardView.js'
 import { ErrorDashboardView } from './ErrorDashboardView.js'
 import { IncidentExporter, type IncidentBundleData } from './IncidentExporter.js'
-import { SettingsModal, type SettingsData, type DrDebugTheme } from './SettingsModal.js'
+import { SettingsModal, type SettingsData, type DrDebugTheme, normalizeDrDebugTheme } from './SettingsModal.js'
 import { StethoscopeInspector } from './StethoscopeInspector.js'
 import { copyToClipboard } from './clipboard.js'
 
@@ -142,6 +142,7 @@ export interface CockpitPanelOptions {
   incidentExporter?: IncidentExporter
   onToggleStethoscope?: () => void
   onExportIncidentBundle?: () => void
+  onRecenterPill?: () => void
 }
 
 export class CockpitPanel {
@@ -425,14 +426,8 @@ export class CockpitPanel {
     })
     this.element.appendChild(this.settingsModal.getElement())
 
-    try {
-      const savedTheme = localStorage.getItem('dr_debug_theme') as DrDebugTheme
-      if (savedTheme) {
-        this.setTheme(savedTheme)
-      }
-    } catch {
-      // ignore
-    }
+    const initialTheme = this.settingsModal.getTheme()
+    this.setTheme(initialTheme)
 
 
     // 4. Smart Diagnostic Action Bar
@@ -541,6 +536,8 @@ export class CockpitPanel {
     this.renderEmptyTimeline()
     this.renderEmptyPrescription()
     this.startUptimeTicker()
+    this.restoreSavedSize()
+    this.initResizable()
     this.initDraggable(header)
     this.errorDashboardView.update()
   }
@@ -1343,6 +1340,191 @@ export class CockpitPanel {
       .replace(/"/g, '&quot;')
   }
 
+  private restoreSavedSize(): void {
+    if (typeof localStorage === 'undefined' || typeof window === 'undefined') return
+    try {
+      const raw = localStorage.getItem('dr_debug_cockpit_size')
+      if (!raw) return
+      const size = JSON.parse(raw)
+      if (size && typeof size.width === 'number' && typeof size.height === 'number') {
+        const winW = window.innerWidth || 1024
+        const winH = window.innerHeight || 768
+        const validW = Math.max(360, Math.min(winW - 24, size.width))
+        const validH = Math.max(340, Math.min(winH - 30, size.height))
+        this.element.style.width = `${validW}px`
+        this.element.style.height = `${validH}px`
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  public resetSize(): void {
+    this.element.style.width = ''
+    this.element.style.height = ''
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('dr_debug_cockpit_size')
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  public resetLayout(): void {
+    this.resetSize()
+    this.element.style.left = ''
+    this.element.style.top = ''
+    this.element.style.right = ''
+    this.element.style.bottom = ''
+    if (this.isMaximized) {
+      this.toggleMaximize()
+    }
+  }
+
+  private initResizable(): void {
+    const handleT = document.createElement('div')
+    handleT.className = 'dr-debug-resize-handle dr-debug-resize-t'
+    handleT.title = 'Drag to resize Cockpit height'
+
+    const handleL = document.createElement('div')
+    handleL.className = 'dr-debug-resize-handle dr-debug-resize-l'
+    handleL.title = 'Drag to resize Cockpit width'
+
+    const handleTL = document.createElement('div')
+    handleTL.className = 'dr-debug-resize-handle dr-debug-resize-tl'
+    handleTL.title = 'Drag to resize Cockpit dynamically'
+    const grip = document.createElement('div')
+    grip.className = 'dr-debug-resize-corner-grip'
+    handleTL.appendChild(grip)
+
+    this.element.appendChild(handleT)
+    this.element.appendChild(handleL)
+    this.element.appendChild(handleTL)
+
+    const attachResizeHandler = (handle: HTMLElement, edge: 'top' | 'left' | 'top-left') => {
+      let isResizing = false
+      let startX = 0
+      let startY = 0
+      let startWidth = 0
+      let startHeight = 0
+
+      const handleResizeStart = (clientX: number, clientY: number, pointerId?: number) => {
+        if (this.isMaximized) return
+        isResizing = true
+        startX = clientX
+        startY = clientY
+
+        const rect = this.element.getBoundingClientRect()
+        startWidth = rect.width
+        startHeight = rect.height
+
+        this.element.classList.add('dr-debug-resizing')
+
+        if (pointerId !== undefined && typeof handle.setPointerCapture === 'function') {
+          try {
+            handle.setPointerCapture(pointerId)
+          } catch {
+            // ignore
+          }
+        }
+      }
+
+      const handleResizeMove = (clientX: number, clientY: number) => {
+        if (!isResizing) return
+        const dx = startX - clientX
+        const dy = startY - clientY
+
+        const winW = typeof window !== 'undefined' ? window.innerWidth : 1920
+        const winH = typeof window !== 'undefined' ? window.innerHeight : 1080
+
+        if (edge === 'left' || edge === 'top-left') {
+          const minW = Math.min(380, winW - 32)
+          const maxW = winW - 24
+          const newW = Math.max(minW, Math.min(maxW, startWidth + dx))
+          this.element.style.width = `${newW}px`
+        }
+
+        if (edge === 'top' || edge === 'top-left') {
+          const minH = 360
+          const maxH = winH - 30
+          const newH = Math.max(minH, Math.min(maxH, startHeight + dy))
+          this.element.style.height = `${newH}px`
+        }
+      }
+
+      const handleResizeEnd = (pointerId?: number) => {
+        if (!isResizing) return
+        isResizing = false
+        this.element.classList.remove('dr-debug-resizing')
+
+        if (pointerId !== undefined && typeof handle.releasePointerCapture === 'function') {
+          try {
+            handle.releasePointerCapture(pointerId)
+          } catch {
+            // ignore
+          }
+        }
+
+        const rect = this.element.getBoundingClientRect()
+        try {
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(
+              'dr_debug_cockpit_size',
+              JSON.stringify({ width: Math.round(rect.width), height: Math.round(rect.height) })
+            )
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      // Modern Pointer Events
+      if (typeof window !== 'undefined' && 'PointerEvent' in window) {
+        handle.addEventListener('pointerdown', (e: PointerEvent) => {
+          if (e.button !== 0) return
+          e.preventDefault()
+          e.stopPropagation()
+          handleResizeStart(e.clientX, e.clientY, e.pointerId)
+        })
+
+        handle.addEventListener('pointermove', (e: PointerEvent) => {
+          handleResizeMove(e.clientX, e.clientY)
+        })
+
+        handle.addEventListener('pointerup', (e: PointerEvent) => {
+          handleResizeEnd(e.pointerId)
+        })
+
+        handle.addEventListener('pointercancel', (e: PointerEvent) => {
+          handleResizeEnd(e.pointerId)
+        })
+      }
+
+      // Mouse fallback
+      handle.addEventListener('mousedown', (e: MouseEvent) => {
+        if (e.button !== 0 || isResizing) return
+        e.preventDefault()
+        e.stopPropagation()
+        handleResizeStart(e.clientX, e.clientY)
+
+        const onMouseMove = (ev: MouseEvent) => handleResizeMove(ev.clientX, ev.clientY)
+        const onMouseUp = () => {
+          handleResizeEnd()
+          window.removeEventListener('mousemove', onMouseMove)
+          window.removeEventListener('mouseup', onMouseUp)
+        }
+
+        window.addEventListener('mousemove', onMouseMove)
+        window.addEventListener('mouseup', onMouseUp)
+      })
+    }
+
+    attachResizeHandler(handleT, 'top')
+    attachResizeHandler(handleL, 'left')
+    attachResizeHandler(handleTL, 'top-left')
+  }
+
   private initDraggable(header: HTMLElement): void {
     let isDragging = false
     let startX = 0
@@ -1350,16 +1532,15 @@ export class CockpitPanel {
     let initialX = 0
     let initialY = 0
 
-    const onMouseDown = (e: MouseEvent) => {
+    const handleDragStart = (clientX: number, clientY: number, target: HTMLElement, pointerId?: number) => {
       if (this.isMaximized) return
-      const target = e.target as HTMLElement
-      if (target.closest('.dr-debug-close-btn') || target.tagName === 'BUTTON' || target.tagName === 'INPUT') {
+      if (target.closest('.dr-debug-close-btn') || target.tagName === 'BUTTON' || target.tagName === 'INPUT' || target.tagName === 'A') {
         return
       }
 
       isDragging = true
-      startX = e.clientX
-      startY = e.clientY
+      startX = clientX
+      startY = clientY
 
       const rect = this.element.getBoundingClientRect()
       initialX = rect.left
@@ -1370,34 +1551,83 @@ export class CockpitPanel {
       this.element.style.right = 'auto'
       this.element.style.bottom = 'auto'
 
-      window.addEventListener('mousemove', onMouseMove)
-      window.addEventListener('mouseup', onMouseUp)
+      if (pointerId !== undefined && typeof header.setPointerCapture === 'function') {
+        try {
+          header.setPointerCapture(pointerId)
+        } catch {
+          // ignore
+        }
+      }
     }
 
-    const onMouseMove = (e: MouseEvent) => {
+    const handleDragMove = (clientX: number, clientY: number) => {
       if (!isDragging) return
-      const dx = e.clientX - startX
-      const dy = e.clientY - startY
+      const dx = clientX - startX
+      const dy = clientY - startY
 
       let newX = initialX + dx
       let newY = initialY + dy
 
-      const maxX = window.innerWidth - this.element.offsetWidth - 10
-      const maxY = window.innerHeight - this.element.offsetHeight - 10
-      newX = Math.max(10, Math.min(newX, maxX))
-      newY = Math.max(10, Math.min(newY, maxY))
+      const winW = typeof window !== 'undefined' ? window.innerWidth : 1920
+      const winH = typeof window !== 'undefined' ? window.innerHeight : 1080
+
+      const maxX = winW - this.element.offsetWidth - 8
+      const maxY = winH - this.element.offsetHeight - 8
+      newX = Math.max(8, Math.min(newX, maxX))
+      newY = Math.max(8, Math.min(newY, maxY))
 
       this.element.style.left = `${newX}px`
       this.element.style.top = `${newY}px`
     }
 
-    const onMouseUp = () => {
+    const handleDragEnd = (pointerId?: number) => {
+      if (!isDragging) return
       isDragging = false
-      window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mouseup', onMouseUp)
+
+      if (pointerId !== undefined && typeof header.releasePointerCapture === 'function') {
+        try {
+          header.releasePointerCapture(pointerId)
+        } catch {
+          // ignore
+        }
+      }
     }
 
-    header.addEventListener('mousedown', onMouseDown)
+    // Modern Pointer Events
+    if (typeof window !== 'undefined' && 'PointerEvent' in window) {
+      header.addEventListener('pointerdown', (e: PointerEvent) => {
+        if (e.button !== 0) return
+        handleDragStart(e.clientX, e.clientY, e.target as HTMLElement, e.pointerId)
+      })
+
+      header.addEventListener('pointermove', (e: PointerEvent) => {
+        handleDragMove(e.clientX, e.clientY)
+      })
+
+      header.addEventListener('pointerup', (e: PointerEvent) => {
+        handleDragEnd(e.pointerId)
+      })
+
+      header.addEventListener('pointercancel', (e: PointerEvent) => {
+        handleDragEnd(e.pointerId)
+      })
+    }
+
+    // Mouse fallback
+    header.addEventListener('mousedown', (e: MouseEvent) => {
+      if (e.button !== 0 || isDragging) return
+      handleDragStart(e.clientX, e.clientY, e.target as HTMLElement)
+
+      const onMouseMove = (ev: MouseEvent) => handleDragMove(ev.clientX, ev.clientY)
+      const onMouseUp = () => {
+        handleDragEnd()
+        window.removeEventListener('mousemove', onMouseMove)
+        window.removeEventListener('mouseup', onMouseUp)
+      }
+
+      window.addEventListener('mousemove', onMouseMove)
+      window.addEventListener('mouseup', onMouseUp)
+    })
   }
 
   private createInTabHeader(tabKey: CockpitTabKey, title: string, dotClass = 'dot-sys'): HTMLElement {
@@ -1533,20 +1763,28 @@ export class CockpitPanel {
   }
 
   public setTheme(theme: DrDebugTheme): void {
-    this.currentTheme = theme
-    this.element.classList.remove('theme-minimal-glass', 'theme-monotone-skeuomorphic')
-    if (theme === 'minimal-glass') {
+    const validTheme = normalizeDrDebugTheme(theme)
+    this.currentTheme = validTheme
+    this.element.classList.remove(
+      'theme-minimal-glass',
+      'theme-windows-xp',
+      'theme-monotone-skeuomorphic',
+      'theme-cyber-matrix'
+    )
+    if (validTheme === 'minimal-glass' || (validTheme as string) === 'windows-xp') {
       this.element.classList.add('theme-minimal-glass')
-    } else if (theme === 'monotone-skeuomorphic') {
+    } else if (validTheme === 'monotone-skeuomorphic') {
       this.element.classList.add('theme-monotone-skeuomorphic')
+    } else if (validTheme === 'cyber-matrix') {
+      this.element.classList.add('theme-cyber-matrix')
     }
     try {
-      localStorage.setItem('dr_debug_theme', theme)
+      localStorage.setItem('dr_debug_theme', validTheme)
     } catch {
       // ignore
     }
-    this.settingsModal.setTheme(theme)
-    this.options.onThemeChange?.(theme)
+    this.settingsModal?.setTheme(validTheme)
+    this.options.onThemeChange?.(validTheme)
   }
 
   public getTheme(): DrDebugTheme {

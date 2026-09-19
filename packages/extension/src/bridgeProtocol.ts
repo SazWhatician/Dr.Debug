@@ -38,7 +38,7 @@ export interface BridgeResponse {
 
 export interface BridgePush {
   source: typeof PUSH
-  event: 'SETTINGS_CHANGED' | 'TOGGLE_UI' | 'INVESTIGATE' | 'DOCKER_EVENT'
+  event: 'SETTINGS_CHANGED' | 'TOGGLE_UI' | 'INVESTIGATE' | 'DOCKER_EVENT' | 'RECENTER_PILL'
   payload?: any
 }
 

@@ -207,6 +207,9 @@ export class ContentScriptBridge {
         case 'DOCKER_EVENT':
           this.handleDockerEvent(data.payload)
           break
+        case 'RECENTER_PILL':
+          this.instance?.getUI()?.recenterPill()
+          break
       }
     })
   }

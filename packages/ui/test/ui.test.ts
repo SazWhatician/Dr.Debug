@@ -296,42 +296,63 @@ describe('DrDebugUI (Shadow DOM HUD & Cockpit)', () => {
     ui.destroy()
   })
 
-  it('supports theme switching across Dr.Debug, Minimalistic glassmorphism, and Monotone skeuomorphism', () => {
+  it('supports theme switching across Dr.Debug, Cyber Matrix HUD, Minimalistic glassmorphism, and Monotone skeuomorphism', () => {
     const ui = new DrDebugUI()
     const shadow = ui.getShadowRoot()
     const modal = shadow.querySelector('.dr-debug-modal') as HTMLElement
+    const pill = shadow.querySelector('.dr-debug-pill') as HTMLElement
 
-    // Default theme is Dr.Debug (original)
+    // Default theme is strictly Dr.Debug (original)
     expect(ui.getTheme()).toBe('dr-debug')
     expect(modal.classList.contains('theme-minimal-glass')).toBe(false)
     expect(modal.classList.contains('theme-monotone-skeuomorphic')).toBe(false)
+    expect(modal.classList.contains('theme-cyber-matrix')).toBe(false)
+    expect(pill.classList.contains('theme-minimal-glass')).toBe(false)
+    expect(pill.classList.contains('theme-cyber-matrix')).toBe(false)
 
-    // Switch to Minimalistic glassmorphism (light theme)
+    // Switch to Cyber Matrix HUD (tactical deck)
+    ui.setTheme('cyber-matrix')
+    expect(ui.getTheme()).toBe('cyber-matrix')
+    expect(modal.classList.contains('theme-cyber-matrix')).toBe(true)
+    expect(modal.classList.contains('theme-minimal-glass')).toBe(false)
+    expect(modal.classList.contains('theme-monotone-skeuomorphic')).toBe(false)
+    expect(pill.classList.contains('theme-cyber-matrix')).toBe(true)
+
+    // Switch to Minimalistic glassmorphism (Windows XP light theme)
     ui.setTheme('minimal-glass')
     expect(ui.getTheme()).toBe('minimal-glass')
     expect(modal.classList.contains('theme-minimal-glass')).toBe(true)
     expect(modal.classList.contains('theme-monotone-skeuomorphic')).toBe(false)
+    expect(modal.classList.contains('theme-cyber-matrix')).toBe(false)
+    expect(pill.classList.contains('theme-minimal-glass')).toBe(true)
+    expect(pill.classList.contains('theme-cyber-matrix')).toBe(false)
 
     // Switch to Monotone skeuomorphism (darker theme)
     ui.setTheme('monotone-skeuomorphic')
     expect(ui.getTheme()).toBe('monotone-skeuomorphic')
     expect(modal.classList.contains('theme-monotone-skeuomorphic')).toBe(true)
     expect(modal.classList.contains('theme-minimal-glass')).toBe(false)
+    expect(modal.classList.contains('theme-cyber-matrix')).toBe(false)
+    expect(pill.classList.contains('theme-monotone-skeuomorphic')).toBe(true)
 
     // Switch back to Dr.Debug (original)
     ui.setTheme('dr-debug')
     expect(ui.getTheme()).toBe('dr-debug')
     expect(modal.classList.contains('theme-minimal-glass')).toBe(false)
     expect(modal.classList.contains('theme-monotone-skeuomorphic')).toBe(false)
+    expect(modal.classList.contains('theme-cyber-matrix')).toBe(false)
+    expect(pill.classList.contains('theme-minimal-glass')).toBe(false)
+    expect(pill.classList.contains('theme-cyber-matrix')).toBe(false)
 
     // Test theme select in SettingsModal
     const themeSelect = shadow.querySelector('#dr-debug-theme') as HTMLSelectElement
     expect(themeSelect).toBeTruthy()
-    themeSelect.value = 'minimal-glass'
+    themeSelect.value = 'cyber-matrix'
     themeSelect.dispatchEvent(new Event('change'))
 
-    expect(ui.getTheme()).toBe('minimal-glass')
-    expect(modal.classList.contains('theme-minimal-glass')).toBe(true)
+    expect(ui.getTheme()).toBe('cyber-matrix')
+    expect(modal.classList.contains('theme-cyber-matrix')).toBe(true)
+    expect(pill.classList.contains('theme-cyber-matrix')).toBe(true)
 
     ui.destroy()
   })

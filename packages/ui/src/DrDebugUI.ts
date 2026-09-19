@@ -31,7 +31,14 @@ export class DrDebugUI {
   private engine = new LocalDiagnosticEngine()
   private container?: HTMLElement
   private observer?: MutationObserver
+  private rootObserver?: MutationObserver
   private observedTarget?: Node
+  private observedBody?: HTMLElement | null
+  private navigationListeners: Array<{ target: EventTarget; type: string; handler: EventListener }> = []
+  private watchdogTimer?: any
+  private originalPushState?: typeof history.pushState
+  private originalReplaceState?: typeof history.replaceState
+  private isDestroyed = false
 
   constructor(options: DrDebugUIOptions = {}) {
     this.getController = options.getController
@@ -49,20 +56,9 @@ export class DrDebugUI {
     if (!host) {
       host = document.createElement('div')
       host.id = 'dr-debug-root'
-      host.style.setProperty('height', '0', 'important')
-      host.style.setProperty('z-index', '2147483647', 'important')
-      host.style.setProperty('pointer-events', 'none', 'important')
-      host.style.setProperty('display', 'block', 'important')
-      host.style.setProperty('visibility', 'visible', 'important')
-      host.style.setProperty('opacity', '1', 'important')
-      host.style.setProperty('border', 'none', 'important')
-      host.style.setProperty('margin', '0', 'important')
-      host.style.setProperty('padding', '0', 'important')
-      host.style.setProperty('transform', 'none', 'important')
-      host.style.setProperty('filter', 'none', 'important')
-      host.style.setProperty('clip', 'auto', 'important')
     }
     this.host = host
+    this.applyHostStyles()
 
     this.attachHostToDOM(options.container)
 
@@ -110,7 +106,8 @@ export class DrDebugUI {
       onThemeChange: (theme) => this.pill?.setTheme(theme),
       audioChimes: this.audioChimes,
       stethoscopeInspector: this.stethoscope,
-      incidentExporter: this.incidentExporter
+      incidentExporter: this.incidentExporter,
+      onRecenterPill: () => this.pill?.recenter()
     })
 
     // Floating Pill
@@ -258,6 +255,29 @@ export class DrDebugUI {
     return this.incidentExporter
   }
 
+  public getPill(): FloatingPill {
+    return this.pill
+  }
+
+  public getCockpit(): CockpitPanel {
+    return this.cockpit
+  }
+
+  /**
+   * Smoothly recenters the floating pill to the default bottom-right position,
+   * uncollapses it, and clears saved coordinate overrides.
+   */
+  public recenterPill(): void {
+    this.pill.recenter()
+  }
+
+  /**
+   * Resets the Cockpit panel dimensions to defaults and clears saved dimensions.
+   */
+  public resetCockpitSize(): void {
+    this.cockpit.resetSize()
+  }
+
   private buildSessionPrompt(): string {
     const controller = this.getController?.()
     if (!controller) {
@@ -386,6 +406,25 @@ export class DrDebugUI {
     )
   }
 
+  private applyHostStyles(): void {
+    if (!this.host) return
+    this.host.style.setProperty('position', 'fixed', 'important')
+    this.host.style.setProperty('inset', 'auto', 'important')
+    this.host.style.setProperty('height', '0', 'important')
+    this.host.style.setProperty('width', '0', 'important')
+    this.host.style.setProperty('z-index', '2147483647', 'important')
+    this.host.style.setProperty('pointer-events', 'none', 'important')
+    this.host.style.setProperty('display', 'block', 'important')
+    this.host.style.setProperty('visibility', 'visible', 'important')
+    this.host.style.setProperty('opacity', '1', 'important')
+    this.host.style.setProperty('border', 'none', 'important')
+    this.host.style.setProperty('margin', '0', 'important')
+    this.host.style.setProperty('padding', '0', 'important')
+    this.host.style.setProperty('transform', 'none', 'important')
+    this.host.style.setProperty('filter', 'none', 'important')
+    this.host.style.setProperty('clip', 'auto', 'important')
+  }
+
   private attachHostToDOM(customContainer?: HTMLElement): void {
     if (typeof document === 'undefined') return
     this.container = customContainer
@@ -395,23 +434,40 @@ export class DrDebugUI {
   }
 
   public ensureHostAttached(): void {
-    if (typeof document === 'undefined') return
-    const target = this.container || document.body || document.documentElement
+    if (typeof document === 'undefined' || this.isDestroyed) return
+
+    // If a custom container was passed but has unmounted/detached, gracefully fallback to document.body
+    let target: HTMLElement | null = null
+    if (this.container && document.contains(this.container)) {
+      target = this.container
+    } else if (document.body) {
+      target = document.body
+    } else if (document.documentElement) {
+      target = document.documentElement
+    }
+
     if (!target) return
+
+    this.applyHostStyles()
 
     if (!document.contains(this.host)) {
       try {
         target.appendChild(this.host)
       } catch {
-        // Target might not be connected or ready yet
+        // Target might be transitioning or busy
       }
-    } else if (document.body && this.host.parentElement === document.documentElement && !this.container) {
-      // Once document.body is parsed, relocate from <html> to <body> for standard layout behavior
+    } else if (document.body && this.host.parentElement === document.documentElement && (!this.container || !document.contains(this.container))) {
+      // Once document.body is parsed or replaced, relocate from <html> to <body>
       try {
         document.body.appendChild(this.host)
       } catch {
         // Fallback
       }
+    }
+
+    // Refresh observers if document.body changed (e.g. Turbo/PJAX body replacement)
+    if (document.body !== this.observedBody) {
+      this.setupObserver()
     }
   }
 
@@ -421,6 +477,7 @@ export class DrDebugUI {
       this.ensureHostAttached()
       this.setupObserver()
     }
+
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', onReady, { once: true })
       document.addEventListener('readystatechange', () => {
@@ -432,41 +489,179 @@ export class DrDebugUI {
         window.addEventListener('load', onReady, { once: true })
       }
     }
+
+    // SPA Navigation & Route Lifecycle Events
+    if (typeof window !== 'undefined') {
+      const scheduleAttach = () => {
+        this.ensureHostAttached()
+        if (typeof requestAnimationFrame !== 'undefined') {
+          requestAnimationFrame(() => this.ensureHostAttached())
+        }
+        setTimeout(() => this.ensureHostAttached(), 50)
+      }
+
+      const addNavListener = (target: EventTarget, type: string) => {
+        const handler = () => scheduleAttach()
+        try {
+          target.addEventListener(type, handler, { passive: true } as any)
+          this.navigationListeners.push({ target, type, handler })
+        } catch {
+          // EventTarget might not support options
+        }
+      }
+
+      addNavListener(window, 'popstate')
+      addNavListener(window, 'hashchange')
+      addNavListener(window, 'pageshow')
+
+      // Framework-specific SPA route and layout transition events
+      const spaEvents = [
+        'turbo:load',
+        'turbo:render',
+        'turbo:frame-load',
+        'astro:page-load',
+        'next:route-change-complete',
+        'page:load'
+      ]
+      spaEvents.forEach(evt => {
+        if (typeof document !== 'undefined') addNavListener(document, evt)
+        addNavListener(window, evt)
+      })
+
+      // Monkey-patch history.pushState & history.replaceState for seamless SPA client navigation
+      this.patchHistoryMethods(scheduleAttach)
+
+      // Watchdog heartbeat: verifies host DOM presence periodically (every 800ms)
+      this.watchdogTimer = setInterval(() => {
+        if (this.isDestroyed) return
+        if (!document.contains(this.host) || (document.body && this.host.parentElement === document.documentElement && (!this.container || !document.contains(this.container)))) {
+          this.ensureHostAttached()
+        }
+      }, 800)
+    }
+  }
+
+  private patchHistoryMethods(onNavigate: () => void): void {
+    if (typeof window === 'undefined' || typeof history === 'undefined') return
+
+    try {
+      const origPush = history.pushState
+      const origReplace = history.replaceState
+
+      this.originalPushState = origPush
+      this.originalReplaceState = origReplace
+
+      const self = this
+      history.pushState = function (this: History, data: any, unused: string, url?: string | URL | null) {
+        const res = origPush.call(this, data, unused, url)
+        try {
+          onNavigate()
+        } catch {}
+        return res
+      }
+
+      history.replaceState = function (this: History, data: any, unused: string, url?: string | URL | null) {
+        const res = origReplace.call(this, data, unused, url)
+        try {
+          onNavigate()
+        } catch {}
+        return res
+      }
+    } catch {
+      // History object may be frozen or restricted
+    }
   }
 
   private setupObserver(): void {
-    if (typeof MutationObserver === 'undefined') return
-    const target = this.container || document.body || document.documentElement
+    if (typeof MutationObserver === 'undefined' || typeof document === 'undefined') return
+
+    const target = (this.container && document.contains(this.container))
+      ? this.container
+      : (document.body || document.documentElement)
+
     if (!target) return
 
-    if (this.observedTarget === target) return
+    this.observedBody = document.body || null
+
     if (this.observer) {
       this.observer.disconnect()
       this.observer = undefined
     }
+    if (this.rootObserver) {
+      this.rootObserver.disconnect()
+      this.rootObserver = undefined
+    }
+
+    const onMutation = () => {
+      if (this.isDestroyed) return
+      if (!document.contains(this.host) || (document.body && this.host.parentElement === document.documentElement && (!this.container || !document.contains(this.container)))) {
+        this.ensureHostAttached()
+      }
+    }
 
     try {
-      this.observer = new MutationObserver(() => {
-        if (!document.contains(this.host)) {
-          this.ensureHostAttached()
-        }
-      })
-      this.observer.observe(target, { childList: true })
+      // 1. Observe target with subtree to catch any container wipe or re-render
+      this.observer = new MutationObserver(onMutation)
+      this.observer.observe(target, { childList: true, subtree: true })
       this.observedTarget = target
+
+      // 2. Observe document.documentElement for root-level changes (e.g. body replacements)
+      if (document.documentElement && target !== document.documentElement) {
+        this.rootObserver = new MutationObserver(() => {
+          if (document.body !== this.observedBody) {
+            this.ensureHostAttached()
+            this.setupObserver()
+          } else {
+            onMutation()
+          }
+        })
+        this.rootObserver.observe(document.documentElement, { childList: true })
+      }
     } catch {
       // MutationObserver fallback
     }
   }
 
   public destroy(): void {
+    this.isDestroyed = true
     this.stethoscope.destroy()
     this.audioChimes.destroy()
+
+    if (this.watchdogTimer) {
+      clearInterval(this.watchdogTimer)
+      this.watchdogTimer = undefined
+    }
+
     if (this.observer) {
       this.observer.disconnect()
       this.observer = undefined
     }
+    if (this.rootObserver) {
+      this.rootObserver.disconnect()
+      this.rootObserver = undefined
+    }
     this.observedTarget = undefined
-    if (this.host.parentNode) {
+    this.observedBody = undefined
+
+    // Remove navigation listeners
+    for (const { target, type, handler } of this.navigationListeners) {
+      try {
+        target.removeEventListener(type, handler)
+      } catch {}
+    }
+    this.navigationListeners = []
+
+    // Restore original history methods
+    if (typeof history !== 'undefined') {
+      if (this.originalPushState) {
+        try { history.pushState = this.originalPushState } catch {}
+      }
+      if (this.originalReplaceState) {
+        try { history.replaceState = this.originalReplaceState } catch {}
+      }
+    }
+
+    if (this.host && this.host.parentNode) {
       this.host.parentNode.removeChild(this.host)
     }
   }

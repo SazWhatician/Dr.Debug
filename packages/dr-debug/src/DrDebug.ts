@@ -36,6 +36,7 @@ export interface DrDebugOptions {
 }
 
 export class DrDebug {
+  private static globalInstance?: DrDebug
   private controller: DebugController
   private core: DrDebugCore
   private llmClient: ILLMClient
@@ -48,8 +49,54 @@ export class DrDebug {
   private syncInterval?: any
   private lastInvestigation: InvestigationResult | null = null
 
+  /**
+   * Initializes or retrieves the singleton Dr. Debug instance across layout re-renders and page transitions.
+   * Safe to call repeatedly inside React layout useEffects or layout templates.
+   */
+  public static init(options: DrDebugOptions = {}): DrDebug {
+    if (typeof window !== 'undefined') {
+      const win = window as any
+      if (win.__DR_DEBUG__ && win.__DR_DEBUG__ instanceof DrDebug) {
+        if (Object.keys(options).length > 0) {
+          win.__DR_DEBUG__.updateLLMConfig(options)
+        }
+        win.__DR_DEBUG__.getUI()?.ensureHostAttached()
+        return win.__DR_DEBUG__
+      }
+    }
+
+    if (DrDebug.globalInstance) {
+      if (Object.keys(options).length > 0) {
+        DrDebug.globalInstance.updateLLMConfig(options)
+      }
+      DrDebug.globalInstance.getUI()?.ensureHostAttached()
+      return DrDebug.globalInstance
+    }
+
+    const instance = new DrDebug(options)
+    DrDebug.globalInstance = instance
+    if (typeof window !== 'undefined') {
+      ;(window as any).__DR_DEBUG__ = instance
+    }
+    return instance
+  }
+
+  public static getInstance(): DrDebug | undefined {
+    if (typeof window !== 'undefined') {
+      const win = window as any
+      if (win.__DR_DEBUG__ && win.__DR_DEBUG__ instanceof DrDebug) {
+        return win.__DR_DEBUG__
+      }
+    }
+    return DrDebug.globalInstance
+  }
+
   constructor(options: DrDebugOptions = {}) {
     this.options = options
+    DrDebug.globalInstance = this
+    if (typeof window !== 'undefined') {
+      ;(window as any).__DR_DEBUG__ = this
+    }
 
     // 1. Substrate Controller
     this.controller = new DebugController()
@@ -236,6 +283,13 @@ export class DrDebug {
     return this.ui
   }
 
+  /**
+   * Smoothly brings the floating pill HUD back to its home position in the bottom-right corner.
+   */
+  public recenter(): void {
+    this.ui?.recenterPill()
+  }
+
   public async investigate(goal?: string, options: InvestigationOptions = {}): Promise<InvestigationResult> {
     const activeGoal = goal || 'Diagnose all active browser errors, network failures, and performance bottlenecks.'
     
@@ -419,6 +473,12 @@ export class DrDebug {
   }
 
   public destroy(): void {
+    if (DrDebug.globalInstance === this) {
+      DrDebug.globalInstance = undefined
+    }
+    if (typeof window !== 'undefined' && (window as any).__DR_DEBUG__ === this) {
+      delete (window as any).__DR_DEBUG__
+    }
     if (this.syncInterval) {
       clearInterval(this.syncInterval)
       this.syncInterval = undefined

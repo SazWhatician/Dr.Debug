@@ -12,7 +12,14 @@ export { ErrorDashboardView } from './components/ErrorDashboardView.js'
 export { FloatingPill } from './components/FloatingPill.js'
 export { VoiceDebugger, type VoiceDebuggerOptions } from './components/VoiceDebugger.js'
 export { DrDebugUI, type DrDebugUIOptions } from './DrDebugUI.js'
-export { SettingsModal, type DrDebugTheme, type SettingsData, type SettingsModalOptions } from './components/SettingsModal.js'
+export {
+  SettingsModal,
+  type DrDebugTheme,
+  type SettingsData,
+  type SettingsModalOptions,
+  normalizeDrDebugTheme,
+  VALID_DR_DEBUG_THEMES
+} from './components/SettingsModal.js'
 export {
   AudioChimes,
   type ErrorChimeProfile,
@@ -23,4 +30,5 @@ export { StethoscopeInspector, type InspectedElementInfo, type StethoscopeInspec
 export { IncidentExporter, type IncidentBundleData } from './components/IncidentExporter.js'
 export { shadowStyles } from './styles.js'
 export { copyToClipboard, bindCopyButton, type BindCopyOptions } from './components/clipboard.js'
+export { DrDebugCockpit, DrDebugReact, type DrDebugReactProps } from './components/DrDebugReact.js'
 

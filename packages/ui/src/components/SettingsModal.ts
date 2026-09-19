@@ -1,7 +1,21 @@
 declare const chrome: any
 import { type ErrorChimeProfile, ERROR_CHIME_OPTIONS } from './AudioChimes.js'
 
-export type DrDebugTheme = 'dr-debug' | 'minimal-glass' | 'monotone-skeuomorphic'
+export type DrDebugTheme = 'dr-debug' | 'cyber-matrix' | 'minimal-glass' | 'monotone-skeuomorphic' | 'windows-xp'
+
+export const VALID_DR_DEBUG_THEMES: DrDebugTheme[] = [
+  'dr-debug',
+  'cyber-matrix',
+  'minimal-glass',
+  'monotone-skeuomorphic',
+  'windows-xp'
+]
+
+export function normalizeDrDebugTheme(theme?: string | null): DrDebugTheme {
+  if (!theme) return 'dr-debug'
+  if (theme === 'windows-xp') return 'minimal-glass'
+  return VALID_DR_DEBUG_THEMES.includes(theme as DrDebugTheme) ? (theme as DrDebugTheme) : 'dr-debug'
+}
 
 export interface SettingsData {
   provider: 'groq' | 'openai' | 'gemini' | 'litert'
@@ -75,13 +89,14 @@ export class SettingsModal {
   }
 
   public setTheme(theme: DrDebugTheme): void {
-    if (this.themeSelect && this.themeSelect.value !== theme) {
-      this.themeSelect.value = theme
+    const valid = normalizeDrDebugTheme(theme)
+    if (this.themeSelect && this.themeSelect.value !== valid) {
+      this.themeSelect.value = valid
     }
   }
 
   public getTheme(): DrDebugTheme {
-    return (this.themeSelect?.value as DrDebugTheme) || 'dr-debug'
+    return normalizeDrDebugTheme(this.themeSelect?.value)
   }
 
   public setSoundEnabled(enabled: boolean): void {
@@ -109,7 +124,7 @@ export class SettingsModal {
 
   public updateSettings(settings: Partial<SettingsData> & { hasApiKey?: boolean; apiKeyMasked?: string }): void {
     if (!settings) return
-    if (settings.theme) this.setTheme(settings.theme)
+    if (settings.theme) this.setTheme(normalizeDrDebugTheme(settings.theme))
     if (settings.soundEnabled !== undefined) {
       this.setSoundEnabled(settings.soundEnabled)
     }
@@ -153,9 +168,10 @@ export class SettingsModal {
             <div class="dr-debug-form-group">
               <label class="dr-debug-form-label">Cockpit Theme</label>
               <select class="dr-debug-form-select" id="dr-debug-theme">
-                <option value="dr-debug" selected>Dr.Debug (original)</option>
-                <option value="minimal-glass">Windows XP (Luna Blue)</option>
-                <option value="monotone-skeuomorphic">Monotone skeuomorphism (darker theme)</option>
+                <option value="dr-debug" selected>Dr.Debug (Original Obsidian Cyan)</option>
+                <option value="cyber-matrix">Cyber Matrix HUD (Tactical Neo-Tokyo Deck)</option>
+                <option value="minimal-glass">Windows XP (Luna Blue Retro)</option>
+                <option value="monotone-skeuomorphic">Monotone Skeuomorphism (Dark Studio)</option>
               </select>
             </div>
             <div class="dr-debug-form-group">
@@ -412,7 +428,7 @@ export class SettingsModal {
       model = provider === 'groq' ? 'openai/gpt-oss-120b' : provider === 'gemini' ? 'gemini-flash-latest' : 'gpt-4o'
     }
     const baseURL = this.baseURLInput.value.trim() || undefined
-    const theme = (this.themeSelect?.value as DrDebugTheme) || 'dr-debug'
+    const theme = normalizeDrDebugTheme(this.themeSelect?.value)
     const soundEnabled = this.soundSelect ? this.soundSelect.value === 'enabled' : this.isSoundEnabled
     const errorChime = (this.errorChimeSelect?.value as ErrorChimeProfile) || 'warp-drop'
 
@@ -459,6 +475,25 @@ export class SettingsModal {
       // ignore
     }
 
+    let themeToApply: DrDebugTheme = 'dr-debug'
+    if (loaded?.theme) {
+      themeToApply = normalizeDrDebugTheme(loaded.theme)
+    } else {
+      try {
+        const savedTheme = localStorage.getItem('dr_debug_theme')
+        if (savedTheme) {
+          themeToApply = normalizeDrDebugTheme(savedTheme)
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (this.themeSelect) {
+      this.themeSelect.value = themeToApply
+    }
+    this.options.onThemeChange?.(themeToApply)
+
     if (loaded) {
       if (loaded.errorChime && this.errorChimeSelect) {
         this.errorChimeSelect.value = loaded.errorChime
@@ -473,36 +508,12 @@ export class SettingsModal {
       if (loaded.soundEnabled !== undefined) {
         this.setSoundEnabled(Boolean(loaded.soundEnabled))
       }
-      if (loaded.theme && this.themeSelect) {
-        this.themeSelect.value = loaded.theme
-        this.options.onThemeChange?.(loaded.theme)
-      } else {
-        try {
-          const savedTheme = localStorage.getItem('dr_debug_theme') as DrDebugTheme
-          if (savedTheme && this.themeSelect) {
-            this.themeSelect.value = savedTheme
-            this.options.onThemeChange?.(savedTheme)
-          }
-        } catch {
-          // ignore
-        }
-      }
       if (loaded.provider) this.providerSelect.value = loaded.provider
       if (loaded.apiKey) this.apiKeyInput.value = loaded.apiKey
       if (loaded.baseURL) this.baseURLInput.value = loaded.baseURL
       this.handleProviderChange()
       if (loaded.model) this.modelInput.value = loaded.model
       if (loaded.apiKey) this.apiKeyInput.value = loaded.apiKey
-    } else {
-      try {
-        const savedTheme = localStorage.getItem('dr_debug_theme') as DrDebugTheme
-        if (savedTheme && this.themeSelect) {
-          this.themeSelect.value = savedTheme
-          this.options.onThemeChange?.(savedTheme)
-        }
-      } catch {
-        // ignore
-      }
     }
   }
 

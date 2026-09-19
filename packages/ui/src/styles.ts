@@ -62,8 +62,34 @@ export const shadowStyles = `
   transform: translateY(-3px) scale(1.03);
 }
 
-.dr-debug-pill:active {
-  transform: translateY(-1px) scale(0.98);
+.dr-debug-pill:active,
+.dr-debug-pill.dr-debug-pill-dragging {
+  cursor: grabbing !important;
+  transition: none !important;
+  transform: scale(1.04);
+  box-shadow: 
+    0 20px 48px -4px rgba(0, 0, 0, 0.9),
+    0 0 28px rgba(6, 182, 212, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+}
+
+.dr-debug-pill.dr-debug-pill-recentered {
+  animation: dr-debug-recenter-glow 1.2s ease-out;
+}
+
+@keyframes dr-debug-recenter-glow {
+  0% {
+    transform: scale(1.18);
+    box-shadow: 0 0 36px rgba(0, 240, 255, 0.9), 0 0 12px rgba(255, 255, 255, 0.8);
+    border-color: #00f0ff;
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 24px rgba(0, 240, 255, 0.5);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Stealth Bezel Collapse: Mini 36px Glowing Orb HUD */
@@ -142,11 +168,39 @@ export const shadowStyles = `
   100% { height: 6px; opacity: 0.8; }
 }
 
+.dr-debug-logo {
+  display: inline-block;
+  object-fit: contain;
+  vertical-align: middle;
+  user-select: none;
+  pointer-events: none;
+}
+
+.dr-debug-logo.pill-logo {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.7));
+}
+
+.dr-debug-logo.header-logo {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.7));
+}
+
+.dr-debug-logo.radar-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.8));
+}
+
 .dr-debug-pill-icon {
-  font-size: 16px;
   display: flex;
   align-items: center;
-  filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.6));
+  justify-content: center;
 }
 
 .dr-debug-pill-badge {
@@ -247,6 +301,62 @@ export const shadowStyles = `
   animation: modal-spring-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 2147483647;
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dr-debug-modal.dr-debug-resizing {
+  transition: none !important;
+  user-select: none !important;
+}
+
+/* Dynamic Resize Handles */
+.dr-debug-resize-handle {
+  position: absolute;
+  z-index: 100;
+  user-select: none;
+  touch-action: none;
+}
+
+.dr-debug-resize-t {
+  top: 0;
+  left: 20px;
+  right: 0;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.dr-debug-resize-l {
+  top: 20px;
+  left: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.dr-debug-resize-tl {
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  cursor: nwse-resize;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.dr-debug-resize-corner-grip {
+  width: 10px;
+  height: 10px;
+  margin: 3px;
+  border-top: 2px solid rgba(56, 189, 248, 0.4);
+  border-left: 2px solid rgba(56, 189, 248, 0.4);
+  border-top-left-radius: 4px;
+  transition: border-color 0.2s;
+}
+
+.dr-debug-resize-handle:hover .dr-debug-resize-corner-grip,
+.dr-debug-resizing .dr-debug-resize-corner-grip {
+  border-color: #00f0ff;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
 }
 
 .dr-debug-modal.hidden {
@@ -3983,24 +4093,24 @@ export const shadowStyles = `
 /* ==========================================================================
    THEME 1: Dr.Debug (Original Cyan Dark Glassmorphism)
    ========================================================================== */
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) {
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) {
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) button,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) input,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) select,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-tab,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-btn {
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) button,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) input,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) select,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-tab,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-btn {
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) code,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) pre,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-telemetry-payload,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-step-output,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-docker-terminal,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic) .dr-debug-metric-badge {
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) code,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) pre,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-telemetry-payload,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-step-output,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-docker-terminal,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-metric-badge {
   font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
 }
 
@@ -5738,6 +5848,443 @@ export const shadowStyles = `
   background: #181b22;
   border: 1px solid #323846;
   color: #cbd5e1;
+}
+
+/* ==========================================================================
+   THEME 4: Cyber Matrix HUD (Tactical Neo-Tokyo Deck)
+   ========================================================================== */
+
+/* Floating Pill HUD: Cyber Cartridge Capsule */
+.dr-debug-pill.theme-cyber-matrix {
+  background: linear-gradient(135deg, #050811 0%, #0d1527 50%, #050811 100%);
+  border: 1.5px solid #00f0ff;
+  border-radius: 0;
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
+  box-shadow:
+    0 0 16px rgba(0, 240, 255, 0.45),
+    0 8px 24px rgba(0, 0, 0, 0.9),
+    inset 0 0 8px rgba(0, 240, 255, 0.25);
+  color: #00f0ff;
+  font-family: 'Space Mono', 'JetBrains Mono', monospace;
+  padding: 6px 16px 6px 12px;
+  transition: all 0.18s ease;
+}
+
+.dr-debug-pill.theme-cyber-matrix:hover {
+  background: linear-gradient(135deg, #0a1124 0%, #162442 50%, #0a1124 100%);
+  border-color: #ffe600;
+  box-shadow:
+    0 0 24px rgba(255, 230, 0, 0.65),
+    0 12px 32px rgba(0, 0, 0, 0.95),
+    inset 0 0 12px rgba(255, 230, 0, 0.35);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.dr-debug-pill.theme-cyber-matrix .dr-debug-equalizer {
+  background: #020408;
+  border: 1px solid #00f0ff;
+  border-radius: 0;
+  padding: 2px;
+  box-shadow: inset 0 0 4px rgba(0, 240, 255, 0.4);
+  gap: 2px;
+}
+
+.dr-debug-pill.theme-cyber-matrix .dr-debug-equalizer .dr-debug-eq-bar {
+  background: linear-gradient(180deg, #ffe600 0%, #00f0ff 100%);
+  border-radius: 0;
+}
+
+.dr-debug-pill.theme-cyber-matrix .dr-debug-pill-title {
+  font-family: 'Space Mono', 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: #00f0ff;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+}
+
+.dr-debug-pill.theme-cyber-matrix .dr-debug-chip {
+  font-family: 'Space Mono', 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  border-radius: 0;
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+  padding: 2px 6px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.dr-debug-pill.theme-cyber-matrix .dr-debug-chip.ok {
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid #00f0ff;
+  color: #00f0ff;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}
+
+.dr-debug-pill.theme-cyber-matrix .dr-debug-chip.err,
+.dr-debug-pill.theme-cyber-matrix .dr-debug-chip.run {
+  background: rgba(255, 0, 85, 0.2);
+  border: 1px solid #ff0055;
+  color: #ff0055;
+  box-shadow: 0 0 10px rgba(255, 0, 85, 0.5);
+}
+
+/* Modal Frame: Cyber Matrix Tactical Deck */
+.dr-debug-modal.theme-cyber-matrix {
+  font-family: 'Space Mono', 'JetBrains Mono', 'IBM Plex Mono', monospace;
+  letter-spacing: 0.03em;
+  background: #05070f;
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
+  background-size: 20px 20px;
+  border: 2px solid #00f0ff;
+  border-radius: 0;
+  box-shadow:
+    0 0 35px rgba(0, 240, 255, 0.3),
+    0 25px 70px rgba(0, 0, 0, 0.95),
+    inset 0 0 25px rgba(0, 240, 255, 0.05);
+  color: #e2e8f0;
+}
+
+.dr-debug-modal.theme-cyber-matrix button,
+.dr-debug-modal.theme-cyber-matrix input,
+.dr-debug-modal.theme-cyber-matrix select,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-tab,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-btn,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-brand-bold,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-err-title,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-presc-title,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-step-reasoning-label,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-settings-title,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-tab-info-title,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-tab-view-title {
+  font-family: 'Space Mono', 'JetBrains Mono', 'IBM Plex Mono', monospace;
+}
+
+.dr-debug-modal.theme-cyber-matrix code,
+.dr-debug-modal.theme-cyber-matrix pre,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-payload,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-step-output,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-terminal,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-metric-badge {
+  font-family: 'JetBrains Mono', 'Space Mono', ui-monospace, monospace;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-header {
+  background: linear-gradient(90deg, #090e1a 0%, #152238 50%, #090e1a 100%);
+  border-bottom: 2px solid #ffe600;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(0, 240, 255, 0.3);
+  padding: 8px 14px;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-brand-bold {
+  color: #ffe600;
+  text-shadow: 0 0 10px rgba(255, 230, 0, 0.7);
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-brand-sub {
+  color: #00f0ff;
+  letter-spacing: 0.05em;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-metric-badge {
+  background: #020408;
+  border: 1px solid #00f0ff;
+  box-shadow: inset 0 0 6px rgba(0, 240, 255, 0.3);
+  color: #00f0ff;
+  border-radius: 0;
+  font-weight: 700;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-close-btn {
+  background: rgba(255, 0, 85, 0.15);
+  border: 1px solid #ff0055;
+  box-shadow: 0 0 8px rgba(255, 0, 85, 0.4);
+  color: #ff0055;
+  border-radius: 0;
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-close-btn:hover {
+  background: #ff0055;
+  color: #ffffff;
+  box-shadow: 0 0 15px #ff0055;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-tabs {
+  background: #03050a;
+  border-bottom: 2px solid #00f0ff;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.9);
+  padding: 5px 8px;
+  gap: 6px;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-tab {
+  color: #7dd3fc;
+  background: rgba(0, 240, 255, 0.06);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 0;
+  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 5px 12px;
+  transition: all 0.15s ease;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-tab:hover {
+  color: #ffffff;
+  background: rgba(0, 240, 255, 0.22);
+  border-color: #00f0ff;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.45);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-tab.active {
+  background: #ffe600 !important;
+  color: #050811 !important;
+  border: 1px solid #fff566 !important;
+  font-weight: 900 !important;
+  box-shadow:
+    0 0 18px rgba(255, 230, 0, 0.7),
+    inset 0 0 4px rgba(255, 255, 255, 0.8) !important;
+  text-shadow: none !important;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-body {
+  background: #05070f;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-tab-view-header {
+  background: linear-gradient(90deg, #090e1c 0%, #101b2f 100%);
+  border: 1px solid #00f0ff;
+  border-radius: 0;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.15), inset 0 0 8px rgba(0, 240, 255, 0.1);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-err-header,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-matrix-toolbar,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-header,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-section,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-toolbar {
+  background: #070c18;
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(0, 240, 255, 0.15);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-2d-matrix {
+  background: #04060c;
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 0;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-matrix-cell {
+  background: #020306;
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 0;
+  box-shadow: inset 0 0 6px rgba(0, 240, 255, 0.1);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-matrix-th {
+  color: #00f0ff;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-search-input,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-dock-search,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-input,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-form-input,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-form-select {
+  background: #03050a;
+  border: 1.5px solid #00f0ff;
+  border-radius: 0;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  box-shadow: inset 0 0 8px rgba(0, 240, 255, 0.25);
+  color: #00f0ff;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-err-item,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-step-card,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-prescription-card,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-card {
+  background: linear-gradient(180deg, #090e1c 0%, #060913 100%);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-left: 3px solid #00f0ff;
+  border-radius: 0;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8), inset 0 0 12px rgba(0, 240, 255, 0.04);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-err-item:hover,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-step-card:hover,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-prescription-card:hover,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-card:hover {
+  border-color: #ffe600;
+  border-left-color: #ffe600;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.9), 0 0 15px rgba(255, 230, 0, 0.25);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-item {
+  background: linear-gradient(180deg, #090e1c 0%, #060914 100%);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-left: 3px solid #ffe600;
+  border-radius: 0;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.8);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-payload {
+  color: #00f0ff;
+  background: #020408;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 0;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-text {
+  color: #e2e8f0;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-time {
+  color: #ffe600;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-query-wrapper {
+  background: #070b16;
+  border-top: 2px solid #00f0ff;
+  box-shadow: 0 -4px 15px rgba(0, 240, 255, 0.15);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-query-box {
+  background: #03050a;
+  border: 1.5px solid #00f0ff;
+  border-radius: 0;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+/* Unique Cyber Button Styles */
+.dr-debug-modal.theme-cyber-matrix .dr-debug-btn {
+  background: linear-gradient(135deg, #ffe600 0%, #ffc000 100%);
+  border: 1.5px solid #fffb99;
+  border-radius: 0;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  box-shadow: 0 0 15px rgba(255, 230, 0, 0.5), inset 0 0 6px rgba(255, 255, 255, 0.6);
+  color: #050811;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-btn:hover {
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+  box-shadow: 0 0 25px rgba(255, 230, 0, 0.95);
+  transform: translateY(-1px);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-btn-outline {
+  background: rgba(0, 240, 255, 0.1);
+  border: 1.5px solid #00f0ff;
+  border-radius: 0;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+  color: #00f0ff;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-btn-outline:hover {
+  background: #00f0ff;
+  color: #050811;
+  box-shadow: 0 0 20px #00f0ff;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-cockpit-footer {
+  background: #03050a;
+  border-top: 1px solid rgba(0, 240, 255, 0.3);
+  color: #7dd3fc;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-settings-overlay,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-tab-info-card {
+  background: #070a14;
+  border: 2px solid #00f0ff;
+  border-radius: 0;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  box-shadow:
+    0 0 40px rgba(0, 240, 255, 0.4),
+    0 25px 70px rgba(0, 0, 0, 0.95),
+    inset 0 0 20px rgba(0, 240, 255, 0.1);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-settings-groupbox {
+  background: #04060d;
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 0;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.05);
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-settings-groupbox-title {
+  color: #ffe600;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-btn-action-icon {
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 0;
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+  color: #00f0ff;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-btn-action-icon:hover {
+  background: #00f0ff;
+  color: #050811;
+  box-shadow: 0 0 12px #00f0ff;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-copy-btn,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-copy-inline,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-export-btn {
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid #00f0ff;
+  border-radius: 0;
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+  color: #00f0ff;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-copy-btn:hover,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-copy-inline:hover,
+.dr-debug-modal.theme-cyber-matrix .dr-debug-export-btn:hover {
+  background: #00f0ff;
+  color: #050811;
+  box-shadow: 0 0 12px #00f0ff;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-mock-chip {
+  background: rgba(255, 230, 0, 0.15);
+  border: 1px solid #ffe600;
+  border-radius: 0;
+  clip-path: polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px);
+  color: #ffe600;
+}
+
+.dr-debug-modal.theme-cyber-matrix .dr-debug-mock-chip:hover {
+  background: #ffe600;
+  color: #050811;
+  box-shadow: 0 0 12px #ffe600;
 }
 
 /* ── Minimalist Action & Tool Buttons ─────────────────────────────────── */
