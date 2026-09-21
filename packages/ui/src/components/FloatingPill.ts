@@ -20,12 +20,13 @@ export class FloatingPill {
   private hasMoved = false
   private isCollapsed = false
   private previousTotalIssues = 0
+  private currentTheme = 'dr-debug'
 
-  constructor(onClick: () => void, audioChimes?: AudioChimes) {
+  constructor(onClick: () => void, audioChimes?: AudioChimes, onEasterEgg?: () => void) {
     this.audioChimes = audioChimes || new AudioChimes()
     this.element = document.createElement('div')
     this.element.className = 'dr-debug-pill'
-    this.element.title = 'Dr. Debug - Click to open Cockpit · Double-click to collapse'
+    this.element.title = 'Dr. Debug - Click to open Cockpit · Double-click to collapse · Alt+Click for Easter Egg'
 
     // Live Equalizer Visualizer Bars
     this.equalizer = document.createElement('div')
@@ -55,6 +56,10 @@ export class FloatingPill {
     // Click handler: expand if collapsed, otherwise open Cockpit
     this.element.addEventListener('click', (e) => {
       if (this.hasMoved) return
+      if ((e.altKey || e.shiftKey) && this.currentTheme === 'arcade-8bit') {
+        onEasterEgg?.()
+        return
+      }
       if (this.isCollapsed) {
         this.expand()
       } else {
@@ -371,18 +376,19 @@ export class FloatingPill {
   }
 
   public setTheme(theme: string): void {
+    this.currentTheme = theme
     this.element.classList.remove(
       'theme-minimal-glass',
       'theme-windows-xp',
       'theme-monotone-skeuomorphic',
-      'theme-cyber-matrix'
+      'theme-arcade-8bit'
     )
     if (theme === 'minimal-glass' || theme === 'windows-xp') {
       this.element.classList.add('theme-minimal-glass')
     } else if (theme === 'monotone-skeuomorphic') {
       this.element.classList.add('theme-monotone-skeuomorphic')
-    } else if (theme === 'cyber-matrix') {
-      this.element.classList.add('theme-cyber-matrix')
+    } else if (theme === 'arcade-8bit') {
+      this.element.classList.add('theme-arcade-8bit')
     }
   }
 

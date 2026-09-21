@@ -31,4 +31,19 @@ export { IncidentExporter, type IncidentBundleData } from './components/Incident
 export { shadowStyles } from './styles.js'
 export { copyToClipboard, bindCopyButton, type BindCopyOptions } from './components/clipboard.js'
 export { DrDebugCockpit, DrDebugReact, type DrDebugReactProps } from './components/DrDebugReact.js'
+export {
+  PixelEasterEgg,
+  type EasterEggCharacter,
+  type PixelEasterEggOptions,
+  RYU_SPRITE_SVG,
+  SPIDERMAN_SPRITE_SVG,
+  DOCTOR_SPRITE_SVG
+} from './components/PixelEasterEgg.js'
+export {
+  PIKACHU_SPRITE_DATA,
+  GENGAR_SPRITE_DATA,
+  CHARIZARD_SPRITE_DATA,
+  BULBASAUR_SPRITE_DATA
+} from './components/pokemonSprites.js'
+
 

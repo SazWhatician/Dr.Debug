@@ -472,6 +472,10 @@ export class DrDebug {
     }
   }
 
+  public peekEasterEgg(character?: 'pikachu' | 'gengar' | 'charizard' | 'bulbasaur' | 'ryu' | 'spiderman' | 'doctor'): void {
+    this.ui?.getPixelEasterEgg()?.peek(character as any, true)
+  }
+
   public destroy(): void {
     if (DrDebug.globalInstance === this) {
       DrDebug.globalInstance = undefined

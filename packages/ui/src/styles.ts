@@ -4154,24 +4154,24 @@ export const shadowStyles = `
 /* ==========================================================================
    THEME 1: Dr.Debug (Original Cyan Dark Glassmorphism)
    ========================================================================== */
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) {
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) {
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) button,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) input,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) select,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-tab,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-btn {
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) button,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) input,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) select,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) .dr-debug-tab,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) .dr-debug-btn {
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) code,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) pre,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-telemetry-payload,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-step-output,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-docker-terminal,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-metric-badge {
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) code,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) pre,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) .dr-debug-telemetry-payload,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) .dr-debug-step-output,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) .dr-debug-docker-terminal,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) .dr-debug-metric-badge {
   font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
 }
 
@@ -5911,442 +5911,6 @@ export const shadowStyles = `
   color: #cbd5e1;
 }
 
-/* ==========================================================================
-   THEME 4: Cyber Matrix HUD (Tactical Neo-Tokyo Deck)
-   ========================================================================== */
-
-/* Floating Pill HUD: Cyber Cartridge Capsule */
-.dr-debug-pill.theme-cyber-matrix {
-  background: linear-gradient(135deg, #050811 0%, #0d1527 50%, #050811 100%);
-  border: 1.5px solid #00f0ff;
-  border-radius: 0;
-  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
-  box-shadow:
-    0 0 16px rgba(0, 240, 255, 0.45),
-    0 8px 24px rgba(0, 0, 0, 0.9),
-    inset 0 0 8px rgba(0, 240, 255, 0.25);
-  color: #00f0ff;
-  font-family: 'Space Mono', 'JetBrains Mono', monospace;
-  padding: 6px 16px 6px 12px;
-  transition: all 0.18s ease;
-}
-
-.dr-debug-pill.theme-cyber-matrix:hover {
-  background: linear-gradient(135deg, #0a1124 0%, #162442 50%, #0a1124 100%);
-  border-color: #ffe600;
-  box-shadow:
-    0 0 24px rgba(255, 230, 0, 0.65),
-    0 12px 32px rgba(0, 0, 0, 0.95),
-    inset 0 0 12px rgba(255, 230, 0, 0.35);
-  transform: translateY(-2px) scale(1.03);
-}
-
-.dr-debug-pill.theme-cyber-matrix .dr-debug-equalizer {
-  background: #020408;
-  border: 1px solid #00f0ff;
-  border-radius: 0;
-  padding: 2px;
-  box-shadow: inset 0 0 4px rgba(0, 240, 255, 0.4);
-  gap: 2px;
-}
-
-.dr-debug-pill.theme-cyber-matrix .dr-debug-equalizer .dr-debug-eq-bar {
-  background: linear-gradient(180deg, #ffe600 0%, #00f0ff 100%);
-  border-radius: 0;
-}
-
-.dr-debug-pill.theme-cyber-matrix .dr-debug-pill-title {
-  font-family: 'Space Mono', 'JetBrains Mono', monospace;
-  font-weight: 700;
-  color: #00f0ff;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
-}
-
-.dr-debug-pill.theme-cyber-matrix .dr-debug-chip {
-  font-family: 'Space Mono', 'JetBrains Mono', monospace;
-  font-size: 9.5px;
-  font-weight: 700;
-  border-radius: 0;
-  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
-  padding: 2px 6px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.dr-debug-pill.theme-cyber-matrix .dr-debug-chip.ok {
-  background: rgba(0, 240, 255, 0.15);
-  border: 1px solid #00f0ff;
-  color: #00f0ff;
-  box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
-}
-
-.dr-debug-pill.theme-cyber-matrix .dr-debug-chip.err,
-.dr-debug-pill.theme-cyber-matrix .dr-debug-chip.run {
-  background: rgba(255, 0, 85, 0.2);
-  border: 1px solid #ff0055;
-  color: #ff0055;
-  box-shadow: 0 0 10px rgba(255, 0, 85, 0.5);
-}
-
-/* Modal Frame: Cyber Matrix Tactical Deck */
-.dr-debug-modal.theme-cyber-matrix {
-  font-family: 'Space Mono', 'JetBrains Mono', 'IBM Plex Mono', monospace;
-  letter-spacing: 0.03em;
-  background: #05070f;
-  background-image:
-    linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
-  background-size: 20px 20px;
-  border: 2px solid #00f0ff;
-  border-radius: 0;
-  box-shadow:
-    0 0 35px rgba(0, 240, 255, 0.3),
-    0 25px 70px rgba(0, 0, 0, 0.95),
-    inset 0 0 25px rgba(0, 240, 255, 0.05);
-  color: #e2e8f0;
-}
-
-.dr-debug-modal.theme-cyber-matrix button,
-.dr-debug-modal.theme-cyber-matrix input,
-.dr-debug-modal.theme-cyber-matrix select,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-tab,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-btn,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-brand-bold,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-err-title,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-presc-title,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-step-reasoning-label,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-settings-title,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-tab-info-title,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-tab-view-title {
-  font-family: 'Space Mono', 'JetBrains Mono', 'IBM Plex Mono', monospace;
-}
-
-.dr-debug-modal.theme-cyber-matrix code,
-.dr-debug-modal.theme-cyber-matrix pre,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-payload,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-step-output,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-terminal,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-metric-badge {
-  font-family: 'JetBrains Mono', 'Space Mono', ui-monospace, monospace;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-header {
-  background: linear-gradient(90deg, #090e1a 0%, #152238 50%, #090e1a 100%);
-  border-bottom: 2px solid #ffe600;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(0, 240, 255, 0.3);
-  padding: 8px 14px;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-brand-bold {
-  color: #ffe600;
-  text-shadow: 0 0 10px rgba(255, 230, 0, 0.7);
-  letter-spacing: 0.08em;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-brand-sub {
-  color: #00f0ff;
-  letter-spacing: 0.05em;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-metric-badge {
-  background: #020408;
-  border: 1px solid #00f0ff;
-  box-shadow: inset 0 0 6px rgba(0, 240, 255, 0.3);
-  color: #00f0ff;
-  border-radius: 0;
-  font-weight: 700;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-close-btn {
-  background: rgba(255, 0, 85, 0.15);
-  border: 1px solid #ff0055;
-  box-shadow: 0 0 8px rgba(255, 0, 85, 0.4);
-  color: #ff0055;
-  border-radius: 0;
-  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-close-btn:hover {
-  background: #ff0055;
-  color: #ffffff;
-  box-shadow: 0 0 15px #ff0055;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-tabs {
-  background: #03050a;
-  border-bottom: 2px solid #00f0ff;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.9);
-  padding: 5px 8px;
-  gap: 6px;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-tab {
-  color: #7dd3fc;
-  background: rgba(0, 240, 255, 0.06);
-  border: 1px solid rgba(0, 240, 255, 0.25);
-  border-radius: 0;
-  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
-  text-transform: uppercase;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  padding: 5px 12px;
-  transition: all 0.15s ease;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-tab:hover {
-  color: #ffffff;
-  background: rgba(0, 240, 255, 0.22);
-  border-color: #00f0ff;
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.45);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-tab.active {
-  background: #ffe600 !important;
-  color: #050811 !important;
-  border: 1px solid #fff566 !important;
-  font-weight: 900 !important;
-  box-shadow:
-    0 0 18px rgba(255, 230, 0, 0.7),
-    inset 0 0 4px rgba(255, 255, 255, 0.8) !important;
-  text-shadow: none !important;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-body {
-  background: #05070f;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-tab-view-header {
-  background: linear-gradient(90deg, #090e1c 0%, #101b2f 100%);
-  border: 1px solid #00f0ff;
-  border-radius: 0;
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.15), inset 0 0 8px rgba(0, 240, 255, 0.1);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-err-header,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-matrix-toolbar,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-header,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-section,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-toolbar {
-  background: #070c18;
-  border: 1px solid rgba(0, 240, 255, 0.35);
-  border-radius: 0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(0, 240, 255, 0.15);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-2d-matrix {
-  background: #04060c;
-  border: 1px solid rgba(0, 240, 255, 0.3);
-  border-radius: 0;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-matrix-cell {
-  background: #020306;
-  border: 1px solid rgba(0, 240, 255, 0.2);
-  border-radius: 0;
-  box-shadow: inset 0 0 6px rgba(0, 240, 255, 0.1);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-matrix-th {
-  color: #00f0ff;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-search-input,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-dock-search,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-input,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-form-input,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-form-select {
-  background: #03050a;
-  border: 1.5px solid #00f0ff;
-  border-radius: 0;
-  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
-  box-shadow: inset 0 0 8px rgba(0, 240, 255, 0.25);
-  color: #00f0ff;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-err-item,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-step-card,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-prescription-card,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-card {
-  background: linear-gradient(180deg, #090e1c 0%, #060913 100%);
-  border: 1px solid rgba(0, 240, 255, 0.35);
-  border-left: 3px solid #00f0ff;
-  border-radius: 0;
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8), inset 0 0 12px rgba(0, 240, 255, 0.04);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-err-item:hover,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-step-card:hover,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-prescription-card:hover,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-card:hover {
-  border-color: #ffe600;
-  border-left-color: #ffe600;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.9), 0 0 15px rgba(255, 230, 0, 0.25);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-item {
-  background: linear-gradient(180deg, #090e1c 0%, #060914 100%);
-  border: 1px solid rgba(0, 240, 255, 0.3);
-  border-left: 3px solid #ffe600;
-  border-radius: 0;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.8);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-payload {
-  color: #00f0ff;
-  background: #020408;
-  border: 1px solid rgba(0, 240, 255, 0.25);
-  border-radius: 0;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-text {
-  color: #e2e8f0;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-time {
-  color: #ffe600;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-query-wrapper {
-  background: #070b16;
-  border-top: 2px solid #00f0ff;
-  box-shadow: 0 -4px 15px rgba(0, 240, 255, 0.15);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-query-box {
-  background: #03050a;
-  border: 1.5px solid #00f0ff;
-  border-radius: 0;
-  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
-  box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.2);
-}
-
-/* Unique Cyber Button Styles */
-.dr-debug-modal.theme-cyber-matrix .dr-debug-btn {
-  background: linear-gradient(135deg, #ffe600 0%, #ffc000 100%);
-  border: 1.5px solid #fffb99;
-  border-radius: 0;
-  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-  box-shadow: 0 0 15px rgba(255, 230, 0, 0.5), inset 0 0 6px rgba(255, 255, 255, 0.6);
-  color: #050811;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  transition: all 0.15s ease;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-btn:hover {
-  background: #ffffff;
-  color: #000000;
-  border-color: #ffffff;
-  box-shadow: 0 0 25px rgba(255, 230, 0, 0.95);
-  transform: translateY(-1px);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-btn-outline {
-  background: rgba(0, 240, 255, 0.1);
-  border: 1.5px solid #00f0ff;
-  border-radius: 0;
-  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
-  color: #00f0ff;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  transition: all 0.15s ease;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-btn-outline:hover {
-  background: #00f0ff;
-  color: #050811;
-  box-shadow: 0 0 20px #00f0ff;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-cockpit-footer {
-  background: #03050a;
-  border-top: 1px solid rgba(0, 240, 255, 0.3);
-  color: #7dd3fc;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-settings-overlay,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-tab-info-card {
-  background: #070a14;
-  border: 2px solid #00f0ff;
-  border-radius: 0;
-  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
-  box-shadow:
-    0 0 40px rgba(0, 240, 255, 0.4),
-    0 25px 70px rgba(0, 0, 0, 0.95),
-    inset 0 0 20px rgba(0, 240, 255, 0.1);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-settings-groupbox {
-  background: #04060d;
-  border: 1px solid rgba(0, 240, 255, 0.35);
-  border-radius: 0;
-  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
-  box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.05);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-settings-groupbox-title {
-  color: #ffe600;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-btn-action-icon {
-  background: rgba(0, 240, 255, 0.08);
-  border: 1px solid rgba(0, 240, 255, 0.3);
-  border-radius: 0;
-  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
-  color: #00f0ff;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-btn-action-icon:hover {
-  background: #00f0ff;
-  color: #050811;
-  box-shadow: 0 0 12px #00f0ff;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-copy-btn,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-copy-inline,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-export-btn {
-  background: rgba(0, 240, 255, 0.1);
-  border: 1px solid #00f0ff;
-  border-radius: 0;
-  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
-  color: #00f0ff;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-copy-btn:hover,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-copy-inline:hover,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-export-btn:hover {
-  background: #00f0ff;
-  color: #050811;
-  box-shadow: 0 0 12px #00f0ff;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-mock-chip {
-  background: rgba(255, 230, 0, 0.15);
-  border: 1px solid #ffe600;
-  border-radius: 0;
-  clip-path: polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px);
-  color: #ffe600;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-mock-chip:hover {
-  background: #ffe600;
-  color: #050811;
-  box-shadow: 0 0 12px #ffe600;
-}
 
 /* ── Minimalist Action & Tool Buttons ─────────────────────────────────── */
 .dr-debug-btn-action-icon {
@@ -6446,5 +6010,412 @@ body.dr-debug-stethoscope-active * {
   box-shadow: 0 0 16px rgba(244, 63, 94, 0.4) !important;
   position: relative;
 }
+
+/* ==========================================================================
+   ARCADE 8-BIT RETRO QUEST THEME (Stepped Pixel Art & Peeking Characters)
+   ========================================================================== */
+
+/* ── 8-Bit Floating Pill HUD ("Arcade 1P Insert Coin") ───────────────── */
+.dr-debug-pill.theme-arcade-8bit {
+  background: #0d0a22;
+  border: none;
+  border-radius: 0;
+  /* Stepped 3px pixel borders */
+  box-shadow:
+    0 -3px 0 #000000,
+    0 3px 0 #000000,
+    -3px 0 0 #000000,
+    3px 0 0 #000000,
+    -3px -3px 0 #ffe600,
+    3px -3px 0 #ffe600,
+    -3px 3px 0 #ff0055,
+    3px 3px 0 #ff0055,
+    0 8px 16px rgba(0, 0, 0, 0.75);
+  padding: 6px 14px 6px 10px;
+  font-family: 'Silkscreen', 'Press Start 2P', monospace;
+  color: #ffe600;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  transition: transform 0.1s steps(2);
+}
+
+.dr-debug-pill.theme-arcade-8bit:hover {
+  background: #19143d;
+  box-shadow:
+    0 -3px 0 #000000,
+    0 3px 0 #000000,
+    -3px 0 0 #000000,
+    3px 0 0 #000000,
+    -3px -3px 0 #00f0ff,
+    3px -3px 0 #00f0ff,
+    -3px 3px 0 #ffe600,
+    3px 3px 0 #ffe600,
+    0 10px 24px rgba(0, 240, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.dr-debug-pill.theme-arcade-8bit .dr-debug-equalizer {
+  background: #000000;
+  border-radius: 0;
+  padding: 2px 3px;
+  gap: 2px;
+  box-shadow:
+    0 -1px 0 #ffe600,
+    0 1px 0 #ffe600,
+    -1px 0 0 #ffe600,
+    1px 0 0 #ffe600;
+}
+
+.dr-debug-pill.theme-arcade-8bit .dr-debug-equalizer .dr-debug-eq-bar {
+  background: #00ff66;
+  border-radius: 0;
+  box-shadow: 0 0 4px #00ff66;
+}
+
+.dr-debug-pill.theme-arcade-8bit .dr-debug-pill-badge span {
+  font-family: 'Silkscreen', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #ffe600;
+  text-shadow: 2px 2px 0 #000000;
+}
+
+.dr-debug-pill.theme-arcade-8bit .dr-debug-chip {
+  border-radius: 0;
+  font-family: 'Silkscreen', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border: none;
+  box-shadow:
+    0 -1px 0 #000,
+    0 1px 0 #000,
+    -1px 0 0 #000,
+    1px 0 0 #000;
+}
+
+.dr-debug-pill.theme-arcade-8bit .dr-debug-chip.ok {
+  background: #00ff66;
+  color: #000000;
+  box-shadow: 0 0 6px rgba(0, 255, 102, 0.6);
+}
+
+.dr-debug-pill.theme-arcade-8bit .dr-debug-chip.err,
+.dr-debug-pill.theme-arcade-8bit .dr-debug-chip.run {
+  background: #ff0055;
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 0, 85, 0.7);
+  animation: dr-debug-pixel-alert-blink 0.6s infinite steps(2);
+}
+
+@keyframes dr-debug-pixel-alert-blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* ── 8-Bit Arcade Cabinet Cockpit Modal ──────────────────────────────── */
+.dr-debug-modal.theme-arcade-8bit {
+  font-family: 'Silkscreen', monospace;
+  background: #0b091f;
+  border-radius: 0;
+  border: none;
+  /* Stepped 4px pixel border frame */
+  box-shadow:
+    0 -4px 0 #000000,
+    0 4px 0 #000000,
+    -4px 0 0 #000000,
+    4px 0 0 #000000,
+    -4px -4px 0 #ffe600,
+    4px -4px 0 #ffe600,
+    -4px 4px 0 #ff0055,
+    4px 4px 0 #ff0055,
+    0 16px 40px rgba(0, 0, 0, 0.95);
+  color: #f1f5f9;
+  image-rendering: pixelated;
+}
+
+/* Arcade Cabinet Marquee Header */
+.dr-debug-modal.theme-arcade-8bit .dr-debug-header {
+  background: linear-gradient(90deg, #180a33 0%, #290e4f 35%, #180a33 100%);
+  border-bottom: 3px solid #ff0055;
+  border-radius: 0;
+  padding: 8px 12px;
+}
+
+.dr-debug-modal.theme-arcade-8bit .dr-debug-brand-bold {
+  font-family: 'Silkscreen', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffe600;
+  text-shadow: 2px 2px 0 #ff0055, 4px 4px 0 #000000;
+  letter-spacing: 0.08em;
+}
+
+.dr-debug-modal.theme-arcade-8bit .dr-debug-brand-sub {
+  font-family: 'Silkscreen', monospace;
+  font-size: 10px;
+  color: #00f0ff;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.dr-debug-modal.theme-arcade-8bit .dr-debug-metric-badge {
+  background: #000000;
+  border-radius: 0;
+  border: 1px solid #ffe600;
+  font-family: 'Silkscreen', monospace;
+  font-size: 9.5px;
+  color: #00ff66;
+  padding: 2px 6px;
+  box-shadow: 2px 2px 0 #000000;
+}
+
+/* 8-Bit Arcade Tab Push Buttons */
+.dr-debug-modal.theme-arcade-8bit .dr-debug-tabs {
+  background: #070514;
+  border-bottom: 2px solid #23194a;
+  gap: 4px;
+  padding: 4px 8px;
+}
+
+.dr-debug-modal.theme-arcade-8bit .dr-debug-tab {
+  border-radius: 0;
+  font-family: 'Silkscreen', monospace;
+  font-size: 10.5px;
+  padding: 5px 10px;
+  color: #94a3b8;
+  background: #110e2e;
+  border: 1px solid #281d59;
+  box-shadow: 2px 2px 0 #000000;
+  transition: all 0.05s steps(2);
+}
+
+.dr-debug-modal.theme-arcade-8bit .dr-debug-tab:hover {
+  background: #23194a;
+  color: #ffe600;
+  border-color: #ffe600;
+}
+
+.dr-debug-modal.theme-arcade-8bit .dr-debug-tab.active {
+  background: #ff0055;
+  color: #ffffff;
+  border-color: #ffe600;
+  box-shadow: 3px 3px 0 #000000;
+  transform: translateY(-1px);
+}
+
+/* 8-Bit Action Button */
+.dr-debug-modal.theme-arcade-8bit .dr-debug-btn,
+.dr-debug-modal.theme-arcade-8bit .dr-debug-btn-action {
+  border-radius: 0;
+  font-family: 'Silkscreen', monospace;
+  font-size: 11px;
+  background: #ffe600;
+  color: #000000;
+  border: none;
+  box-shadow:
+    0 -2px 0 #000,
+    0 2px 0 #000,
+    -2px 0 0 #000,
+    2px 0 0 #000,
+    3px 3px 0 #9f1239;
+  font-weight: 700;
+  transition: all 0.05s steps(2);
+}
+
+.dr-debug-modal.theme-arcade-8bit .dr-debug-btn:hover,
+.dr-debug-modal.theme-arcade-8bit .dr-debug-btn-action:hover {
+  background: #00ff66;
+  color: #000000;
+  transform: translateY(-1px);
+  box-shadow:
+    0 -2px 0 #000,
+    0 2px 0 #000,
+    -2px 0 0 #000,
+    2px 0 0 #000,
+    4px 4px 0 #000;
+}
+
+.dr-debug-modal.theme-arcade-8bit .dr-debug-btn:active,
+.dr-debug-modal.theme-arcade-8bit .dr-debug-btn-action:active {
+  transform: translateY(2px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+/* 8-Bit Card & Log Terminals */
+.dr-debug-modal.theme-arcade-8bit .dr-debug-step-card,
+.dr-debug-modal.theme-arcade-8bit .dr-debug-card,
+.dr-debug-modal.theme-arcade-8bit .dr-debug-presc-tier,
+.dr-debug-modal.theme-arcade-8bit .dr-debug-docker-terminal,
+.dr-debug-modal.theme-arcade-8bit .dr-debug-code-box {
+  border-radius: 0;
+  background: #070514;
+  border: 1px solid #30246b;
+  box-shadow: 3px 3px 0 #000000;
+}
+
+.dr-debug-modal.theme-arcade-8bit code,
+.dr-debug-modal.theme-arcade-8bit pre {
+  font-family: 'Silkscreen', 'JetBrains Mono', monospace;
+  color: #00ff66;
+}
+
+/* ── 8-Bit Peeking Characters Easter Egg (Inside Dr. Debug Box Corners) ── */
+.dr-debug-pixel-peeker {
+  position: absolute;
+  z-index: 2147483640;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.9));
+  user-select: none;
+  opacity: 0;
+  transition: transform 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.2s ease;
+}
+
+/* Corner 1: Bottom-Right */
+.dr-debug-pixel-peeker.corner-bottom-right {
+  bottom: 28px;
+  right: 18px;
+  transform: translateY(75px);
+}
+.dr-debug-pixel-peeker.corner-bottom-right.peek-active {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.dr-debug-pixel-peeker.corner-bottom-right.peek-retreat {
+  transform: translateY(75px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.6, -0.28, 0.74, 0.05), opacity 0.2s ease;
+}
+
+/* Corner 2: Bottom-Left */
+.dr-debug-pixel-peeker.corner-bottom-left {
+  bottom: 28px;
+  left: 18px;
+  transform: translateY(75px);
+}
+.dr-debug-pixel-peeker.corner-bottom-left.peek-active {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.dr-debug-pixel-peeker.corner-bottom-left.peek-retreat {
+  transform: translateY(75px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.6, -0.28, 0.74, 0.05), opacity 0.2s ease;
+}
+
+/* Corner 3: Top-Right */
+.dr-debug-pixel-peeker.corner-top-right {
+  top: 10px;
+  right: 68px;
+  transform: translateY(-75px);
+}
+.dr-debug-pixel-peeker.corner-top-right .dr-debug-peeker-speech {
+  order: 2;
+  margin-bottom: 0;
+  margin-top: 4px;
+}
+.dr-debug-pixel-peeker.corner-top-right .dr-debug-peeker-speech::after {
+  bottom: auto;
+  top: -5px;
+  border-width: 0 5px 5px;
+  border-color: transparent transparent #000 transparent;
+}
+.dr-debug-pixel-peeker.corner-top-right.peek-active {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.dr-debug-pixel-peeker.corner-top-right.peek-retreat {
+  transform: translateY(-75px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.6, -0.28, 0.74, 0.05), opacity 0.2s ease;
+}
+
+/* Corner 4: Top-Left */
+.dr-debug-pixel-peeker.corner-top-left {
+  top: 10px;
+  left: 18px;
+  transform: translateY(-75px);
+}
+.dr-debug-pixel-peeker.corner-top-left .dr-debug-peeker-speech {
+  order: 2;
+  margin-bottom: 0;
+  margin-top: 4px;
+}
+.dr-debug-pixel-peeker.corner-top-left .dr-debug-peeker-speech::after {
+  bottom: auto;
+  top: -5px;
+  border-width: 0 5px 5px;
+  border-color: transparent transparent #000 transparent;
+}
+.dr-debug-pixel-peeker.corner-top-left.peek-active {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.dr-debug-pixel-peeker.corner-top-left.peek-retreat {
+  transform: translateY(-75px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.6, -0.28, 0.74, 0.05), opacity 0.2s ease;
+}
+
+.dr-debug-peeker-speech {
+  background: #ffffff;
+  border: 2px solid #000000;
+  box-shadow: 2px 2px 0 #000000;
+  color: #000000;
+  font-family: 'Silkscreen', monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 3px 7px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  position: relative;
+  letter-spacing: 0.04em;
+  animation: dr-debug-pixel-speech-bob 0.8s infinite alternate ease-in-out;
+}
+
+.dr-debug-peeker-speech::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px 5px 0;
+  border-style: solid;
+  border-color: #000 transparent;
+  display: block;
+  width: 0;
+}
+
+.dr-debug-peeker-art svg,
+.dr-debug-peeker-art img {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+  animation: dr-debug-pixel-idle-bob 0.6s infinite alternate ease-in-out;
+}
+
+@keyframes dr-debug-pixel-idle-bob {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-3px); }
+}
+
+@keyframes dr-debug-pixel-speech-bob {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-2px); }
+}
 `
+
 

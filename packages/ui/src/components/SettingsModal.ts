@@ -1,20 +1,24 @@
 declare const chrome: any
 import { type ErrorChimeProfile, ERROR_CHIME_OPTIONS } from './AudioChimes.js'
+import { type EasterEggCharacter } from './PixelEasterEgg.js'
 
-export type DrDebugTheme = 'dr-debug' | 'cyber-matrix' | 'minimal-glass' | 'monotone-skeuomorphic' | 'windows-xp'
+export type DrDebugTheme = 'dr-debug' | 'minimal-glass' | 'monotone-skeuomorphic' | 'windows-xp' | 'arcade-8bit'
 
 export const VALID_DR_DEBUG_THEMES: DrDebugTheme[] = [
   'dr-debug',
-  'cyber-matrix',
   'minimal-glass',
   'monotone-skeuomorphic',
-  'windows-xp'
+  'windows-xp',
+  'arcade-8bit'
 ]
 
 export function normalizeDrDebugTheme(theme?: string | null): DrDebugTheme {
   if (!theme) return 'dr-debug'
-  if (theme === 'windows-xp') return 'minimal-glass'
-  return VALID_DR_DEBUG_THEMES.includes(theme as DrDebugTheme) ? (theme as DrDebugTheme) : 'dr-debug'
+  const clean = theme.toLowerCase().trim()
+  if (VALID_DR_DEBUG_THEMES.includes(clean as DrDebugTheme)) {
+    return clean as DrDebugTheme
+  }
+  return 'dr-debug'
 }
 
 export interface SettingsData {
@@ -38,6 +42,7 @@ export interface SettingsModalOptions {
   onSoundChange?: (enabled: boolean) => void
   onErrorChimeChange?: (chime: ErrorChimeProfile) => void
   onTestChime?: (chime: ErrorChimeProfile) => void
+  onPeekEasterEgg?: (character?: EasterEggCharacter) => void
   getCurrentTheme?: () => DrDebugTheme
   initialSettings?: SettingsData
 }
@@ -103,6 +108,10 @@ export class SettingsModal {
     const valid = normalizeDrDebugTheme(theme)
     if (this.themeSelect) {
       this.themeSelect.value = valid
+    }
+    const peekerGroup = this.element.querySelector('#dr-debug-peeker-preview-group') as HTMLElement
+    if (peekerGroup) {
+      peekerGroup.style.display = valid === 'arcade-8bit' ? 'block' : 'none'
     }
   }
 
@@ -180,10 +189,21 @@ export class SettingsModal {
               <label class="dr-debug-form-label">Cockpit Theme</label>
               <select class="dr-debug-form-select" id="dr-debug-theme">
                 <option value="dr-debug" selected>Dr.Debug (Original Obsidian Cyan)</option>
-                <option value="cyber-matrix">Cyber Matrix HUD (Tactical Neo-Tokyo Deck)</option>
+                <option value="arcade-8bit">🕹️ Arcade 8-Bit (Retro Quest &amp; Peeking Fighters)</option>
                 <option value="minimal-glass">Windows XP (Luna Blue Retro)</option>
                 <option value="monotone-skeuomorphic">Monotone Skeuomorphism (Dark Studio)</option>
               </select>
+            </div>
+            <div class="dr-debug-form-group" id="dr-debug-peeker-preview-group" style="display: none; margin-top: -4px; margin-bottom: 12px;">
+              <label class="dr-debug-form-label" style="font-size: 10px; color: #ffe600; margin-bottom: 4px;">🎮 Pop Out 8-Bit Easter Egg (Arcade Theme):</label>
+              <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                <button type="button" class="dr-debug-btn-outline dr-debug-btn-peeker-test" data-char="pikachu" style="padding: 2px 6px; font-size: 10px; cursor: pointer; border-radius: 4px;">⚡ Pikachu</button>
+                <button type="button" class="dr-debug-btn-outline dr-debug-btn-peeker-test" data-char="gengar" style="padding: 2px 6px; font-size: 10px; cursor: pointer; border-radius: 4px;">👻 Gengar</button>
+                <button type="button" class="dr-debug-btn-outline dr-debug-btn-peeker-test" data-char="charizard" style="padding: 2px 6px; font-size: 10px; cursor: pointer; border-radius: 4px;">🔥 Charizard</button>
+                <button type="button" class="dr-debug-btn-outline dr-debug-btn-peeker-test" data-char="bulbasaur" style="padding: 2px 6px; font-size: 10px; cursor: pointer; border-radius: 4px;">🍃 Bulbasaur</button>
+                <button type="button" class="dr-debug-btn-outline dr-debug-btn-peeker-test" data-char="ryu" style="padding: 2px 6px; font-size: 10px; cursor: pointer; border-radius: 4px;">🥋 Ryu</button>
+                <button type="button" class="dr-debug-btn-outline dr-debug-btn-peeker-test" data-char="spiderman" style="padding: 2px 6px; font-size: 10px; cursor: pointer; border-radius: 4px;">🕷️ Spidey</button>
+              </div>
             </div>
             <div class="dr-debug-form-group">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
@@ -199,7 +219,7 @@ export class SettingsModal {
             </div>
             <div class="dr-debug-form-group" id="dr-debug-error-chime-group">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                <label class="dr-debug-form-label" style="margin-bottom:0;">Incident Error Chime (5 Sounds)</label>
+                <label class="dr-debug-form-label" style="margin-bottom:0;">Incident Error Chime (6 Sounds)</label>
                 <button type="button" id="dr-debug-btn-test-chime" class="dr-debug-btn-outline" style="flex: 0 0 auto; padding: 1px 6px; font-size: 9.5px; height: 18px; line-height: 1; border-radius: 4px; cursor: pointer;" title="Preview selected error chime">
                   ▶ Preview Chime
                 </button>
@@ -210,6 +230,7 @@ export class SettingsModal {
                 <option value="cyber-glitch">3. Cyber Glitch (Tri-Tone Digital Strobe)</option>
                 <option value="subtle-bell">4. Subtle Bell (Glassy Ambient Ping)</option>
                 <option value="retro-alarm">5. Retro Synth (8-Bit Arcade Warning)</option>
+                <option value="arcade-chiptune">6. Arcade Chiptune (8-Bit Square Wave)</option>
               </select>
             </div>
           </div>
@@ -259,7 +280,7 @@ export class SettingsModal {
           <div class="dr-debug-settings-update-banner">
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
-              <span class="dr-debug-update-version">Dr. Debug v0.1.20</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.21</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
@@ -277,11 +298,24 @@ export class SettingsModal {
     this.themeSelect = this.element.querySelector('#dr-debug-theme')!
     const handleThemeApply = () => {
       const theme = normalizeDrDebugTheme(this.themeSelect.value)
+      const peekerGroup = this.element.querySelector('#dr-debug-peeker-preview-group') as HTMLElement
+      if (peekerGroup) {
+        peekerGroup.style.display = theme === 'arcade-8bit' ? 'block' : 'none'
+      }
       this.options.onThemeChange?.(theme)
     }
     this.themeSelect.addEventListener('change', handleThemeApply)
     this.themeSelect.addEventListener('input', handleThemeApply)
     this.themeSelect.addEventListener('click', handleThemeApply)
+
+    const peekerButtons = this.element.querySelectorAll<HTMLButtonElement>('.dr-debug-btn-peeker-test')
+    peekerButtons.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const char = btn.getAttribute('data-char') as EasterEggCharacter
+        this.options.onPeekEasterEgg?.(char)
+      })
+    })
 
     this.soundSelect = this.element.querySelector('#dr-debug-sound')!
     this.soundToggleBtn = this.element.querySelector('#dr-debug-btn-sound-toggle')!
@@ -533,7 +567,7 @@ export class SettingsModal {
 
   private async handleCheckUpdate(btn: HTMLButtonElement): Promise<void> {
     const originalText = btn.innerHTML
-    const currentVersion = '0.1.20'
+    const currentVersion = '0.1.21'
 
     btn.disabled = true
     btn.innerHTML = `<span>Checking...</span>`

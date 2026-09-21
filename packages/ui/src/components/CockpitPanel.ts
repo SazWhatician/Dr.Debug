@@ -7,6 +7,7 @@ import { IncidentExporter, type IncidentBundleData } from './IncidentExporter.js
 import { SettingsModal, type SettingsData, type DrDebugTheme, normalizeDrDebugTheme } from './SettingsModal.js'
 import { StethoscopeInspector } from './StethoscopeInspector.js'
 import { copyToClipboard } from './clipboard.js'
+import { type EasterEggCharacter } from './PixelEasterEgg.js'
 
 export interface StepItem {
   stepNumber: number
@@ -143,6 +144,7 @@ export interface CockpitPanelOptions {
   onToggleStethoscope?: () => void
   onExportIncidentBundle?: () => void
   onRecenterPill?: () => void
+  onPeekEasterEgg?: (character?: EasterEggCharacter) => void
 }
 
 export class CockpitPanel {
@@ -418,6 +420,7 @@ export class CockpitPanel {
       onTestChime: (chime) => {
         this.audioChimes.playIncidentAlert(chime)
       },
+      onPeekEasterEgg: options.onPeekEasterEgg,
       onTestConnection: async (settings) => {
         if (options.onTestConnection) {
           return await options.onTestConnection(settings)
@@ -1868,14 +1871,14 @@ export class CockpitPanel {
       'theme-minimal-glass',
       'theme-windows-xp',
       'theme-monotone-skeuomorphic',
-      'theme-cyber-matrix'
+      'theme-arcade-8bit'
     )
     if (validTheme === 'minimal-glass' || (validTheme as string) === 'windows-xp') {
       this.element.classList.add('theme-minimal-glass')
     } else if (validTheme === 'monotone-skeuomorphic') {
       this.element.classList.add('theme-monotone-skeuomorphic')
-    } else if (validTheme === 'cyber-matrix') {
-      this.element.classList.add('theme-cyber-matrix')
+    } else if (validTheme === 'arcade-8bit') {
+      this.element.classList.add('theme-arcade-8bit')
     }
     try {
       localStorage.setItem('dr_debug_theme', validTheme)

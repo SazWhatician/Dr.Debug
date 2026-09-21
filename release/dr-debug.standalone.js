@@ -9706,6 +9706,11 @@ ${msg.content}<end_of_turn>
       id: "retro-alarm",
       name: "Retro Synth",
       description: "8-Bit Arcade Warning \u2014 Alternating chiptune square-wave alert"
+    },
+    {
+      id: "arcade-chiptune",
+      name: "Arcade 8-Bit",
+      description: "Chiptune Quest Alert \u2014 8-Bit battle warning square-wave chirp"
     }
   ];
   var AudioChimes = class {
@@ -9760,6 +9765,9 @@ ${msg.content}<end_of_turn>
           break;
         case "retro-alarm":
           this.playRetroAlarmChime();
+          break;
+        case "arcade-chiptune":
+          this.playArcadeChiptuneChime();
           break;
         case "warp-drop":
         default:
@@ -9932,6 +9940,159 @@ ${msg.content}<end_of_turn>
           gain.connect(ctx.destination);
           osc.start(p.start);
           osc.stop(p.start + p.dur);
+        });
+      } catch {
+      }
+    }
+    /**
+     * Error Chime 6: Arcade Chiptune Alert
+     * Authentic 8-bit square-wave dual chirp (440Hz -> 880Hz -> 220Hz)
+     */
+    playArcadeChiptuneChime() {
+      if (!this.isEnabled || typeof window === "undefined") return;
+      const ctx = this.initContext();
+      if (!ctx) return;
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {
+        });
+      }
+      try {
+        const now = ctx.currentTime;
+        const notes = [
+          { freq: 440, start: now, dur: 0.06 },
+          { freq: 880, start: now + 0.06, dur: 0.06 },
+          { freq: 330, start: now + 0.12, dur: 0.14 }
+        ];
+        notes.forEach((n) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "square";
+          osc.frequency.setValueAtTime(n.freq, n.start);
+          gain.gain.setValueAtTime(0.045, n.start);
+          gain.gain.exponentialRampToValueAtTime(1e-4, n.start + n.dur);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(n.start);
+          osc.stop(n.start + n.dur);
+        });
+      } catch {
+      }
+    }
+    /**
+     * 8-Bit Coin Insert Sound (Classic Mario/Arcade coin pickup: B5 -> E6)
+     */
+    playCoinSound() {
+      if (!this.isEnabled || typeof window === "undefined") return;
+      const ctx = this.initContext();
+      if (!ctx) return;
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {
+        });
+      }
+      try {
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "square";
+        osc.frequency.setValueAtTime(987.77, now);
+        osc.frequency.setValueAtTime(1318.51, now + 0.07);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(1e-4, now + 0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } catch {
+      }
+    }
+    /**
+     * 8-Bit Jump / Peek Sound (Rising square wave)
+     */
+    playJumpSound() {
+      if (!this.isEnabled || typeof window === "undefined") return;
+      const ctx = this.initContext();
+      if (!ctx) return;
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {
+        });
+      }
+      try {
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "square";
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(600, now + 0.12);
+        gain.gain.setValueAtTime(0.04, now);
+        gain.gain.exponentialRampToValueAtTime(1e-4, now + 0.14);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.14);
+      } catch {
+      }
+    }
+    /**
+     * 8-Bit Hit / Damage Sound
+     */
+    playHitSound() {
+      if (!this.isEnabled || typeof window === "undefined") return;
+      const ctx = this.initContext();
+      if (!ctx) return;
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {
+        });
+      }
+      try {
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(55, now + 0.15);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(1e-4, now + 0.18);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.18);
+      } catch {
+      }
+    }
+    /**
+     * 8-Bit Victory / Level Up Fanfare
+     */
+    playFanfareSound() {
+      if (!this.isEnabled || typeof window === "undefined") return;
+      const ctx = this.initContext();
+      if (!ctx) return;
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {
+        });
+      }
+      try {
+        const now = ctx.currentTime;
+        const melody = [
+          { freq: 523.25, start: now, dur: 0.08 },
+          // C5
+          { freq: 659.25, start: now + 0.09, dur: 0.08 },
+          // E5
+          { freq: 783.99, start: now + 0.18, dur: 0.08 },
+          // G5
+          { freq: 1046.5, start: now + 0.27, dur: 0.25 }
+          // C6
+        ];
+        melody.forEach((m) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "square";
+          osc.frequency.setValueAtTime(m.freq, m.start);
+          gain.gain.setValueAtTime(0.05, m.start);
+          gain.gain.exponentialRampToValueAtTime(1e-4, m.start + m.dur);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(m.start);
+          osc.stop(m.start + m.dur);
         });
       } catch {
       }
@@ -11653,15 +11814,18 @@ ${rawJson}
   // packages/ui/src/components/SettingsModal.ts
   var VALID_DR_DEBUG_THEMES = [
     "dr-debug",
-    "cyber-matrix",
     "minimal-glass",
     "monotone-skeuomorphic",
-    "windows-xp"
+    "windows-xp",
+    "arcade-8bit"
   ];
   function normalizeDrDebugTheme(theme) {
     if (!theme) return "dr-debug";
-    if (theme === "windows-xp") return "minimal-glass";
-    return VALID_DR_DEBUG_THEMES.includes(theme) ? theme : "dr-debug";
+    const clean = theme.toLowerCase().trim();
+    if (VALID_DR_DEBUG_THEMES.includes(clean)) {
+      return clean;
+    }
+    return "dr-debug";
   }
   var SettingsModal = class {
     constructor(options) {
@@ -11717,6 +11881,10 @@ ${rawJson}
       const valid = normalizeDrDebugTheme(theme);
       if (this.themeSelect) {
         this.themeSelect.value = valid;
+      }
+      const peekerGroup = this.element.querySelector("#dr-debug-peeker-preview-group");
+      if (peekerGroup) {
+        peekerGroup.style.display = valid === "arcade-8bit" ? "block" : "none";
       }
     }
     getTheme() {
@@ -11790,10 +11958,21 @@ ${rawJson}
               <label class="dr-debug-form-label">Cockpit Theme</label>
               <select class="dr-debug-form-select" id="dr-debug-theme">
                 <option value="dr-debug" selected>Dr.Debug (Original Obsidian Cyan)</option>
-                <option value="cyber-matrix">Cyber Matrix HUD (Tactical Neo-Tokyo Deck)</option>
+                <option value="arcade-8bit">\u{1F579}\uFE0F Arcade 8-Bit (Retro Quest &amp; Peeking Fighters)</option>
                 <option value="minimal-glass">Windows XP (Luna Blue Retro)</option>
                 <option value="monotone-skeuomorphic">Monotone Skeuomorphism (Dark Studio)</option>
               </select>
+            </div>
+            <div class="dr-debug-form-group" id="dr-debug-peeker-preview-group" style="display: none; margin-top: -4px; margin-bottom: 12px;">
+              <label class="dr-debug-form-label" style="font-size: 10px; color: #ffe600; margin-bottom: 4px;">\u{1F3AE} Pop Out 8-Bit Easter Egg (Arcade Theme):</label>
+              <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                <button type="button" class="dr-debug-btn-outline dr-debug-btn-peeker-test" data-char="pikachu" style="padding: 2px 6px; font-size: 10px; cursor: pointer; border-radius: 4px;">\u26A1 Pikachu</button>
+                <button type="button" class="dr-debug-btn-outline dr-debug-btn-peeker-test" data-char="gengar" style="padding: 2px 6px; font-size: 10px; cursor: pointer; border-radius: 4px;">\u{1F47B} Gengar</button>
+                <button type="button" class="dr-debug-btn-outline dr-debug-btn-peeker-test" data-char="charizard" style="padding: 2px 6px; font-size: 10px; cursor: pointer; border-radius: 4px;">\u{1F525} Charizard</button>
+                <button type="button" class="dr-debug-btn-outline dr-debug-btn-peeker-test" data-char="bulbasaur" style="padding: 2px 6px; font-size: 10px; cursor: pointer; border-radius: 4px;">\u{1F343} Bulbasaur</button>
+                <button type="button" class="dr-debug-btn-outline dr-debug-btn-peeker-test" data-char="ryu" style="padding: 2px 6px; font-size: 10px; cursor: pointer; border-radius: 4px;">\u{1F94B} Ryu</button>
+                <button type="button" class="dr-debug-btn-outline dr-debug-btn-peeker-test" data-char="spiderman" style="padding: 2px 6px; font-size: 10px; cursor: pointer; border-radius: 4px;">\u{1F577}\uFE0F Spidey</button>
+              </div>
             </div>
             <div class="dr-debug-form-group">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
@@ -11809,7 +11988,7 @@ ${rawJson}
             </div>
             <div class="dr-debug-form-group" id="dr-debug-error-chime-group">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                <label class="dr-debug-form-label" style="margin-bottom:0;">Incident Error Chime (5 Sounds)</label>
+                <label class="dr-debug-form-label" style="margin-bottom:0;">Incident Error Chime (6 Sounds)</label>
                 <button type="button" id="dr-debug-btn-test-chime" class="dr-debug-btn-outline" style="flex: 0 0 auto; padding: 1px 6px; font-size: 9.5px; height: 18px; line-height: 1; border-radius: 4px; cursor: pointer;" title="Preview selected error chime">
                   \u25B6 Preview Chime
                 </button>
@@ -11820,6 +11999,7 @@ ${rawJson}
                 <option value="cyber-glitch">3. Cyber Glitch (Tri-Tone Digital Strobe)</option>
                 <option value="subtle-bell">4. Subtle Bell (Glassy Ambient Ping)</option>
                 <option value="retro-alarm">5. Retro Synth (8-Bit Arcade Warning)</option>
+                <option value="arcade-chiptune">6. Arcade Chiptune (8-Bit Square Wave)</option>
               </select>
             </div>
           </div>
@@ -11869,7 +12049,7 @@ ${rawJson}
           <div class="dr-debug-settings-update-banner">
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
-              <span class="dr-debug-update-version">Dr. Debug v0.1.20</span>
+              <span class="dr-debug-update-version">Dr. Debug v0.1.21</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
@@ -11887,11 +12067,24 @@ ${rawJson}
       const handleThemeApply = () => {
         var _a2, _b2;
         const theme = normalizeDrDebugTheme(this.themeSelect.value);
+        const peekerGroup = this.element.querySelector("#dr-debug-peeker-preview-group");
+        if (peekerGroup) {
+          peekerGroup.style.display = theme === "arcade-8bit" ? "block" : "none";
+        }
         (_b2 = (_a2 = this.options).onThemeChange) == null ? void 0 : _b2.call(_a2, theme);
       };
       this.themeSelect.addEventListener("change", handleThemeApply);
       this.themeSelect.addEventListener("input", handleThemeApply);
       this.themeSelect.addEventListener("click", handleThemeApply);
+      const peekerButtons = this.element.querySelectorAll(".dr-debug-btn-peeker-test");
+      peekerButtons.forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          var _a2, _b2;
+          e.stopPropagation();
+          const char = btn.getAttribute("data-char");
+          (_b2 = (_a2 = this.options).onPeekEasterEgg) == null ? void 0 : _b2.call(_a2, char);
+        });
+      });
       this.soundSelect = this.element.querySelector("#dr-debug-sound");
       this.soundToggleBtn = this.element.querySelector("#dr-debug-btn-sound-toggle");
       const syncSoundUI = (enabled) => {
@@ -12108,7 +12301,7 @@ ${rawJson}
     async handleCheckUpdate(btn) {
       var _a, _b;
       const originalText = btn.innerHTML;
-      const currentVersion = "0.1.20";
+      const currentVersion = "0.1.21";
       btn.disabled = true;
       btn.innerHTML = `<span>Checking...</span>`;
       btn.style.opacity = "0.85";
@@ -12506,6 +12699,7 @@ ${rawJson}
         onTestChime: (chime) => {
           this.audioChimes.playIncidentAlert(chime);
         },
+        onPeekEasterEgg: options.onPeekEasterEgg,
         onTestConnection: async (settings) => {
           var _a;
           if (options.onTestConnection) {
@@ -13764,14 +13958,14 @@ ${rawJson}
         "theme-minimal-glass",
         "theme-windows-xp",
         "theme-monotone-skeuomorphic",
-        "theme-cyber-matrix"
+        "theme-arcade-8bit"
       );
       if (validTheme === "minimal-glass" || validTheme === "windows-xp") {
         this.element.classList.add("theme-minimal-glass");
       } else if (validTheme === "monotone-skeuomorphic") {
         this.element.classList.add("theme-monotone-skeuomorphic");
-      } else if (validTheme === "cyber-matrix") {
-        this.element.classList.add("theme-cyber-matrix");
+      } else if (validTheme === "arcade-8bit") {
+        this.element.classList.add("theme-arcade-8bit");
       }
       try {
         localStorage.setItem("dr_debug_theme", validTheme);
@@ -13953,11 +14147,12 @@ ${rawJson}
     hasMoved = false;
     isCollapsed = false;
     previousTotalIssues = 0;
-    constructor(onClick, audioChimes) {
+    currentTheme = "dr-debug";
+    constructor(onClick, audioChimes, onEasterEgg) {
       this.audioChimes = audioChimes || new AudioChimes();
       this.element = document.createElement("div");
       this.element.className = "dr-debug-pill";
-      this.element.title = "Dr. Debug - Click to open Cockpit \xB7 Double-click to collapse";
+      this.element.title = "Dr. Debug - Click to open Cockpit \xB7 Double-click to collapse \xB7 Alt+Click for Easter Egg";
       this.equalizer = document.createElement("div");
       this.equalizer.className = "dr-debug-equalizer";
       for (let i = 0; i < 3; i++) {
@@ -13980,6 +14175,10 @@ ${rawJson}
       this.element.appendChild(this.badgeText);
       this.element.addEventListener("click", (e) => {
         if (this.hasMoved) return;
+        if ((e.altKey || e.shiftKey) && this.currentTheme === "arcade-8bit") {
+          onEasterEgg == null ? void 0 : onEasterEgg();
+          return;
+        }
         if (this.isCollapsed) {
           this.expand();
         } else {
@@ -14229,18 +14428,19 @@ ${rawJson}
       });
     }
     setTheme(theme) {
+      this.currentTheme = theme;
       this.element.classList.remove(
         "theme-minimal-glass",
         "theme-windows-xp",
         "theme-monotone-skeuomorphic",
-        "theme-cyber-matrix"
+        "theme-arcade-8bit"
       );
       if (theme === "minimal-glass" || theme === "windows-xp") {
         this.element.classList.add("theme-minimal-glass");
       } else if (theme === "monotone-skeuomorphic") {
         this.element.classList.add("theme-monotone-skeuomorphic");
-      } else if (theme === "cyber-matrix") {
-        this.element.classList.add("theme-cyber-matrix");
+      } else if (theme === "arcade-8bit") {
+        this.element.classList.add("theme-arcade-8bit");
       }
     }
     getAudioChimes() {
@@ -14453,6 +14653,394 @@ ${rawJson}
       }
       this.overlayEl = null;
       this.badgeEl = null;
+    }
+  };
+
+  // packages/ui/src/components/pokemonSprites.ts
+  var PIKACHU_SPRITE_DATA = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC0AAAAsCAYAAADxRjE/AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAALgSURBVGhDvZe9cdwwEIUZugSHDC90CSqB4YUqxSUodOgyGLoMh1fChZed5kF40GJ3AYIEeG/mjTQg8PBpiR9qmgbocrk8Yd0+Upxj2DwIWpbr2NAoZg7PZ+jo4PdfP1Lu6OwMmuF/lqkrHBn323IOMCRfISa6r3MXNMaGnAjN/KHQEAL/f3xPdhQ8AK/zd85tOQcY4uuUPgytck6DxqbRFdpbbQ8YGU3AGLxnMiqAF6CZqS3HG+g9wBykQ7ekq00wrPXH/W9m9sEz9tNVRp6ew8gbeBQc4zSodjaXWlpNwJAHDaMaum9NMkeDGljH3cB0KziXwzTZoyvzOoc+uh/GN0FvAdMt4HE5PR+PxxeQkwPj0mCf7Lhc57HQcG2NMyfu+BxGmVXmjZeetRyTe4DpUmg68uJRxdeO9uy2FH1kv/BznUPfarVHQgPg9vHb9G/x7fr2/Df/TODxTRRlAqqOoR54gL6+pb48g1lR/O4VCWMITfAtaKi6aTxoD1xDsz/aJZDOPApN1eEFcA1cjwNIev06UyyNo9CUhXeAvXAPmmBelZlN4LBhW4+9gr7gHVgPmCqBu3Zy4c0TpEEGPga6oeZrz7MDql3K36Ww83NoV9kJ4cC0uhs6fXZuhHlHmoYpOV1ADfM0SULzg0j3gWpLg5vMs3djluZokgTeAq9B18DNG+qFxuD0/RCBabm2M2DAONByX9SAS0XZLUARfgs6VVSDxwpmwLKfaB8CLWSATbVkVVU7/nvhkkvfI6Ly8lk+bZ+yStTWcQYV22SlZeVjXmpHYUaBJxAYwF6VtdlXA3uwzrNuGWgNWLUDVvMoaCiEcYkYMM8OUItHQlOnQjNfT9qtdPFoyE5gAX2OiuAKQp7vtO7zEuCoKkAJ2IPH768AporgPOpoHpM0wbmx5aX1ChkIcT57cqst/tBzZdZ1+79MqboED5fV2eDmgjl4XOllpJ+PVloOYiOdPukIvQz2E5Xco4ELdrsZAAAAAElFTkSuQmCC";
+  var GENGAR_SPRITE_DATA = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAA2CAYAAACFrsqnAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAOdSURBVGhD1Zi9cVRBEIQJQSFgEgImpsKQSQiYMgkDUyEoBExMhYCJKU9Uq6pF69Ps773TFVPVdbx9szP97axOlD58uGDcfvn+JHH9vwoB/Li5e7r+dL0F4kOQrq6utmqcFGp8f3v3DLEKkuZVQzocRAVpilfHU0jlHubnWpo3wDSEmlh8x7BJ57qxjVUQzrcp7u8BLIFkkR6U1mTCeTbFZyoBCJbmJefnvikIRRrKggTSv/k+zRKgpaqfa2bOEISnnoZYXMr86uRWRRC+m4LQi9yYMGyQ2jVNpcmEqAD06QMsgZzkIk52QX32QPiuOlmKRq3qnb3kob8CSbqkNUwWTcM9AK/n5wxAS3nNS4ik0wZeMcnXK2H0SfPngpCqn8M318uTsHjFCJNFW6J5ikZ78jRcm+/fTKbaXMH4edV8yj04bSp75jTy/QuEoypKAxXgjBLUfX5ff+yC8OAk5nS/tVogLr4Cw4lprwCsFRC+l0oQRVWYIDZA05USQk0TogeS6y2I8lo5qqlkwTzRGZgehERj7Om+XJOa03D0ClZXg+Yp7yHMz8//QJRT9W1BSEOQ1lRsLM3YHM0nhHMI4prKefj1UIK01L1WGSya5vRMkNFkdPo9iFWQ4TQcORWa9LNN0fSMfJUMcTYQhWEI8vjn8cUIDfbkPQRYBVEevQ6jMiwQ6evNt1fmRpJZ7dGna0gGUW2arrQ0DYc2EcRGbMoaPXtPQhjEPWiaUt4WiKIHkoZGz9L93f2zdkGkbRBtTBAVq4yOnlvrFwNR08oQn6vTr/Jy4jRdaRuEV2sWZGYtp3F2EEUFQ5N8bq3lpFiXpiudBFJdL5qsrhJzcp3TuAiIYSqDIzjnEWIWRPvobymqxoQhSLWmPVUtGq50MoSimophWl8AudYCWAE56Vo5/H8vGiBQS8ynaJpSjUNAFDOGdkTTlQ4FGU1lVzTd0mEgCp3MkTA029OhIGp+FAyNjqS+9LMdBsgGNDgSDa7osKmoWPXnS4mGd8339h0GovHmXxB9zY4SD4AwZwNRI/+uoKlZ5V5CvCuI5e96Gh3pIiAKw7ChmxpoZUo9GObRz3aoGJtVTQ2jT4qQOcleTefS01asgHCvo7qC1VSYM6q7HCrWg5hpSBg+tzSquxQGYZPVhjTP50qH/pwoek1nIBzKzVq9ujv1h9FruNPIQBa/EE6tX4Yh+Hlkk+qgDHdUjzenl2LuKcGDOkePdwsbbwH8BalGFoohl5T8AAAAAElFTkSuQmCC";
+  var CHARIZARD_SPRITE_DATA = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEQAAABPCAYAAABS1GNxAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAaJSURBVHhe7Zs9ctxGEIUZOnTo0KFDH4FHUKiQR3DoUEfwEXwEHWNDhw4dOnTITK4G8aCHb3oGM1gApEy/qlfaBWb650MDu0VSDw+vqL8ev/8Srr1/dxKAzFz7bkQQ7x5IKAD88/v/UFYKAM9/lFDeJRg1HlMiKP7a13Cv9OnnH76EefzNKyvcpyEguHkr+T4p4v39+eNkxn7T2ircJ8M9AuT24XEy17w5RdFRaA1IbUo4IRUoL7E//TRZubhI00lz3SWarqIV7OccBIEQRgPMEl8OKN44z3s9rOkwZeRZDJNHc7pV/JbhdPC9x+CU7HE2VXcpa5zHdNV8H6cimw7/1KkACRVNZrlpB8mAu5Q1XjNhhLxht08EITHGrCJfHJO/e/xQtcAw4LB6QbSAhNR0BiabGu6XvJ4WhB9/+a1wHGe8IRGGX43aPV0DEqpNSjYx3CupphoMQqAZr1sOg0ndBFMD4s+GDETPdIRaQNh8ZsbbFJ8XTJrZ7+3soRpyIJwSTQb3ZLoUCG8RJmzZoWRAQrUp6ZkM6XIgGn8m23IPECmajzUBI/7thRFqAQkTAM14TQkIk/RaULaAhHwae9ZL3ySQ3ib3QLkMiGDcA0TubdCB1B7GLtXYAhImhLuAMPge9wIJ+YXYguIATwWyNR1xPszjNY/cBgQiKNleAanVKRPCoUD8XO2qZMB6gYQyKAmYao2ZCaIbSAtGeAuIrhrH2PcwZ6YaFAfTqpMmiF4gzSQskkAcBs8TJBNnYj7f36ozM0EMAWGwVlN+TjA4HY39mwX5NGjPKAyZME4BEspgxHHul/1qx95VBbmmmJq8Vo0tE8ZdQPzKCIiunsNgg4wjD0BZxVdub5KxW94FJIOicw4h3nuxPh2uLJa7BcSBE4Y3yWM1jwJJv5AJBpunMxghxZAr+4r9fotuweiF4jDmutqqAWETmZOmqhAyq2nF6AGiJlmvzLW+3upsy6H0NiPP47+4Z7JoByMYbIrNORRCJJzdQEZhyLyye6CEVUMLSNZgll+xtKf13KqpKHDELGYvlHBt9N0s3qcrgxKvR6Gsipoamn9Pq2O6EmxA62muGXELCgs3FTXQ3FDTqhjCmILdbsV3ENoT+7OFRXFfzf48ECAWnqjItwsI70NvMs4/Pz9PZtFugUhGc4pRy5E5g68YiJ2pADEKJLRs8mLmLzMTjJ4mPKDgCIS/bkGpHa/lycQ8e4CEVgWzIS94LmoFzwtlHBYms9lee23rFr4qy8s1m/IgLEL2+9qTEWCPGXuPDUwxoczn5zflV7vmOah+l1JMFAtombHvtWpjT57TzzU1CsN+27YkY/LaMcYdsU8Dz10KRLeIwyCQ7BY6EobHVc3MQSBaNwSkE4bUBFK7hRiz14rDxgVFNR0GhDD8fSVBCsTXpTD+/LV0AqBlBwIoq+OseQhIbPaE/jq+ezC4A/GJyNZNsQghc9J8y2yeoFjLKJBQkWwOyuATAMHQN1eNtK+b4LLxLSfNZ2bzLSC81azGLhUQ/P6NfwOCjun24hUZmg46AZBZF0c1bAGxffuV0E0Lw7aXAtjoiBMA8jyJxXHZgQiWG7X2y6eCUNy4VUIvydnkqJNm54ZWV5xuXbx5/24tyVvOJqRobq/zhpbc2bS0zt0LJFQ0r/u2AuQlMRvb6wTIAuV2K6Ylu1jJ3vvkzeP2IIzp2KFAwgkQNc9nhKbidCBqXp8wXBNaFcem7nECgxD8gi1Q5gnytTOkY+RgsnOrQtnUvU5AOBABUB1eq0DY1JyrAoa+8bKpe4xv0ZkFwKfFQVwGJCt0ghQ/oGZje90BRLbGCxinA6kVuQA5CEotT81qPpsS9nCoWoUeBmX+/3uM33JrStjDoeoG4mbDNNcfBGQ69/njeUB6iqxCGbRGn/FrxkSsYrGPw9QDJCtoj3WlGb/mNwmkVdSoi9HfcJZbH8vs4zDVxtiLyQrbYz4cmbOV/3QQUvaRtmUVx4a3TCByCwRyXqNRKLE+PALG9zBery+DMgJkbopK4QiCf0p9E0BCPVAqMFbKINCCx/hbvhTIrKIIeqQoh0PPS4r4NcfzZST3kSqKcZ9QVJGD1sP2cihPT09ff6R3uxWFvQYUh3FS7lwBI36SJihhf/0aQAjjpNxVTcmmP7map8Rfw0ergJG58ivZU8Wm+f4sTTmW5ucfI+q1/i5OfzB4QT1vQlOjalqN+3t/xnHzf1mcgmVKLpzYNyc2zfcP/wIRvV3JSVn2twAAAABJRU5ErkJggg==";
+  var BULBASAUR_SPRITE_DATA = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACMAAAApCAYAAAC/QpA/AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAJxSURBVFhHzdY9UsMwEAXgHMElJWVKSsqUKTlCSsocgSPkCJSUlCkpU6bkCBzBXZjn4Wmen1eSnR+HndlJsOTdz5KcYbEYGS+b5YnpY7MGAO/H1Wn78dTl3VBsTETTNOm7z71poClWBMnVIUxXaDYYQcQ4aFYYEbpKBEUo3U6vdVGg8L7dJgy/R6gIdjUQmyP1ewTSFbk6qASJMCXQv8JcBKpBapgIdDOMIxzC5v73w3qd0nuGgRtRfArGITnM8243SO/fC/1hU4wDHMEnjjAO2Rw/UxZBitGm/rdDWJigEmY0iAW0uR9GRWjhCBNBHFMERc1xTQ9griDGapAIVDzULFgDKIRJkDfXcdZjTV53Rxd6w9vPV0pHRBgW9mt8vQ+HQ/fZtm1vXvotUjESDdCcE6diHIRGRPi8HobNUBST2VgnljBelOmNS1vH8YTR1EkRBNf5iSfOPbWvjo9rJgwKRxi/5hggsPfICOR/l0C9M+PNdUU47quzXz6e2tdNAnkDTcJ4kEMI3x5fHd2aCIN7gFEQVkcbe+pLAgAzQUor49viGACA+V6vEoRP6hBH9QAamMA9d0gucY9ixkKqIC3MLRuT3oDLrg19js93S8LgCXkQvXEu2RT3+eF0WIQbgDAJ29Qdxj9U1DS6hmK4j58RpIQZgLg1GOD+1xB8I/hGKYQNom1zEBYhXB1v6gBFAM2MIFrbt68IQVCNQe6/Jsb45nS/K5K+bV6boatUm5smE4XUbXAE5o6FMPQBfWwQXAWiolTEFMjZER02B+gK3hTD0LOk6dBZMBoOuCsGkQPNjgGE/0jzM/tbMUf4m4X0OefGL4K2ZFQPyEd5AAAAAElFTkSuQmCC";
+
+  // packages/ui/src/components/PixelEasterEgg.ts
+  var RYU_SPRITE_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="64" height="64" shape-rendering="crispEdges">
+  <!-- Hair: Dark Charcoal -->
+  <rect x="10" y="3" width="12" height="3" fill="#1c1917" />
+  <rect x="8" y="5" width="16" height="4" fill="#1c1917" />
+  <rect x="7" y="7" width="4" height="5" fill="#1c1917" />
+  <rect x="21" y="7" width="4" height="5" fill="#1c1917" />
+  
+  <!-- Red Headband (The iconic Ryu Bandana) -->
+  <rect x="8" y="9" width="16" height="3" fill="#e11d48" />
+  <rect x="6" y="10" width="3" height="3" fill="#be123c" />
+  <!-- Headband tail waving to the left -->
+  <rect x="3" y="11" width="4" height="2" fill="#e11d48" />
+  <rect x="1" y="12" width="3" height="3" fill="#9f1239" />
+  <rect x="0" y="14" width="2" height="3" fill="#be123c" />
+
+  <!-- Face: Skin tones -->
+  <rect x="10" y="12" width="12" height="6" fill="#fcd34d" />
+  <rect x="11" y="13" width="10" height="5" fill="#fef3c7" />
+  <!-- Intense Eyebrows & Eyes -->
+  <rect x="11" y="13" width="4" height="1" fill="#1c1917" />
+  <rect x="17" y="13" width="4" height="1" fill="#1c1917" />
+  <rect x="12" y="14" width="2" height="2" fill="#000000" />
+  <rect x="18" y="14" width="2" height="2" fill="#000000" />
+  <rect x="13" y="14" width="1" height="1" fill="#ffffff" />
+  <rect x="19" y="14" width="1" height="1" fill="#ffffff" />
+  
+  <!-- Mouth / Focused expression -->
+  <rect x="14" y="17" width="4" height="1" fill="#b45309" />
+
+  <!-- White Karate Gi & Muscular Shoulders -->
+  <rect x="7" y="18" width="18" height="14" fill="#f8fafc" />
+  <!-- Gi V-Neck Collar & Chest -->
+  <rect x="13" y="18" width="6" height="4" fill="#fcd34d" />
+  <rect x="14" y="18" width="4" height="5" fill="#e2e8f0" />
+  <!-- Gi Black Trim/Folds -->
+  <rect x="11" y="19" width="2" height="13" fill="#cbd5e1" />
+  <rect x="19" y="19" width="2" height="13" fill="#94a3b8" />
+
+  <!-- Raised Fist / Thumb Up (Peeking gesture) -->
+  <rect x="23" y="15" width="6" height="6" fill="#fcd34d" />
+  <rect x="24" y="14" width="4" height="2" fill="#f59e0b" />
+  <rect x="25" y="16" width="3" height="3" fill="#ffffff" /> <!-- White wrist wrap -->
+  <rect x="24" y="19" width="4" height="2" fill="#b45309" />
+</svg>
+`;
+  var SPIDERMAN_SPRITE_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="64" height="64" shape-rendering="crispEdges">
+  <!-- Mask Outline / Red Hood -->
+  <rect x="10" y="4" width="12" height="2" fill="#dc2626" />
+  <rect x="8" y="6" width="16" height="2" fill="#dc2626" />
+  <rect x="7" y="8" width="18" height="12" fill="#ef4444" />
+  <rect x="8" y="20" width="16" height="3" fill="#dc2626" />
+  <rect x="10" y="23" width="12" height="2" fill="#b91c1c" />
+  
+  <!-- Web Lines (Black grid on mask) -->
+  <rect x="15" y="4" width="2" height="21" fill="#18181b" />
+  <rect x="7" y="13" width="18" height="1" fill="#18181b" />
+  <rect x="8" y="9" width="16" height="1" fill="#18181b" />
+  <rect x="8" y="18" width="16" height="1" fill="#18181b" />
+  <!-- Diagonal web segments -->
+  <rect x="11" y="7" width="1" height="3" fill="#18181b" />
+  <rect x="20" y="7" width="1" height="3" fill="#18181b" />
+  <rect x="10" y="14" width="1" height="4" fill="#18181b" />
+  <rect x="21" y="14" width="1" height="4" fill="#18181b" />
+
+  <!-- Iconic Large Slanted White Eyes with Black Borders -->
+  <!-- Left Eye -->
+  <polygon points="9,11 15,11 13,16 9,14" fill="#000000" />
+  <polygon points="10,12 14,12 12,15 10,13" fill="#ffffff" />
+  <!-- Right Eye -->
+  <polygon points="17,11 23,11 23,14 19,16" fill="#000000" />
+  <polygon points="18,12 22,12 22,13 20,15" fill="#ffffff" />
+
+  <!-- Blue & Red Shoulders / Peeking Hands -->
+  <rect x="5" y="24" width="22" height="8" fill="#1d4ed8" />
+  <rect x="11" y="24" width="10" height="8" fill="#ef4444" />
+  <rect x="14" y="24" width="4" height="8" fill="#18181b" /> <!-- Spider chest logo stem -->
+
+  <!-- Left Peeking Hand clutching bezel -->
+  <rect x="4" y="19" width="4" height="5" fill="#ef4444" />
+  <rect x="4" y="18" width="3" height="2" fill="#18181b" />
+  <!-- Right Peeking Hand clutching bezel -->
+  <rect x="24" y="19" width="4" height="5" fill="#ef4444" />
+  <rect x="25" y="18" width="3" height="2" fill="#18181b" />
+</svg>
+`;
+  var DOCTOR_SPRITE_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="64" height="64" shape-rendering="crispEdges">
+  <!-- Hair: Mad Scientist / Doctor -->
+  <rect x="9" y="3" width="14" height="3" fill="#64748b" />
+  <rect x="7" y="5" width="18" height="4" fill="#64748b" />
+  <rect x="6" y="8" width="4" height="5" fill="#94a3b8" />
+  <rect x="22" y="8" width="4" height="5" fill="#94a3b8" />
+
+  <!-- Silver Head Mirror / Reflector -->
+  <circle cx="12" cy="7" r="3" fill="#0ea5e9" />
+  <circle cx="12" cy="7" r="2" fill="#ffffff" />
+  <rect x="12" y="7" width="1" height="1" fill="#0284c7" />
+
+  <!-- Face -->
+  <rect x="9" y="8" width="14" height="10" fill="#fed7aa" />
+  <!-- Big Friendly Pixel Glasses -->
+  <rect x="9" y="10" width="6" height="4" fill="#0284c7" />
+  <rect x="10" y="11" width="4" height="2" fill="#e0f2fe" />
+  <rect x="17" y="10" width="6" height="4" fill="#0284c7" />
+  <rect x="18" y="11" width="4" height="2" fill="#e0f2fe" />
+  <rect x="15" y="11" width="2" height="1" fill="#0369a1" /> <!-- Bridge -->
+  <!-- Smile -->
+  <rect x="13" y="15" width="6" height="2" fill="#be123c" />
+  <rect x="14" y="15" width="4" height="1" fill="#ffffff" />
+
+  <!-- White Doctor Coat & Blue Stethoscope -->
+  <rect x="6" y="18" width="20" height="14" fill="#ffffff" />
+  <!-- Stethoscope around neck -->
+  <rect x="10" y="18" width="2" height="7" fill="#0284c7" />
+  <rect x="20" y="18" width="2" height="7" fill="#0284c7" />
+  <rect x="11" y="24" width="10" height="2" fill="#0284c7" />
+  <rect x="15" y="25" width="2" height="3" fill="#0284c7" />
+  <circle cx="16" cy="28" r="2" fill="#94a3b8" />
+
+  <!-- Peeking Hands holding Stethoscope chest piece -->
+  <rect x="4" y="17" width="4" height="4" fill="#fed7aa" />
+  <rect x="24" y="17" width="4" height="4" fill="#fed7aa" />
+</svg>
+`;
+  var PixelEasterEgg = class {
+    container;
+    element = null;
+    onSound;
+    customSpriteUrl;
+    isPeeking = false;
+    idleInterval = null;
+    currentTheme = "dr-debug";
+    currentCorner = "bottom-right";
+    characters = [
+      "pikachu",
+      "gengar",
+      "charizard",
+      "bulbasaur",
+      "ryu",
+      "spiderman",
+      "doctor"
+    ];
+    currentCharacter = "pikachu";
+    constructor(options) {
+      this.container = options.container;
+      this.onSound = options.onSound;
+      this.customSpriteUrl = options.customSpriteUrl;
+      this.currentTheme = options.theme || "dr-debug";
+      this.init();
+    }
+    init() {
+      this.element = document.createElement("div");
+      this.element.className = `dr-debug-pixel-peeker corner-${this.currentCorner}`;
+      this.element.setAttribute("title", "8-Bit Easter Egg: Click to interact!");
+      this.element.innerHTML = `
+      <div class="dr-debug-peeker-speech" style="display: none;">1P READY!</div>
+      <div class="dr-debug-peeker-art"></div>
+    `;
+      this.element.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.celebrate();
+      });
+      this.container.appendChild(this.element);
+      if (this.currentTheme === "arcade-8bit") {
+        this.startIdleTimer();
+      }
+    }
+    /**
+     * Set active UI theme. Only 'arcade-8bit' enables Easter egg triggers & peeker timer.
+     */
+    setTheme(theme) {
+      this.currentTheme = theme;
+      if (theme !== "arcade-8bit") {
+        this.retreat();
+        this.stopIdleTimer();
+      } else {
+        this.startIdleTimer();
+      }
+    }
+    getTheme() {
+      return this.currentTheme;
+    }
+    getCurrentCorner() {
+      return this.currentCorner;
+    }
+    getElement() {
+      return this.element;
+    }
+    setContainer(newContainer) {
+      if (this.element && this.element.parentElement) {
+        this.element.parentElement.removeChild(this.element);
+      }
+      this.container = newContainer;
+      if (this.element) {
+        this.container.appendChild(this.element);
+      }
+    }
+    /**
+     * Set custom sprite image URL (e.g. from spriters-resource or local assets)
+     */
+    setCustomSprite(url) {
+      this.customSpriteUrl = url;
+    }
+    /**
+     * Triggers a peek animation for a specific character or random in a random corner inside Dr. Debug.
+     */
+    peek(character, force = false, corner) {
+      var _a;
+      if (this.currentTheme !== "arcade-8bit") {
+        return;
+      }
+      if (this.isPeeking && !force && !character || !this.element) return;
+      if (!force && ((_a = this.element.parentElement) == null ? void 0 : _a.classList.contains("hidden"))) {
+        return;
+      }
+      this.isPeeking = true;
+      this.currentCharacter = character || this.getRandomCharacter();
+      this.currentCorner = corner || this.getRandomCorner();
+      this.element.classList.remove(
+        "corner-bottom-right",
+        "corner-bottom-left",
+        "corner-top-right",
+        "corner-top-left"
+      );
+      this.element.classList.add(`corner-${this.currentCorner}`);
+      const artContainer = this.element.querySelector(".dr-debug-peeker-art");
+      const speech = this.element.querySelector(".dr-debug-peeker-speech");
+      if (!artContainer) return;
+      if (this.customSpriteUrl) {
+        artContainer.innerHTML = `<img src="${this.customSpriteUrl}" alt="Custom Sprite" style="width: 56px; height: 56px; image-rendering: pixelated;" />`;
+      } else {
+        switch (this.currentCharacter) {
+          case "pikachu":
+            artContainer.innerHTML = `<img src="${PIKACHU_SPRITE_DATA}" alt="Pikachu" class="dr-debug-sprite-img" style="width: 52px; height: 52px; image-rendering: pixelated;" />`;
+            if (speech) speech.textContent = "PIKA-PIKA!";
+            break;
+          case "gengar":
+            artContainer.innerHTML = `<img src="${GENGAR_SPRITE_DATA}" alt="Gengar" class="dr-debug-sprite-img" style="width: 56px; height: 60px; image-rendering: pixelated;" />`;
+            if (speech) speech.textContent = "GENGAR HEHE!";
+            break;
+          case "charizard":
+            artContainer.innerHTML = `<img src="${CHARIZARD_SPRITE_DATA}" alt="Charizard" class="dr-debug-sprite-img" style="width: 60px; height: 66px; image-rendering: pixelated;" />`;
+            if (speech) speech.textContent = "CHARIZARD ROAR!";
+            break;
+          case "bulbasaur":
+            artContainer.innerHTML = `<img src="${BULBASAUR_SPRITE_DATA}" alt="Bulbasaur" class="dr-debug-sprite-img" style="width: 48px; height: 54px; image-rendering: pixelated;" />`;
+            if (speech) speech.textContent = "BULBA-SAUR!";
+            break;
+          case "spiderman":
+            artContainer.innerHTML = SPIDERMAN_SPRITE_SVG;
+            if (speech) speech.textContent = "SPIDEY-SENSE!";
+            break;
+          case "doctor":
+            artContainer.innerHTML = DOCTOR_SPRITE_SVG;
+            if (speech) speech.textContent = "PATCH TIME!";
+            break;
+          case "ryu":
+          default:
+            artContainer.innerHTML = RYU_SPRITE_SVG;
+            if (speech) speech.textContent = "HADOUKEN!";
+            break;
+        }
+      }
+      if (this.onSound) {
+        this.onSound("jump");
+      }
+      this.element.classList.remove("peek-active", "peek-retreat");
+      void this.element.offsetWidth;
+      this.element.classList.add("peek-active");
+      setTimeout(() => {
+        if (speech && this.isPeeking) {
+          speech.style.display = "block";
+        }
+      }, 450);
+      setTimeout(() => {
+        this.retreat();
+      }, 2600);
+    }
+    /**
+     * Retreat back behind the Dr. Debug bezel
+     */
+    retreat() {
+      if (!this.element) return;
+      const speech = this.element.querySelector(".dr-debug-peeker-speech");
+      if (speech) speech.style.display = "none";
+      this.element.classList.remove("peek-active");
+      this.element.classList.add("peek-retreat");
+      this.isPeeking = false;
+      setTimeout(() => {
+        if (this.element) {
+          this.element.classList.remove("peek-retreat");
+        }
+      }, 380);
+    }
+    /**
+     * Celebrate interaction (plays victory fanfare or coin and shakes)
+     */
+    celebrate() {
+      var _a;
+      if (this.currentTheme !== "arcade-8bit") return;
+      if (this.onSound) {
+        this.onSound("coin");
+      }
+      const speech = (_a = this.element) == null ? void 0 : _a.querySelector(".dr-debug-peeker-speech");
+      if (speech) {
+        switch (this.currentCharacter) {
+          case "pikachu":
+            speech.textContent = "THUNDERBOLT! +100 PTS";
+            break;
+          case "gengar":
+            speech.textContent = "SHADOW BALL! +100 PTS";
+            break;
+          case "charizard":
+            speech.textContent = "FLAMETHROWER! +100 PTS";
+            break;
+          case "bulbasaur":
+            speech.textContent = "SOLAR BEAM! +100 PTS";
+            break;
+          case "spiderman":
+            speech.textContent = "THWIP! +100 PTS";
+            break;
+          case "doctor":
+            speech.textContent = "DEBUGGED! +100 PTS";
+            break;
+          case "ryu":
+          default:
+            speech.textContent = "K.O.! +100 PTS";
+            break;
+        }
+        speech.style.display = "block";
+        setTimeout(() => {
+          speech.style.display = "none";
+          this.retreat();
+        }, 1e3);
+      }
+    }
+    /**
+     * Get random character from roster
+     */
+    getRandomCharacter() {
+      const idx = Math.floor(Math.random() * this.characters.length);
+      return this.characters[idx];
+    }
+    /**
+     * Get random corner inside Dr. Debug box
+     */
+    getRandomCorner() {
+      const corners = ["bottom-right", "bottom-left", "top-right", "top-left"];
+      return corners[Math.floor(Math.random() * corners.length)];
+    }
+    /**
+     * Periodic ambient timer: peeks inside Dr. Debug on random corners every 7-15s (short period)
+     */
+    startIdleTimer() {
+      this.stopIdleTimer();
+      if (this.currentTheme !== "arcade-8bit") return;
+      const nextInterval = 7e3 + Math.random() * 8e3;
+      this.idleInterval = window.setTimeout(() => {
+        if (this.currentTheme === "arcade-8bit") {
+          this.peek();
+        }
+        this.startIdleTimer();
+      }, nextInterval);
+    }
+    stopIdleTimer() {
+      if (this.idleInterval !== null) {
+        clearTimeout(this.idleInterval);
+        this.idleInterval = null;
+      }
+    }
+    destroy() {
+      this.stopIdleTimer();
+      if (this.element && this.element.parentElement) {
+        this.element.parentElement.removeChild(this.element);
+      }
+      this.element = null;
     }
   };
 
@@ -18613,24 +19201,24 @@ ${rawJson}
 /* ==========================================================================
    THEME 1: Dr.Debug (Original Cyan Dark Glassmorphism)
    ========================================================================== */
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) {
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) {
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) button,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) input,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) select,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-tab,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-btn {
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) button,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) input,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) select,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) .dr-debug-tab,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) .dr-debug-btn {
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) code,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) pre,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-telemetry-payload,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-step-output,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-docker-terminal,
-.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-cyber-matrix) .dr-debug-metric-badge {
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) code,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) pre,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) .dr-debug-telemetry-payload,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) .dr-debug-step-output,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) .dr-debug-docker-terminal,
+.dr-debug-modal:not(.theme-minimal-glass):not(.theme-monotone-skeuomorphic):not(.theme-arcade-8bit) .dr-debug-metric-badge {
   font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
 }
 
@@ -20370,442 +20958,6 @@ ${rawJson}
   color: #cbd5e1;
 }
 
-/* ==========================================================================
-   THEME 4: Cyber Matrix HUD (Tactical Neo-Tokyo Deck)
-   ========================================================================== */
-
-/* Floating Pill HUD: Cyber Cartridge Capsule */
-.dr-debug-pill.theme-cyber-matrix {
-  background: linear-gradient(135deg, #050811 0%, #0d1527 50%, #050811 100%);
-  border: 1.5px solid #00f0ff;
-  border-radius: 0;
-  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
-  box-shadow:
-    0 0 16px rgba(0, 240, 255, 0.45),
-    0 8px 24px rgba(0, 0, 0, 0.9),
-    inset 0 0 8px rgba(0, 240, 255, 0.25);
-  color: #00f0ff;
-  font-family: 'Space Mono', 'JetBrains Mono', monospace;
-  padding: 6px 16px 6px 12px;
-  transition: all 0.18s ease;
-}
-
-.dr-debug-pill.theme-cyber-matrix:hover {
-  background: linear-gradient(135deg, #0a1124 0%, #162442 50%, #0a1124 100%);
-  border-color: #ffe600;
-  box-shadow:
-    0 0 24px rgba(255, 230, 0, 0.65),
-    0 12px 32px rgba(0, 0, 0, 0.95),
-    inset 0 0 12px rgba(255, 230, 0, 0.35);
-  transform: translateY(-2px) scale(1.03);
-}
-
-.dr-debug-pill.theme-cyber-matrix .dr-debug-equalizer {
-  background: #020408;
-  border: 1px solid #00f0ff;
-  border-radius: 0;
-  padding: 2px;
-  box-shadow: inset 0 0 4px rgba(0, 240, 255, 0.4);
-  gap: 2px;
-}
-
-.dr-debug-pill.theme-cyber-matrix .dr-debug-equalizer .dr-debug-eq-bar {
-  background: linear-gradient(180deg, #ffe600 0%, #00f0ff 100%);
-  border-radius: 0;
-}
-
-.dr-debug-pill.theme-cyber-matrix .dr-debug-pill-title {
-  font-family: 'Space Mono', 'JetBrains Mono', monospace;
-  font-weight: 700;
-  color: #00f0ff;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
-}
-
-.dr-debug-pill.theme-cyber-matrix .dr-debug-chip {
-  font-family: 'Space Mono', 'JetBrains Mono', monospace;
-  font-size: 9.5px;
-  font-weight: 700;
-  border-radius: 0;
-  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
-  padding: 2px 6px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.dr-debug-pill.theme-cyber-matrix .dr-debug-chip.ok {
-  background: rgba(0, 240, 255, 0.15);
-  border: 1px solid #00f0ff;
-  color: #00f0ff;
-  box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
-}
-
-.dr-debug-pill.theme-cyber-matrix .dr-debug-chip.err,
-.dr-debug-pill.theme-cyber-matrix .dr-debug-chip.run {
-  background: rgba(255, 0, 85, 0.2);
-  border: 1px solid #ff0055;
-  color: #ff0055;
-  box-shadow: 0 0 10px rgba(255, 0, 85, 0.5);
-}
-
-/* Modal Frame: Cyber Matrix Tactical Deck */
-.dr-debug-modal.theme-cyber-matrix {
-  font-family: 'Space Mono', 'JetBrains Mono', 'IBM Plex Mono', monospace;
-  letter-spacing: 0.03em;
-  background: #05070f;
-  background-image:
-    linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
-  background-size: 20px 20px;
-  border: 2px solid #00f0ff;
-  border-radius: 0;
-  box-shadow:
-    0 0 35px rgba(0, 240, 255, 0.3),
-    0 25px 70px rgba(0, 0, 0, 0.95),
-    inset 0 0 25px rgba(0, 240, 255, 0.05);
-  color: #e2e8f0;
-}
-
-.dr-debug-modal.theme-cyber-matrix button,
-.dr-debug-modal.theme-cyber-matrix input,
-.dr-debug-modal.theme-cyber-matrix select,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-tab,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-btn,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-brand-bold,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-err-title,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-presc-title,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-step-reasoning-label,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-settings-title,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-tab-info-title,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-tab-view-title {
-  font-family: 'Space Mono', 'JetBrains Mono', 'IBM Plex Mono', monospace;
-}
-
-.dr-debug-modal.theme-cyber-matrix code,
-.dr-debug-modal.theme-cyber-matrix pre,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-payload,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-step-output,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-terminal,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-metric-badge {
-  font-family: 'JetBrains Mono', 'Space Mono', ui-monospace, monospace;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-header {
-  background: linear-gradient(90deg, #090e1a 0%, #152238 50%, #090e1a 100%);
-  border-bottom: 2px solid #ffe600;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(0, 240, 255, 0.3);
-  padding: 8px 14px;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-brand-bold {
-  color: #ffe600;
-  text-shadow: 0 0 10px rgba(255, 230, 0, 0.7);
-  letter-spacing: 0.08em;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-brand-sub {
-  color: #00f0ff;
-  letter-spacing: 0.05em;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-metric-badge {
-  background: #020408;
-  border: 1px solid #00f0ff;
-  box-shadow: inset 0 0 6px rgba(0, 240, 255, 0.3);
-  color: #00f0ff;
-  border-radius: 0;
-  font-weight: 700;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-close-btn {
-  background: rgba(255, 0, 85, 0.15);
-  border: 1px solid #ff0055;
-  box-shadow: 0 0 8px rgba(255, 0, 85, 0.4);
-  color: #ff0055;
-  border-radius: 0;
-  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-close-btn:hover {
-  background: #ff0055;
-  color: #ffffff;
-  box-shadow: 0 0 15px #ff0055;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-tabs {
-  background: #03050a;
-  border-bottom: 2px solid #00f0ff;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.9);
-  padding: 5px 8px;
-  gap: 6px;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-tab {
-  color: #7dd3fc;
-  background: rgba(0, 240, 255, 0.06);
-  border: 1px solid rgba(0, 240, 255, 0.25);
-  border-radius: 0;
-  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
-  text-transform: uppercase;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  padding: 5px 12px;
-  transition: all 0.15s ease;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-tab:hover {
-  color: #ffffff;
-  background: rgba(0, 240, 255, 0.22);
-  border-color: #00f0ff;
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.45);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-tab.active {
-  background: #ffe600 !important;
-  color: #050811 !important;
-  border: 1px solid #fff566 !important;
-  font-weight: 900 !important;
-  box-shadow:
-    0 0 18px rgba(255, 230, 0, 0.7),
-    inset 0 0 4px rgba(255, 255, 255, 0.8) !important;
-  text-shadow: none !important;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-body {
-  background: #05070f;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-tab-view-header {
-  background: linear-gradient(90deg, #090e1c 0%, #101b2f 100%);
-  border: 1px solid #00f0ff;
-  border-radius: 0;
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.15), inset 0 0 8px rgba(0, 240, 255, 0.1);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-err-header,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-matrix-toolbar,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-header,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-section,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-toolbar {
-  background: #070c18;
-  border: 1px solid rgba(0, 240, 255, 0.35);
-  border-radius: 0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(0, 240, 255, 0.15);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-2d-matrix {
-  background: #04060c;
-  border: 1px solid rgba(0, 240, 255, 0.3);
-  border-radius: 0;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-matrix-cell {
-  background: #020306;
-  border: 1px solid rgba(0, 240, 255, 0.2);
-  border-radius: 0;
-  box-shadow: inset 0 0 6px rgba(0, 240, 255, 0.1);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-matrix-th {
-  color: #00f0ff;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-search-input,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-dock-search,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-input,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-form-input,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-form-select {
-  background: #03050a;
-  border: 1.5px solid #00f0ff;
-  border-radius: 0;
-  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
-  box-shadow: inset 0 0 8px rgba(0, 240, 255, 0.25);
-  color: #00f0ff;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-err-item,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-step-card,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-prescription-card,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-card {
-  background: linear-gradient(180deg, #090e1c 0%, #060913 100%);
-  border: 1px solid rgba(0, 240, 255, 0.35);
-  border-left: 3px solid #00f0ff;
-  border-radius: 0;
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8), inset 0 0 12px rgba(0, 240, 255, 0.04);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-err-item:hover,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-step-card:hover,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-prescription-card:hover,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-docker-card:hover {
-  border-color: #ffe600;
-  border-left-color: #ffe600;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.9), 0 0 15px rgba(255, 230, 0, 0.25);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-item {
-  background: linear-gradient(180deg, #090e1c 0%, #060914 100%);
-  border: 1px solid rgba(0, 240, 255, 0.3);
-  border-left: 3px solid #ffe600;
-  border-radius: 0;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.8);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-payload {
-  color: #00f0ff;
-  background: #020408;
-  border: 1px solid rgba(0, 240, 255, 0.25);
-  border-radius: 0;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-text {
-  color: #e2e8f0;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-telemetry-time {
-  color: #ffe600;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-query-wrapper {
-  background: #070b16;
-  border-top: 2px solid #00f0ff;
-  box-shadow: 0 -4px 15px rgba(0, 240, 255, 0.15);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-query-box {
-  background: #03050a;
-  border: 1.5px solid #00f0ff;
-  border-radius: 0;
-  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
-  box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.2);
-}
-
-/* Unique Cyber Button Styles */
-.dr-debug-modal.theme-cyber-matrix .dr-debug-btn {
-  background: linear-gradient(135deg, #ffe600 0%, #ffc000 100%);
-  border: 1.5px solid #fffb99;
-  border-radius: 0;
-  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-  box-shadow: 0 0 15px rgba(255, 230, 0, 0.5), inset 0 0 6px rgba(255, 255, 255, 0.6);
-  color: #050811;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  transition: all 0.15s ease;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-btn:hover {
-  background: #ffffff;
-  color: #000000;
-  border-color: #ffffff;
-  box-shadow: 0 0 25px rgba(255, 230, 0, 0.95);
-  transform: translateY(-1px);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-btn-outline {
-  background: rgba(0, 240, 255, 0.1);
-  border: 1.5px solid #00f0ff;
-  border-radius: 0;
-  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
-  color: #00f0ff;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  transition: all 0.15s ease;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-btn-outline:hover {
-  background: #00f0ff;
-  color: #050811;
-  box-shadow: 0 0 20px #00f0ff;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-cockpit-footer {
-  background: #03050a;
-  border-top: 1px solid rgba(0, 240, 255, 0.3);
-  color: #7dd3fc;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-settings-overlay,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-tab-info-card {
-  background: #070a14;
-  border: 2px solid #00f0ff;
-  border-radius: 0;
-  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
-  box-shadow:
-    0 0 40px rgba(0, 240, 255, 0.4),
-    0 25px 70px rgba(0, 0, 0, 0.95),
-    inset 0 0 20px rgba(0, 240, 255, 0.1);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-settings-groupbox {
-  background: #04060d;
-  border: 1px solid rgba(0, 240, 255, 0.35);
-  border-radius: 0;
-  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
-  box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.05);
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-settings-groupbox-title {
-  color: #ffe600;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-btn-action-icon {
-  background: rgba(0, 240, 255, 0.08);
-  border: 1px solid rgba(0, 240, 255, 0.3);
-  border-radius: 0;
-  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
-  color: #00f0ff;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-btn-action-icon:hover {
-  background: #00f0ff;
-  color: #050811;
-  box-shadow: 0 0 12px #00f0ff;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-copy-btn,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-copy-inline,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-export-btn {
-  background: rgba(0, 240, 255, 0.1);
-  border: 1px solid #00f0ff;
-  border-radius: 0;
-  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
-  color: #00f0ff;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-copy-btn:hover,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-copy-inline:hover,
-.dr-debug-modal.theme-cyber-matrix .dr-debug-export-btn:hover {
-  background: #00f0ff;
-  color: #050811;
-  box-shadow: 0 0 12px #00f0ff;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-mock-chip {
-  background: rgba(255, 230, 0, 0.15);
-  border: 1px solid #ffe600;
-  border-radius: 0;
-  clip-path: polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px);
-  color: #ffe600;
-}
-
-.dr-debug-modal.theme-cyber-matrix .dr-debug-mock-chip:hover {
-  background: #ffe600;
-  color: #050811;
-  box-shadow: 0 0 12px #ffe600;
-}
 
 /* \u2500\u2500 Minimalist Action & Tool Buttons \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
 .dr-debug-btn-action-icon {
@@ -20905,6 +21057,412 @@ body.dr-debug-stethoscope-active * {
   box-shadow: 0 0 16px rgba(244, 63, 94, 0.4) !important;
   position: relative;
 }
+
+/* ==========================================================================
+   ARCADE 8-BIT RETRO QUEST THEME (Stepped Pixel Art & Peeking Characters)
+   ========================================================================== */
+
+/* \u2500\u2500 8-Bit Floating Pill HUD ("Arcade 1P Insert Coin") \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.dr-debug-pill.theme-arcade-8bit {
+  background: #0d0a22;
+  border: none;
+  border-radius: 0;
+  /* Stepped 3px pixel borders */
+  box-shadow:
+    0 -3px 0 #000000,
+    0 3px 0 #000000,
+    -3px 0 0 #000000,
+    3px 0 0 #000000,
+    -3px -3px 0 #ffe600,
+    3px -3px 0 #ffe600,
+    -3px 3px 0 #ff0055,
+    3px 3px 0 #ff0055,
+    0 8px 16px rgba(0, 0, 0, 0.75);
+  padding: 6px 14px 6px 10px;
+  font-family: 'Silkscreen', 'Press Start 2P', monospace;
+  color: #ffe600;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  transition: transform 0.1s steps(2);
+}
+
+.dr-debug-pill.theme-arcade-8bit:hover {
+  background: #19143d;
+  box-shadow:
+    0 -3px 0 #000000,
+    0 3px 0 #000000,
+    -3px 0 0 #000000,
+    3px 0 0 #000000,
+    -3px -3px 0 #00f0ff,
+    3px -3px 0 #00f0ff,
+    -3px 3px 0 #ffe600,
+    3px 3px 0 #ffe600,
+    0 10px 24px rgba(0, 240, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.dr-debug-pill.theme-arcade-8bit .dr-debug-equalizer {
+  background: #000000;
+  border-radius: 0;
+  padding: 2px 3px;
+  gap: 2px;
+  box-shadow:
+    0 -1px 0 #ffe600,
+    0 1px 0 #ffe600,
+    -1px 0 0 #ffe600,
+    1px 0 0 #ffe600;
+}
+
+.dr-debug-pill.theme-arcade-8bit .dr-debug-equalizer .dr-debug-eq-bar {
+  background: #00ff66;
+  border-radius: 0;
+  box-shadow: 0 0 4px #00ff66;
+}
+
+.dr-debug-pill.theme-arcade-8bit .dr-debug-pill-badge span {
+  font-family: 'Silkscreen', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #ffe600;
+  text-shadow: 2px 2px 0 #000000;
+}
+
+.dr-debug-pill.theme-arcade-8bit .dr-debug-chip {
+  border-radius: 0;
+  font-family: 'Silkscreen', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border: none;
+  box-shadow:
+    0 -1px 0 #000,
+    0 1px 0 #000,
+    -1px 0 0 #000,
+    1px 0 0 #000;
+}
+
+.dr-debug-pill.theme-arcade-8bit .dr-debug-chip.ok {
+  background: #00ff66;
+  color: #000000;
+  box-shadow: 0 0 6px rgba(0, 255, 102, 0.6);
+}
+
+.dr-debug-pill.theme-arcade-8bit .dr-debug-chip.err,
+.dr-debug-pill.theme-arcade-8bit .dr-debug-chip.run {
+  background: #ff0055;
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 0, 85, 0.7);
+  animation: dr-debug-pixel-alert-blink 0.6s infinite steps(2);
+}
+
+@keyframes dr-debug-pixel-alert-blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* \u2500\u2500 8-Bit Arcade Cabinet Cockpit Modal \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.dr-debug-modal.theme-arcade-8bit {
+  font-family: 'Silkscreen', monospace;
+  background: #0b091f;
+  border-radius: 0;
+  border: none;
+  /* Stepped 4px pixel border frame */
+  box-shadow:
+    0 -4px 0 #000000,
+    0 4px 0 #000000,
+    -4px 0 0 #000000,
+    4px 0 0 #000000,
+    -4px -4px 0 #ffe600,
+    4px -4px 0 #ffe600,
+    -4px 4px 0 #ff0055,
+    4px 4px 0 #ff0055,
+    0 16px 40px rgba(0, 0, 0, 0.95);
+  color: #f1f5f9;
+  image-rendering: pixelated;
+}
+
+/* Arcade Cabinet Marquee Header */
+.dr-debug-modal.theme-arcade-8bit .dr-debug-header {
+  background: linear-gradient(90deg, #180a33 0%, #290e4f 35%, #180a33 100%);
+  border-bottom: 3px solid #ff0055;
+  border-radius: 0;
+  padding: 8px 12px;
+}
+
+.dr-debug-modal.theme-arcade-8bit .dr-debug-brand-bold {
+  font-family: 'Silkscreen', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffe600;
+  text-shadow: 2px 2px 0 #ff0055, 4px 4px 0 #000000;
+  letter-spacing: 0.08em;
+}
+
+.dr-debug-modal.theme-arcade-8bit .dr-debug-brand-sub {
+  font-family: 'Silkscreen', monospace;
+  font-size: 10px;
+  color: #00f0ff;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.dr-debug-modal.theme-arcade-8bit .dr-debug-metric-badge {
+  background: #000000;
+  border-radius: 0;
+  border: 1px solid #ffe600;
+  font-family: 'Silkscreen', monospace;
+  font-size: 9.5px;
+  color: #00ff66;
+  padding: 2px 6px;
+  box-shadow: 2px 2px 0 #000000;
+}
+
+/* 8-Bit Arcade Tab Push Buttons */
+.dr-debug-modal.theme-arcade-8bit .dr-debug-tabs {
+  background: #070514;
+  border-bottom: 2px solid #23194a;
+  gap: 4px;
+  padding: 4px 8px;
+}
+
+.dr-debug-modal.theme-arcade-8bit .dr-debug-tab {
+  border-radius: 0;
+  font-family: 'Silkscreen', monospace;
+  font-size: 10.5px;
+  padding: 5px 10px;
+  color: #94a3b8;
+  background: #110e2e;
+  border: 1px solid #281d59;
+  box-shadow: 2px 2px 0 #000000;
+  transition: all 0.05s steps(2);
+}
+
+.dr-debug-modal.theme-arcade-8bit .dr-debug-tab:hover {
+  background: #23194a;
+  color: #ffe600;
+  border-color: #ffe600;
+}
+
+.dr-debug-modal.theme-arcade-8bit .dr-debug-tab.active {
+  background: #ff0055;
+  color: #ffffff;
+  border-color: #ffe600;
+  box-shadow: 3px 3px 0 #000000;
+  transform: translateY(-1px);
+}
+
+/* 8-Bit Action Button */
+.dr-debug-modal.theme-arcade-8bit .dr-debug-btn,
+.dr-debug-modal.theme-arcade-8bit .dr-debug-btn-action {
+  border-radius: 0;
+  font-family: 'Silkscreen', monospace;
+  font-size: 11px;
+  background: #ffe600;
+  color: #000000;
+  border: none;
+  box-shadow:
+    0 -2px 0 #000,
+    0 2px 0 #000,
+    -2px 0 0 #000,
+    2px 0 0 #000,
+    3px 3px 0 #9f1239;
+  font-weight: 700;
+  transition: all 0.05s steps(2);
+}
+
+.dr-debug-modal.theme-arcade-8bit .dr-debug-btn:hover,
+.dr-debug-modal.theme-arcade-8bit .dr-debug-btn-action:hover {
+  background: #00ff66;
+  color: #000000;
+  transform: translateY(-1px);
+  box-shadow:
+    0 -2px 0 #000,
+    0 2px 0 #000,
+    -2px 0 0 #000,
+    2px 0 0 #000,
+    4px 4px 0 #000;
+}
+
+.dr-debug-modal.theme-arcade-8bit .dr-debug-btn:active,
+.dr-debug-modal.theme-arcade-8bit .dr-debug-btn-action:active {
+  transform: translateY(2px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+/* 8-Bit Card & Log Terminals */
+.dr-debug-modal.theme-arcade-8bit .dr-debug-step-card,
+.dr-debug-modal.theme-arcade-8bit .dr-debug-card,
+.dr-debug-modal.theme-arcade-8bit .dr-debug-presc-tier,
+.dr-debug-modal.theme-arcade-8bit .dr-debug-docker-terminal,
+.dr-debug-modal.theme-arcade-8bit .dr-debug-code-box {
+  border-radius: 0;
+  background: #070514;
+  border: 1px solid #30246b;
+  box-shadow: 3px 3px 0 #000000;
+}
+
+.dr-debug-modal.theme-arcade-8bit code,
+.dr-debug-modal.theme-arcade-8bit pre {
+  font-family: 'Silkscreen', 'JetBrains Mono', monospace;
+  color: #00ff66;
+}
+
+/* \u2500\u2500 8-Bit Peeking Characters Easter Egg (Inside Dr. Debug Box Corners) \u2500\u2500 */
+.dr-debug-pixel-peeker {
+  position: absolute;
+  z-index: 2147483640;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.9));
+  user-select: none;
+  opacity: 0;
+  transition: transform 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.2s ease;
+}
+
+/* Corner 1: Bottom-Right */
+.dr-debug-pixel-peeker.corner-bottom-right {
+  bottom: 28px;
+  right: 18px;
+  transform: translateY(75px);
+}
+.dr-debug-pixel-peeker.corner-bottom-right.peek-active {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.dr-debug-pixel-peeker.corner-bottom-right.peek-retreat {
+  transform: translateY(75px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.6, -0.28, 0.74, 0.05), opacity 0.2s ease;
+}
+
+/* Corner 2: Bottom-Left */
+.dr-debug-pixel-peeker.corner-bottom-left {
+  bottom: 28px;
+  left: 18px;
+  transform: translateY(75px);
+}
+.dr-debug-pixel-peeker.corner-bottom-left.peek-active {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.dr-debug-pixel-peeker.corner-bottom-left.peek-retreat {
+  transform: translateY(75px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.6, -0.28, 0.74, 0.05), opacity 0.2s ease;
+}
+
+/* Corner 3: Top-Right */
+.dr-debug-pixel-peeker.corner-top-right {
+  top: 10px;
+  right: 68px;
+  transform: translateY(-75px);
+}
+.dr-debug-pixel-peeker.corner-top-right .dr-debug-peeker-speech {
+  order: 2;
+  margin-bottom: 0;
+  margin-top: 4px;
+}
+.dr-debug-pixel-peeker.corner-top-right .dr-debug-peeker-speech::after {
+  bottom: auto;
+  top: -5px;
+  border-width: 0 5px 5px;
+  border-color: transparent transparent #000 transparent;
+}
+.dr-debug-pixel-peeker.corner-top-right.peek-active {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.dr-debug-pixel-peeker.corner-top-right.peek-retreat {
+  transform: translateY(-75px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.6, -0.28, 0.74, 0.05), opacity 0.2s ease;
+}
+
+/* Corner 4: Top-Left */
+.dr-debug-pixel-peeker.corner-top-left {
+  top: 10px;
+  left: 18px;
+  transform: translateY(-75px);
+}
+.dr-debug-pixel-peeker.corner-top-left .dr-debug-peeker-speech {
+  order: 2;
+  margin-bottom: 0;
+  margin-top: 4px;
+}
+.dr-debug-pixel-peeker.corner-top-left .dr-debug-peeker-speech::after {
+  bottom: auto;
+  top: -5px;
+  border-width: 0 5px 5px;
+  border-color: transparent transparent #000 transparent;
+}
+.dr-debug-pixel-peeker.corner-top-left.peek-active {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.dr-debug-pixel-peeker.corner-top-left.peek-retreat {
+  transform: translateY(-75px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.6, -0.28, 0.74, 0.05), opacity 0.2s ease;
+}
+
+.dr-debug-peeker-speech {
+  background: #ffffff;
+  border: 2px solid #000000;
+  box-shadow: 2px 2px 0 #000000;
+  color: #000000;
+  font-family: 'Silkscreen', monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 3px 7px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  position: relative;
+  letter-spacing: 0.04em;
+  animation: dr-debug-pixel-speech-bob 0.8s infinite alternate ease-in-out;
+}
+
+.dr-debug-peeker-speech::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px 5px 0;
+  border-style: solid;
+  border-color: #000 transparent;
+  display: block;
+  width: 0;
+}
+
+.dr-debug-peeker-art svg,
+.dr-debug-peeker-art img {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+  animation: dr-debug-pixel-idle-bob 0.6s infinite alternate ease-in-out;
+}
+
+@keyframes dr-debug-pixel-idle-bob {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-3px); }
+}
+
+@keyframes dr-debug-pixel-speech-bob {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-2px); }
+}
 `;
 
   // packages/ui/src/DrDebugUI.ts
@@ -20916,6 +21474,7 @@ body.dr-debug-stethoscope-active * {
     audioChimes;
     incidentExporter;
     stethoscope;
+    pixelEasterEgg;
     getController;
     engine = new LocalDiagnosticEngine();
     container;
@@ -20983,8 +21542,9 @@ body.dr-debug-stethoscope-active * {
         onSaveSettings: options.onSaveSettings,
         onTestConnection: options.onTestConnection,
         onThemeChange: (theme) => {
-          var _a;
-          return (_a = this.pill) == null ? void 0 : _a.setTheme(theme);
+          var _a, _b;
+          (_a = this.pill) == null ? void 0 : _a.setTheme(theme);
+          (_b = this.pixelEasterEgg) == null ? void 0 : _b.setTheme(theme);
         },
         audioChimes: this.audioChimes,
         stethoscopeInspector: this.stethoscope,
@@ -20992,12 +21552,58 @@ body.dr-debug-stethoscope-active * {
         onRecenterPill: () => {
           var _a;
           return (_a = this.pill) == null ? void 0 : _a.recenter();
+        },
+        onPeekEasterEgg: (char) => {
+          var _a;
+          if (this.cockpit.getTheme() === "arcade-8bit") {
+            (_a = this.pixelEasterEgg) == null ? void 0 : _a.peek(char, true);
+          }
         }
       });
       this.pill = new FloatingPill(() => {
         this.cockpit.toggle();
-      }, this.audioChimes);
+      }, this.audioChimes, () => {
+        var _a;
+        if (this.cockpit.getTheme() === "arcade-8bit") {
+          if (this.cockpit.getElement().classList.contains("hidden")) {
+            this.cockpit.show();
+          }
+          (_a = this.pixelEasterEgg) == null ? void 0 : _a.peek(void 0, true);
+        }
+      });
       this.pill.setTheme(this.cockpit.getTheme());
+      this.pixelEasterEgg = new PixelEasterEgg({
+        container: this.cockpit.getElement(),
+        theme: this.cockpit.getTheme(),
+        onSound: (sound) => {
+          if (this.cockpit.getTheme() === "arcade-8bit") {
+            if (sound === "coin") this.audioChimes.playCoinSound();
+            else if (sound === "jump") this.audioChimes.playJumpSound();
+            else if (sound === "hit") this.audioChimes.playHitSound();
+            else if (sound === "fanfare") this.audioChimes.playFanfareSound();
+          }
+        }
+      });
+      if (typeof window !== "undefined") {
+        ;
+        window.__DR_DEBUG_PEEK__ = (char) => {
+          var _a;
+          if (this.getTheme() === "arcade-8bit") {
+            (_a = this.pixelEasterEgg) == null ? void 0 : _a.peek(char, true);
+          }
+        };
+        const onKeyDown = (e) => {
+          var _a;
+          if (e.altKey && (e.key === "p" || e.key === "P")) {
+            if (this.getTheme() === "arcade-8bit") {
+              e.preventDefault();
+              (_a = this.pixelEasterEgg) == null ? void 0 : _a.peek(void 0, true);
+            }
+          }
+        };
+        window.addEventListener("keydown", onKeyDown);
+        this.navigationListeners.push({ target: window, type: "keydown", handler: onKeyDown });
+      }
       this.shadowRoot.appendChild(this.pill.getElement());
       this.shadowRoot.appendChild(this.cockpit.getElement());
     }
@@ -21054,8 +21660,19 @@ body.dr-debug-stethoscope-active * {
       return this.cockpit.getActiveTabInfo();
     }
     setTheme(theme) {
+      var _a;
       this.cockpit.setTheme(theme);
       this.pill.setTheme(theme);
+      (_a = this.pixelEasterEgg) == null ? void 0 : _a.setTheme(theme);
+      if (theme === "arcade-8bit") {
+        setTimeout(() => {
+          var _a2;
+          return (_a2 = this.pixelEasterEgg) == null ? void 0 : _a2.peek();
+        }, 250);
+      }
+    }
+    getPixelEasterEgg() {
+      return this.pixelEasterEgg;
     }
     getTheme() {
       return this.cockpit.getTheme();
@@ -21402,7 +22019,9 @@ Direction: ${finding.remediation}`
       }
     }
     destroy() {
+      var _a;
       this.isDestroyed = true;
+      (_a = this.pixelEasterEgg) == null ? void 0 : _a.destroy();
       this.stethoscope.destroy();
       this.audioChimes.destroy();
       if (this.watchdogTimer) {
@@ -21809,6 +22428,10 @@ Direction: ${finding.remediation}`
         });
       } catch {
       }
+    }
+    peekEasterEgg(character) {
+      var _a, _b;
+      (_b = (_a = this.ui) == null ? void 0 : _a.getPixelEasterEgg()) == null ? void 0 : _b.peek(character, true);
     }
     destroy() {
       var _a;

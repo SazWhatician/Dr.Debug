@@ -4,6 +4,7 @@ import { AudioChimes } from './components/AudioChimes.js'
 import { CockpitPanel, type CockpitTabKey, type PrescriptionData, type StepItem } from './components/CockpitPanel.js'
 import { IncidentExporter } from './components/IncidentExporter.js'
 import { StethoscopeInspector } from './components/StethoscopeInspector.js'
+import { PixelEasterEgg } from './components/PixelEasterEgg.js'
 import type { DrDebugTheme } from './components/SettingsModal.js'
 import type { CausalErrorGraph } from './components/CausalGraphView.js'
 import { FloatingPill } from './components/FloatingPill.js'
@@ -27,6 +28,7 @@ export class DrDebugUI {
   private audioChimes: AudioChimes
   private incidentExporter: IncidentExporter
   private stethoscope: StethoscopeInspector
+  private pixelEasterEgg?: PixelEasterEgg
   private getController?: () => DebugController | undefined
   private engine = new LocalDiagnosticEngine()
   private container?: HTMLElement
@@ -103,18 +105,66 @@ export class DrDebugUI {
       getSessionPrompt: options.getSessionPrompt || (() => this.buildSessionPrompt()),
       onSaveSettings: options.onSaveSettings,
       onTestConnection: options.onTestConnection,
-      onThemeChange: (theme) => this.pill?.setTheme(theme),
+      onThemeChange: (theme) => {
+        this.pill?.setTheme(theme)
+        this.pixelEasterEgg?.setTheme(theme)
+      },
       audioChimes: this.audioChimes,
       stethoscopeInspector: this.stethoscope,
       incidentExporter: this.incidentExporter,
-      onRecenterPill: () => this.pill?.recenter()
+      onRecenterPill: () => this.pill?.recenter(),
+      onPeekEasterEgg: (char) => {
+        if (this.cockpit.getTheme() === 'arcade-8bit') {
+          this.pixelEasterEgg?.peek(char, true)
+        }
+      }
     })
 
     // Floating Pill
     this.pill = new FloatingPill(() => {
       this.cockpit.toggle()
-    }, this.audioChimes)
+    }, this.audioChimes, () => {
+      if (this.cockpit.getTheme() === 'arcade-8bit') {
+        if (this.cockpit.getElement().classList.contains('hidden')) {
+          this.cockpit.show()
+        }
+        this.pixelEasterEgg?.peek(undefined, true)
+      }
+    })
     this.pill.setTheme(this.cockpit.getTheme())
+
+    // 8-Bit Pixel Easter Egg (Street Fighter, Pokémon, & Spidey peeker inside Dr. Debug box)
+    this.pixelEasterEgg = new PixelEasterEgg({
+      container: this.cockpit.getElement(),
+      theme: this.cockpit.getTheme(),
+      onSound: (sound) => {
+        if (this.cockpit.getTheme() === 'arcade-8bit') {
+          if (sound === 'coin') this.audioChimes.playCoinSound()
+          else if (sound === 'jump') this.audioChimes.playJumpSound()
+          else if (sound === 'hit') this.audioChimes.playHitSound()
+          else if (sound === 'fanfare') this.audioChimes.playFanfareSound()
+        }
+      }
+    })
+
+    if (typeof window !== 'undefined') {
+      ;(window as any).__DR_DEBUG_PEEK__ = (char?: any) => {
+        if (this.getTheme() === 'arcade-8bit') {
+          this.pixelEasterEgg?.peek(char, true)
+        }
+      }
+
+      const onKeyDown = (e: KeyboardEvent) => {
+        if (e.altKey && (e.key === 'p' || e.key === 'P')) {
+          if (this.getTheme() === 'arcade-8bit') {
+            e.preventDefault()
+            this.pixelEasterEgg?.peek(undefined, true)
+          }
+        }
+      }
+      window.addEventListener('keydown', onKeyDown)
+      this.navigationListeners.push({ target: window, type: 'keydown', handler: onKeyDown as EventListener })
+    }
 
     this.shadowRoot.appendChild(this.pill.getElement())
     this.shadowRoot.appendChild(this.cockpit.getElement())
@@ -202,6 +252,14 @@ export class DrDebugUI {
   public setTheme(theme: DrDebugTheme): void {
     this.cockpit.setTheme(theme)
     this.pill.setTheme(theme)
+    this.pixelEasterEgg?.setTheme(theme)
+    if (theme === 'arcade-8bit') {
+      setTimeout(() => this.pixelEasterEgg?.peek(), 250)
+    }
+  }
+
+  public getPixelEasterEgg(): PixelEasterEgg | undefined {
+    return this.pixelEasterEgg
   }
 
   public getTheme(): DrDebugTheme {
@@ -627,6 +685,7 @@ export class DrDebugUI {
 
   public destroy(): void {
     this.isDestroyed = true
+    this.pixelEasterEgg?.destroy()
     this.stethoscope.destroy()
     this.audioChimes.destroy()
 

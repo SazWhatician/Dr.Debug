@@ -10,6 +10,9 @@ import {
 describe('Mega Update Features (Typography, Bezel Collapse, Audio Chimes, Stethoscope, Exporter)', () => {
   beforeEach(() => {
     document.body.innerHTML = ''
+    try {
+      localStorage.clear()
+    } catch {}
   })
 
   describe('FloatingPill — Typography & Stealth Bezel Collapse', () => {
@@ -345,7 +348,7 @@ describe('Mega Update Features (Typography, Bezel Collapse, Audio Chimes, Stetho
 
       expect(chimeSelect).toBeTruthy()
       expect(testChimeBtn).toBeTruthy()
-      expect(chimeSelect.options.length).toBe(5)
+      expect(chimeSelect.options.length).toBe(6)
 
       // Change error chime selection to cyber-glitch
       chimeSelect.value = 'cyber-glitch'
@@ -448,28 +451,34 @@ describe('Mega Update Features (Typography, Bezel Collapse, Audio Chimes, Stetho
       expect(modal.classList.contains('theme-minimal-glass')).toBe(false)
       expect(modal.classList.contains('theme-windows-xp')).toBe(false)
       expect(modal.classList.contains('theme-monotone-skeuomorphic')).toBe(false)
-      expect(modal.classList.contains('theme-cyber-matrix')).toBe(false)
+      expect(modal.classList.contains('theme-arcade-8bit')).toBe(false)
       expect(pill.classList.contains('theme-minimal-glass')).toBe(false)
-      expect(pill.classList.contains('theme-cyber-matrix')).toBe(false)
+      expect(pill.classList.contains('theme-arcade-8bit')).toBe(false)
 
       ui.destroy()
     })
 
-    it('supports Cyber Matrix HUD theme with theme-cyber-matrix class and unique polygon styling classes', () => {
+    it('supports Arcade 8-Bit Retro theme with theme-arcade-8bit class and rejects removed cyber-matrix', () => {
       const ui = new DrDebugUI()
       const shadow = ui.getShadowRoot()
       const modal = shadow.querySelector('.dr-debug-modal') as HTMLElement
       const pill = shadow.querySelector('.dr-debug-pill') as HTMLElement
 
-      ui.setTheme('cyber-matrix')
-      expect(ui.getTheme()).toBe('cyber-matrix')
-      expect(modal.classList.contains('theme-cyber-matrix')).toBe(true)
-      expect(pill.classList.contains('theme-cyber-matrix')).toBe(true)
+      ui.setTheme('arcade-8bit')
+      expect(ui.getTheme()).toBe('arcade-8bit')
+      expect(modal.classList.contains('theme-arcade-8bit')).toBe(true)
+      expect(pill.classList.contains('theme-arcade-8bit')).toBe(true)
+
+      // Cyber Matrix HUD has been removed; setting it falls back to dr-debug
+      ui.setTheme('cyber-matrix' as any)
+      expect(ui.getTheme()).toBe('dr-debug')
+      expect(modal.classList.contains('theme-arcade-8bit')).toBe(false)
+      expect(modal.classList.contains('theme-cyber-matrix')).toBe(false)
 
       // Fallback for invalid theme string defaults to dr-debug
       ui.setTheme('nonexistent-theme' as any)
       expect(ui.getTheme()).toBe('dr-debug')
-      expect(modal.classList.contains('theme-cyber-matrix')).toBe(false)
+      expect(modal.classList.contains('theme-arcade-8bit')).toBe(false)
       expect(modal.classList.contains('theme-minimal-glass')).toBe(false)
 
       ui.destroy()
@@ -484,15 +493,15 @@ describe('Mega Update Features (Typography, Bezel Collapse, Audio Chimes, Stetho
       const settingsBtn = shadow.querySelector('#dr-debug-settings-btn') as HTMLButtonElement
       const themeSelect = shadow.querySelector('#dr-debug-theme') as HTMLSelectElement
 
-      // 1. Change theme via UI
-      ui.setTheme('cyber-matrix')
-      expect(ui.getTheme()).toBe('cyber-matrix')
-      expect(modal.classList.contains('theme-cyber-matrix')).toBe(true)
+      // 1. Change theme via UI to arcade-8bit
+      ui.setTheme('arcade-8bit')
+      expect(ui.getTheme()).toBe('arcade-8bit')
+      expect(modal.classList.contains('theme-arcade-8bit')).toBe(true)
 
-      // 2. Open settings modal and verify dropdown value is synced to cyber-matrix
+      // 2. Open settings modal and verify dropdown value is synced to arcade-8bit
       settingsBtn.click()
       expect(settingsOverlay.style.display).toBe('flex')
-      expect(themeSelect.value).toBe('cyber-matrix')
+      expect(themeSelect.value).toBe('arcade-8bit')
 
       // 3. Re-selecting or clicking dropdown option triggers theme change
       themeSelect.value = 'monotone-skeuomorphic'
@@ -565,5 +574,106 @@ describe('Mega Update Features (Typography, Bezel Collapse, Audio Chimes, Stetho
 
       ui.destroy()
     })
+
+    it('supports Arcade 8-Bit theme with box-contained Easter egg peeker, 4-corner positions, and strict theme isolation', () => {
+      const ui = new DrDebugUI()
+      const shadow = ui.getShadowRoot()
+      const modal = shadow.querySelector('.dr-debug-modal') as HTMLElement
+      const pill = shadow.querySelector('.dr-debug-pill') as HTMLElement
+      const peeker = ui.getPixelEasterEgg()
+
+      expect(peeker).toBeTruthy()
+      const peekerEl = modal.querySelector('.dr-debug-pixel-peeker') as HTMLElement
+      // Verify peeker is mounted INSIDE the Dr. Debug modal box, not on the outside viewport
+      expect(peekerEl).toBeTruthy()
+      expect(peekerEl.parentElement).toBe(modal)
+
+      // 1. In default theme ('dr-debug'), Easter egg is strictly dormant
+      expect(ui.getTheme()).toBe('dr-debug')
+      peeker!.peek('ryu')
+      expect(peekerEl.classList.contains('peek-active')).toBe(false)
+
+      // 2. Switch to Arcade 8-Bit theme -> Easter eggs now enabled
+      ui.setTheme('arcade-8bit')
+      expect(ui.getTheme()).toBe('arcade-8bit')
+      expect(modal.classList.contains('theme-arcade-8bit')).toBe(true)
+      expect(pill.classList.contains('theme-arcade-8bit')).toBe(true)
+
+      // 3. Test Peeker in Corner: Bottom-Right with Ryu
+      peeker!.peek('ryu', true, 'bottom-right')
+      expect(peekerEl.classList.contains('peek-active')).toBe(true)
+      expect(peekerEl.classList.contains('corner-bottom-right')).toBe(true)
+      expect(peekerEl.innerHTML).toContain('HADOUKEN!')
+
+      // Celebrate interaction
+      peeker!.celebrate()
+      expect(peekerEl.innerHTML).toContain('K.O.!')
+
+      // 4. Test Peeker in Corner: Top-Left with Spider-Man
+      peeker!.retreat()
+      peeker!.peek('spiderman', true, 'top-left')
+      expect(peekerEl.classList.contains('corner-top-left')).toBe(true)
+      expect(peekerEl.innerHTML).toContain('SPIDEY-SENSE!')
+
+      // 5. Test Peeker in Corner: Top-Right with Doctor
+      peeker!.retreat()
+      peeker!.peek('doctor', true, 'top-right')
+      expect(peekerEl.classList.contains('corner-top-right')).toBe(true)
+      expect(peekerEl.innerHTML).toContain('PATCH TIME!')
+
+      // 6. Test Pokémon Generation 1 Sprites in Corner: Bottom-Left
+      // Test Pikachu
+      peeker!.retreat()
+      peeker!.peek('pikachu', true, 'bottom-left')
+      expect(peekerEl.classList.contains('corner-bottom-left')).toBe(true)
+      expect(peekerEl.innerHTML).toContain('PIKA-PIKA!')
+      expect(peekerEl.innerHTML).toContain('alt="Pikachu"')
+      peeker!.celebrate()
+      expect(peekerEl.innerHTML).toContain('THUNDERBOLT!')
+
+      // Test Gengar
+      peeker!.retreat()
+      peeker!.peek('gengar', true)
+      expect(peekerEl.innerHTML).toContain('GENGAR HEHE!')
+      expect(peekerEl.innerHTML).toContain('alt="Gengar"')
+      peeker!.celebrate()
+      expect(peekerEl.innerHTML).toContain('SHADOW BALL!')
+
+      // Test Charizard
+      peeker!.retreat()
+      peeker!.peek('charizard', true)
+      expect(peekerEl.innerHTML).toContain('CHARIZARD ROAR!')
+      expect(peekerEl.innerHTML).toContain('alt="Charizard"')
+      peeker!.celebrate()
+      expect(peekerEl.innerHTML).toContain('FLAMETHROWER!')
+
+      // Test Bulbasaur
+      peeker!.retreat()
+      peeker!.peek('bulbasaur', true)
+      expect(peekerEl.innerHTML).toContain('BULBA-SAUR!')
+      expect(peekerEl.innerHTML).toContain('alt="Bulbasaur"')
+      peeker!.celebrate()
+      expect(peekerEl.innerHTML).toContain('SOLAR BEAM!')
+
+      // 7. Test Switching theme away from arcade-8bit retreats and disables peeker
+      ui.setTheme('minimal-glass')
+      expect(ui.getTheme()).toBe('minimal-glass')
+      expect(peekerEl.classList.contains('peek-active')).toBe(false)
+      peeker!.peek('pikachu')
+      expect(peekerEl.classList.contains('peek-active')).toBe(false)
+
+      // Test 8-Bit Audio Chimes
+      const chimes = ui.getAudioChimes()
+      chimes.setErrorChimeProfile('arcade-chiptune')
+      expect(chimes.getErrorChimeProfile()).toBe('arcade-chiptune')
+      chimes.playIncidentAlert('arcade-chiptune')
+      chimes.playCoinSound()
+      chimes.playJumpSound()
+      chimes.playHitSound()
+      chimes.playFanfareSound()
+
+      ui.destroy()
+    })
   })
 })
+

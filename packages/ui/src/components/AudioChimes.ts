@@ -10,6 +10,7 @@ export type ErrorChimeProfile =
   | 'cyber-glitch'
   | 'subtle-bell'
   | 'retro-alarm'
+  | 'arcade-chiptune'
 
 export interface ErrorChimeOption {
   id: ErrorChimeProfile
@@ -42,8 +43,14 @@ export const ERROR_CHIME_OPTIONS: ErrorChimeOption[] = [
     id: 'retro-alarm',
     name: 'Retro Synth',
     description: '8-Bit Arcade Warning — Alternating chiptune square-wave alert'
+  },
+  {
+    id: 'arcade-chiptune',
+    name: 'Arcade 8-Bit',
+    description: 'Chiptune Quest Alert — 8-Bit battle warning square-wave chirp'
   }
 ]
+
 
 export class AudioChimes {
   private ctx: AudioContext | null = null
@@ -98,6 +105,9 @@ export class AudioChimes {
         break
       case 'retro-alarm':
         this.playRetroAlarmChime()
+        break
+      case 'arcade-chiptune':
+        this.playArcadeChiptuneChime()
         break
       case 'warp-drop':
       default:
@@ -299,6 +309,161 @@ export class AudioChimes {
 
         osc.start(p.start)
         osc.stop(p.start + p.dur)
+      })
+    } catch {}
+  }
+
+  /**
+   * Error Chime 6: Arcade Chiptune Alert
+   * Authentic 8-bit square-wave dual chirp (440Hz -> 880Hz -> 220Hz)
+   */
+  public playArcadeChiptuneChime(): void {
+    if (!this.isEnabled || typeof window === 'undefined') return
+    const ctx = this.initContext()
+    if (!ctx) return
+
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {})
+    }
+
+    try {
+      const now = ctx.currentTime
+      const notes = [
+        { freq: 440, start: now, dur: 0.06 },
+        { freq: 880, start: now + 0.06, dur: 0.06 },
+        { freq: 330, start: now + 0.12, dur: 0.14 }
+      ]
+
+      notes.forEach((n) => {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = 'square'
+        osc.frequency.setValueAtTime(n.freq, n.start)
+        gain.gain.setValueAtTime(0.045, n.start)
+        gain.gain.exponentialRampToValueAtTime(0.0001, n.start + n.dur)
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        osc.start(n.start)
+        osc.stop(n.start + n.dur)
+      })
+    } catch {}
+  }
+
+  /**
+   * 8-Bit Coin Insert Sound (Classic Mario/Arcade coin pickup: B5 -> E6)
+   */
+  public playCoinSound(): void {
+    if (!this.isEnabled || typeof window === 'undefined') return
+    const ctx = this.initContext()
+    if (!ctx) return
+
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {})
+    }
+
+    try {
+      const now = ctx.currentTime
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'square'
+      osc.frequency.setValueAtTime(987.77, now) // B5
+      osc.frequency.setValueAtTime(1318.51, now + 0.07) // E6
+      gain.gain.setValueAtTime(0.06, now)
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35)
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.start(now)
+      osc.stop(now + 0.35)
+    } catch {}
+  }
+
+  /**
+   * 8-Bit Jump / Peek Sound (Rising square wave)
+   */
+  public playJumpSound(): void {
+    if (!this.isEnabled || typeof window === 'undefined') return
+    const ctx = this.initContext()
+    if (!ctx) return
+
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {})
+    }
+
+    try {
+      const now = ctx.currentTime
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'square'
+      osc.frequency.setValueAtTime(150, now)
+      osc.frequency.exponentialRampToValueAtTime(600, now + 0.12)
+      gain.gain.setValueAtTime(0.04, now)
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14)
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.start(now)
+      osc.stop(now + 0.14)
+    } catch {}
+  }
+
+  /**
+   * 8-Bit Hit / Damage Sound
+   */
+  public playHitSound(): void {
+    if (!this.isEnabled || typeof window === 'undefined') return
+    const ctx = this.initContext()
+    if (!ctx) return
+
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {})
+    }
+
+    try {
+      const now = ctx.currentTime
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'sawtooth'
+      osc.frequency.setValueAtTime(220, now)
+      osc.frequency.exponentialRampToValueAtTime(55, now + 0.15)
+      gain.gain.setValueAtTime(0.06, now)
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18)
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.start(now)
+      osc.stop(now + 0.18)
+    } catch {}
+  }
+
+  /**
+   * 8-Bit Victory / Level Up Fanfare
+   */
+  public playFanfareSound(): void {
+    if (!this.isEnabled || typeof window === 'undefined') return
+    const ctx = this.initContext()
+    if (!ctx) return
+
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {})
+    }
+
+    try {
+      const now = ctx.currentTime
+      const melody = [
+        { freq: 523.25, start: now, dur: 0.08 },        // C5
+        { freq: 659.25, start: now + 0.09, dur: 0.08 }, // E5
+        { freq: 783.99, start: now + 0.18, dur: 0.08 }, // G5
+        { freq: 1046.5, start: now + 0.27, dur: 0.25 }  // C6
+      ]
+      melody.forEach((m) => {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = 'square'
+        osc.frequency.setValueAtTime(m.freq, m.start)
+        gain.gain.setValueAtTime(0.05, m.start)
+        gain.gain.exponentialRampToValueAtTime(0.0001, m.start + m.dur)
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        osc.start(m.start)
+        osc.stop(m.start + m.dur)
       })
     } catch {}
   }
