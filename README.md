@@ -33,7 +33,7 @@ I built **Dr. Debug** to eliminate that entire manual feedback loop. Instead of 
 - **Autonomous Re-Act Diagnostic Engine**: Executes step-by-step diagnostic reasoning (`Thought -> Action -> Observation`) using tools like `inspect_error`, `inspect_request`, and safe `eval_js` until reaching high-confidence root-cause verification.
 - **Zero-Pollution Shadow DOM HUD**: Draggable, glassmorphic UI cockpit encapsulated in an isolated Shadow Root (`#dr-debug-root`) to guarantee zero style leakage or layout shifts on host applications.
 - **Manifest V3 Chrome Extension & DevTools Panel**: Run as an unpacked browser extension or dock it directly into the native Chrome DevTools workspace with one-click Markdown and JSON RCA exports.
-- **Flexible LLM Provider Layer**: Works with ultra-fast cloud inference (Groq, Anthropic Claude, OpenAI) as well as offline/in-browser models via LiteRT and WebLLM.
+- **Flexible LLM Provider Layer**: Works with ultra-fast cloud inference (Groq, Anthropic Claude, OpenAI, Gemini) as well as offline/in-browser models via LiteRT, and local open-source AI via Ollama / LM Studio.
 
 ---
 

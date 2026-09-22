@@ -360,19 +360,25 @@ export type DebugReflection = z.infer<typeof DebugReflectionSchema>
 
 ## 6. Tool Registry & Action Schemas
 
-All tools are registered in `@dr-debug/core/src/tools/index.ts` with strict Zod contracts and access to the `DebugController` runtime:
+All 15 tools are registered in `@dr-debug/core/src/tools/index.ts` with strict Zod contracts and access to the `DebugController` runtime:
 
 | Tool Name | Input Schema | Purpose |
 |:--|:--|:--|
-| `inspect_error` | `{ errorIndex: number }` | Retrieves full demangled stack trace, frame variables, and error metadata. |
-| `inspect_request` | `{ requestIndex: number }` | Reads full HTTP request/response headers, parameters, and payloads. |
-| `inspect_element` | `{ selector: string }` | Inspects DOM node dimensions, layout shifts, listeners, and computed styles. |
-| `query_framework_state` | `{ framework: 'react'\|'vue'\|'zustand', path?: string }` | Reads React component tree, props, Redux/Zustand store snapshots. |
-| `execute_javascript` | `{ script: string }` | Executes sandboxed diagnostic scripts in the page context with `AbortSignal` support. |
-| `find_correlations` | `{ eventType: string, timeframeMs: number }` | Analyzes temporal clustering of errors, network calls, and long tasks. |
+| `inspect_error` | `{ errorIndex: number }` | Retrieves full demangled stack trace, frame variables, source lines, and error burst counts. |
+| `inspect_request` | `{ requestIndex: number }` | Reads full HTTP request/response headers, parameters, timing metrics, and response payloads. |
+| `inspect_docker_logs` | `{ container?: string, level?: string, grep?: string, tail?: number }` | Queries backend host Docker container logs with regex filter and timestamp correlation. |
+| `graphify_errors` | `{ format?: 'json' \| 'mermaid' }` | Constructs multi-layer Causal Error DAGs (Docker → Network → Console → DOM) with root-cause identification. |
+| `inspect_element` | `{ selector: string }` | Inspects DOM node dimensions, layout shifts, event listeners, and computed styles. |
+| `inspect_layout` | `{ selector?: string }` | Detects CSS layout anomalies (overflow clipping, zero size, invisible overlays, z-index traps). |
+| `query_framework_state` | `{ framework: 'react'\|'vue'\|'zustand', path?: string }` | Reads React component tree, props, Redux/Zustand store snapshots, Vue 3, and Svelte state. |
+| `execute_javascript` | `{ script: string }` | Executes sandboxed diagnostic scripts in the page context with timeout protection. |
+| `find_correlations` | `{ eventType?: string, timeframeMs?: number }` | Analyzes temporal clustering of errors, network calls, and long tasks. |
 | `replay_network_request` | `{ requestIndex: number, overrideHeaders?: Record<string, string> }` | Re-sends a failed network request to test if failures are transient or deterministic. |
+| `mock_response` | `{ urlPattern: string, status?: number, body?: string, headers?: Record<string, string> }` | Injects synthetic mock responses into `NetworkMockInterceptor` to validate fix hypotheses. |
+| `synthesize_test` | `{ testName?: string, assertions?: string[] }` | Synthesizes an executable Playwright regression test script verifying the diagnosed fix. |
+| `generate_patch` | `{ filepath?: string, description?: string }` | Generates standard unified diffs (`git apply` compatible) and publication-ready GitHub PR descriptions. |
 | `check_storage` | `{ type: 'local'\|'session'\|'cookie', key?: string }` | Checks for stale tokens, invalid JSON, or missing auth cookies. |
-| `done` | `{ diagnosis: string, rootCause: string, fix: string, confidence: number, filesToModify?: string[] }` | Terminates the investigation and outputs the finalized Root Cause Analysis (RCA). |
+| `done` | `{ diagnosis: string, rootCause: string, fix: string, confidence: number, filesToModify?: string[], diff?: string, debugRoute?: object }` | Terminates the investigation and outputs the finalized Root Cause Analysis (RCA) and patch. |
 
 ---
 
@@ -549,20 +555,30 @@ To ensure zero false diagnoses, Dr. Debug is evaluated against 10 deterministic 
 ## 12. Advanced Extensions, MCP & Future Moonshots
 
 ### 1. Model Context Protocol (MCP) Integration
-Dr. Debug exposes an MCP server interface (`@dr-debug/mcp`), enabling IDE assistants (Claude Desktop, Cursor, Antigravity) to query live browser state directly:
+Dr. Debug exposes an official MCP server interface (`@dr-debug/mcp`), enabling IDE assistants (Claude Desktop, Cursor, Antigravity IDE, Windsurf) to query live browser state directly with zero API keys required:
 
-```json
-{
-  "name": "drdebug_get_diagnostics",
-  "description": "Returns current live browser console errors, network failures, and performance metrics from Dr. Debug",
-  "parameters": {
-    "type": "object",
-    "properties": {
-      "severity": { "type": "string", "enum": ["all", "errors_only"] }
-    }
-  }
-}
-```
+#### MCP Tools Exposed (8 Tools)
+- `drdebug_get_diagnostics`: Aggregated multi-substrate health status, active anomalies, and memory.
+- `drdebug_inspect_request`: Full HTTP request/response payloads, headers, timings, and cURL command.
+- `drdebug_get_ai_brief`: Surgical incident brief with demangled stacks and `<debug_state>` XML.
+- `drdebug_inspect_error`: Deep error inspection with demangled stack frames and source locations.
+- `drdebug_get_interaction_replay`: 30s chronological sequence of human clicks, inputs, and scrolls.
+- `drdebug_execute_script`: Evaluates JavaScript in the live browser tab and returns the result.
+- `drdebug_list_docker_containers`: Lists local Docker containers, running states, and ports.
+- `drdebug_get_docker_logs`: Queries Docker container stdout/stderr logs with regex filtering.
+
+#### MCP Resources Exposed (7 Resources)
+- `drdebug://state/live`: Real-time `<debug_state>` XML snapshot.
+- `drdebug://console/errors`: Active uncaught runtime errors and demangled stacks.
+- `drdebug://network/failures`: Failed HTTP requests, status codes, and payloads.
+- `drdebug://interactions/replay`: Chronological user interaction replay sequence.
+- `drdebug://matrix/diagnostics`: 2D Substrate Diagnostics Matrix.
+- `drdebug://tab/{tabId}/state`: Dynamic snapshot for a specific browser tab.
+- `drdebug://container/{containerId}/logs`: Dynamic log stream for a specific Docker container.
+
+#### MCP Prompts Exposed (2 Incident Workflows)
+- `drdebug_triage_incident`: One-click prompt injecting live telemetry, errors, and reproduction steps for instant RCA.
+- `drdebug_correlate_500`: Correlates failed frontend HTTP requests with backend host Docker container crash logs.
 
 ### 2. Predictive Bug Prevention
 Using historical trajectory data, Dr. Debug warns developers *before* a crash happens:
