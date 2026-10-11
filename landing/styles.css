@@ -709,6 +709,59 @@ body {
   animation: pulseBeacon 1.5s infinite alternate;
 }
 
+.dl-live-counter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  border-radius: 20px;
+  padding: 5px 14px;
+  margin-bottom: 16px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  letter-spacing: 0.06em;
+  box-shadow: 0 0 15px rgba(52, 211, 153, 0.12), inset 0 0 10px rgba(0, 0, 0, 0.5);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.dl-live-counter-badge.just-incremented {
+  transform: scale(1.08);
+  box-shadow: 0 0 25px rgba(52, 211, 153, 0.65), inset 0 0 15px rgba(52, 211, 153, 0.3);
+  border-color: #34d399;
+}
+
+.dl-live-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #34d399;
+  box-shadow: 0 0 8px #34d399;
+  animation: pulseGreen 2s infinite ease-in-out;
+}
+
+.dl-live-counter-label {
+  color: #94a3b8;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+}
+
+.dl-live-counter-number {
+  color: #34d399;
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
+}
+
+@keyframes pulseGreen {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+
 .dl-main-title {
   font-family: var(--font-display);
   font-size: 2rem;

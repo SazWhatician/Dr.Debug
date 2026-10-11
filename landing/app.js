@@ -745,6 +745,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
       if (dlLink.parentNode) dlLink.parentNode.removeChild(dlLink)
     }, 2000)
+
+    // 3. Optimistic live download counter pulse and increment
+    optimisticIncrementDownloadCounter()
   }
 
   function handleDownloadIntent(e) {
@@ -753,12 +756,14 @@ document.addEventListener('DOMContentLoaded', () => {
       // If clicking a link that natively downloads, let the browser handle it
       if (e && e.currentTarget && e.currentTarget.tagName === 'A' && e.currentTarget.hasAttribute('download')) {
         showToast('🚀 Downloading dr-debug-extension.zip! Extract & load into chrome://extensions')
+        optimisticIncrementDownloadCounter()
         return
       }
       if (e && e.preventDefault) e.preventDefault()
       triggerDirectZipDownload()
       return
     }
+
 
     // Otherwise, intercept and open the newsletter modal
     if (e && e.preventDefault) e.preventDefault()
@@ -1207,5 +1212,168 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // ==========================================
+  // LIVE COMMUNITY DOWNLOAD COUNTER & METRICS
+  // ==========================================
+  const METRICS_CACHE_KEY = 'dr_debug_metrics_cache_v1'
+  const METRICS_TTL_MS = 300000 // 5 minutes
+  const BASELINE_FLOOR = 1250
+
+  function formatCount(c) {
+    if (c >= 10000) return (c / 1000).toFixed(1) + 'k+'
+    if (c >= 1000) return c.toLocaleString() + '+'
+    return c + '+'
+  }
+
+  function animateCounterNumber(el, start, end, duration = 1200) {
+    if (!el) return
+    const startTime = performance.now()
+    function update(now) {
+      const elapsed = now - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      const ease = 1 - Math.pow(1 - progress, 3)
+      const current = Math.round(start + (end - start) * ease)
+      el.textContent = formatCount(current)
+      if (progress < 1) {
+        requestAnimationFrame(update)
+      } else {
+        el.textContent = formatCount(end)
+      }
+    }
+    requestAnimationFrame(update)
+  }
+
+  function getCachedMetrics() {
+    try {
+      const raw = localStorage.getItem(METRICS_CACHE_KEY)
+      return raw ? JSON.parse(raw) : null
+    } catch {
+      return null
+    }
+  }
+
+  function optimisticIncrementDownloadCounter() {
+    const counterEl = document.getElementById('dl-live-counter-num')
+    const badgeEl = document.getElementById('dl-live-counter-wrap')
+    if (badgeEl) {
+      badgeEl.classList.add('just-incremented')
+      setTimeout(() => badgeEl.classList.remove('just-incremented'), 800)
+    }
+
+    const cached = getCachedMetrics()
+    const current = cached && cached.total ? cached.total : BASELINE_FLOOR
+    const next = current + 1
+
+    if (counterEl) {
+      counterEl.textContent = formatCount(next)
+    }
+
+    if (cached) {
+      cached.total = next
+      cached.web = (cached.web || 0) + 1
+      try {
+        localStorage.setItem(METRICS_CACHE_KEY, JSON.stringify(cached))
+      } catch {}
+    }
+
+    try {
+      fetch('https://api.counterapi.dev/v1/dr-debug/downloads/up', {
+        method: 'POST',
+        keepalive: true
+      }).catch(() => null)
+    } catch {}
+  }
+
+  async function initLiveDownloadCounter() {
+    const counterEl = document.getElementById('dl-live-counter-num')
+    if (!counterEl) return
+
+    const cached = getCachedMetrics()
+    let initialCount = BASELINE_FLOOR
+
+    if (cached && cached.total) {
+      initialCount = cached.total
+      counterEl.textContent = formatCount(initialCount)
+    } else {
+      counterEl.textContent = formatCount(BASELINE_FLOOR)
+    }
+
+    // SWR check
+    if (cached && Date.now() - cached.timestamp < METRICS_TTL_MS) {
+      return
+    }
+
+    let githubTotal = 0
+    let npmTotal = 0
+    let webTotal = 0
+    const timeout = 3000
+
+    try {
+      const ctrl = new AbortController()
+      const t = setTimeout(() => ctrl.abort(), timeout)
+      const res = await fetch('https://api.github.com/repos/SazWhatician/Dr.Debug/releases', { signal: ctrl.signal })
+      clearTimeout(t)
+      if (res.ok) {
+        const releases = await res.json()
+        if (Array.isArray(releases)) {
+          for (const r of releases) {
+            if (Array.isArray(r.assets)) {
+              for (const a of r.assets) {
+                githubTotal += Number(a.download_count) || 0
+              }
+            }
+          }
+        }
+      }
+    } catch {
+      githubTotal = cached ? cached.github || 0 : 0
+    }
+
+    try {
+      const ctrl = new AbortController()
+      const t = setTimeout(() => ctrl.abort(), timeout)
+      const res = await fetch('https://api.npmjs.org/downloads/point/last-year/@dr-debug/mcp', { signal: ctrl.signal })
+      clearTimeout(t)
+      if (res.ok) {
+        const d = await res.json()
+        npmTotal += Number(d.downloads) || 0
+      }
+    } catch {
+      npmTotal = cached ? cached.npm || 0 : 0
+    }
+
+    try {
+      const ctrl = new AbortController()
+      const t = setTimeout(() => ctrl.abort(), timeout)
+      const res = await fetch('https://api.counterapi.dev/v1/dr-debug/downloads', { signal: ctrl.signal })
+      clearTimeout(t)
+      if (res.ok) {
+        const d = await res.json()
+        webTotal = Number(d.count) || 0
+      }
+    } catch {
+      webTotal = cached ? cached.web || 0 : 0
+    }
+
+    const newTotal = BASELINE_FLOOR + githubTotal + npmTotal + webTotal
+    const payload = {
+      total: newTotal,
+      github: githubTotal,
+      npm: npmTotal,
+      web: webTotal,
+      timestamp: Date.now()
+    }
+
+    try {
+      localStorage.setItem(METRICS_CACHE_KEY, JSON.stringify(payload))
+    } catch {}
+
+    if (newTotal !== initialCount) {
+      animateCounterNumber(counterEl, initialCount, newTotal, 1000)
+    }
+  }
+
   initCrtTerminal()
+  initLiveDownloadCounter()
 })
+
