@@ -28,10 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function formatCount(c) {
     if (c >= 10000) return (c / 1000).toFixed(1) + 'k+'
     if (c >= 1000) return c.toLocaleString() + '+'
-    return c + '+'
+    return String(c)
   }
   try {
-    const raw = localStorage.getItem('dr_debug_metrics_cache_v1')
+    const raw = localStorage.getItem('dr_debug_metrics_cache_v2')
     if (raw) {
       const data = JSON.parse(raw)
       if (data && data.total && popupDownloadsCount) {

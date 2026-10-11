@@ -6,9 +6,9 @@ export interface DownloadMetrics {
   timestamp: number
 }
 
-const CACHE_KEY = 'dr_debug_metrics_cache_v1'
+const CACHE_KEY = 'dr_debug_metrics_cache_v2'
 const CACHE_TTL_MS = 300000 // 5 minutes
-const BASELINE_FLOOR = 1250
+const BASELINE_FLOOR = 4
 
 export function formatDownloadCount(count: number): string {
   if (count >= 10000) {
@@ -18,7 +18,7 @@ export function formatDownloadCount(count: number): string {
   if (count >= 1000) {
     return `${count.toLocaleString()}+`
   }
-  return `${count}+`
+  return `${count}`
 }
 
 export class DownloadMetricsService {
@@ -115,11 +115,11 @@ export class DownloadMetricsService {
       webTotal = cachedFallback?.web || 0
     }
 
-    const total = BASELINE_FLOOR + githubTotal + npmTotal + webTotal
+    const total = BASELINE_FLOOR + githubTotal + webTotal
     const result: DownloadMetrics = {
       total,
       github: githubTotal,
-      npm: npmTotal,
+      npm: 0,
       web: webTotal,
       timestamp: Date.now()
     }

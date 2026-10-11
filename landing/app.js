@@ -1215,14 +1215,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================
   // LIVE COMMUNITY DOWNLOAD COUNTER & METRICS
   // ==========================================
-  const METRICS_CACHE_KEY = 'dr_debug_metrics_cache_v1'
+  const METRICS_CACHE_KEY = 'dr_debug_metrics_cache_v2'
   const METRICS_TTL_MS = 300000 // 5 minutes
-  const BASELINE_FLOOR = 1250
+  const BASELINE_FLOOR = 4
 
   function formatCount(c) {
     if (c >= 10000) return (c / 1000).toFixed(1) + 'k+'
     if (c >= 1000) return c.toLocaleString() + '+'
-    return c + '+'
+    return String(c)
   }
 
   function animateCounterNumber(el, start, end, duration = 1200) {
@@ -1355,11 +1355,11 @@ document.addEventListener('DOMContentLoaded', () => {
       webTotal = cached ? cached.web || 0 : 0
     }
 
-    const newTotal = BASELINE_FLOOR + githubTotal + npmTotal + webTotal
+    const newTotal = BASELINE_FLOOR + githubTotal + webTotal
     const payload = {
       total: newTotal,
       github: githubTotal,
-      npm: npmTotal,
+      npm: 0,
       web: webTotal,
       timestamp: Date.now()
     }

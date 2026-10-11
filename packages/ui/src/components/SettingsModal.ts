@@ -283,7 +283,7 @@ export class SettingsModal {
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
               <span class="dr-debug-update-version">Dr. Debug v0.1.21</span>
-              <span class="dr-debug-downloads-pill" id="dr-debug-hud-downloads">📥 1,250+ Downloads</span>
+              <span class="dr-debug-downloads-pill" id="dr-debug-hud-downloads">📥 4 Downloads</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>

@@ -11,7 +11,8 @@ describe('DownloadMetricsService', () => {
   })
 
   it('formats download counts correctly across thresholds', () => {
-    expect(formatDownloadCount(450)).toBe('450+')
+    expect(formatDownloadCount(4)).toBe('4')
+    expect(formatDownloadCount(450)).toBe('450')
     expect(formatDownloadCount(1250)).toBe('1,250+')
     expect(formatDownloadCount(9999)).toBe('9,999+')
     expect(formatDownloadCount(12500)).toBe('12.5k+')
@@ -22,11 +23,11 @@ describe('DownloadMetricsService', () => {
     const service = new DownloadMetricsService()
     const metrics = await service.fetchMetrics()
 
-    expect(metrics.total).toBeGreaterThanOrEqual(1250)
+    expect(metrics.total).toBeGreaterThanOrEqual(4)
     expect(metrics.github).toBe(0)
   })
 
-  it('correctly aggregates GitHub, NPM, and CounterAPI counts', async () => {
+  it('correctly aggregates GitHub and CounterAPI counts', async () => {
     vi.spyOn(global, 'fetch').mockImplementation((url: any) => {
       const urlStr = String(url)
       if (urlStr.includes('api.github.com')) {
@@ -42,12 +43,6 @@ describe('DownloadMetricsService', () => {
           ]
         } as any)
       }
-      if (urlStr.includes('api.npmjs.org')) {
-        return Promise.resolve({
-          ok: true,
-          json: async () => ({ downloads: 150 })
-        } as any)
-      }
       if (urlStr.includes('api.counterapi.dev')) {
         return Promise.resolve({
           ok: true,
@@ -60,18 +55,17 @@ describe('DownloadMetricsService', () => {
     const service = new DownloadMetricsService()
     const metrics = await service.fetchMetrics()
 
-    // 500 (gh) + 300 (gh) + 150 (npm) + 100 (counter) + 1250 (baseline) = 2300
+    // 500 (gh) + 300 (gh) + 100 (counter) + 4 (baseline) = 904
     expect(metrics.github).toBe(800)
-    expect(metrics.npm).toBe(150)
     expect(metrics.web).toBe(100)
-    expect(metrics.total).toBe(2300)
+    expect(metrics.total).toBe(904)
   })
 
   it('optimistically increments count on download click', async () => {
     const service = new DownloadMetricsService()
     localStorage.setItem(
-      'dr_debug_metrics_cache_v1',
-      JSON.stringify({ total: 1500, github: 200, npm: 50, web: 0, timestamp: Date.now() })
+      'dr_debug_metrics_cache_v2',
+      JSON.stringify({ total: 4, github: 0, npm: 0, web: 0, timestamp: Date.now() })
     )
 
     vi.spyOn(global, 'fetch').mockResolvedValue({
@@ -80,7 +74,7 @@ describe('DownloadMetricsService', () => {
     } as any)
 
     const newTotal = await service.recordDownloadClick()
-    expect(newTotal).toBe(1501)
-    expect(service.getCachedMetrics()?.total).toBe(1501)
+    expect(newTotal).toBe(5)
+    expect(service.getCachedMetrics()?.total).toBe(5)
   })
 })

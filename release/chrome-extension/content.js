@@ -11712,9 +11712,9 @@ ${rawJson}
   };
 
   // packages/ui/src/services/DownloadMetricsService.ts
-  var CACHE_KEY = "dr_debug_metrics_cache_v1";
+  var CACHE_KEY = "dr_debug_metrics_cache_v2";
   var CACHE_TTL_MS = 3e5;
-  var BASELINE_FLOOR = 1250;
+  var BASELINE_FLOOR = 4;
   function formatDownloadCount(count) {
     if (count >= 1e4) {
       const k = (count / 1e3).toFixed(1);
@@ -11723,7 +11723,7 @@ ${rawJson}
     if (count >= 1e3) {
       return `${count.toLocaleString()}+`;
     }
-    return `${count}+`;
+    return `${count}`;
   }
   var DownloadMetricsService = class {
     inFlightPromise = null;
@@ -11806,11 +11806,11 @@ ${rawJson}
       } catch {
         webTotal = cachedFallback?.web || 0;
       }
-      const total = BASELINE_FLOOR + githubTotal + npmTotal + webTotal;
+      const total = BASELINE_FLOOR + githubTotal + webTotal;
       const result = {
         total,
         github: githubTotal,
-        npm: npmTotal,
+        npm: 0,
         web: webTotal,
         timestamp: Date.now()
       };
@@ -12079,7 +12079,7 @@ ${rawJson}
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
               <span class="dr-debug-update-version">Dr. Debug v0.1.21</span>
-              <span class="dr-debug-downloads-pill" id="dr-debug-hud-downloads">\u{1F4E5} 1,250+ Downloads</span>
+              <span class="dr-debug-downloads-pill" id="dr-debug-hud-downloads">\u{1F4E5} 4 Downloads</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
