@@ -23,6 +23,24 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   }
 
+  // Live community download metrics tally
+  const popupDownloadsCount = document.getElementById('popup-downloads-count')
+  function formatCount(c) {
+    if (c >= 10000) return (c / 1000).toFixed(1) + 'k+'
+    if (c >= 1000) return c.toLocaleString() + '+'
+    return c + '+'
+  }
+  try {
+    const raw = localStorage.getItem('dr_debug_metrics_cache_v1')
+    if (raw) {
+      const data = JSON.parse(raw)
+      if (data && data.total && popupDownloadsCount) {
+        popupDownloadsCount.textContent = formatCount(data.total)
+      }
+    }
+  } catch (e) {}
+
+
   function updateVisibility() {
     if (!providerSelect || !apiKeyGroup) return
     if (providerSelect.value === 'litert') {
