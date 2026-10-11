@@ -510,8 +510,20 @@ describe('DrDebugUI (Shadow DOM HUD & Cockpit)', () => {
       openSpy.mockRestore()
       ui.destroy()
     })
+
+    it('renders live download count pill in SettingsModal banner', () => {
+      const ui = new DrDebugUI()
+      const shadow = ui.getShadowRoot()
+      ui.openCockpit()
+
+      const pill = shadow.querySelector('#dr-debug-hud-downloads')
+      expect(pill).toBeDefined()
+      expect(pill?.textContent).toContain('Downloads')
+      ui.destroy()
+    })
   })
 })
+
 
 
 

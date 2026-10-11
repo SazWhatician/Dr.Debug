@@ -3080,7 +3080,23 @@ export const shadowStyles = `
   letter-spacing: 0.2px;
 }
 
+.dr-debug-downloads-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 9999px;
+  padding: 1px 7px;
+  margin-top: 3px;
+  letter-spacing: 0.02em;
+  width: fit-content;
+}
+
 .dr-debug-btn-update {
+
   background: linear-gradient(135deg, rgba(56, 189, 248, 0.18) 0%, rgba(14, 165, 233, 0.28) 100%);
   border: 1px solid rgba(56, 189, 248, 0.45);
   color: #ffffff;

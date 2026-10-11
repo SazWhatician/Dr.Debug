@@ -1,6 +1,8 @@
 declare const chrome: any
 import { type ErrorChimeProfile, ERROR_CHIME_OPTIONS } from './AudioChimes.js'
 import { type EasterEggCharacter } from './PixelEasterEgg.js'
+import { DownloadMetricsService, formatDownloadCount } from '../services/DownloadMetricsService.js'
+
 
 export type DrDebugTheme = 'dr-debug' | 'minimal-glass' | 'monotone-skeuomorphic' | 'windows-xp' | 'arcade-8bit'
 
@@ -281,12 +283,14 @@ export class SettingsModal {
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
               <span class="dr-debug-update-version">Dr. Debug v0.1.21</span>
+              <span class="dr-debug-downloads-pill" id="dr-debug-hud-downloads">📥 1,250+ Downloads</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
               <span class="dr-debug-update-arrow">↗</span>
             </button>
           </div>
+
 
           <div class="dr-debug-settings-footer">
             Created by <a href="https://github.com/SazWhatician" target="_blank" rel="noopener noreferrer" class="dr-debug-link-author">Saswat Mohanty (@SazWhatician)</a> · <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" rel="noopener noreferrer" class="dr-debug-link-social">LinkedIn</a>
@@ -393,7 +397,20 @@ export class SettingsModal {
     checkUpdateBtn?.addEventListener('click', () => {
       if (checkUpdateBtn) this.handleCheckUpdate(checkUpdateBtn)
     })
+
+    const metricsService = new DownloadMetricsService()
+    const cachedMetrics = metricsService.getCachedMetrics()
+    const hudDownloads = this.element.querySelector('#dr-debug-hud-downloads') as HTMLElement | null
+    if (hudDownloads && cachedMetrics?.total) {
+      hudDownloads.textContent = `📥 ${formatDownloadCount(cachedMetrics.total)} Downloads`
+    }
+    metricsService.fetchMetrics().then((metrics) => {
+      if (hudDownloads && metrics?.total) {
+        hudDownloads.textContent = `📥 ${formatDownloadCount(metrics.total)} Downloads`
+      }
+    }).catch(() => null)
   }
+
 
   private handleProviderChange(): void {
     const provider = this.providerSelect.value
