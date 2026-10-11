@@ -174,6 +174,7 @@ export class FloatingPill {
   }
 
   private renderBadge(title: string, chipText: string, chipClass: string): void {
+    if (typeof document === 'undefined') return
     while (this.badgeText.firstChild) {
       this.badgeText.removeChild(this.badgeText.firstChild)
     }
@@ -194,6 +195,7 @@ export class FloatingPill {
     slowNetCount = 0,
     isRunning = false
   ): void {
+    if (typeof document === 'undefined') return
     if (isRunning) {
       this.renderBadge('Dr. Debug', 'DIAGNOSING', 'run')
       return

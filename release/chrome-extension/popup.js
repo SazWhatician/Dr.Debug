@@ -233,6 +233,27 @@ document.addEventListener('DOMContentLoaded', () => {
   })
 
   const btnCheckUpdate = document.getElementById('btn-check-update')
+  if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+    chrome.runtime.sendMessage({ type: 'DR_DEBUG_CHECK_UPDATE' }, (res) => {
+      if (res?.updateAvailable && btnCheckUpdate) {
+        btnCheckUpdate.innerHTML = `<span>⚡ v${res.latestVersion} Available! Update ↗</span>`
+        btnCheckUpdate.style.background = 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'
+        btnCheckUpdate.style.borderColor = '#60a5fa'
+        btnCheckUpdate.style.color = '#ffffff'
+        btnCheckUpdate.onclick = (e) => {
+          e.preventDefault()
+          const zip = 'https://dr-debug.vercel.app/dr-debug-extension.zip'
+          if (chrome.tabs?.create) {
+            chrome.tabs.create({ url: zip })
+          } else {
+            window.open(zip, '_blank')
+          }
+          showStatus(`🚀 Downloading v${res.latestVersion}! Double-click update.bat or reload in chrome://extensions`)
+        }
+      }
+    })
+  }
+
   btnCheckUpdate?.addEventListener('click', () => {
     const url = 'https://dr-debug.vercel.app/'
     if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
@@ -241,6 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
       window.open(url, '_blank', 'noopener,noreferrer')
     }
   })
+
 
 
   function showStatus(text, isError = false) {

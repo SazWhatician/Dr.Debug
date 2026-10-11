@@ -521,8 +521,49 @@ describe('DrDebugUI (Shadow DOM HUD & Cockpit)', () => {
       expect(pill?.textContent).toContain('Downloads')
       ui.destroy()
     })
+
+    it('renders in-cockpit Update Assistant drawer with terminal command when update is available', async () => {
+      const ui = new DrDebugUI()
+      const shadow = ui.getShadowRoot()
+      ui.openCockpit()
+
+      const originalFetch = global.fetch
+      global.fetch = vi.fn().mockImplementation((url: any) => {
+        const u = String(url)
+        if (u.includes('api.github.com')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ tag_name: 'v0.9.9' })
+          })
+        }
+        if (u.includes('update-extension')) {
+          return Promise.reject(new Error('Daemon offline'))
+        }
+        return Promise.reject(new Error('Unknown url'))
+      }) as any
+
+      const updateBtn = shadow.querySelector('#dr-debug-btn-check-update') as HTMLButtonElement
+      updateBtn.click()
+
+      // Wait for GitHub check to complete and button to transform
+      await new Promise((r) => setTimeout(r, 60))
+      expect(updateBtn.innerHTML).toContain('1-Click Update')
+
+      // Click 1-Click Update
+      updateBtn.click()
+      await new Promise((r) => setTimeout(r, 60))
+
+      const assistant = shadow.querySelector('#dr-debug-update-assistant')
+      expect(assistant).toBeDefined()
+      expect(assistant?.textContent).toContain('Update Assistant')
+      expect(assistant?.querySelector('.dr-debug-update-cmd')).toBeDefined()
+
+      global.fetch = originalFetch
+      ui.destroy()
+    })
   })
 })
+
 
 
 

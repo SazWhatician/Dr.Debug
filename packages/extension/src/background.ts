@@ -239,7 +239,47 @@ export class BackgroundWorker {
   constructor() {
     this.dockerManager = new DockerStreamManager()
     this.dockerManager.start()
+    this.checkForUpdates().catch(() => null)
   }
+
+  public async checkForUpdates(): Promise<{ updateAvailable: boolean; latestVersion: string; currentVersion: string }> {
+    const currentVersion = '0.1.21'
+    try {
+      const res = await fetch('https://api.github.com/repos/SazWhatician/Dr.Debug/releases/latest', {
+        signal: AbortSignal.timeout(4000)
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const latestVersion = (data.tag_name || '').replace(/^v/, '').trim()
+        if (latestVersion && this.isNewerVersion(latestVersion, currentVersion)) {
+          if (typeof chrome !== 'undefined' && chrome.action?.setBadgeText) {
+            chrome.action.setBadgeText({ text: 'NEW' })
+            chrome.action.setBadgeBackgroundColor({ color: '#2563eb' })
+          }
+          if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+            chrome.storage.local.set({ dr_debug_update: { available: true, version: latestVersion } })
+          }
+          return { updateAvailable: true, latestVersion, currentVersion }
+        }
+      }
+    } catch {
+      // offline / rate limit fallback
+    }
+    return { updateAvailable: false, latestVersion: currentVersion, currentVersion }
+  }
+
+  private isNewerVersion(latest: string, current: string): boolean {
+    const p1 = latest.split('.').map(Number)
+    const p2 = current.split('.').map(Number)
+    for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+      const v1 = p1[i] || 0
+      const v2 = p2[i] || 0
+      if (v1 > v2) return true
+      if (v1 < v2) return false
+    }
+    return false
+  }
+
 
   private readSettings(): Promise<StoredSettings> {
     return new Promise((resolve) => {
@@ -370,7 +410,15 @@ export class BackgroundWorker {
         return true
       }
 
+      case 'DR_DEBUG_CHECK_UPDATE': {
+        this.checkForUpdates()
+          .then((info) => sendResponse(info))
+          .catch(() => sendResponse({ updateAvailable: false, currentVersion: '0.1.21', latestVersion: '0.1.21' }))
+        return true
+      }
+
       default:
+
         sendResponse({ status: 'unhandled_type', type: message.type })
         break
     }

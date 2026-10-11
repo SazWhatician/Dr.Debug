@@ -687,14 +687,22 @@ export class SettingsModal {
           // Daemon is offline
         }
 
-        // Fallback: If daemon is offline, open download URL
-        btn.innerHTML = `<span>Get v${latestVersion} ↗</span>`
-        const url = 'https://dr-debug.vercel.app/'
+        // Fallback: If daemon is offline, open Update Assistant drawer & trigger direct download
+        btn.innerHTML = `<span>⚡ Updating Assistant Active</span>`
+        const zipUrl = 'https://dr-debug.vercel.app/dr-debug-extension.zip'
         if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
-          chrome.tabs.create({ url })
-        } else {
-          window.open(url, '_blank', 'noopener,noreferrer')
+          chrome.tabs.create({ url: zipUrl })
+        } else if (typeof window !== 'undefined') {
+          const dlAnchor = document.createElement('a')
+          dlAnchor.href = zipUrl
+          dlAnchor.download = 'dr-debug-extension.zip'
+          dlAnchor.target = '_blank'
+          document.body.appendChild(dlAnchor)
+          dlAnchor.click()
+          setTimeout(() => dlAnchor.remove(), 1200)
         }
+
+        this.showUpdateAssistant(latestVersion)
       }
     } catch {
       btn.disabled = false
@@ -702,6 +710,101 @@ export class SettingsModal {
       btn.style.opacity = '1'
     }
   }
+
+  private showUpdateAssistant(latestVersion: string): void {
+    const existing = this.element.querySelector('#dr-debug-update-assistant')
+    if (existing) {
+      existing.remove()
+    }
+
+    const drawer = document.createElement('div')
+    drawer.className = 'dr-debug-update-assistant'
+    drawer.id = 'dr-debug-update-assistant'
+    drawer.innerHTML = `
+      <div class="dr-debug-update-assistant-header">
+        <div class="dr-debug-update-assistant-title">
+          <span class="dr-debug-assistant-icon">🚀</span>
+          <strong>Dr. Debug Update Assistant (v${latestVersion})</strong>
+        </div>
+        <button type="button" class="dr-debug-assistant-close" id="dr-debug-close-assistant">×</button>
+      </div>
+      <p class="dr-debug-assistant-desc">
+        Download for <code>dr-debug-extension.zip</code> has started. Follow any of these quick paths:
+      </p>
+      
+      <div class="dr-debug-update-methods">
+        <div class="dr-debug-method-card">
+          <div class="dr-debug-method-head">
+            <span class="dr-debug-method-badge">ZERO TERMINAL</span>
+            <span>1. Double-Click In Your Folder</span>
+          </div>
+          <p class="dr-debug-method-text">
+            Inside your extracted Dr. Debug extension folder, double-click <code>update.bat</code> (Windows) or <code>update.sh</code> (Mac/Linux).
+          </p>
+        </div>
+
+        <div class="dr-debug-method-card">
+          <div class="dr-debug-method-head">
+            <span class="dr-debug-method-badge">1-CLICK TERMINAL</span>
+            <span>2. One-Liner (Auto Overwrite)</span>
+          </div>
+          <div class="dr-debug-cmd-box">
+            <code class="dr-debug-update-cmd" id="dr-debug-cmd-text">powershell -c "Invoke-WebRequest -Uri https://dr-debug.vercel.app/dr-debug-extension.zip -OutFile u.zip; Expand-Archive u.zip . -Force; Remove-Item u.zip"</code>
+            <button type="button" class="dr-debug-btn-copy-cmd" id="dr-debug-btn-copy-cmd">Copy</button>
+          </div>
+        </div>
+
+        <div class="dr-debug-method-card">
+          <div class="dr-debug-method-head">
+            <span class="dr-debug-method-badge">BROWSER RELOAD</span>
+            <span>3. Reload In Chrome</span>
+          </div>
+          <p class="dr-debug-method-text">
+            Go to <code>chrome://extensions</code> in Chrome and click the 🔄 reload icon on Dr. Debug.
+          </p>
+          <button type="button" class="dr-debug-btn-open-extensions" id="dr-debug-btn-open-extensions">
+            <span>Open chrome://extensions ↗</span>
+          </button>
+        </div>
+      </div>
+    `
+
+    const contentArea = this.element.querySelector('.dr-debug-settings-content') || this.element
+    contentArea.appendChild(drawer)
+
+    drawer.querySelector('#dr-debug-close-assistant')?.addEventListener('click', () => {
+      drawer.remove()
+    })
+
+    const copyBtn = drawer.querySelector('#dr-debug-btn-copy-cmd') as HTMLButtonElement | null
+    const cmdText = drawer.querySelector('#dr-debug-cmd-text')
+    copyBtn?.addEventListener('click', async () => {
+      if (cmdText?.textContent) {
+        try {
+          if (navigator.clipboard) {
+            await navigator.clipboard.writeText(cmdText.textContent)
+          }
+        } catch {
+          // fallback
+        }
+        copyBtn.textContent = 'Copied! ✓'
+        setTimeout(() => {
+          copyBtn.textContent = 'Copy'
+        }, 2000)
+      }
+    })
+
+    const extBtn = drawer.querySelector('#dr-debug-btn-open-extensions') as HTMLButtonElement | null
+    extBtn?.addEventListener('click', () => {
+      const url = 'chrome://extensions'
+      if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
+        chrome.tabs.create({ url })
+      } else {
+        window.open(url, '_blank')
+      }
+    })
+  }
+
 
   private isVersionGreaterOrEqual(v1: string, v2: string): boolean {
     const parts1 = v1.split('.').map(Number)

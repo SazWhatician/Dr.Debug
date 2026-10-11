@@ -3135,7 +3135,174 @@ export const shadowStyles = `
   transform: translate(1.5px, -1.5px);
 }
 
+.dr-debug-update-assistant {
+  margin-top: 14px;
+  background: rgba(10, 16, 30, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fadeInAssistant 0.25s ease-out;
+}
+
+@keyframes fadeInAssistant {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dr-debug-update-assistant-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dr-debug-update-assistant-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.dr-debug-assistant-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.dr-debug-assistant-close:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dr-debug-assistant-desc {
+  font-size: 11px;
+  color: #cbd5e1;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.dr-debug-assistant-desc code {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.dr-debug-update-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dr-debug-method-card {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dr-debug-method-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.dr-debug-method-badge {
+  font-size: 9px;
+  font-weight: 800;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 1px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+.dr-debug-method-text {
+  font-size: 10.5px;
+  color: #94a3b8;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.dr-debug-method-text code {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.12);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.dr-debug-cmd-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 4px 6px;
+  margin-top: 4px;
+}
+
+.dr-debug-update-cmd {
+  font-family: monospace;
+  font-size: 9.5px;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.dr-debug-btn-copy-cmd {
+  background: rgba(56, 189, 248, 0.2);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dr-debug-btn-copy-cmd:hover {
+  background: rgba(56, 189, 248, 0.35);
+}
+
+.dr-debug-btn-open-extensions {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 4px;
+  width: fit-content;
+}
+
+.dr-debug-btn-open-extensions:hover {
+  background: rgba(16, 185, 129, 0.25);
+}
+
 .dr-debug-settings-groupbox {
+
   display: flex;
   flex-direction: column;
   gap: 8px;

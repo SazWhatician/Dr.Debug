@@ -343,6 +343,42 @@ var BackgroundWorker = class {
   constructor() {
     this.dockerManager = new DockerStreamManager();
     this.dockerManager.start();
+    this.checkForUpdates().catch(() => null);
+  }
+  async checkForUpdates() {
+    const currentVersion = "0.1.21";
+    try {
+      const res = await fetch("https://api.github.com/repos/SazWhatician/Dr.Debug/releases/latest", {
+        signal: AbortSignal.timeout(4e3)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const latestVersion = (data.tag_name || "").replace(/^v/, "").trim();
+        if (latestVersion && this.isNewerVersion(latestVersion, currentVersion)) {
+          if (typeof chrome !== "undefined" && chrome.action?.setBadgeText) {
+            chrome.action.setBadgeText({ text: "NEW" });
+            chrome.action.setBadgeBackgroundColor({ color: "#2563eb" });
+          }
+          if (typeof chrome !== "undefined" && chrome.storage?.local) {
+            chrome.storage.local.set({ dr_debug_update: { available: true, version: latestVersion } });
+          }
+          return { updateAvailable: true, latestVersion, currentVersion };
+        }
+      }
+    } catch {
+    }
+    return { updateAvailable: false, latestVersion: currentVersion, currentVersion };
+  }
+  isNewerVersion(latest, current) {
+    const p1 = latest.split(".").map(Number);
+    const p2 = current.split(".").map(Number);
+    for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+      const v1 = p1[i] || 0;
+      const v2 = p2[i] || 0;
+      if (v1 > v2) return true;
+      if (v1 < v2) return false;
+    }
+    return false;
   }
   readSettings() {
     return new Promise((resolve) => {
@@ -444,6 +480,10 @@ var BackgroundWorker = class {
       case "DR_DEBUG_DOCKER_FETCH": {
         const { endpoint, params } = message.payload || {};
         this.dockerManager.proxyFetch(endpoint || "/docker/status", params).then((result) => sendResponse({ result })).catch((err) => sendResponse({ error: err?.message || "Docker fetch failed" }));
+        return true;
+      }
+      case "DR_DEBUG_CHECK_UPDATE": {
+        this.checkForUpdates().then((info) => sendResponse(info)).catch(() => sendResponse({ updateAvailable: false, currentVersion: "0.1.21", latestVersion: "0.1.21" }));
         return true;
       }
       default:

@@ -12421,19 +12421,113 @@ ${rawJson}
             }
           } catch {
           }
-          btn.innerHTML = `<span>Get v${latestVersion} \u2197</span>`;
-          const url = "https://dr-debug.vercel.app/";
+          btn.innerHTML = `<span>\u26A1 Updating Assistant Active</span>`;
+          const zipUrl = "https://dr-debug.vercel.app/dr-debug-extension.zip";
           if (typeof chrome !== "undefined" && chrome.tabs && chrome.tabs.create) {
-            chrome.tabs.create({ url });
-          } else {
-            window.open(url, "_blank", "noopener,noreferrer");
+            chrome.tabs.create({ url: zipUrl });
+          } else if (typeof window !== "undefined") {
+            const dlAnchor = document.createElement("a");
+            dlAnchor.href = zipUrl;
+            dlAnchor.download = "dr-debug-extension.zip";
+            dlAnchor.target = "_blank";
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            setTimeout(() => dlAnchor.remove(), 1200);
           }
+          this.showUpdateAssistant(latestVersion);
         };
       } catch {
         btn.disabled = false;
         btn.innerHTML = originalText;
         btn.style.opacity = "1";
       }
+    }
+    showUpdateAssistant(latestVersion) {
+      const existing = this.element.querySelector("#dr-debug-update-assistant");
+      if (existing) {
+        existing.remove();
+      }
+      const drawer = document.createElement("div");
+      drawer.className = "dr-debug-update-assistant";
+      drawer.id = "dr-debug-update-assistant";
+      drawer.innerHTML = `
+      <div class="dr-debug-update-assistant-header">
+        <div class="dr-debug-update-assistant-title">
+          <span class="dr-debug-assistant-icon">\u{1F680}</span>
+          <strong>Dr. Debug Update Assistant (v${latestVersion})</strong>
+        </div>
+        <button type="button" class="dr-debug-assistant-close" id="dr-debug-close-assistant">\xD7</button>
+      </div>
+      <p class="dr-debug-assistant-desc">
+        Download for <code>dr-debug-extension.zip</code> has started. Follow any of these quick paths:
+      </p>
+      
+      <div class="dr-debug-update-methods">
+        <div class="dr-debug-method-card">
+          <div class="dr-debug-method-head">
+            <span class="dr-debug-method-badge">ZERO TERMINAL</span>
+            <span>1. Double-Click In Your Folder</span>
+          </div>
+          <p class="dr-debug-method-text">
+            Inside your extracted Dr. Debug extension folder, double-click <code>update.bat</code> (Windows) or <code>update.sh</code> (Mac/Linux).
+          </p>
+        </div>
+
+        <div class="dr-debug-method-card">
+          <div class="dr-debug-method-head">
+            <span class="dr-debug-method-badge">1-CLICK TERMINAL</span>
+            <span>2. One-Liner (Auto Overwrite)</span>
+          </div>
+          <div class="dr-debug-cmd-box">
+            <code class="dr-debug-update-cmd" id="dr-debug-cmd-text">powershell -c "Invoke-WebRequest -Uri https://dr-debug.vercel.app/dr-debug-extension.zip -OutFile u.zip; Expand-Archive u.zip . -Force; Remove-Item u.zip"</code>
+            <button type="button" class="dr-debug-btn-copy-cmd" id="dr-debug-btn-copy-cmd">Copy</button>
+          </div>
+        </div>
+
+        <div class="dr-debug-method-card">
+          <div class="dr-debug-method-head">
+            <span class="dr-debug-method-badge">BROWSER RELOAD</span>
+            <span>3. Reload In Chrome</span>
+          </div>
+          <p class="dr-debug-method-text">
+            Go to <code>chrome://extensions</code> in Chrome and click the \u{1F504} reload icon on Dr. Debug.
+          </p>
+          <button type="button" class="dr-debug-btn-open-extensions" id="dr-debug-btn-open-extensions">
+            <span>Open chrome://extensions \u2197</span>
+          </button>
+        </div>
+      </div>
+    `;
+      const contentArea = this.element.querySelector(".dr-debug-settings-content") || this.element;
+      contentArea.appendChild(drawer);
+      drawer.querySelector("#dr-debug-close-assistant")?.addEventListener("click", () => {
+        drawer.remove();
+      });
+      const copyBtn = drawer.querySelector("#dr-debug-btn-copy-cmd");
+      const cmdText = drawer.querySelector("#dr-debug-cmd-text");
+      copyBtn?.addEventListener("click", async () => {
+        if (cmdText?.textContent) {
+          try {
+            if (navigator.clipboard) {
+              await navigator.clipboard.writeText(cmdText.textContent);
+            }
+          } catch {
+          }
+          copyBtn.textContent = "Copied! \u2713";
+          setTimeout(() => {
+            copyBtn.textContent = "Copy";
+          }, 2e3);
+        }
+      });
+      const extBtn = drawer.querySelector("#dr-debug-btn-open-extensions");
+      extBtn?.addEventListener("click", () => {
+        const url = "chrome://extensions";
+        if (typeof chrome !== "undefined" && chrome.tabs && chrome.tabs.create) {
+          chrome.tabs.create({ url });
+        } else {
+          window.open(url, "_blank");
+        }
+      });
     }
     isVersionGreaterOrEqual(v1, v2) {
       const parts1 = v1.split(".").map(Number);
@@ -14280,6 +14374,7 @@ ${rawJson}
       }
     }
     renderBadge(title, chipText, chipClass) {
+      if (typeof document === "undefined") return;
       while (this.badgeText.firstChild) {
         this.badgeText.removeChild(this.badgeText.firstChild);
       }
@@ -14294,6 +14389,7 @@ ${rawJson}
       this.badgeText.appendChild(chipSpan);
     }
     updateStatus(errorCount, failedNetCount = 0, slowNetCount = 0, isRunning = false) {
+      if (typeof document === "undefined") return;
       if (isRunning) {
         this.renderBadge("Dr. Debug", "DIAGNOSING", "run");
         return;
@@ -18182,7 +18278,174 @@ ${rawJson}
   transform: translate(1.5px, -1.5px);
 }
 
+.dr-debug-update-assistant {
+  margin-top: 14px;
+  background: rgba(10, 16, 30, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fadeInAssistant 0.25s ease-out;
+}
+
+@keyframes fadeInAssistant {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dr-debug-update-assistant-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dr-debug-update-assistant-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.dr-debug-assistant-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.dr-debug-assistant-close:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dr-debug-assistant-desc {
+  font-size: 11px;
+  color: #cbd5e1;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.dr-debug-assistant-desc code {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.dr-debug-update-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dr-debug-method-card {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dr-debug-method-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.dr-debug-method-badge {
+  font-size: 9px;
+  font-weight: 800;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 1px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+.dr-debug-method-text {
+  font-size: 10.5px;
+  color: #94a3b8;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.dr-debug-method-text code {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.12);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.dr-debug-cmd-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 4px 6px;
+  margin-top: 4px;
+}
+
+.dr-debug-update-cmd {
+  font-family: monospace;
+  font-size: 9.5px;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.dr-debug-btn-copy-cmd {
+  background: rgba(56, 189, 248, 0.2);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dr-debug-btn-copy-cmd:hover {
+  background: rgba(56, 189, 248, 0.35);
+}
+
+.dr-debug-btn-open-extensions {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 4px;
+  width: fit-content;
+}
+
+.dr-debug-btn-open-extensions:hover {
+  background: rgba(16, 185, 129, 0.25);
+}
+
 .dr-debug-settings-groupbox {
+
   display: flex;
   flex-direction: column;
   gap: 8px;
