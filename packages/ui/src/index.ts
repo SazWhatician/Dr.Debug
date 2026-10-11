@@ -43,7 +43,12 @@ export {
   PIKACHU_SPRITE_DATA,
   GENGAR_SPRITE_DATA,
   CHARIZARD_SPRITE_DATA,
-  BULBASAUR_SPRITE_DATA
 } from './components/pokemonSprites.js'
+export {
+  DownloadMetricsService,
+  formatDownloadCount,
+  type DownloadMetrics
+} from './services/DownloadMetricsService.js'
+
 
 
