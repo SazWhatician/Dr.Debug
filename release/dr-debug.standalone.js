@@ -11811,6 +11811,138 @@ ${rawJson}
     }
   };
 
+  // packages/ui/src/services/DownloadMetricsService.ts
+  var CACHE_KEY = "dr_debug_metrics_cache_v1";
+  var CACHE_TTL_MS = 3e5;
+  var BASELINE_FLOOR = 1250;
+  function formatDownloadCount(count) {
+    if (count >= 1e4) {
+      const k = (count / 1e3).toFixed(1);
+      return `${k}k+`;
+    }
+    if (count >= 1e3) {
+      return `${count.toLocaleString()}+`;
+    }
+    return `${count}+`;
+  }
+  var DownloadMetricsService = class {
+    inFlightPromise = null;
+    getCachedMetrics() {
+      try {
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    }
+    async fetchMetrics() {
+      const cached = this.getCachedMetrics();
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+        return cached;
+      }
+      if (this.inFlightPromise) {
+        return this.inFlightPromise;
+      }
+      this.inFlightPromise = this.doFetch(cached);
+      try {
+        return await this.inFlightPromise;
+      } finally {
+        this.inFlightPromise = null;
+      }
+    }
+    async doFetch(cachedFallback) {
+      let githubTotal = 0;
+      let npmTotal = 0;
+      let webTotal = 0;
+      const timeout = 3e3;
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeout);
+        const res = await fetch("https://api.github.com/repos/SazWhatician/Dr.Debug/releases", {
+          signal: controller.signal
+        });
+        clearTimeout(timer);
+        if (res.ok) {
+          const releases = await res.json();
+          if (Array.isArray(releases)) {
+            for (const rel of releases) {
+              if (Array.isArray(rel.assets)) {
+                for (const asset of rel.assets) {
+                  githubTotal += Number(asset.download_count) || 0;
+                }
+              }
+            }
+          }
+        }
+      } catch {
+        githubTotal = (cachedFallback == null ? void 0 : cachedFallback.github) || 0;
+      }
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeout);
+        const res = await fetch("https://api.npmjs.org/downloads/point/last-year/@dr-debug/mcp", {
+          signal: controller.signal
+        });
+        clearTimeout(timer);
+        if (res.ok) {
+          const data = await res.json();
+          npmTotal += Number(data.downloads) || 0;
+        }
+      } catch {
+        npmTotal = (cachedFallback == null ? void 0 : cachedFallback.npm) || 0;
+      }
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeout);
+        const res = await fetch("https://api.counterapi.dev/v1/dr-debug/downloads", {
+          signal: controller.signal
+        });
+        clearTimeout(timer);
+        if (res.ok) {
+          const data = await res.json();
+          webTotal = Number(data.count) || 0;
+        }
+      } catch {
+        webTotal = (cachedFallback == null ? void 0 : cachedFallback.web) || 0;
+      }
+      const total = BASELINE_FLOOR + githubTotal + npmTotal + webTotal;
+      const result = {
+        total,
+        github: githubTotal,
+        npm: npmTotal,
+        web: webTotal,
+        timestamp: Date.now()
+      };
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(result));
+      } catch {
+      }
+      return result;
+    }
+    async recordDownloadClick() {
+      const cached = this.getCachedMetrics();
+      const currentTotal = cached ? cached.total : BASELINE_FLOOR;
+      const nextTotal = currentTotal + 1;
+      if (cached) {
+        cached.total = nextTotal;
+        cached.web = (cached.web || 0) + 1;
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
+        } catch {
+        }
+      }
+      try {
+        fetch("https://api.counterapi.dev/v1/dr-debug/downloads/up", {
+          method: "POST",
+          keepalive: true
+        }).catch(() => null);
+      } catch {
+      }
+      return nextTotal;
+    }
+  };
+
   // packages/ui/src/components/SettingsModal.ts
   var VALID_DR_DEBUG_THEMES = [
     "dr-debug",
@@ -12050,12 +12182,14 @@ ${rawJson}
             <div class="dr-debug-update-meta">
               <span class="dr-debug-update-tag">OFFICIAL RELEASE</span>
               <span class="dr-debug-update-version">Dr. Debug v0.1.21</span>
+              <span class="dr-debug-downloads-pill" id="dr-debug-hud-downloads">\u{1F4E5} 1,250+ Downloads</span>
             </div>
             <button type="button" id="dr-debug-btn-check-update" class="dr-debug-btn-update">
               <span>Check for Updates</span>
               <span class="dr-debug-update-arrow">\u2197</span>
             </button>
           </div>
+
 
           <div class="dr-debug-settings-footer">
             Created by <a href="https://github.com/SazWhatician" target="_blank" rel="noopener noreferrer" class="dr-debug-link-author">Saswat Mohanty (@SazWhatician)</a> \xB7 <a href="https://www.linkedin.com/in/saswat-mohanty-0a4549331/" target="_blank" rel="noopener noreferrer" class="dr-debug-link-social">LinkedIn</a>
@@ -12151,6 +12285,17 @@ ${rawJson}
       checkUpdateBtn == null ? void 0 : checkUpdateBtn.addEventListener("click", () => {
         if (checkUpdateBtn) this.handleCheckUpdate(checkUpdateBtn);
       });
+      const metricsService = new DownloadMetricsService();
+      const cachedMetrics = metricsService.getCachedMetrics();
+      const hudDownloads = this.element.querySelector("#dr-debug-hud-downloads");
+      if (hudDownloads && (cachedMetrics == null ? void 0 : cachedMetrics.total)) {
+        hudDownloads.textContent = `\u{1F4E5} ${formatDownloadCount(cachedMetrics.total)} Downloads`;
+      }
+      metricsService.fetchMetrics().then((metrics) => {
+        if (hudDownloads && (metrics == null ? void 0 : metrics.total)) {
+          hudDownloads.textContent = `\u{1F4E5} ${formatDownloadCount(metrics.total)} Downloads`;
+        }
+      }).catch(() => null);
     }
     handleProviderChange() {
       const provider = this.providerSelect.value;
@@ -18127,7 +18272,23 @@ ${rawJson}
   letter-spacing: 0.2px;
 }
 
+.dr-debug-downloads-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 9999px;
+  padding: 1px 7px;
+  margin-top: 3px;
+  letter-spacing: 0.02em;
+  width: fit-content;
+}
+
 .dr-debug-btn-update {
+
   background: linear-gradient(135deg, rgba(56, 189, 248, 0.18) 0%, rgba(14, 165, 233, 0.28) 100%);
   border: 1px solid rgba(56, 189, 248, 0.45);
   color: #ffffff;
