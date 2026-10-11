@@ -217,8 +217,9 @@ npm test
 ```
 
 Current test status:
-- **33 test suites passing (100%)**
-- **170 total tests passing (100%)**
+- **34 test suites passing (100%)**
+- **175 total tests passing (100%)**
+
 - Tests cover host Docker CLI streamer, interceptor mutex re-entrancy, RFC-9457 classification, source map VLQ line mapping, XML serializer determinism, and Re-Act reflection parsing.
 
 ---
